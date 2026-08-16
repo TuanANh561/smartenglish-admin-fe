@@ -27,7 +27,7 @@ function Sidebar() {
         <span className="text-base font-semibold text-white">SmartEnglish AI</span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+      <nav className="flex-1 overflow-y-auto scrollbar-none px-3 pb-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-4">
             <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-200/70">
