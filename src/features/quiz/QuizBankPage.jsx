@@ -1,5 +1,20 @@
 import { useMemo, useState } from 'react'
-import { CheckCircle2, Sparkles, Plus, Upload, XCircle } from 'lucide-react'
+import {
+  BarChart3,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileText,
+  ListFilter,
+  Pencil,
+  Plus,
+  Settings,
+  Sparkles,
+  Upload,
+  Users,
+  XCircle,
+} from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -12,12 +27,13 @@ import EmptyState from '@/components/ui/EmptyState'
 import Select from '@/components/ui/Select'
 import StatTile from '@/components/ui/StatTile'
 import Tabs from '@/components/ui/Tabs'
-import { formatDate, formatNumber } from '@/lib/utils'
+import { formatNumber } from '@/lib/utils'
 import { QUIZ_STATS, quizQuestions } from '@/mocks/data/quizQuestions'
-import { QUIZ_TYPE_META, quizSets } from '@/mocks/data/quizSets'
+import { EXAM_TRACK_META, quizSets, VERIFICATION_META } from '@/mocks/data/quizSets'
 import { buildQuizColumns, QUESTION_TYPE_META } from './columns'
 
 const PAGE_SIZE = 10
+const SETS_PAGE_SIZE = 6
 
 const TABS = [
   { value: 'questions', label: 'Ngân hàng câu hỏi' },
@@ -31,7 +47,7 @@ const SOURCE_OPTIONS = [
   { value: 'ai', label: 'AI tạo' },
   { value: 'manual', label: 'Thủ công' },
 ]
-const QUIZ_TYPE_CHIPS = Object.entries(QUIZ_TYPE_META).map(([key, meta]) => ({
+const EXAM_TRACK_CHIPS = Object.entries(EXAM_TRACK_META).map(([key, meta]) => ({
   key,
   label: meta.label,
 }))
@@ -46,12 +62,18 @@ function QuizBankPage() {
   const [page, setPage] = useState(1)
   const [activeQuestion, setActiveQuestion] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const [quizTypeFilter, setQuizTypeFilter] = useState('all')
+  const [examTrackFilter, setExamTrackFilter] = useState('all')
+  const [setsPage, setSetsPage] = useState(1)
 
   const filteredSets = useMemo(() => {
-    if (quizTypeFilter === 'all') return quizSets
-    return quizSets.filter((set) => set.quizType === quizTypeFilter)
-  }, [quizTypeFilter])
+    if (examTrackFilter === 'all') return quizSets
+    return quizSets.filter((set) => set.examTrack === examTrackFilter)
+  }, [examTrackFilter])
+
+  const setsTotal = filteredSets.length
+  const setsTotalPages = Math.max(1, Math.ceil(setsTotal / SETS_PAGE_SIZE))
+  const setsStart = (setsPage - 1) * SETS_PAGE_SIZE
+  const setsPageData = filteredSets.slice(setsStart, setsStart + SETS_PAGE_SIZE)
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -166,86 +188,110 @@ function QuizBankPage() {
       )}
 
       {activeTab === 'sets' && (
-        <Card>
-          <FilterChipRow chips={QUIZ_TYPE_CHIPS} value={quizTypeFilter} onChange={setQuizTypeFilter} />
-
-          {filteredSets.length === 0 ? (
-            <EmptyState
-              className="mt-4"
-              title="Chưa có bộ đề nào"
-              description="Thử đổi loại bài hoặc tạo bộ đề mới."
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <FilterChipRow
+              chips={EXAM_TRACK_CHIPS}
+              value={examTrackFilter}
+              onChange={(value) => {
+                setExamTrackFilter(value)
+                setSetsPage(1)
+              }}
             />
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" icon={ListFilter}>
+                Bộ lọc
+              </Button>
+              <Button variant="secondary" size="sm" icon={Sparkles}>
+                Mới nhất
+              </Button>
+            </div>
+          </div>
+
+          {setsPageData.length === 0 ? (
+            <EmptyState title="Chưa có đề thi nào" description="Thử đổi bộ lọc hoặc tạo đề thi mới." />
           ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-canvas">
-                  <tr>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      ID
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Tên bộ đề
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Loại bài
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Nguồn
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Số câu
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Điểm đạt
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Lượt làm tối đa
-                    </th>
-                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Cập nhật
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {filteredSets.map((set) => (
-                    <tr key={set.id} className="hover:bg-canvas">
-                      <td className="px-4 py-3 font-mono text-xs text-ink-muted">{set.id}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-navy-700">{set.title}</p>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {set.tags.map((tag) => (
-                            <span key={tag} className="text-xs text-ink-muted">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge tone={QUIZ_TYPE_META[set.quizType].tone}>
-                          {QUIZ_TYPE_META[set.quizType].label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        {set.aiGenerated ? (
-                          <Badge tone="info" className="gap-1">
-                            <Sparkles size={12} strokeWidth={1.75} />
-                            AI
-                          </Badge>
-                        ) : (
-                          <Badge tone="neutral">Thủ công</Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-ink">{set.questionCount}</td>
-                      <td className="px-4 py-3 text-ink">{set.passingScore ?? '—'}</td>
-                      <td className="px-4 py-3 text-ink">{set.maxAttempts ?? 'Không giới hạn'}</td>
-                      <td className="px-4 py-3 text-ink-muted">{formatDate(set.createdAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {setsPageData.map((set) => {
+                const trackMeta = EXAM_TRACK_META[set.examTrack]
+                const verificationMeta = VERIFICATION_META[set.verificationStatus]
+                return (
+                  <Card key={set.id} className="flex flex-col">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+                        <span className={`h-1.5 w-1.5 rounded-full ${trackMeta.dotClass}`} />
+                        {trackMeta.label}
+                      </span>
+                      <Badge tone={verificationMeta.tone} className="gap-1">
+                        <CheckCircle2 size={12} strokeWidth={1.75} />
+                        {verificationMeta.label}
+                      </Badge>
+                    </div>
+
+                    <h3 className="mt-2 text-base font-semibold text-navy-700">{set.title}</h3>
+                    <p className="mt-0.5 text-sm text-ink-muted">{set.subtitle}</p>
+
+                    <div className="mt-4 space-y-1.5 text-sm text-ink-muted">
+                      <p className="flex items-center gap-1.5">
+                        <Clock size={14} strokeWidth={1.75} />
+                        {set.durationMinutes} phút
+                        <FileText size={14} strokeWidth={1.75} className="ml-2" />
+                        {set.questionCount} câu
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Users size={14} strokeWidth={1.75} />
+                        {formatNumber(set.attempts)} lượt{' '}
+                        {set.attemptsType === 'full' ? 'thi đầy đủ' : 'luyện tập'}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2 border-t border-line pt-3">
+                      <Button variant="secondary" size="sm" icon={Pencil} className="flex-1">
+                        Sửa đề
+                      </Button>
+                      <Button size="sm" icon={BarChart3} className="flex-1">
+                        Xem kết quả
+                      </Button>
+                      <button
+                        type="button"
+                        aria-label="Cài đặt đề thi"
+                        className="rounded-lg border border-line p-2 text-ink-muted hover:bg-canvas hover:text-ink"
+                      >
+                        <Settings size={16} strokeWidth={1.75} />
+                      </button>
+                    </div>
+                  </Card>
+                )
+              })}
             </div>
           )}
-        </Card>
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-ink-muted">
+              Trang {setsPage} / {setsTotalPages} · {formatNumber(setsTotal)} đề thi
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Trang trước"
+                disabled={setsPage <= 1}
+                onClick={() => setSetsPage((p) => p - 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft size={18} strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                aria-label="Trang sau"
+                disabled={setsPage >= setsTotalPages}
+                onClick={() => setSetsPage((p) => p + 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronRight size={18} strokeWidth={1.75} />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Drawer

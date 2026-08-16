@@ -11,6 +11,8 @@ import ReadingPage from '@/features/reading/ReadingPage'
 import ListeningPage from '@/features/listening/ListeningPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
 import AiContentPage from '@/features/aiContent/AiContentPage'
+import PremiumPage from '@/features/premium/PremiumPage'
+import TransactionsPage from '@/features/transactions/TransactionsPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -34,8 +36,8 @@ export const router = createBrowserRouter([
           { path: 'noi-dung-ai', element: <AiContentPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },
           { path: 'doanh-thu', element: <RevenueListPage /> },
-          { path: 'doi-soat', element: <PlaceholderPage /> },
-          { path: 'goi-premium', element: <PlaceholderPage /> },
+          { path: 'doi-soat', element: <TransactionsPage /> },
+          { path: 'goi-premium', element: <PremiumPage /> },
           { path: 'phan-quyen', element: <PlaceholderPage /> },
           { path: 'thong-bao', element: <PlaceholderPage /> },
           { path: 'bao-cao', element: <PlaceholderPage /> },

@@ -91,8 +91,14 @@ export const ROUTE_META = {
   },
   '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
   '/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
-  '/doi-soat': { title: 'Giao dịch & Đối soát', description: 'Theo dõi giao dịch và đối soát thanh toán' },
-  '/goi-premium': { title: 'Gói Premium', description: 'Cấu hình gói Premium và mã giảm giá' },
+  '/doi-soat': {
+    title: 'Giao dịch & Đối soát',
+    description: 'Quản lý dòng tiền, theo dõi thanh toán và xử lý các yêu cầu hoàn tiền từ học viên',
+  },
+  '/goi-premium': {
+    title: 'Premium Package & Pricing Configurator',
+    description: 'Quản lý các gói dịch vụ và mã giảm giá cho hệ thống SmartEnglish AI',
+  },
   '/phan-quyen': { title: 'Phân quyền', description: 'Quản lý vai trò và phân quyền' },
   '/thong-bao': { title: 'Thông báo', description: 'Quản lý thông báo hệ thống' },
   '/bao-cao': { title: 'Báo cáo vi phạm', description: 'Theo dõi báo cáo vi phạm từ người dùng' },
