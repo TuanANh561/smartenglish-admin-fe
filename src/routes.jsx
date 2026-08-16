@@ -3,6 +3,7 @@ import AppShellLayout from '@/components/layout/AppShellLayout'
 import PlaceholderPage from '@/components/layout/PlaceholderPage'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/features/auth/LoginPage'
+import DashboardPage from '@/features/dashboard/DashboardPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -15,7 +16,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShellLayout />,
         children: [
-          { index: true, element: <PlaceholderPage /> },
+          { index: true, element: <DashboardPage /> },
           { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
           { path: 'hoc-vien', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/tu-vung', element: <PlaceholderPage /> },

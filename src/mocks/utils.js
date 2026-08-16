@@ -1,5 +1,8 @@
-/** Cắt trang + tìm kiếm + lọc trên mảng, trả đúng shape mà API thật sẽ trả. */
-export function paginate(rows, { page = 1, size = 10, search, searchFields = [], filters = {} } = {}) {
+/** Cắt trang + tìm kiếm + lọc + sắp xếp trên mảng, trả đúng shape mà API thật sẽ trả. */
+export function paginate(
+  rows,
+  { page = 1, size = 10, search, searchFields = [], filters = {}, sortBy, sortDir = 'asc' } = {},
+) {
   let result = rows
 
   const keyword = search?.trim().toLowerCase()
@@ -12,6 +15,19 @@ export function paginate(rows, { page = 1, size = 10, search, searchFields = [],
   for (const [field, value] of Object.entries(filters)) {
     if (value === undefined || value === null || value === '' || value === 'all') continue
     result = result.filter((row) => row[field] === value)
+  }
+
+  if (sortBy) {
+    const dir = sortDir === 'desc' ? -1 : 1
+    result = [...result].sort((a, b) => {
+      const va = a[sortBy]
+      const vb = b[sortBy]
+      if (va == null && vb == null) return 0
+      if (va == null) return dir
+      if (vb == null) return -dir
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir
+      return String(va).localeCompare(String(vb), 'vi') * dir
+    })
   }
 
   const total = result.length

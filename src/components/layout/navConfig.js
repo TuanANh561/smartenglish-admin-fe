@@ -64,7 +64,10 @@ export const NAV_GROUPS = [
 ]
 
 export const ROUTE_META = {
-  '/': { title: 'Dashboard', description: 'Tổng quan hệ thống và các chỉ số chính' },
+  '/': {
+    title: 'Dashboard Tổng quan',
+    description: 'Chào mừng trở lại, hệ thống đang hoạt động ổn định.',
+  },
   '/du-lieu-chi-tiet': { title: 'Dữ liệu chi tiết', description: 'Thống kê chi tiết theo thời gian' },
   '/hoc-vien': { title: 'Học viên', description: 'Quản lý danh sách và hồ sơ học viên' },
   '/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
