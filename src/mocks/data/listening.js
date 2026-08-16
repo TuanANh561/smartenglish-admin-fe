@@ -1,0 +1,69 @@
+export const listeningLessons = [
+  {
+    id: '1',
+    title: 'Client Presentation Prep',
+    description:
+      'A dialogue between two colleagues preparing slides and anticipating questions ahead of a client meeting.',
+    level: 'B2 Upper Int.',
+    accent: 'US Accent',
+    topic: 'Kinh doanh',
+    status: 'ready',
+    duration: '04:12',
+    waveform: [6, 14, 10, 20, 16, 22, 12, 18, 9, 24, 14, 8, 17, 11, 20],
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: '2',
+    title: 'Ordering at a Cafe',
+    description:
+      'A simple interaction between a barista and a customer ordering coffee and a pastry.',
+    level: 'A2 Pre-Int.',
+    accent: 'UK Accent',
+    topic: 'Đời sống',
+    status: 'review',
+    duration: '01:45',
+    waveform: [8, 16, 9, 12, 20, 7, 15, 10, 6, 13],
+    createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: '3',
+    title: 'Airport Check-in Conversation',
+    description:
+      'A traveller checks in for an international flight and asks about baggage allowance.',
+    level: 'B1 Intermediate',
+    accent: 'US Accent',
+    topic: 'Du lịch',
+    status: 'ready',
+    duration: '03:08',
+    waveform: [12, 18, 7, 21, 15, 9, 19, 11, 23, 14, 8, 17],
+    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: '4',
+    title: 'Job Interview Basics',
+    description: 'A mock interview covering common questions about strengths and weaknesses.',
+    level: 'B2 Upper Int.',
+    accent: 'Australian Accent',
+    topic: 'Kinh doanh',
+    status: 'review',
+    duration: '05:30',
+    waveform: [10, 22, 14, 8, 19, 13, 25, 9, 16, 12, 20, 7, 18],
+    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+  },
+  {
+    id: '5',
+    title: 'Weather Forecast Report',
+    description: 'A short radio-style weather forecast for the week across major cities.',
+    level: 'A1 Beginner',
+    accent: 'UK Accent',
+    topic: 'Đời sống',
+    status: 'ready',
+    duration: '01:20',
+    waveform: [5, 9, 13, 7, 11, 6, 15, 8],
+    createdAt: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000),
+  },
+]
+
+export const LISTENING_TOPICS = ['Kinh doanh', 'Đời sống', 'Du lịch']
+export const LISTENING_ACCENTS = ['US Accent', 'UK Accent', 'Australian Accent']
+export const LISTENING_LEVELS = ['A1 Beginner', 'A2 Pre-Int.', 'B1 Intermediate', 'B2 Upper Int.']

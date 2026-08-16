@@ -32,7 +32,14 @@ export const NAV_GROUPS = [
     items: [
       { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen },
       { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học & Bài học', icon: Library },
-      { to: '/hoc-lieu/bai-doc', label: 'Bài đọc & Bài nghe', icon: Headphones },
+      {
+        label: 'Bài đọc và nghe',
+        icon: Headphones,
+        children: [
+          { to: '/hoc-lieu/bai-doc', label: 'Bài đọc' },
+          { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe' },
+        ],
+      },
       { to: '/hoc-lieu/bai-kiem-tra', label: 'Bài kiểm tra', icon: ClipboardList },
     ],
   },
@@ -72,7 +79,8 @@ export const ROUTE_META = {
   '/hoc-vien': { title: 'Học viên', description: 'Quản lý danh sách và hồ sơ học viên' },
   '/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
-  '/hoc-lieu/bai-doc': { title: 'Bài đọc & Bài nghe', description: 'Quản lý bài đọc và bài nghe' },
+  '/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },
+  '/hoc-lieu/bai-nghe': { title: 'Bài nghe', description: 'Quản lý bài nghe, bản ghi âm và bản chép lời' },
   '/hoc-lieu/bai-kiem-tra': { title: 'Bài kiểm tra', description: 'Quản lý bài kiểm tra và ngân hàng câu hỏi' },
   '/noi-dung-ai': { title: 'Duyệt nội dung AI', description: 'Kiểm duyệt nội dung do AI sinh ra' },
   '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },

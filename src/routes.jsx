@@ -7,6 +7,8 @@ import DashboardPage from '@/features/dashboard/DashboardPage'
 import StudentsPage from '@/features/students/StudentsPage'
 import RevenueListPage from '@/features/revenue/RevenueListPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
+import ReadingPage from '@/features/reading/ReadingPage'
+import ListeningPage from '@/features/listening/ListeningPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -24,7 +26,8 @@ export const router = createBrowserRouter([
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
-          { path: 'hoc-lieu/bai-doc', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/bai-doc', element: <ReadingPage /> },
+          { path: 'hoc-lieu/bai-nghe', element: <ListeningPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <PlaceholderPage /> },
           { path: 'noi-dung-ai', element: <PlaceholderPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },

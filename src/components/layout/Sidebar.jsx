@@ -1,12 +1,57 @@
-import { GraduationCap, LogOut } from 'lucide-react'
+import { ChevronDown, GraduationCap, LogOut } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
 import { NAV_GROUPS } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
+
+function NavItemGroup({ item }) {
+  const location = useLocation()
+  const isChildActive = item.children.some((child) => location.pathname === child.to)
+  const [open, setOpen] = useState(isChildActive)
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+          isChildActive ? 'text-white' : 'text-brand-200/90 hover:bg-white/10',
+        )}
+      >
+        <item.icon size={18} strokeWidth={1.75} />
+        <span className="flex-1 text-left">{item.label}</span>
+        <ChevronDown
+          size={16}
+          strokeWidth={1.75}
+          className={cn('transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div className="mt-0.5 flex flex-col gap-0.5 border-l border-white/10 pl-4">
+          {item.children.map((child) => (
+            <NavLink
+              key={child.to}
+              to={child.to}
+              className={({ isActive }) =>
+                cn(
+                  'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                  isActive ? 'bg-brand-500 text-white' : 'text-brand-200/90 hover:bg-white/10',
+                )
+              }
+            >
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function Sidebar() {
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -34,24 +79,28 @@ function Sidebar() {
               {group.label}
             </p>
             <div className="flex flex-col gap-0.5">
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-brand-500 text-white'
-                        : 'text-brand-200/90 hover:bg-white/10',
-                    )
-                  }
-                >
-                  <item.icon size={18} strokeWidth={1.75} />
-                  {item.label}
-                </NavLink>
-              ))}
+              {group.items.map((item) =>
+                item.children ? (
+                  <NavItemGroup key={item.label} item={item} />
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-brand-500 text-white'
+                          : 'text-brand-200/90 hover:bg-white/10',
+                      )
+                    }
+                  >
+                    <item.icon size={18} strokeWidth={1.75} />
+                    {item.label}
+                  </NavLink>
+                ),
+              )}
             </div>
           </div>
         ))}
