@@ -81,7 +81,10 @@ export const ROUTE_META = {
   '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
   '/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },
   '/hoc-lieu/bai-nghe': { title: 'Bài nghe', description: 'Quản lý bài nghe, bản ghi âm và bản chép lời' },
-  '/hoc-lieu/bai-kiem-tra': { title: 'Bài kiểm tra', description: 'Quản lý bài kiểm tra và ngân hàng câu hỏi' },
+  '/hoc-lieu/bai-kiem-tra': {
+    title: 'Quản lý Bài Kiểm Tra (Quiz Bank)',
+    description: 'Quản lý ngân hàng câu hỏi và duyệt nội dung do AI sinh ra',
+  },
   '/noi-dung-ai': { title: 'Duyệt nội dung AI', description: 'Kiểm duyệt nội dung do AI sinh ra' },
   '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
   '/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },

@@ -9,6 +9,7 @@ import RevenueListPage from '@/features/revenue/RevenueListPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import ReadingPage from '@/features/reading/ReadingPage'
 import ListeningPage from '@/features/listening/ListeningPage'
+import QuizBankPage from '@/features/quiz/QuizBankPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -28,7 +29,7 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/bai-doc', element: <ReadingPage /> },
           { path: 'hoc-lieu/bai-nghe', element: <ListeningPage /> },
-          { path: 'hoc-lieu/bai-kiem-tra', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/bai-kiem-tra', element: <QuizBankPage /> },
           { path: 'noi-dung-ai', element: <PlaceholderPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },
           { path: 'doanh-thu', element: <RevenueListPage /> },

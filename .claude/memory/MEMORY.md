@@ -41,6 +41,14 @@ Phạm vi: Dashboard tổng quan, Dữ liệu chi tiết, Học viên, Doanh thu
 
 - 2026-08-16 — GIAI ĐOẠN 6 xong: Bộ DataTable dùng chung TanStack Table v9 (`useTable` + `rowSortingFeature` manual) không dùng rowSelectionFeature/rowExpandingFeature vì đơn giản hơn. `DataTable.jsx` (sắp xếp 1 cột, chọn nhiều dòng, mở rộng dòng, loading/error/empty), `DataTableToolbar.jsx` (tìm kiếm debounce 300ms + slot filter/actions), `FilterChipRow.jsx` (chip nhanh), `useDataTable.js` (gom state → `params` đúng shape API), `exportCsv.js` (CSV + BOM UTF-8). `features/users/columns.jsx` (7 cột + CSV columns riêng). Test thêm sắp xếp asc/desc, 21/21 xanh.
 - 2026-08-16 — GIAI ĐOẠN 7–8 xong: Hai trang danh sách. (7) `StudentsPage.jsx` — dùng DataTable + filter vai trò, tìm kiếm tên/email, mở rộng (4 thông tin chi tiết), xuất CSV. (8) `RevenueListPage.jsx` — 4 KPI (tổng doanh thu/giao dịch/giá trị trung bình/tỉ lệ chuyển đổi) + bảng giao dịch 6 cột (ngày/học viên/gói/khoản tiền/trạng thái/phương thức), filter trạng thái, tìm kiếm, xuất CSV. Mock: `transactions.js` (15 record), handler `/admin/revenue/transactions` + `/admin/revenue/stats`. Cập nhật `endpoints.js` + `routes.jsx` (route `/hoc-vien` & `/doanh-thu`) + `navConfig.js` mô tả. Lint sạch, 21/21 test, build qua.
+- 2026-08-16 — `.claude/prompts/` đã xoá theo yêu cầu người dùng — từ nay prompt gửi trực tiếp trong chat, không còn file kịch bản 19 giai đoạn để tra cứu "việc tiếp theo".
+- 2026-08-16 — 3 trang nội dung học liệu, prompt trực tiếp trong chat (không theo file giai đoạn cũ), toàn bộ client-side mock (`useState`, không gọi API/TanStack Query), dùng `components/ui/*` sẵn có — **không phải shadcn/ui** dù prompt có nhắc, vì dự án không cài shadcn:
+  - `features/vocabulary/VocabularyPage.jsx` — bảng thuần (không TanStack Table), route `/hoc-lieu/tu-vung`.
+  - `features/reading/ReadingPage.jsx` + `mocks/data/readings.js` (9 bài, câu hỏi/đáp án tiếng Anh, giải thích tiếng Việt) + `features/reading/levels.js` — grid card + `Drawer` xem chi tiết nội dung/câu hỏi trắc nghiệm, route `/hoc-lieu/bai-doc`.
+  - `features/listening/ListeningPage.jsx` + `mocks/data/listening.js` — grid card waveform SVG tĩnh, filter chủ đề/giọng đọc, toggle grid/list, route `/hoc-lieu/bai-nghe`.
+  - Menu cha "Bài đọc và nghe" trong `navConfig.js` đổi thành item có `children` (dropdown 2 mục con) — `Sidebar.jsx` thêm component `NavItemGroup` (tự mở khi route con active, `ChevronDown` xoay), đây là **item nav đầu tiên có submenu** trong dự án, các nhóm khác vẫn phẳng.
+  - `features/quiz/QuizBankPage.jsx` + `features/quiz/columns.jsx` + `mocks/data/quizQuestions.js` (5 câu hỏi đa dạng loại, dựa theo enum `question_type` thật trong `learning.questions`: multiple_choice/fill_blank/matching/word_order) — dùng lại `DataTable` dùng chung (phân trang/chọn dòng client-side, không qua `useDataTable`/API vì yêu cầu chỉ mock), `Drawer` 480px xem chi tiết câu hỏi + đáp án đúng tô xanh + nút Duyệt/Từ chối khi `status: 'pending'`, `StatTile` 3 ô thống kê. Badge "Nguồn AI" dùng tone `info` (xanh) thay vì tím theo prompt gốc — **giữ đúng palette**, không thêm màu ngoài `design-system.md`. Route `/hoc-lieu/bai-kiem-tra`.
+  - Bổ sung tab "Bộ đề thi" trong `QuizBankPage.jsx` (dùng `ui/Tabs.jsx` có sẵn, 2 tab: Ngân hàng câu hỏi / Bộ đề thi) + `mocks/data/quizSets.js` (7 bộ đề, `QUIZ_TYPE_META` map đúng enum `quiz_type` thật trong `learning.quizzes`: mock_ielts/mock_toeic/placement/grammar_mini/dynamic) — bảng `<table>` thuần (không TanStack, <20 dòng theo `data-table` skill), filter bằng `FilterChipRow` theo loại bài.
 
 ## Đang làm
 
@@ -48,7 +56,7 @@ Chưa có.
 
 ## Việc tiếp theo
 
-Giai đoạn 0–8 đã xong. Tiếp tục giai đoạn 9+ trong `.claude/prompts/giai-doan-giao-dien.md` (các trang con còn lại: tích hợp nội dung/phân quyền/cài đặt). Giai đoạn 0–6 là nền dùng chung.
+Không còn file kịch bản giai đoạn để tham chiếu — nhận prompt trực tiếp theo từng trang. Các route còn `PlaceholderPage`: `/du-lieu-chi-tiet`, `/hoc-lieu/khoa-hoc`, `/noi-dung-ai`, `/voice-ai`, `/doi-soat`, `/goi-premium`, `/phan-quyen`, `/thong-bao`, `/bao-cao`, `/nhat-ky`, `/cai-dat`.
 
 ## Điểm cần lưu ý
 
