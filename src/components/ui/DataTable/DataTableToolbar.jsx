@@ -7,12 +7,15 @@ const DEBOUNCE_MS = 300
 /** Hàng công cụ trên bảng: tìm kiếm (trì hoãn 300ms) trái, bộ lọc giữa, hành động phải. */
 function DataTableToolbar({ searchValue = '', onSearchChange, searchPlaceholder, children, actions, className }) {
   const [localSearch, setLocalSearch] = useState(searchValue)
-  const debounceRef = useRef(null)
-
-  useEffect(() => {
+  // Đồng bộ khi prop đổi từ bên ngoài (vd nút "Xoá bộ lọc") — chỉnh state lúc render,
+  // không dùng effect, tránh cascading render theo khuyến nghị của React.
+  const [prevSearchValue, setPrevSearchValue] = useState(searchValue)
+  if (searchValue !== prevSearchValue) {
+    setPrevSearchValue(searchValue)
     setLocalSearch(searchValue)
-  }, [searchValue])
+  }
 
+  const debounceRef = useRef(null)
   useEffect(() => () => clearTimeout(debounceRef.current), [])
 
   const handleChange = (value) => {

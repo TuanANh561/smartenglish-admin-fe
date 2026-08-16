@@ -4,6 +4,8 @@ import PlaceholderPage from '@/components/layout/PlaceholderPage'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/features/auth/LoginPage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
+import StudentsPage from '@/features/students/StudentsPage'
+import RevenueListPage from '@/features/revenue/RevenueListPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -18,14 +20,14 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
-          { path: 'hoc-vien', element: <PlaceholderPage /> },
+          { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/bai-doc', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <PlaceholderPage /> },
           { path: 'noi-dung-ai', element: <PlaceholderPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },
-          { path: 'doanh-thu', element: <PlaceholderPage /> },
+          { path: 'doanh-thu', element: <RevenueListPage /> },
           { path: 'doi-soat', element: <PlaceholderPage /> },
           { path: 'goi-premium', element: <PlaceholderPage /> },
           { path: 'phan-quyen', element: <PlaceholderPage /> },

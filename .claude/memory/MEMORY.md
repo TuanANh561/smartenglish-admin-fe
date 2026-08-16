@@ -39,13 +39,16 @@ Phạm vi: Dashboard tổng quan, Dữ liệu chi tiết, Học viên, Doanh thu
 
 - 2026-08-16 — Sinh động hoá riêng DashboardPage (theo yêu cầu người dùng — chỉ phạm vi Dashboard, KHÔNG đụng ui/charts dùng chung): `KpiCard.jsx` thêm prop `tone` (brand/navy/success/gold — 4 màu nhấn khác nhau cho 4 chỉ số, vẫn trong palette), viền trái `border-l-[3px]` theo tone, chip đổi màu nền cho phần trăm tăng/giảm, hover nhẹ nhấc shadow. `DashboardPage.jsx` thêm eyebrow "Tổng quan/Xu hướng & phân tích/Chi tiết" trên từng khối, và truyền `title` dạng JSX (icon + chữ) cho `LineChartCard`/`BarChartCard`/`DonutCard` — làm được mà KHÔNG sửa file component biểu đồ dùng chung vì `CardHeader` vốn chỉ render `{title}` nguyên trạng. `RecentActivityCard.jsx` thêm icon cạnh tiêu đề, hover hàng bảng, viền nhẹ quanh Avatar. Lint sạch, build qua.
 
+- 2026-08-16 — GIAI ĐOẠN 6 xong: Bộ DataTable dùng chung TanStack Table v9 (`useTable` + `rowSortingFeature` manual) không dùng rowSelectionFeature/rowExpandingFeature vì đơn giản hơn. `DataTable.jsx` (sắp xếp 1 cột, chọn nhiều dòng, mở rộng dòng, loading/error/empty), `DataTableToolbar.jsx` (tìm kiếm debounce 300ms + slot filter/actions), `FilterChipRow.jsx` (chip nhanh), `useDataTable.js` (gom state → `params` đúng shape API), `exportCsv.js` (CSV + BOM UTF-8). `features/users/columns.jsx` (7 cột + CSV columns riêng). Test thêm sắp xếp asc/desc, 21/21 xanh.
+- 2026-08-16 — GIAI ĐOẠN 7–8 xong: Hai trang danh sách. (7) `StudentsPage.jsx` — dùng DataTable + filter vai trò, tìm kiếm tên/email, mở rộng (4 thông tin chi tiết), xuất CSV. (8) `RevenueListPage.jsx` — 4 KPI (tổng doanh thu/giao dịch/giá trị trung bình/tỉ lệ chuyển đổi) + bảng giao dịch 6 cột (ngày/học viên/gói/khoản tiền/trạng thái/phương thức), filter trạng thái, tìm kiếm, xuất CSV. Mock: `transactions.js` (15 record), handler `/admin/revenue/transactions` + `/admin/revenue/stats`. Cập nhật `endpoints.js` + `routes.jsx` (route `/hoc-vien` & `/doanh-thu`) + `navConfig.js` mô tả. Lint sạch, 21/21 test, build qua.
+
 ## Đang làm
 
 Chưa có.
 
 ## Việc tiếp theo
 
-Giai đoạn 0–5 đã xong. Tiếp tục giai đoạn 6 trong `.claude/prompts/giai-doan-giao-dien.md` (DataTable dùng chung cho mọi màn danh sách — có thể dùng skill `data-table`). Giai đoạn 0–6 là nền dùng chung, không được bỏ qua.
+Giai đoạn 0–8 đã xong. Tiếp tục giai đoạn 9+ trong `.claude/prompts/giai-doan-giao-dien.md` (các trang con còn lại: tích hợp nội dung/phân quyền/cài đặt). Giai đoạn 0–6 là nền dùng chung.
 
 ## Điểm cần lưu ý
 

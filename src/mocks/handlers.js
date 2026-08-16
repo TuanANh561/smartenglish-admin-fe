@@ -13,6 +13,7 @@ import { paginate } from './utils'
 import * as dashboard from './data/dashboard'
 import { users, roles } from './data/users'
 import { orders, plans, coupons, revenueSummary } from './data/payments'
+import { transactions } from './data/transactions'
 import { createMockToken, decodeMockToken, isTokenExpired } from './tokenUtils'
 
 const notFound = { status: 404, message: 'Không tìm thấy dữ liệu.', details: null }
@@ -83,6 +84,18 @@ export const handlers = {
   // ── Doanh thu ───────────────────────────────────────────────────
   [`GET ${ENDPOINTS.revenue.summary}`]: revenueSummary,
   [`GET ${ENDPOINTS.revenue.byMonth}`]: dashboard.revenueByMonth,
+  [`GET ${ENDPOINTS.revenue.transactions}`]: ({ params }) =>
+    paginate(transactions, {
+      ...params,
+      searchFields: ['studentName', 'studentEmail'],
+      filters: { status: params?.status, plan: params?.planType },
+    }),
+  [`GET ${ENDPOINTS.revenue.stats}`]: {
+    totalRevenue: 45_200_000,
+    totalTransactions: 1_234,
+    averageOrderValue: 36_667,
+    conversionRate: 3.2,
+  },
 
   // ── Người dùng ──────────────────────────────────────────────────
   [`GET ${ENDPOINTS.users.list}`]: ({ params }) =>

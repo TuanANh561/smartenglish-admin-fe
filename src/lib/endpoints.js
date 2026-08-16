@@ -167,6 +167,8 @@ export const ENDPOINTS = {
     byMonth: '/admin/revenue/by-month',
     byPlan: '/admin/revenue/by-plan',
     report: '/admin/revenue/report',
+    transactions: '/admin/revenue/transactions',
+    stats: '/admin/revenue/stats',
   },
 
   // ── Thống kê tổng hợp ───────────────────────────────────────────

@@ -23,6 +23,19 @@ describe('lớp dữ liệu ở chế độ mock', () => {
       .toBe(true)
   })
 
+  it('sắp xếp theo cột khi có sortBy/sortDir (dùng cho DataTable)', async () => {
+    const asc = await api.get(ENDPOINTS.users.list, {
+      params: { size: 20, sortBy: 'displayName', sortDir: 'asc' },
+    })
+    const names = asc.items.map((u) => u.displayName)
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'vi')))
+
+    const desc = await api.get(ENDPOINTS.users.list, {
+      params: { size: 20, sortBy: 'displayName', sortDir: 'desc' },
+    })
+    expect(desc.items.map((u) => u.displayName)).toEqual([...names].reverse())
+  })
+
   it('thay tham số động vào đường dẫn', async () => {
     const user = await api.get(ENDPOINTS.users.detail, { path: { id: 'u-1' } })
     expect(user.id).toBe('u-1')

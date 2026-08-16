@@ -13,6 +13,8 @@ import { cn, formatNumber } from '@/lib/utils'
  * để hiện mũi tên + phát `onSortingChange`, tương tự v8 với `manualSorting: true`.
  * Chọn nhiều dòng và mở rộng dòng KHÔNG dùng feature riêng của thư viện — tự quản lý
  * bằng state cục bộ vì đơn giản hơn nhiều so với rowSelectionFeature/rowExpandingFeature.
+ * PHẢI dùng hook `useTable` (không tự gọi `constructTable`) — hook lo phần khởi tạo
+ * reactivity (`coreReactivityFeature`) mà table-core không tự thêm.
  */
 const FEATURES = { rowSortingFeature }
 const localColumnHelper = createColumnHelper()
@@ -131,6 +133,9 @@ function DataTable({
     getRowId: (row) => row.id,
     state: { sorting },
     onSortingChange,
+    manualSorting: true,
+    manualPagination: true,
+    manualExpanding: true,
   })
 
   const columnCount = finalColumns.length
@@ -219,7 +224,7 @@ function DataTable({
                         : 'hover:bg-canvas',
                     )}
                   >
-                    {row.getVisibleCells().map((cell) => (
+                    {row.getAllCells().map((cell) => (
                       <td
                         key={cell.id}
                         className={cn('px-4 py-3', alignClass(cell.column.columnDef.meta?.align))}
