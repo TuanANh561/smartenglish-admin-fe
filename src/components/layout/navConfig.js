@@ -85,7 +85,10 @@ export const ROUTE_META = {
     title: 'Quản lý Bài Kiểm Tra (Quiz Bank)',
     description: 'Quản lý ngân hàng câu hỏi và duyệt nội dung do AI sinh ra',
   },
-  '/noi-dung-ai': { title: 'Duyệt nội dung AI', description: 'Kiểm duyệt nội dung do AI sinh ra' },
+  '/noi-dung-ai': {
+    title: 'Nội dung sinh bởi AI — Chờ duyệt',
+    description: 'Kiểm tra và xác thực nội dung giảng trình được tạo tự động bởi GPT-4o',
+  },
   '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
   '/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
   '/doi-soat': { title: 'Giao dịch & Đối soát', description: 'Theo dõi giao dịch và đối soát thanh toán' },

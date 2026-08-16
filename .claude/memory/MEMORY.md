@@ -49,6 +49,7 @@ Phạm vi: Dashboard tổng quan, Dữ liệu chi tiết, Học viên, Doanh thu
   - Menu cha "Bài đọc và nghe" trong `navConfig.js` đổi thành item có `children` (dropdown 2 mục con) — `Sidebar.jsx` thêm component `NavItemGroup` (tự mở khi route con active, `ChevronDown` xoay), đây là **item nav đầu tiên có submenu** trong dự án, các nhóm khác vẫn phẳng.
   - `features/quiz/QuizBankPage.jsx` + `features/quiz/columns.jsx` + `mocks/data/quizQuestions.js` (5 câu hỏi đa dạng loại, dựa theo enum `question_type` thật trong `learning.questions`: multiple_choice/fill_blank/matching/word_order) — dùng lại `DataTable` dùng chung (phân trang/chọn dòng client-side, không qua `useDataTable`/API vì yêu cầu chỉ mock), `Drawer` 480px xem chi tiết câu hỏi + đáp án đúng tô xanh + nút Duyệt/Từ chối khi `status: 'pending'`, `StatTile` 3 ô thống kê. Badge "Nguồn AI" dùng tone `info` (xanh) thay vì tím theo prompt gốc — **giữ đúng palette**, không thêm màu ngoài `design-system.md`. Route `/hoc-lieu/bai-kiem-tra`.
   - Bổ sung tab "Bộ đề thi" trong `QuizBankPage.jsx` (dùng `ui/Tabs.jsx` có sẵn, 2 tab: Ngân hàng câu hỏi / Bộ đề thi) + `mocks/data/quizSets.js` (7 bộ đề, `QUIZ_TYPE_META` map đúng enum `quiz_type` thật trong `learning.quizzes`: mock_ielts/mock_toeic/placement/grammar_mini/dynamic) — bảng `<table>` thuần (không TanStack, <20 dòng theo `data-table` skill), filter bằng `FilterChipRow` theo loại bài.
+- 2026-08-16 — `features/aiContent/AiContentPage.jsx` + `mocks/data/aiContent.js` (6 mục: vocab/example/exam, field `status: 'pending'|'approved'|'rejected'` phỏng theo `is_approved` của `content.words`/`content.phrases`, `source: 'ai_generated'` theo enum thật của `content.word_examples`) — route `/noi-dung-ai`. Layout 2 cột `xl:grid-cols-[1fr_360px]`: trái danh sách card chờ duyệt (Tabs New Vocab/Examples/Exams lọc theo `type`, mỗi card Duyệt/Sửa/Từ chối cập nhật state cục bộ + `react-hot-toast`, Sửa mở `Modal` có `Textarea`), phải panel "Cấu hình AI Prompt" sticky (`xl:sticky xl:top-6`) — ô system prompt dùng nền `bg-navy-900` (token có sẵn, không phải dark-mode toàn app, chỉ 1 panel kiểu console), 2 `StatTile` số liệu, 2 slider `<input type="range" className="accent-brand-500">` (dự án chưa có Slider primitive, không tạo mới vì chỉ dùng 1 chỗ). **Không** đặt `<h1>` riêng trong trang — `Topbar` đã render tiêu đề/mô tả qua `ROUTE_META`, badge số lượng "chờ duyệt" (động theo state) đặt cạnh toolbar thay vì cạnh tiêu đề.
 
 ## Đang làm
 
@@ -56,7 +57,7 @@ Chưa có.
 
 ## Việc tiếp theo
 
-Không còn file kịch bản giai đoạn để tham chiếu — nhận prompt trực tiếp theo từng trang. Các route còn `PlaceholderPage`: `/du-lieu-chi-tiet`, `/hoc-lieu/khoa-hoc`, `/noi-dung-ai`, `/voice-ai`, `/doi-soat`, `/goi-premium`, `/phan-quyen`, `/thong-bao`, `/bao-cao`, `/nhat-ky`, `/cai-dat`.
+Không còn file kịch bản giai đoạn để tham chiếu — nhận prompt trực tiếp theo từng trang. Các route còn `PlaceholderPage`: `/du-lieu-chi-tiet`, `/hoc-lieu/khoa-hoc`, `/voice-ai`, `/doi-soat`, `/goi-premium`, `/phan-quyen`, `/thong-bao`, `/bao-cao`, `/nhat-ky`, `/cai-dat`.
 
 ## Điểm cần lưu ý
 

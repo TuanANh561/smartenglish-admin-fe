@@ -10,6 +10,7 @@ import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import ReadingPage from '@/features/reading/ReadingPage'
 import ListeningPage from '@/features/listening/ListeningPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
+import AiContentPage from '@/features/aiContent/AiContentPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/bai-doc', element: <ReadingPage /> },
           { path: 'hoc-lieu/bai-nghe', element: <ListeningPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <QuizBankPage /> },
-          { path: 'noi-dung-ai', element: <PlaceholderPage /> },
+          { path: 'noi-dung-ai', element: <AiContentPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },
           { path: 'doanh-thu', element: <RevenueListPage /> },
           { path: 'doi-soat', element: <PlaceholderPage /> },
