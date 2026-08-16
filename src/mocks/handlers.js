@@ -13,8 +13,14 @@ import { paginate } from './utils'
 import * as dashboard from './data/dashboard'
 import { users, roles } from './data/users'
 import { orders, plans, coupons, revenueSummary } from './data/payments'
+import { createMockToken, decodeMockToken, isTokenExpired } from './tokenUtils'
 
 const notFound = { status: 404, message: 'Không tìm thấy dữ liệu.', details: null }
+const sessionExpired = {
+  status: 401,
+  message: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.',
+  details: null,
+}
 
 function findOr404(collection, id) {
   const found = collection.find((item) => item.id === id)
@@ -22,7 +28,50 @@ function findOr404(collection, id) {
   return structuredClone(found)
 }
 
+// Access token sống ngắn (15 phút), refresh token sống dài (7 ngày) — như JWT thật.
+const ACCESS_TTL_SECONDS = 15 * 60
+const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60
+
+function issueTokenPair(user) {
+  return {
+    accessToken: createMockToken(user, ACCESS_TTL_SECONDS, 'access'),
+    refreshToken: createMockToken(user, REFRESH_TTL_SECONDS, 'refresh'),
+  }
+}
+
 export const handlers = {
+  // ── Xác thực ────────────────────────────────────────────────────
+  [`POST ${ENDPOINTS.auth.login}`]: ({ data }) => {
+    const { email, password } = data ?? {}
+    const user = users.find((item) => item.email === email && item.role === 'admin')
+    if (!user || password !== 'admin123') {
+      throw { status: 401, message: 'Email hoặc mật khẩu không đúng.', details: null }
+    }
+    return { ...issueTokenPair(user), user: structuredClone(user) }
+  },
+
+  [`POST ${ENDPOINTS.auth.refresh}`]: ({ data }) => {
+    const payload = decodeMockToken(data?.refreshToken)
+    if (!payload || payload.type !== 'refresh' || isTokenExpired(payload)) {
+      throw sessionExpired
+    }
+    const user = users.find((item) => item.id === payload.sub)
+    if (!user) throw sessionExpired
+    return issueTokenPair(user)
+  },
+
+  [`GET ${ENDPOINTS.auth.me}`]: ({ token }) => {
+    const payload = decodeMockToken(token)
+    if (!payload || payload.type !== 'access' || isTokenExpired(payload)) {
+      throw sessionExpired
+    }
+    const user = users.find((item) => item.id === payload.sub)
+    if (!user) throw sessionExpired
+    return structuredClone(user)
+  },
+
+  [`POST ${ENDPOINTS.auth.logout}`]: () => ({ success: true }),
+
   // ── Thống kê / Dashboard ────────────────────────────────────────
   [`GET ${ENDPOINTS.stats.overview}`]: dashboard.overview,
   [`GET ${ENDPOINTS.stats.activeUsers}`]: dashboard.activeUsers,
