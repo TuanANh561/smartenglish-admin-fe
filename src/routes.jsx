@@ -6,6 +6,7 @@ import LoginPage from '@/features/auth/LoginPage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
 import StudentsPage from '@/features/students/StudentsPage'
 import RevenueListPage from '@/features/revenue/RevenueListPage'
+import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
 
@@ -21,7 +22,7 @@ export const router = createBrowserRouter([
           { index: true, element: <DashboardPage /> },
           { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
-          { path: 'hoc-lieu/tu-vung', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/bai-doc', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <PlaceholderPage /> },
