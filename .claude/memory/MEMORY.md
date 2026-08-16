@@ -18,7 +18,11 @@ Phạm vi: Dashboard tổng quan, Dữ liệu chi tiết, Học viên, Doanh thu
 
 - 2026-08-16 — Dựng bộ `.claude/`: rules (workflow, design-system, conventions), skills (admin-page, dashboard-chart, data-table), agents (ui-auditor, api-integrator), commands (checkpoint, new-page), memory. Palette rút từ ảnh thiết kế dashboard.
 - 2026-08-16 — README theo hướng repo Admin riêng lẻ, có bảng các repo liên quan.
-- 2026-08-16 — Lớp dữ liệu: `lib/endpoints.js` (toàn bộ URL), `lib/api.js` (axios + công tắc mock), `src/mocks/` (handlers + data), ví dụ `features/dashboard` và `features/users`. Lint sạch.
+- 2026-08-16 — Lớp dữ liệu: `lib/endpoints.js` (toàn bộ URL), `lib/api.js` (axios + công tắc mock), `src/mocks/` (handlers + data), ví dụ `features/dashboard` và `features/users`. Lint sạch, 6/6 test xanh.
+- 2026-08-16 — `.claude/prompts/giai-doan-giao-dien.md`: 19 prompt tự chứa để dựng giao diện theo giai đoạn, bám 8 ảnh thiết kế người dùng cung cấp.
+- 2026-08-16 — GIAI ĐOẠN 0 xong: nối `@tailwindcss/vite` + alias `@` → `src` vào `vite.config.js`; `src/index.css` chỉ còn `@import "tailwindcss"` + `@theme` (13 token màu); xoá hết file template (`App.css`, `src/assets/*`, `public/icons.svg`); `lib/utils.js` (cn, formatCurrency, formatNumber, formatDate, formatRelativeTime, formatPercent — lưu ý `formatNumber`/phần thập phân của `formatCurrency`/`formatPercent` KHÔNG dùng `toLocaleString('vi-VN')` vì locale đó cho dấu phẩy thập phân/chấm nghìn ngược với thiết kế, phải tự làm tròn); `App.jsx` tạm hiện 13 ô màu + demo 6 hàm định dạng; `lib/utils.test.js` 10/10 xanh. Lint sạch, build qua.
+- 2026-08-16 — GIAI ĐOẠN 1 xong: 19 nguyên thủy trong `src/components/ui/` (Button, Card+CardHeader, Badge, Input, Textarea, Select, SearchInput, FilterChip, Modal, Drawer, ConfirmDialog, Skeleton+SkeletonText+SkeletonCard, EmptyState, ErrorState, Pagination, Avatar, Tabs, Switch, ProgressBar, StatTile, StatusDot); `src/pages/UiKitchenSink.jsx` demo đủ 19 mục, gắn tạm vào `App.jsx`. Pagination rút gọn kiểu `1 2 3 … 25`; Modal/Drawer đóng bằng Esc + click nền, không backdrop-blur. Icon lucide toàn bộ size 18/strokeWidth 1.75. Màu warning/danger dùng hex badge trong design-system.md (`#A16207`, `#DC2626`) vì chưa có token @theme riêng. Lint sạch, build qua.
+- 2026-08-16 — GIAI ĐOẠN 2 xong: `components/layout/Sidebar.jsx` (gradient navy-800→navy-900, 5 nhóm nav cuộn dọc, thẻ người dùng dính đáy), `Topbar.jsx` (tiêu đề/mô tả theo route qua `navConfig.js`, actions mặc định Calendar + Xuất CSV), `AppShell.jsx`, `AppShellLayout.jsx` (route layout dùng `<Outlet/>`), `PlaceholderPage.jsx`, `navConfig.js` (NAV_GROUPS + ROUTE_META, nguồn dữ liệu menu/tiêu đề duy nhất). `src/routes.jsx`: 17 route bọc AppShell (tạm PlaceholderPage) + `/ui` (kitchen-sink, đứng ngoài AppShell) + `*` → `pages/NotFound.jsx` tiếng Việt. `main.jsx` đổi sang `RouterProvider` + `QueryClientProvider` (retry 1, staleTime 30s, không refetch on focus) + `Toaster`. Xoá `src/App.jsx`. Lint sạch, build qua.
 
 ## Quyết định
 
@@ -35,10 +39,7 @@ Chưa có.
 
 ## Việc tiếp theo
 
-1. Nối `@tailwindcss/vite` vào `vite.config.js`, viết lại `src/index.css` với `@import "tailwindcss"` + block `@theme`.
-2. Dọn template Vite (`App.jsx`, `App.css`, `assets/` thừa).
-3. Dựng `AppShell` + `Sidebar` + `Topbar` theo ảnh thiết kế.
-4. Trang Dashboard: 4 KPI card, line chart, donut, bar chart, bảng hoạt động gần đây (đã có sẵn hook trong `features/dashboard/hooks/useDashboard.js`).
+Giai đoạn 0–1 đã xong. Tiếp tục giai đoạn 2 trong `.claude/prompts/giai-doan-giao-dien.md` (khung ứng dụng: Sidebar + Topbar + route, bám ảnh Dashboard gốc). Giai đoạn 0–6 là nền dùng chung, không được bỏ qua.
 
 ## Điểm cần lưu ý
 
