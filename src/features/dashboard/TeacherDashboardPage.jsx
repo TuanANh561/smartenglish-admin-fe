@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   ArrowRight,
@@ -86,6 +87,7 @@ function ActivityIcon({ type }) {
 
 // ─── Teacher Dashboard chính ─────────────────────────────────────────────────
 function TeacherDashboardPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const today = useMemo(() => {
     return new Date().toLocaleDateString('vi-VN', {
@@ -236,7 +238,8 @@ function TeacherDashboardPage() {
           <h2 className="text-base font-bold text-navy-700">Lớp học đang giảng dạy</h2>
           <button
             type="button"
-            className="flex items-center gap-1 text-sm font-semibold text-brand-500 hover:text-brand-600"
+            onClick={() => navigate('/lop-hoc')}
+            className="flex items-center gap-1 text-sm font-semibold text-brand-500 hover:text-brand-600 cursor-pointer"
           >
             Xem tất cả lớp
             <ArrowRight size={15} />
@@ -247,6 +250,7 @@ function TeacherDashboardPage() {
           {TEACHER_CLASSES.map((cls) => (
             <div
               key={cls.id}
+              onClick={() => navigate('/lop-hoc')}
               className="group overflow-hidden rounded-xl border border-line bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
             >
               {/* Ảnh bìa với gradient */}

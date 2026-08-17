@@ -38,20 +38,13 @@ export const roles = [
   { id: 'r-1', name: 'admin', label: 'Quản trị viên', userCount: 1, permissions: ['*'] },
   {
     id: 'r-2',
-    name: 'content_manager',
-    label: 'Quản lý học liệu',
-    userCount: 3,
-    permissions: ['content.read', 'content.write', 'ai.review'],
-  },
-  {
-    id: 'r-3',
     name: 'teacher',
     label: 'Giáo viên',
     userCount: 2,
     permissions: ['class.manage', 'assignment.manage'],
   },
   {
-    id: 'r-4',
+    id: 'r-3',
     name: 'student',
     label: 'Học viên',
     userCount: 28_394,

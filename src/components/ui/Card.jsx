@@ -1,10 +1,14 @@
 import { cn } from '@/lib/utils'
 
-function Card({ children, className, ...props }) {
+function Card({ children, className, onClick, ...props }) {
+  const isClickable = Boolean(onClick || props.role === 'button')
+
   return (
     <div
+      onClick={onClick}
       className={cn(
         'rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]',
+        isClickable && 'cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md',
         className,
       )}
       {...props}

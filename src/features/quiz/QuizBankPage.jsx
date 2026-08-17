@@ -122,12 +122,6 @@ function QuizBankPage() {
         <Button icon={Plus}>Tạo Quiz Mới</Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <StatTile label="Tổng câu hỏi" value={formatNumber(QUIZ_STATS.total)} />
-        <StatTile label="AI tạo" value={formatNumber(QUIZ_STATS.aiGenerated)} tone="info" />
-        <StatTile label="Chờ duyệt" value={formatNumber(QUIZ_STATS.pendingReview)} tone="danger" />
-      </div>
-
       <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'questions' && (
@@ -201,14 +195,6 @@ function QuizBankPage() {
                 setSetsPage(1)
               }}
             />
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" icon={ListFilter}>
-                Bộ lọc
-              </Button>
-              <Button variant="secondary" size="sm" icon={Sparkles}>
-                Mới nhất
-              </Button>
-            </div>
           </div>
 
           {setsPageData.length === 0 ? (

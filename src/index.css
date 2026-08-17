@@ -22,3 +22,28 @@ body {
   color: var(--color-ink);
   font-family: system-ui, sans-serif;
 }
+
+/* Quy tắc toàn cục: Tất cả nút bấm, liên kết, thẻ tương tác đều tự động có pointer cursor */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+select:not(:disabled),
+summary,
+a,
+label[for],
+.cursor-pointer,
+[data-clickable="true"] {
+  cursor: pointer;
+}
+
+/* Con trỏ cấm khi phần tử bị vô hiệu hóa */
+button:disabled,
+[aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}

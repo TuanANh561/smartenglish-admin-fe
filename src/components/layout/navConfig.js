@@ -24,11 +24,14 @@ export const ROLE_ACCESS = {
   teacher: [
     '/',
     '/lop-hoc',
-    '/hoc-lieu/tu-vung',
+    '/goi-dich-vu',
     '/hoc-lieu/bai-doc',
     '/hoc-lieu/bai-nghe',
     '/hoc-lieu/bai-kiem-tra',
     '/noi-dung-ai',
+    '/thong-bao',
+    '/nhat-ky',
+    '/cai-dat',
   ],
 }
 
@@ -52,22 +55,16 @@ export const NAV_GROUPS = [
       },
       { to: '/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
       { to: '/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
+      { to: '/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
     ],
   },
   {
     label: 'Học liệu',
     items: [
-      { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen, roles: ['admin', 'teacher'] },
+      { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen, roles: ['admin'] },
       { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học & Bài học', icon: Library, roles: ['admin'] },
-      {
-        label: 'Bài đọc và nghe',
-        icon: Headphones,
-        roles: ['admin', 'teacher'],
-        children: [
-          { to: '/hoc-lieu/bai-doc', label: 'Bài đọc', roles: ['admin', 'teacher'] },
-          { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe', roles: ['admin', 'teacher'] },
-        ],
-      },
+      { to: '/hoc-lieu/bai-doc', label: 'Bài đọc', icon: BookOpen, roles: ['admin', 'teacher'] },
+      { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe', icon: Headphones, roles: ['admin', 'teacher'] },
       {
         to: '/hoc-lieu/bai-kiem-tra',
         label: 'Bài kiểm tra',
@@ -95,10 +92,10 @@ export const NAV_GROUPS = [
     label: 'Cài đặt hệ thống',
     items: [
       { to: '/phan-quyen', label: 'Phân quyền', icon: ShieldCheck, roles: ['admin'] },
-      { to: '/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin'] },
+      { to: '/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin', 'teacher'] },
       { to: '/bao-cao', label: 'Báo cáo vi phạm', icon: Flag, roles: ['admin'] },
-      { to: '/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin'] },
-      { to: '/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin'] },
+      { to: '/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin', 'teacher'] },
+      { to: '/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin', 'teacher'] },
     ],
   },
 ]
@@ -128,6 +125,7 @@ export const ROUTE_META = {
   '/du-lieu-chi-tiet': { title: 'Dữ liệu chi tiết', description: 'Thống kê chi tiết theo thời gian' },
   '/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
+  '/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
   '/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
   '/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },

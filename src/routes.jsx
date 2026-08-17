@@ -12,6 +12,7 @@ import ListeningPage from '@/features/listening/ListeningPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
 import AiContentPage from '@/features/aiContent/AiContentPage'
 import PremiumPage from '@/features/premium/PremiumPage'
+import TeacherPackagesPage from '@/features/premium/TeacherPackagesPage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
           { path: 'doanh-thu', element: <RevenueListPage /> },
           { path: 'doi-soat', element: <TransactionsPage /> },
           { path: 'goi-premium', element: <PremiumPage /> },
+          { path: 'goi-dich-vu', element: <TeacherPackagesPage /> },
           { path: 'phan-quyen', element: <PlaceholderPage /> },
           { path: 'thong-bao', element: <PlaceholderPage /> },
           { path: 'bao-cao', element: <PlaceholderPage /> },

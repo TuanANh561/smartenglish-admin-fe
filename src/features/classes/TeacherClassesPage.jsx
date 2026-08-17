@@ -157,7 +157,8 @@ function ClassListView({ onViewClass }) {
                   return (
                     <tr
                       key={cls.id}
-                      className="group transition-colors hover:bg-canvas"
+                      onClick={() => onViewClass(cls)}
+                      className="group transition-colors hover:bg-canvas cursor-pointer"
                     >
                       {/* Tên lớp */}
                       <td className="px-4 py-3">
@@ -194,7 +195,7 @@ function ClassListView({ onViewClass }) {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => onViewClass(cls)}
+                            onClick={(e) => { e.stopPropagation(); onViewClass(cls) }}
                             className="rounded-md p-1.5 text-ink-muted hover:bg-brand-50 hover:text-brand-500"
                             title="Xem chi tiết"
                           >
@@ -202,6 +203,7 @@ function ClassListView({ onViewClass }) {
                           </button>
                           <button
                             type="button"
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded-md p-1.5 text-ink-muted hover:bg-slate-100 hover:text-navy-700"
                             title="Chỉnh sửa"
                           >
@@ -209,6 +211,7 @@ function ClassListView({ onViewClass }) {
                           </button>
                           <button
                             type="button"
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded-md p-1.5 text-ink-muted hover:bg-red-50 hover:text-red-500"
                             title="Xóa"
                           >
@@ -422,7 +425,11 @@ function ClassDetailView({ cls, onBack, onViewStudent }) {
                     </tr>
                   ) : (
                     paged.map((student) => (
-                      <tr key={student.id} className="hover:bg-canvas transition-colors">
+                      <tr
+                        key={student.id}
+                        onClick={() => onViewStudent(student, cls)}
+                        className="hover:bg-canvas transition-colors cursor-pointer"
+                      >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <StudentAvatar student={student} />
@@ -443,7 +450,7 @@ function ClassDetailView({ cls, onBack, onViewStudent }) {
                           <div className="flex justify-end">
                             <button
                               type="button"
-                              onClick={() => onViewStudent(student, cls)}
+                              onClick={(e) => { e.stopPropagation(); onViewStudent(student, cls) }}
                               className="rounded-md p-1.5 text-ink-muted hover:bg-brand-50 hover:text-brand-500"
                               title="Xem thông tin học viên"
                             >
