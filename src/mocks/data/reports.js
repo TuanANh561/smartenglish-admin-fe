@@ -1,0 +1,100 @@
+// Mock data báo cáo vi phạm tiêu chuẩn cộng đồng
+
+export const INITIAL_REPORTS_STATS = {
+  pendingCount: 142,
+  pendingDelta: 12,
+  resolvedCount: 856,
+  slaRate: 92,
+  violationRate: 2.4,
+}
+
+export const INITIAL_REPORTS = [
+  {
+    id: 'REP-001',
+    reportedUser: {
+      id: 'u-101',
+      name: 'Trần Văn A',
+      handle: '@tran_a',
+      initials: 'TV',
+      avatarColor: '#64748b',
+    },
+    reporter: {
+      name: 'Nguyễn Thị Hoa',
+      handle: '@hoa_nt',
+    },
+    contentType: 'Bình luận',
+    contentSnippet: 'Những lời lẽ mang tính xúc phạm và chê bai học viên khác trong phòng thi thử IELTS Speaking.',
+    reason: 'Ngôn từ kích động',
+    severity: 'critical',
+    severityLabel: 'Nghiêm trọng',
+    severityTone: 'danger',
+    createdAt: '10 phút trước',
+    status: 'pending',
+  },
+  {
+    id: 'REP-002',
+    reportedUser: {
+      id: 'u-102',
+      name: 'Lê Thị N',
+      handle: '@le_n',
+      initials: 'LN',
+      avatarColor: '#3b82f6',
+    },
+    reporter: {
+      name: 'Vũ Đức Thắng (GV)',
+      handle: '@thang_vd',
+    },
+    contentType: 'Bài viết',
+    contentSnippet: 'Đăng liên kết mời chào mua bán tài liệu lậu và khóa học không rõ nguồn gốc trong diễn đàn lớp học.',
+    reason: 'Spam / Quảng cáo',
+    severity: 'medium',
+    severityLabel: 'Trung bình',
+    severityTone: 'warning',
+    createdAt: '2 giờ trước',
+    status: 'pending',
+  },
+  {
+    id: 'REP-003',
+    reportedUser: {
+      id: 'u-103',
+      name: 'Phạm Minh',
+      handle: '@p_minh',
+      initials: 'PM',
+      avatarColor: '#8b5cf6',
+    },
+    reporter: {
+      name: 'Hệ thống tự động (AI Filter)',
+      handle: '@system_bot',
+    },
+    contentType: 'Hồ sơ',
+    contentSnippet: 'Ảnh đại diện có nội dung nhạy cảm vi phạm thuần phong mỹ tục.',
+    reason: 'Ảnh đại diện không phù hợp',
+    severity: 'low',
+    severityLabel: 'Thấp',
+    severityTone: 'neutral',
+    createdAt: 'Hôm qua',
+    status: 'pending',
+  },
+  {
+    id: 'REP-004',
+    reportedUser: {
+      id: 'u-104',
+      name: 'Hoàng Quốc Bảo',
+      handle: '@bao_hq',
+      initials: 'HB',
+      avatarColor: '#f59e0b',
+    },
+    reporter: {
+      name: 'Lê Hoàng Nam',
+      handle: '@nam_lh',
+    },
+    contentType: 'Bình luận',
+    contentSnippet: 'Spam ký tự vô nghĩa lặp đi lặp lại nhiều lần trong phần thảo luận bài đọc.',
+    reason: 'Spam nội dung',
+    severity: 'low',
+    severityLabel: 'Thấp',
+    severityTone: 'neutral',
+    createdAt: '3 ngày trước',
+    status: 'resolved',
+  },
+]

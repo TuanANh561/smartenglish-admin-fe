@@ -2,21 +2,25 @@ import { createBrowserRouter } from 'react-router-dom'
 import AppShellLayout from '@/components/layout/AppShellLayout'
 import PlaceholderPage from '@/components/layout/PlaceholderPage'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
-import LoginPage from '@/features/auth/LoginPage'
-import DashboardPage from '@/features/dashboard/DashboardPage'
-import StudentsPage from '@/features/students/StudentsPage'
-import RevenueListPage from '@/features/revenue/RevenueListPage'
-import VocabularyPage from '@/features/vocabulary/VocabularyPage'
-import ReadingPage from '@/features/reading/ReadingPage'
-import ListeningPage from '@/features/listening/ListeningPage'
-import QuizBankPage from '@/features/quiz/QuizBankPage'
 import AiContentPage from '@/features/aiContent/AiContentPage'
+import AuditLogPage from '@/features/auditLog/AuditLogPage'
+import LoginPage from '@/features/auth/LoginPage'
+import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
+import DashboardPage from '@/features/dashboard/DashboardPage'
+import ListeningPage from '@/features/listening/ListeningPage'
+import NotificationsPage from '@/features/notifications/NotificationsPage'
 import PremiumPage from '@/features/premium/PremiumPage'
 import TeacherPackagesPage from '@/features/premium/TeacherPackagesPage'
+import QuizBankPage from '@/features/quiz/QuizBankPage'
+import ReadingPage from '@/features/reading/ReadingPage'
+import ReportsPage from '@/features/reports/ReportsPage'
+import RevenueListPage from '@/features/revenue/RevenueListPage'
+import SettingsPage from '@/features/settings/SettingsPage'
+import StudentsPage from '@/features/students/StudentsPage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
-import UiKitchenSink from '@/pages/UiKitchenSink'
+import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import NotFound from '@/pages/NotFound'
-import TeacherClassesPage from './features/classes/TeacherClassesPage'
+import UiKitchenSink from '@/pages/UiKitchenSink'
 
 export const router = createBrowserRouter([
   { path: '/dang-nhap', element: <LoginPage /> },
@@ -43,10 +47,10 @@ export const router = createBrowserRouter([
           { path: 'goi-premium', element: <PremiumPage /> },
           { path: 'goi-dich-vu', element: <TeacherPackagesPage /> },
           { path: 'phan-quyen', element: <PlaceholderPage /> },
-          { path: 'thong-bao', element: <PlaceholderPage /> },
-          { path: 'bao-cao', element: <PlaceholderPage /> },
-          { path: 'nhat-ky', element: <PlaceholderPage /> },
-          { path: 'cai-dat', element: <PlaceholderPage /> },
+          { path: 'thong-bao', element: <NotificationsPage /> },
+          { path: 'bao-cao', element: <ReportsPage /> },
+          { path: 'nhat-ky', element: <AuditLogPage /> },
+          { path: 'cai-dat', element: <SettingsPage /> },
         ],
       },
     ],

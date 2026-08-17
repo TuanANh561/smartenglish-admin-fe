@@ -1,0 +1,47 @@
+// Mock data cài đặt hệ thống
+
+export const INITIAL_SYSTEM_SETTINGS = {
+  general: {
+    appName: 'SmartEnglish AI',
+    appSlogan: 'Nền tảng học và giảng dạy tiếng Anh thông minh với AI',
+    defaultLanguage: 'vi',
+    timezone: 'Asia/Ho_Chi_Minh',
+    supportEmail: 'hotro@smartenglish.vn',
+    supportPhone: '1900 6868',
+    maintenanceMode: false,
+    allowRegistration: true,
+  },
+  security: {
+    twoFactorAuth: false,
+    sessionTimeoutMinutes: 60,
+    minPasswordLength: 8,
+    requireSpecialChar: true,
+    maxLoginAttempts: 5,
+    lockoutDurationMinutes: 15,
+    ipWhitelist: '192.168.1.1/24\n113.161.85.20',
+  },
+  payment: {
+    currency: 'VND',
+    vnpayEnabled: true,
+    vnpayMerchantId: 'SMARTENG_VNPAY_01',
+    vnpaySecretKey: '••••••••••••••••••••••••••••••••',
+    vnpaySandbox: true,
+    momoEnabled: true,
+    momoPartnerCode: 'MOMO_SMARTENG_2026',
+    momoAccessKey: '••••••••••••••••',
+    stripeEnabled: false,
+    stripePublishableKey: 'pk_test_51Mz••••••••••••••••••••',
+    webhookUrl: 'https://api.smartenglish.vn/v1/payments/webhook',
+  },
+  email: {
+    smtpHost: 'smtp.gmail.com',
+    smtpPort: 587,
+    smtpUser: 'no-reply@smartenglish.vn',
+    smtpPassword: '••••••••••••••••',
+    senderName: 'SmartEnglish AI Notification',
+    fcmServerKey: 'AAAA••••••••••••••••••••••••••••••••',
+    notifyNewRegistration: true,
+    notifyPaymentSuccess: true,
+    notifyAssignmentSubmission: true,
+  },
+}
