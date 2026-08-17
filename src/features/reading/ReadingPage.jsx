@@ -340,18 +340,22 @@ function ReadingPage() {
                     </span>
 
                     <div className="flex items-center gap-1">
-                      {/* Nút giao bài và Sửa/Xóa: chỉ hiển thị cho bài thuộc sở hữu hoặc admin */}
+                      {/* Nút giao bài: Chỉ dành cho giáo viên và bài thuộc sở hữu của mình */}
+                      {isTeacher && checkOwnership(item) && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleAssignToClass(e, item)}
+                          className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
+                          title="Giao bài cho lớp học"
+                        >
+                          <Send size={12} />
+                          Giao bài
+                        </button>
+                      )}
+
+                      {/* Nút Sửa/Xóa: Hiển thị cho bài thuộc sở hữu hoặc Admin */}
                       {canManage(item) ? (
                         <>
-                          <button
-                            type="button"
-                            onClick={(e) => handleAssignToClass(e, item)}
-                            className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
-                            title="Giao bài cho lớp học"
-                          >
-                            <Send size={12} />
-                            Giao bài
-                          </button>
                           <button
                             type="button"
                             onClick={(e) => handleEditClick(e, item)}
@@ -474,24 +478,25 @@ function ReadingPage() {
 
             {/* Bottom Actions trong Drawer */}
             <div className="flex gap-2 border-t border-line pt-4">
+              {isTeacher && checkOwnership(activeReading) && (
+                <Button
+                  variant="primary"
+                  fullWidth
+                  icon={Send}
+                  onClick={(e) => handleAssignToClass(e, activeReading)}
+                >
+                  Giao bài đọc này cho lớp
+                </Button>
+              )}
               {canManage(activeReading) ? (
-                <>
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    icon={Send}
-                    onClick={(e) => handleAssignToClass(e, activeReading)}
-                  >
-                    Giao bài đọc này cho lớp
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    icon={Pencil}
-                    onClick={(e) => handleEditClick(e, activeReading)}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                </>
+                <Button
+                  variant={isTeacher && checkOwnership(activeReading) ? 'secondary' : 'primary'}
+                  fullWidth={!isTeacher || !checkOwnership(activeReading)}
+                  icon={Pencil}
+                  onClick={(e) => handleEditClick(e, activeReading)}
+                >
+                  Chỉnh sửa
+                </Button>
               ) : (
                 <div className="w-full text-center text-xs text-ink-muted py-2 bg-slate-50 rounded-lg">
                   <Lock size={13} className="inline mr-1" />

@@ -464,8 +464,8 @@ function QuizBankPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Nút giao đề cho lớp & Sửa đề: chỉ hiển thị khi có quyền sở hữu/quản lý */}
-                        {canManage(set) ? (
+                        {/* Nút giao đề cho lớp: Chỉ dành cho giáo viên và đề thuộc sở hữu của mình */}
+                        {isTeacher && checkOwnership(set) ? (
                           <>
                             <Button
                               variant="secondary"
@@ -485,6 +485,16 @@ function QuizBankPage() {
                               Sửa đề
                             </Button>
                           </>
+                        ) : canManage(set) ? (
+                          <Button
+                            size="sm"
+                            fullWidth
+                            icon={Pencil}
+                            onClick={() => handleEditSet(set)}
+                            className="text-xs"
+                          >
+                            Sửa đề thi
+                          </Button>
                         ) : (
                           <Button
                             variant="secondary"

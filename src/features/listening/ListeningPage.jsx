@@ -343,17 +343,22 @@ function ListeningPage() {
                     </span>
 
                     <div className="flex items-center gap-1.5">
+                      {/* Nút giao bài: Chỉ dành cho giáo viên và bài thuộc sở hữu của mình */}
+                      {isTeacher && checkOwnership(item) && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleAssignToClass(e, item)}
+                          className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
+                          title="Giao bài nghe cho lớp"
+                        >
+                          <Send size={12} />
+                          Giao bài
+                        </button>
+                      )}
+
+                      {/* Nút Sửa/Xóa: Hiển thị cho bài thuộc sở hữu hoặc Admin */}
                       {canManage(item) ? (
                         <>
-                          <button
-                            type="button"
-                            onClick={(e) => handleAssignToClass(e, item)}
-                            className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
-                            title="Giao bài nghe cho lớp"
-                          >
-                            <Send size={12} />
-                            Giao bài
-                          </button>
                           <button
                             type="button"
                             onClick={(e) => handleEditClick(e, item)}
