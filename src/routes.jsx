@@ -9,6 +9,7 @@ import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
 import ListeningPage from '@/features/listening/ListeningPage'
 import NotificationsPage from '@/features/notifications/NotificationsPage'
+import PermissionsPage from '@/features/permissions/PermissionsPage'
 import PremiumPage from '@/features/premium/PremiumPage'
 import TeacherPackagesPage from '@/features/premium/TeacherPackagesPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
@@ -46,7 +47,7 @@ export const router = createBrowserRouter([
           { path: 'doi-soat', element: <TransactionsPage /> },
           { path: 'goi-premium', element: <PremiumPage /> },
           { path: 'goi-dich-vu', element: <TeacherPackagesPage /> },
-          { path: 'phan-quyen', element: <PlaceholderPage /> },
+          { path: 'phan-quyen', element: <PermissionsPage /> },
           { path: 'thong-bao', element: <NotificationsPage /> },
           { path: 'bao-cao', element: <ReportsPage /> },
           { path: 'nhat-ky', element: <AuditLogPage /> },
