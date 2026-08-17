@@ -6,6 +6,9 @@ import AiContentPage from '@/features/aiContent/AiContentPage'
 import AuditLogPage from '@/features/auditLog/AuditLogPage'
 import LoginPage from '@/features/auth/LoginPage'
 import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
+import CourseDetailPage from '@/features/courses/CourseDetailPage'
+import CoursesPage from '@/features/courses/CoursesPage'
+import CreateCoursePage from '@/features/courses/CreateCoursePage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
 import ListeningPage from '@/features/listening/ListeningPage'
 import NotificationsPage from '@/features/notifications/NotificationsPage'
@@ -37,7 +40,10 @@ export const router = createBrowserRouter([
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
-          { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
+          { path: 'hoc-lieu/khoa-hoc/tao-moi', element: <CreateCoursePage /> },
+          { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },
+          { path: 'hoc-lieu/khoa-hoc/:id/chinh-sua', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/bai-doc', element: <ReadingPage /> },
           { path: 'hoc-lieu/bai-nghe', element: <ListeningPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <QuizBankPage /> },

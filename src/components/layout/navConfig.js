@@ -25,6 +25,7 @@ export const ROLE_ACCESS = {
     '/',
     '/lop-hoc',
     '/goi-dich-vu',
+    '/hoc-lieu/khoa-hoc',
     '/hoc-lieu/bai-doc',
     '/hoc-lieu/bai-nghe',
     '/hoc-lieu/bai-kiem-tra',
@@ -39,7 +40,9 @@ export function isRouteAllowed(pathname, role = 'admin') {
   if (role === 'admin') return true
   if (!pathname) return false
 
-  return ROLE_ACCESS.teacher.includes(pathname)
+  return ROLE_ACCESS.teacher.some((allowed) =>
+    pathname === allowed || pathname.startsWith(`${allowed}/`),
+  )
 }
 
 export const NAV_GROUPS = [
@@ -62,7 +65,7 @@ export const NAV_GROUPS = [
     label: 'Học liệu',
     items: [
       { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen, roles: ['admin'] },
-      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin'] },
+      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
       { to: '/hoc-lieu/bai-doc', label: 'Bài đọc', icon: BookOpen, roles: ['admin', 'teacher'] },
       { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe', icon: Headphones, roles: ['admin', 'teacher'] },
       {
