@@ -7,6 +7,8 @@ import { SkeletonCard } from '@/components/ui/Skeleton'
 import { formatCurrency, formatNumber, formatPercent } from '@/lib/utils'
 import KpiCard from '@/features/dashboard/components/KpiCard'
 import RecentActivityCard from '@/features/dashboard/components/RecentActivityCard'
+import TeacherDashboardPage from '@/features/dashboard/TeacherDashboardPage'
+import { useAuthStore } from '@/store/authStore'
 import {
   useActiveUsers,
   useFeatureUsage,
@@ -33,7 +35,8 @@ function SectionEyebrow({ children }) {
   )
 }
 
-function DashboardPage() {
+// Admin Dashboard — toàn bộ hooks gọi ở đây, không bị điều kiện chặn
+function AdminDashboard() {
   const overview = useOverview()
   const activeUsers = useActiveUsers()
   const featureUsage = useFeatureUsage()
@@ -167,4 +170,18 @@ function DashboardPage() {
   )
 }
 
+// Router chọn dashboard theo role người dùng
+function DashboardPage() {
+  const user = useAuthStore((s) => s.user)
+
+  // Giáo viên → Teacher Dashboard
+  if (user?.role === 'teacher') {
+    return <TeacherDashboardPage />
+  }
+
+  // Mặc định (admin) → Admin Dashboard
+  return <AdminDashboard />
+}
+
 export default DashboardPage
+
