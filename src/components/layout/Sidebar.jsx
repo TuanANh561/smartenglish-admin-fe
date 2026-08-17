@@ -4,13 +4,16 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
-import { NAV_GROUPS } from '@/components/layout/navConfig'
+import { getVisibleNavGroups } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
 
-function NavItemGroup({ item }) {
+function NavItemGroup({ item, role }) {
   const location = useLocation()
-  const isChildActive = item.children.some((child) => location.pathname === child.to)
+  const visibleChildren = (item.children || []).filter(
+    (child) => !child.roles || child.roles.includes(role),
+  )
+  const isChildActive = visibleChildren.some((child) => location.pathname === child.to)
   const [open, setOpen] = useState(isChildActive)
 
   return (
@@ -33,7 +36,7 @@ function NavItemGroup({ item }) {
       </button>
       {open && (
         <div className="mt-0.5 flex flex-col gap-0.5 border-l border-white/10 pl-4">
-          {item.children.map((child) => (
+          {visibleChildren.map((child) => (
             <NavLink
               key={child.to}
               to={child.to}
@@ -58,6 +61,8 @@ function Sidebar() {
   const user = useAuthStore((state) => state.user)
   const logout = useLogout()
   const navigate = useNavigate()
+  const role = user?.role ?? 'admin'
+  const navGroups = getVisibleNavGroups(role)
 
   const handleLogout = async () => {
     await logout()
@@ -73,7 +78,7 @@ function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-none px-3 pb-4">
-        {NAV_GROUPS.map((group) => (
+        {navGroups.map((group) => (
           <div key={group.label} className="mb-4">
             <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-200/70">
               {group.label}
@@ -81,7 +86,7 @@ function Sidebar() {
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) =>
                 item.children ? (
-                  <NavItemGroup key={item.label} item={item} />
+                  <NavItemGroup key={item.label} item={item} role={role} />
                 ) : (
                   <NavLink
                     key={item.to}
@@ -113,7 +118,9 @@ function Sidebar() {
             <p className="truncate text-sm font-medium text-white">
               {user?.displayName ?? 'Quản trị viên'}
             </p>
-            <p className="truncate text-xs text-brand-200/70">Quản trị hệ thống</p>
+            <p className="truncate text-xs text-brand-200/70">
+              {user?.role === 'teacher' ? 'Giáo viên' : 'Quản trị hệ thống'}
+            </p>
           </div>
           <button
             type="button"

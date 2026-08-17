@@ -1,12 +1,21 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useInitAuth } from '@/features/auth/hooks/useAuth'
+import { isRouteAllowed } from '@/components/layout/navConfig'
 
 function ProtectedRoute() {
   useInitAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const initialized = useAuthStore((state) => state.initialized)
+
+  useEffect(() => {
+    if (user && !isRouteAllowed(location.pathname, user.role)) {
+      navigate('/', { replace: true })
+    }
+  }, [location.pathname, navigate, user])
 
   if (!initialized) {
     return (

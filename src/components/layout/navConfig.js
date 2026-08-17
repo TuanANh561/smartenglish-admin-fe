@@ -18,57 +18,105 @@ import {
   Wand2,
 } from 'lucide-react'
 
+export const ROLE_ACCESS = {
+  admin: ['*'],
+  teacher: [
+    '/',
+    '/hoc-vien',
+    '/hoc-lieu/tu-vung',
+    '/hoc-lieu/bai-doc',
+    '/hoc-lieu/bai-nghe',
+    '/hoc-lieu/bai-kiem-tra',
+    '/noi-dung-ai',
+  ],
+}
+
+export function isRouteAllowed(pathname, role = 'admin') {
+  if (role === 'admin') return true
+  if (!pathname) return false
+
+  return ROLE_ACCESS.teacher.includes(pathname)
+}
+
 export const NAV_GROUPS = [
   {
     label: 'Menu',
     items: [
-      { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-      { to: '/du-lieu-chi-tiet', label: 'Dữ liệu chi tiết', icon: BarChart3 },
-      { to: '/hoc-vien', label: 'Học viên', icon: Users },
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
+      {
+        to: '/du-lieu-chi-tiet',
+        label: 'Dữ liệu chi tiết',
+        icon: BarChart3,
+        roles: ['admin'],
+      },
+      { to: '/hoc-vien', label: 'Học viên', icon: Users, roles: ['admin', 'teacher'] },
     ],
   },
   {
     label: 'Học liệu',
     items: [
-      { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen },
-      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học & Bài học', icon: Library },
+      { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen, roles: ['admin', 'teacher'] },
+      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học & Bài học', icon: Library, roles: ['admin'] },
       {
         label: 'Bài đọc và nghe',
         icon: Headphones,
+        roles: ['admin', 'teacher'],
         children: [
-          { to: '/hoc-lieu/bai-doc', label: 'Bài đọc' },
-          { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe' },
+          { to: '/hoc-lieu/bai-doc', label: 'Bài đọc', roles: ['admin', 'teacher'] },
+          { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe', roles: ['admin', 'teacher'] },
         ],
       },
-      { to: '/hoc-lieu/bai-kiem-tra', label: 'Bài kiểm tra', icon: ClipboardList },
+      {
+        to: '/hoc-lieu/bai-kiem-tra',
+        label: 'Bài kiểm tra',
+        icon: ClipboardList,
+        roles: ['admin', 'teacher'],
+      },
     ],
   },
   {
     label: 'Nội dung AI',
     items: [
-      { to: '/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles },
-      { to: '/voice-ai', label: 'Cấu hình AI', icon: Wand2 },
+      { to: '/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles, roles: ['admin', 'teacher'] },
+      { to: '/voice-ai', label: 'Cấu hình AI', icon: Wand2, roles: ['admin'] },
     ],
   },
   {
     label: 'Kinh doanh',
     items: [
-      { to: '/doanh-thu', label: 'Doanh thu', icon: Wallet },
-      { to: '/doi-soat', label: 'Giao dịch & Đối soát', icon: Receipt },
-      { to: '/goi-premium', label: 'Gói Premium', icon: Crown },
+      { to: '/doanh-thu', label: 'Doanh thu', icon: Wallet, roles: ['admin'] },
+      { to: '/doi-soat', label: 'Giao dịch & Đối soát', icon: Receipt, roles: ['admin'] },
+      { to: '/goi-premium', label: 'Gói Premium', icon: Crown, roles: ['admin'] },
     ],
   },
   {
     label: 'Cài đặt hệ thống',
     items: [
-      { to: '/phan-quyen', label: 'Phân quyền', icon: ShieldCheck },
-      { to: '/thong-bao', label: 'Thông báo', icon: Bell },
-      { to: '/bao-cao', label: 'Báo cáo vi phạm', icon: Flag },
-      { to: '/nhat-ky', label: 'Nhật ký hoạt động', icon: History },
-      { to: '/cai-dat', label: 'Cài đặt', icon: Settings },
+      { to: '/phan-quyen', label: 'Phân quyền', icon: ShieldCheck, roles: ['admin'] },
+      { to: '/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin'] },
+      { to: '/bao-cao', label: 'Báo cáo vi phạm', icon: Flag, roles: ['admin'] },
+      { to: '/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin'] },
+      { to: '/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin'] },
     ],
   },
 ]
+
+export function getVisibleNavGroups(role = 'admin') {
+  return NAV_GROUPS.map((group) => ({
+    ...group,
+    items: (group.items || []).filter((item) => {
+      if (item.children) {
+        const children = (item.children || []).filter((child) =>
+          !child.roles || child.roles.includes(role),
+        )
+
+        return children.length > 0
+      }
+
+      return !item.roles || item.roles.includes(role)
+    }),
+  })).filter((group) => group.items.length > 0)
+}
 
 export const ROUTE_META = {
   '/': {

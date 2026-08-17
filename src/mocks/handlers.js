@@ -44,10 +44,15 @@ export const handlers = {
   // ── Xác thực ────────────────────────────────────────────────────
   [`POST ${ENDPOINTS.auth.login}`]: ({ data }) => {
     const { email, password } = data ?? {}
-    const user = users.find((item) => item.email === email && item.role === 'admin')
-    if (!user || password !== 'admin123') {
+    const user = users.find((item) => item.email === email)
+    const validPassword =
+      (user?.role === 'admin' && password === 'admin123') ||
+      (user?.role === 'teacher' && password === 'teacher123')
+
+    if (!user || !validPassword) {
       throw { status: 401, message: 'Email hoặc mật khẩu không đúng.', details: null }
     }
+
     return { ...issueTokenPair(user), user: structuredClone(user) }
   },
 

@@ -61,6 +61,15 @@ describe('xác thực — JWT giả (access + refresh token)', () => {
     expect(decodeMockToken(data.refreshToken)).toMatchObject({ sub: data.user.id, type: 'refresh' })
   })
 
+  it('đăng nhập giáo viên thành công và trả role teacher', async () => {
+    const data = await api.post(ENDPOINTS.auth.login, {
+      data: { email: 'mai.ht@gmail.com', password: 'teacher123' },
+    })
+    expect(data.user.role).toBe('teacher')
+    expect(decodeMockToken(data.accessToken)).toMatchObject({ sub: data.user.id, type: 'access' })
+    expect(decodeMockToken(data.refreshToken)).toMatchObject({ sub: data.user.id, type: 'refresh' })
+  })
+
   it('sai mật khẩu báo lỗi tiếng Việt, không lộ token', async () => {
     await expect(
       api.post(ENDPOINTS.auth.login, {

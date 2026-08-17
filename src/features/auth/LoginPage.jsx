@@ -115,7 +115,7 @@ function LoginPage() {
           </Button>
 
           <p className="text-center text-xs text-ink-muted">
-            Tài khoản demo: admin@smartenglish.vn / admin123
+            Tài khoản demo: admin@smartenglish.vn / admin123 · mai.ht@gmail.com / teacher123
           </p>
         </form>
 
