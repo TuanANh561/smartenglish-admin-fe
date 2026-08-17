@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { ArrowUpDown, Eye, Pencil, PenLine, Shuffle, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Eye, Lock, Pencil, PenLine, Shuffle, Trash2 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 
 export const QUESTION_TYPE_META = {
@@ -22,7 +22,33 @@ const SOURCE_META = {
 
 const columnHelper = createColumnHelper()
 
-export function buildQuizColumns({ onView, onEdit, onDelete }) {
+export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
+  const isTeacher = currentUser?.role === 'teacher'
+  const isAdmin = currentUser?.role === 'admin'
+
+  const checkOwnership = (row) => {
+    if (!currentUser) return false
+    if (isTeacher) {
+      return (
+        row.authorEmail === currentUser.email ||
+        row.authorName === currentUser.displayName ||
+        row.authorName === 'Hoàng Thị Mai'
+      )
+    }
+    return (
+      row.authorEmail === currentUser.email ||
+      row.authorEmail === 'system@smartenglish.vn' ||
+      row.authorName?.includes('Hệ thống') ||
+      row.authorName?.includes('Quản trị')
+    )
+  }
+
+  const canManage = (row) => {
+    if (!currentUser) return false
+    if (isAdmin) return true
+    return checkOwnership(row)
+  }
+
   return [
     columnHelper.accessor('id', {
       header: 'ID',
@@ -31,7 +57,7 @@ export function buildQuizColumns({ onView, onEdit, onDelete }) {
     columnHelper.accessor('questionType', {
       header: 'Dạng bài',
       cell: (info) => {
-        const meta = QUESTION_TYPE_META[info.getValue()]
+        const meta = QUESTION_TYPE_META[info.getValue()] || QUESTION_TYPE_META.multiple_choice
         return (
           <span className="inline-flex items-center gap-1.5 text-sm text-ink">
             {meta.dotClass ? (
@@ -49,15 +75,27 @@ export function buildQuizColumns({ onView, onEdit, onDelete }) {
       cell: (info) => {
         const text = info.getValue()
         return (
-          <span className="text-ink" title={text}>
-            {text.length > 60 ? `${text.slice(0, 60)}…` : text}
+          <span className="text-ink font-medium" title={text}>
+            {text.length > 55 ? `${text.slice(0, 55)}…` : text}
           </span>
         )
       },
     }),
-    columnHelper.accessor('relatedWord', {
-      header: 'Từ vựng liên quan',
-      cell: (info) => <Badge tone="neutral">{info.getValue()}</Badge>,
+    columnHelper.accessor('authorName', {
+      header: 'Tác giả',
+      cell: (info) => {
+        const author = info.getValue() || 'Hệ thống'
+        const isOwned = checkOwnership(info.row.original)
+        const isSystem = author.includes('Hệ thống') || info.row.original.authorEmail === 'system@smartenglish.vn'
+
+        if (isTeacher && isOwned) {
+          return <Badge tone="success">👤 Của tôi</Badge>
+        }
+        if (isSystem) {
+          return <Badge tone="neutral">🏢 Hệ thống</Badge>
+        }
+        return <Badge tone="warning">👨‍🏫 {author}</Badge>
+      },
     }),
     columnHelper.accessor('cefrLevel', {
       header: 'CEFR',
@@ -66,57 +104,70 @@ export function buildQuizColumns({ onView, onEdit, onDelete }) {
     columnHelper.accessor('difficulty', {
       header: 'Độ khó',
       cell: (info) => {
-        const meta = DIFFICULTY_META[info.getValue()]
-        return <Badge tone={meta.tone}>{meta.label}</Badge>
-      },
-    }),
-    columnHelper.accessor('source', {
-      header: 'Nguồn',
-      cell: (info) => {
-        const meta = SOURCE_META[info.getValue()]
+        const meta = DIFFICULTY_META[info.getValue()] || DIFFICULTY_META.medium
         return <Badge tone={meta.tone}>{meta.label}</Badge>
       },
     }),
     columnHelper.display({
       id: 'actions',
       header: 'Hành động',
-      cell: (info) => (
-        <div className="flex items-center gap-3 text-ink-muted">
-          <button
-            type="button"
-            aria-label="Xem chi tiết"
-            onClick={(event) => {
-              event.stopPropagation()
-              onView(info.row.original)
-            }}
-            className="hover:text-brand-500"
-          >
-            <Eye size={16} strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label="Sửa câu hỏi"
-            onClick={(event) => {
-              event.stopPropagation()
-              onEdit(info.row.original)
-            }}
-            className="hover:text-brand-500"
-          >
-            <Pencil size={16} strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label="Xoá câu hỏi"
-            onClick={(event) => {
-              event.stopPropagation()
-              onDelete(info.row.original)
-            }}
-            className="hover:text-[#B91C1C]"
-          >
-            <Trash2 size={16} strokeWidth={1.75} />
-          </button>
-        </div>
-      ),
+      cell: (info) => {
+        const manageable = canManage(info.row.original)
+
+        return (
+          <div className="flex items-center gap-2 text-ink-muted">
+            <button
+              type="button"
+              aria-label="Xem chi tiết"
+              onClick={(event) => {
+                event.stopPropagation()
+                onView(info.row.original)
+              }}
+              className="hover:text-brand-500 p-1"
+              title="Xem chi tiết câu hỏi"
+            >
+              <Eye size={16} strokeWidth={1.75} />
+            </button>
+
+            {manageable ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Sửa câu hỏi"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onEdit(info.row.original)
+                  }}
+                  className="hover:text-brand-500 p-1"
+                  title="Sửa câu hỏi"
+                >
+                  <Pencil size={16} strokeWidth={1.75} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Xoá câu hỏi"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onDelete(info.row.original)
+                  }}
+                  className="hover:text-[#B91C1C] p-1"
+                  title="Xoá câu hỏi"
+                >
+                  <Trash2 size={16} strokeWidth={1.75} />
+                </button>
+              </>
+            ) : (
+              <span
+                className="text-[10px] text-ink-muted italic flex items-center gap-0.5 px-1"
+                title="Chỉ tác giả mới có quyền chỉnh sửa câu hỏi này"
+              >
+                <Lock size={11} />
+                (Chỉ xem)
+              </span>
+            )}
+          </div>
+        )
+      },
     }),
   ]
 }

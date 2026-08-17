@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ArrowLeft,
   BookOpen,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import { CLASSES, CLASS_STATUS, CLASS_STUDENTS, LEVEL_COLOR } from '@/mocks/data/classes'
+import { useAuthStore } from '@/store/authStore'
 
 // ─── Hàm tiện ích ─────────────────────────────────────────────────────────────
 
@@ -75,11 +76,22 @@ function ScoreBadge({ score }) {
 
 // ─── MÀNN HÌNH 1: DANH SÁCH LỚP ──────────────────────────────────────────────
 function ClassListView({ onViewClass }) {
+  const user = useAuthStore((s) => s.user)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 4
 
-  const filtered = CLASSES.filter(
+  const teacherClasses = useMemo(() => {
+    if (!user || user.role === 'admin') return CLASSES
+    return CLASSES.filter(
+      (c) =>
+        c.teacherEmail === user.email ||
+        c.teacherName === user.displayName ||
+        c.teacherName === 'Hoàng Thị Mai',
+    )
+  }, [user])
+
+  const filtered = teacherClasses.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.code.toLowerCase().includes(search.toLowerCase()),

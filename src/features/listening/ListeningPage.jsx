@@ -1,22 +1,28 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Crown,
   FileText,
   LayoutGrid,
   LayoutList,
+  Lock,
   Mic,
   Pencil,
   Play,
   Plus,
+  Send,
   Trash2,
   Upload,
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
+import FilterChip from '@/components/ui/FilterChip'
 import Select from '@/components/ui/Select'
 import { cn } from '@/lib/utils'
 import {
@@ -25,6 +31,7 @@ import {
   listeningLessons,
 } from '@/mocks/data/listening'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
+import { useAuthStore } from '@/store/authStore'
 
 const STATUS_META = {
   ready: { label: 'Bản chép lời sẵn sàng', tone: 'info', Icon: CheckCircle2 },
@@ -51,33 +58,177 @@ function Waveform({ bars }) {
 }
 
 function ListeningPage() {
+  const user = useAuthStore((s) => s.user)
+  const isTeacher = user?.role === 'teacher'
+
+  const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
   const [topic, setTopic] = useState('all')
   const [accent, setAccent] = useState('all')
   const [view, setView] = useState('grid')
 
   const publicLessons = useMemo(() => buildPublicContent('listening', listeningLessons), [])
 
+  const checkOwnership = (item) => {
+    if (!user) return false
+    if (isTeacher) {
+      return (
+        item.authorEmail === user.email ||
+        item.authorName === user.displayName ||
+        item.authorName === 'Hoàng Thị Mai'
+      )
+    }
+    // Đối với admin: chỉ bài do admin/hệ thống tạo mới là của admin
+    return (
+      item.authorEmail === user.email ||
+      item.authorEmail === 'system@smartenglish.vn' ||
+      item.authorName?.includes('Hệ thống') ||
+      item.authorName?.includes('Quản trị')
+    )
+  }
+
+  const canManage = (item) => {
+    if (!user) return false
+    if (user.role === 'admin') return true
+    return checkOwnership(item)
+  }
+
+  const myLessonsCount = useMemo(() => {
+    return publicLessons.filter((item) => checkOwnership(item)).length
+  }, [publicLessons, user])
+
   const filtered = useMemo(() => {
     return publicLessons.filter((item) => {
+      const isOwned = checkOwnership(item)
+      const isSystem = item.authorEmail === 'system@smartenglish.vn' || item.authorName?.includes('Hệ thống')
+
+      let matchOwner = true
+      if (ownershipFilter === 'mine') {
+        matchOwner = isOwned
+      } else if (ownershipFilter === 'system') {
+        matchOwner = isSystem
+      } else if (ownershipFilter === 'others') {
+        matchOwner = !isOwned && !isSystem
+      } else if (ownershipFilter !== 'all') {
+        matchOwner = item.authorName === ownershipFilter || item.authorEmail === ownershipFilter
+      }
+
       const matchTopic = topic === 'all' || item.topic === topic
       const matchAccent = accent === 'all' || item.accent === accent
-      return matchTopic && matchAccent
+      return matchOwner && matchTopic && matchAccent
     })
-  }, [publicLessons, topic, accent])
+  }, [publicLessons, topic, accent, ownershipFilter, user])
+
+  const handleEditClick = (e, item) => {
+    e.stopPropagation()
+    if (!canManage(item)) {
+      toast.error(`Bạn không có quyền sửa bài nghe của "${item.authorName || 'người khác'}".`)
+      return
+    }
+    toast.success(`Mở trình sửa bài nghe: "${item.title}"`)
+  }
+
+  const handleDeleteClick = (e, item) => {
+    e.stopPropagation()
+    if (!canManage(item)) {
+      toast.error('Chỉ tác giả mới có quyền xoá bài nghe này!')
+      return
+    }
+    toast.success(`Đã xoá bài nghe "${item.title}"`)
+  }
+
+  const handleAssignToClass = (e, item) => {
+    e.stopPropagation()
+    toast.success(`Đã mở popup giao bài nghe "${item.title}" cho lớp`)
+  }
 
   return (
-    <main className="flex-1 bg-canvas p-6 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div />
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" icon={Upload}>
+    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
+      {/* Top action & Quota */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {isTeacher ? (
+          <div className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50/70 px-4 py-2 text-xs">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
+              <Crown size={13} />
+            </span>
+            <div>
+              <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
+              <span className="text-ink-muted">
+                Bạn đã tạo <strong className="text-brand-600 font-bold">{myLessonsCount}</strong> bài nghe · Hạn mức{' '}
+                <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
+              </span>
+            </div>
+            <Link to="/goi-dich-vu" className="ml-2 font-semibold text-brand-600 hover:underline">
+              Chi tiết gói →
+            </Link>
+          </div>
+        ) : <div />}
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button variant="secondary" icon={Upload} onClick={() => toast.success('Mở popup tải lên hàng loạt')}>
             Tải lên hàng loạt
           </Button>
-          <Button icon={Mic}>Thêm bài nghe mới</Button>
+          <Button icon={Mic} onClick={() => toast.success('Mở form tạo bài nghe mới')}>
+            Thêm bài nghe mới
+          </Button>
         </div>
       </div>
 
-      <Card>
+      {/* Filter Card */}
+      <Card className="space-y-4">
+        {/* Dòng 1: Bộ lọc tác giả */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+              Học liệu:
+            </span>
+            <div className="flex items-center gap-1.5">
+              <FilterChip
+                active={ownershipFilter === 'mine'}
+                onClick={() => setOwnershipFilter('mine')}
+              >
+                👤 Của tôi ({myLessonsCount})
+              </FilterChip>
+              <FilterChip
+                active={ownershipFilter === 'all'}
+                onClick={() => setOwnershipFilter('all')}
+              >
+                🌐 Tất cả bài nghe ({publicLessons.length})
+              </FilterChip>
+              <FilterChip
+                active={ownershipFilter === 'system'}
+                onClick={() => setOwnershipFilter('system')}
+              >
+                🏢 Hệ thống SmartEnglish
+              </FilterChip>
+              {isTeacher && (
+                <FilterChip
+                  active={ownershipFilter === 'others'}
+                  onClick={() => setOwnershipFilter('others')}
+                >
+                  👥 Giáo viên khác
+                </FilterChip>
+              )}
+            </div>
+          </div>
+
+          {!isTeacher && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-ink-muted">Lọc theo tác giả:</span>
+              <Select
+                value={ownershipFilter}
+                onChange={(e) => setOwnershipFilter(e.target.value)}
+                className="w-48 text-xs"
+              >
+                <option value="all">Tất cả tác giả</option>
+                <option value="Hoàng Thị Mai">Hoàng Thị Mai (GV)</option>
+                <option value="Vũ Đức Thắng">Vũ Đức Thắng (GV)</option>
+                <option value="Hệ thống SmartEnglish">Hệ thống SmartEnglish</option>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Dòng 2: Chủ đề + Giọng đọc + View Mode */}
         <div className="flex flex-wrap items-center gap-3">
           <Select value={topic} onChange={(e) => setTopic(e.target.value)} className="w-48">
             <option value="all">Tất cả chủ đề</option>
@@ -102,7 +253,7 @@ function ListeningPage() {
               aria-label="Xem dạng lưới"
               onClick={() => setView('grid')}
               className={cn(
-                'rounded-md p-1.5',
+                'rounded-md p-1.5 cursor-pointer',
                 view === 'grid' ? 'bg-navy-700 text-white' : 'text-ink-muted hover:bg-canvas',
               )}
             >
@@ -113,7 +264,7 @@ function ListeningPage() {
               aria-label="Xem dạng danh sách"
               onClick={() => setView('list')}
               className={cn(
-                'rounded-md p-1.5',
+                'rounded-md p-1.5 cursor-pointer',
                 view === 'list' ? 'bg-navy-700 text-white' : 'text-ink-muted hover:bg-canvas',
               )}
             >
@@ -124,7 +275,14 @@ function ListeningPage() {
       </Card>
 
       {filtered.length === 0 ? (
-        <EmptyState title="Không có bài nghe phù hợp" description="Thử đổi chủ đề hoặc giọng đọc." />
+        <EmptyState
+          title="Không có bài nghe phù hợp"
+          description={
+            ownershipFilter === 'mine'
+              ? 'Bạn chưa tạo bài nghe nào trong danh mục này. Hãy bấm "+ Thêm bài nghe mới" hoặc chọn "Tất cả bài nghe".'
+              : 'Thử đổi chủ đề hoặc giọng đọc.'
+          }
+        />
       ) : (
         <div
           className={cn(
@@ -134,9 +292,24 @@ function ListeningPage() {
         >
           {filtered.map((item) => {
             const status = STATUS_META[item.status]
+            const isOwned = checkOwnership(item)
+            const isSystem = item.authorEmail === 'system@smartenglish.vn' || item.authorName?.includes('Hệ thống')
+
             return (
-              <Card key={item.id} className="flex flex-col overflow-hidden p-0">
+              <Card key={item.id} className="flex flex-col overflow-hidden p-0 hover:border-brand-500 hover:shadow-md transition-all group">
                 <div className="relative flex items-center justify-center bg-canvas px-4 py-6">
+                  <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                    {isTeacher && isOwned ? (
+                      <Badge tone="success" className="font-semibold">
+                        👤 Của tôi
+                      </Badge>
+                    ) : isSystem ? (
+                      <Badge tone="neutral">🏢 Hệ thống</Badge>
+                    ) : (
+                      <Badge tone="warning">👨‍🏫 {item.authorName}</Badge>
+                    )}
+                  </div>
+
                   <Badge tone={status.tone} className="absolute right-3 top-3 gap-1">
                     <status.Icon size={12} strokeWidth={1.75} />
                     {status.label}
@@ -145,7 +318,8 @@ function ListeningPage() {
                   <button
                     type="button"
                     aria-label={`Nghe thử ${item.title}`}
-                    className="absolute inline-flex h-10 w-10 items-center justify-center rounded-full bg-navy-700 text-white shadow-[0_1px_2px_rgba(16,24,40,0.2)] hover:bg-navy-800"
+                    onClick={() => toast.success(`Đang phát: "${item.title}"`)}
+                    className="absolute inline-flex h-10 w-10 items-center justify-center rounded-full bg-navy-700 text-white shadow-[0_1px_2px_rgba(16,24,40,0.2)] hover:bg-navy-800 cursor-pointer"
                   >
                     <Play size={18} strokeWidth={1.75} fill="currentColor" />
                   </button>
@@ -155,9 +329,9 @@ function ListeningPage() {
                   <div className="flex flex-wrap gap-1.5">
                     <Badge tone="neutral">{item.level}</Badge>
                     <Badge tone="neutral">{item.accent}</Badge>
-                    {item.isAI && <Badge tone="info">🤖 Nội dung AI</Badge>}
+                    {item.isAI && <Badge tone="info">🤖 AI sinh</Badge>}
                   </div>
-                  <h3 className="mt-3 line-clamp-2 text-base font-semibold text-navy-700">
+                  <h3 className="mt-3 line-clamp-2 text-base font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
                     {item.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-ink-muted">{item.description}</p>
@@ -167,16 +341,47 @@ function ListeningPage() {
                       <Clock size={16} strokeWidth={1.75} />
                       {item.duration}
                     </span>
-                    <div className="flex items-center gap-3 text-ink-muted">
-                      <button aria-label="Sửa bài nghe" className="hover:text-brand-500">
-                        <Pencil size={16} strokeWidth={1.75} />
-                      </button>
-                      <button aria-label="Xem bản chép lời" className="hover:text-brand-500">
-                        <FileText size={16} strokeWidth={1.75} />
-                      </button>
-                      <button aria-label="Xoá bài nghe" className="hover:text-[#B91C1C]">
-                        <Trash2 size={16} strokeWidth={1.75} />
-                      </button>
+
+                    <div className="flex items-center gap-1.5">
+                      {canManage(item) ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => handleAssignToClass(e, item)}
+                            className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
+                            title="Giao bài nghe cho lớp"
+                          >
+                            <Send size={12} />
+                            Giao bài
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleEditClick(e, item)}
+                            aria-label="Sửa bài nghe"
+                            className="p-1.5 text-ink-muted hover:text-brand-500 rounded-md cursor-pointer"
+                            title="Chỉnh sửa bài nghe"
+                          >
+                            <Pencil size={15} strokeWidth={1.75} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteClick(e, item)}
+                            aria-label="Xoá bài nghe"
+                            className="p-1.5 text-ink-muted hover:text-[#B91C1C] rounded-md cursor-pointer"
+                            title="Xoá bài nghe"
+                          >
+                            <Trash2 size={15} strokeWidth={1.75} />
+                          </button>
+                        </>
+                      ) : (
+                        <span
+                          className="text-[10px] text-ink-muted italic px-2 py-1 bg-slate-50 rounded-md border border-slate-100 flex items-center gap-1"
+                          title="Chỉ tác giả mới có quyền giao bài hoặc chỉnh sửa bài nghe này"
+                        >
+                          <Lock size={11} />
+                          Chỉ xem
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -186,7 +391,8 @@ function ListeningPage() {
 
           <button
             type="button"
-            className="flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-line bg-transparent p-5 text-center hover:border-brand-500"
+            onClick={() => toast.success('Mở form tạo bài nghe mới')}
+            className="flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-line bg-transparent p-5 text-center hover:border-brand-500 cursor-pointer"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-canvas text-ink-muted">
               <Plus size={22} strokeWidth={1.75} />

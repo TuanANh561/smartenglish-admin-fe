@@ -4,6 +4,8 @@ export const readings = [
     title: 'The Impact of Micro-Plastics on Marine Ecosystems',
     level: 'B2',
     topic: 'Môi trường',
+    authorName: 'Hoàng Thị Mai',
+    authorEmail: 'mai.ht@gmail.com',
     description:
       'An in-depth analysis of how micro-plastics enter the food chain and affect diverse marine life across the globe, from plankton to apex predators.',
     content:
@@ -39,6 +41,8 @@ export const readings = [
     title: 'A Day in the Life of a Tokyo Chef',
     level: 'A2',
     topic: 'Đời sống',
+    authorName: 'Hệ thống SmartEnglish',
+    authorEmail: 'system@smartenglish.vn',
     description:
       'Follow Kenji as he starts his morning at the fish market and prepares for a busy night at his small restaurant in downtown Tokyo.',
     content:
@@ -68,6 +72,8 @@ export const readings = [
     title: "Quantum Computing: A Post-Moore's Law Paradigm",
     level: 'C1',
     topic: 'Công nghệ',
+    authorName: 'Hoàng Thị Mai',
+    authorEmail: 'mai.ht@gmail.com',
     description:
       'Exploring the theoretical foundations and practical challenges of scaling quantum bits in modern architectural designs.',
     content:
@@ -107,6 +113,8 @@ export const readings = [
     title: 'Remote Work: A New Global Norm',
     level: 'B1',
     topic: 'Kinh doanh',
+    authorName: 'Vũ Đức Thắng',
+    authorEmail: 'thang.vd@gmail.com',
     description:
       'How the shift to remote work has changed company culture, productivity metrics, and the way teams communicate across time zones.',
     content:
@@ -129,6 +137,8 @@ export const readings = [
     title: 'The Basics of Healthy Sleep',
     level: 'A1',
     topic: 'Sức khỏe',
+    authorName: 'Hệ thống SmartEnglish',
+    authorEmail: 'system@smartenglish.vn',
     description:
       'Simple tips about how many hours of sleep people need and why a consistent bedtime routine matters for your health.',
     content:
@@ -151,6 +161,8 @@ export const readings = [
     title: 'Understanding Behavioural Economics',
     level: 'B2',
     topic: 'Kinh tế',
+    authorName: 'Hoàng Thị Mai',
+    authorEmail: 'mai.ht@gmail.com',
     description:
       'An overview of how cognitive biases influence financial decisions and why traditional economic models often fail to predict real behaviour.',
     content:
@@ -178,6 +190,8 @@ export const readings = [
     title: 'Climate Migration in the 21st Century',
     level: 'C2',
     topic: 'Xã hội',
+    authorName: 'Vũ Đức Thắng',
+    authorEmail: 'thang.vd@gmail.com',
     description:
       'Examining the socio-political ramifications of mass displacement caused by rising sea levels and increasingly erratic weather patterns.',
     content:
@@ -205,6 +219,8 @@ export const readings = [
     title: 'My Favourite Weekend Hobby',
     level: 'A1',
     topic: 'Đời sống',
+    authorName: 'Hoàng Thị Mai',
+    authorEmail: 'mai.ht@gmail.com',
     description:
       'A short personal story about gardening on weekends and the simple joy of watching plants grow over time.',
     content:
@@ -227,6 +243,8 @@ export const readings = [
     title: 'The Rise of Electric Vehicles',
     level: 'B1',
     topic: 'Công nghệ',
+    authorName: 'Hệ thống SmartEnglish',
+    authorEmail: 'system@smartenglish.vn',
     description:
       'A look at how battery costs, government incentives, and charging infrastructure are accelerating the shift towards electric cars.',
     content:
