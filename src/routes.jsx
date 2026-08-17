@@ -6,6 +6,7 @@ import AiContentPage from '@/features/aiContent/AiContentPage'
 import AuditLogPage from '@/features/auditLog/AuditLogPage'
 import LoginPage from '@/features/auth/LoginPage'
 import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
+import CommunityPage from '@/features/community/CommunityPage'
 import CourseDetailPage from '@/features/courses/CourseDetailPage'
 import CoursesPage from '@/features/courses/CoursesPage'
 import CreateCoursePage from '@/features/courses/CreateCoursePage'
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
         element: <AppShellLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
+          { path: 'cong-dong', element: <CommunityPage /> },
           { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },

@@ -10,6 +10,7 @@ import {
   History,
   LayoutDashboard,
   Library,
+  MessageSquare,
   Receipt,
   Settings,
   ShieldCheck,
@@ -24,6 +25,7 @@ export const ROLE_ACCESS = {
   teacher: [
     '/',
     '/lop-hoc',
+    '/cong-dong',
     '/goi-dich-vu',
     '/hoc-lieu/khoa-hoc',
     '/hoc-lieu/bai-doc',
@@ -50,6 +52,7 @@ export const NAV_GROUPS = [
     label: 'Menu',
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
+      { to: '/cong-dong', label: 'Cộng đồng', icon: MessageSquare, roles: ['admin', 'teacher'] },
       {
         to: '/du-lieu-chi-tiet',
         label: 'Dữ liệu chi tiết',
