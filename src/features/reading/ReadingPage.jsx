@@ -11,6 +11,7 @@ import SearchInput from '@/components/ui/SearchInput'
 import { formatDate } from '@/lib/utils'
 import { readings } from '@/mocks/data/readings'
 import { LEVEL_GROUPS, LEVEL_LABEL, LEVEL_TONE } from './levels'
+import { buildPublicContent } from '@/features/aiContent/aiContentService'
 
 const PAGE_SIZE = 6
 
@@ -20,20 +21,21 @@ function ReadingPage() {
   const [page, setPage] = useState(1)
   const [activeReading, setActiveReading] = useState(null)
 
+  const publicReadings = useMemo(() => buildPublicContent('reading', readings), [])
   const activeGroup = LEVEL_GROUPS.find((group) => group.key === levelGroup)
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
-    return readings.filter((item) => {
+    return publicReadings.filter((item) => {
       const matchLevel = !activeGroup.levels || activeGroup.levels.includes(item.level)
       const matchSearch =
         !keyword ||
         item.title.toLowerCase().includes(keyword) ||
-        item.description.toLowerCase().includes(keyword) ||
-        item.topic.toLowerCase().includes(keyword)
+        (item.description || '').toLowerCase().includes(keyword) ||
+        (item.topic || '').toLowerCase().includes(keyword)
       return matchLevel && matchSearch
     })
-  }, [search, activeGroup])
+  }, [search, activeGroup, publicReadings])
 
   const total = filtered.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -96,7 +98,10 @@ function ReadingPage() {
               onClick={() => setActiveReading(item)}
             >
               <div className="flex items-start justify-between">
-                <Badge tone={LEVEL_TONE[item.level]}>{LEVEL_LABEL[item.level]}</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={LEVEL_TONE[item.level]}>{LEVEL_LABEL[item.level]}</Badge>
+                  {item.isAI && <Badge tone="info">🤖 Nội dung AI</Badge>}
+                </div>
                 <button
                   type="button"
                   aria-label="Cài đặt bài đọc"

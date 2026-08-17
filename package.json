@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:gemini": "node scripts/test-gemini-diagnostic.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

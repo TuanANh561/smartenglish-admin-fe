@@ -24,6 +24,7 @@ import {
   LISTENING_TOPICS,
   listeningLessons,
 } from '@/mocks/data/listening'
+import { buildPublicContent } from '@/features/aiContent/aiContentService'
 
 const STATUS_META = {
   ready: { label: 'Bản chép lời sẵn sàng', tone: 'info', Icon: CheckCircle2 },
@@ -54,13 +55,15 @@ function ListeningPage() {
   const [accent, setAccent] = useState('all')
   const [view, setView] = useState('grid')
 
+  const publicLessons = useMemo(() => buildPublicContent('listening', listeningLessons), [])
+
   const filtered = useMemo(() => {
-    return listeningLessons.filter((item) => {
+    return publicLessons.filter((item) => {
       const matchTopic = topic === 'all' || item.topic === topic
       const matchAccent = accent === 'all' || item.accent === accent
       return matchTopic && matchAccent
     })
-  }, [topic, accent])
+  }, [publicLessons, topic, accent])
 
   return (
     <main className="flex-1 bg-canvas p-6 space-y-5">
@@ -152,6 +155,7 @@ function ListeningPage() {
                   <div className="flex flex-wrap gap-1.5">
                     <Badge tone="neutral">{item.level}</Badge>
                     <Badge tone="neutral">{item.accent}</Badge>
+                    {item.isAI && <Badge tone="info">🤖 Nội dung AI</Badge>}
                   </div>
                   <h3 className="mt-3 line-clamp-2 text-base font-semibold text-navy-700">
                     {item.title}

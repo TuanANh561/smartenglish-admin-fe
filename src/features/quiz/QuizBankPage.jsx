@@ -30,6 +30,7 @@ import Tabs from '@/components/ui/Tabs'
 import { formatNumber } from '@/lib/utils'
 import { QUIZ_STATS, quizQuestions } from '@/mocks/data/quizQuestions'
 import { EXAM_TRACK_META, quizSets, VERIFICATION_META } from '@/mocks/data/quizSets'
+import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { buildQuizColumns, QUESTION_TYPE_META } from './columns'
 
 const PAGE_SIZE = 10
@@ -75,20 +76,22 @@ function QuizBankPage() {
   const setsStart = (setsPage - 1) * SETS_PAGE_SIZE
   const setsPageData = filteredSets.slice(setsStart, setsStart + SETS_PAGE_SIZE)
 
+  const publicQuizQuestions = useMemo(() => buildPublicContent('quiz', quizQuestions), [])
+
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
-    return quizQuestions.filter((q) => {
+    return publicQuizQuestions.filter((q) => {
       const matchSearch =
         !keyword ||
-        q.questionText.toLowerCase().includes(keyword) ||
-        q.relatedWord.toLowerCase().includes(keyword)
+        (q.questionText || '').toLowerCase().includes(keyword) ||
+        (q.relatedWord || '').toLowerCase().includes(keyword)
       const matchType = type === 'all' || q.questionType === type
       const matchCefr = cefr === 'all' || q.cefrLevel === cefr
       const matchTopic = topic === 'all' || q.topic === topic
-      const matchSource = source === 'all' || q.source === source
+      const matchSource = source === 'all' || (q.isAI ? 'ai' : q.source) === source
       return matchSearch && matchType && matchCefr && matchTopic && matchSource
     })
-  }, [search, type, cefr, topic, source])
+  }, [search, type, cefr, topic, source, publicQuizQuestions])
 
   const total = filtered.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
