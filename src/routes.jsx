@@ -15,6 +15,7 @@ import PremiumPage from '@/features/premium/PremiumPage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 import NotFound from '@/pages/NotFound'
+import TeacherClassesPage from './features/classes/TeacherClassesPage'
 
 export const router = createBrowserRouter([
   { path: '/dang-nhap', element: <LoginPage /> },
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
+          { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <PlaceholderPage /> },
