@@ -42,6 +42,8 @@ export const router = createBrowserRouter([
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
+          { path: 'hoc-lieu/ngu-phap', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/phat-am', element: <PlaceholderPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
           { path: 'hoc-lieu/khoa-hoc/tao-moi', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },

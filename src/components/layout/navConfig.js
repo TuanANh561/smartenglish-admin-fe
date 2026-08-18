@@ -6,7 +6,6 @@ import {
   Crown,
   Flag,
   GraduationCap,
-  Headphones,
   History,
   LayoutDashboard,
   Library,
@@ -67,16 +66,20 @@ export const NAV_GROUPS = [
   {
     label: 'Học liệu',
     items: [
-      { to: '/hoc-lieu/tu-vung', label: 'Kho từ vựng', icon: BookOpen, roles: ['admin'] },
-      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
-      { to: '/hoc-lieu/bai-doc', label: 'Bài đọc', icon: BookOpen, roles: ['admin', 'teacher'] },
-      { to: '/hoc-lieu/bai-nghe', label: 'Bài nghe', icon: Headphones, roles: ['admin', 'teacher'] },
       {
-        to: '/hoc-lieu/bai-kiem-tra',
-        label: 'Bài kiểm tra',
-        icon: ClipboardList,
+        label: 'Bài học',
+        icon: BookOpen,
         roles: ['admin', 'teacher'],
+        children: [
+          { to: '/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin'] },
+          { to: '/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin', 'teacher'] },
+          { to: '/hoc-lieu/phat-am', label: 'Phát âm', roles: ['admin', 'teacher'] },
+          { to: '/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin', 'teacher'] },
+          { to: '/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin', 'teacher'] },
+        ],
       },
+      { to: '/hoc-lieu/bai-kiem-tra', label: 'Bài Thi', icon: ClipboardList, roles: ['admin', 'teacher'] },
+      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
     ],
   },
   {
@@ -141,8 +144,8 @@ export const ROUTE_META = {
     description: 'Quản lý ngân hàng câu hỏi và duyệt nội dung do AI sinh ra',
   },
   '/noi-dung-ai': {
-    title: 'Nội dung sinh bởi AI — Chờ duyệt',
-    description: 'Kiểm tra và xác thực nội dung giảng trình được tạo tự động bởi GPT-4o',
+    title: 'Tạo — Duyệt nội dung AI',
+    description: 'Quản lý nội dung do AI sinh ra',
   },
   '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
   '/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },

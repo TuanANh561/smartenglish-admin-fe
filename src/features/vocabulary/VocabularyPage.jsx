@@ -56,19 +56,7 @@ function VocabularyPage() {
 
   return (
     <main className="flex-1 bg-canvas p-6 space-y-5">
-      {/* Breadcrumb */}
-      <div className="text-sm">
-        <span className="text-ink-muted">Quản lý nội dung</span>
-        <span className="mx-2 text-ink-muted">/</span>
-        <span className="text-ink">Kho từ vựng gốc</span>
-      </div>
-
       <Card>
-        {/* Header */}
-        <div className="px-5 pt-5 pb-3">
-          <h1 className="text-2xl font-semibold text-navy-700">Quản lý Kho Từ vựng gốc</h1>
-        </div>
-
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-line">
           <div className="flex-1 min-w-xs">

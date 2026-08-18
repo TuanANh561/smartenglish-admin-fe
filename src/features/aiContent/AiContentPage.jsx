@@ -21,6 +21,7 @@ import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import SearchInput from '@/components/ui/SearchInput'
 import Select from '@/components/ui/Select'
 import Tabs from '@/components/ui/Tabs'
 import Textarea from '@/components/ui/Textarea'
@@ -537,6 +538,7 @@ function AiContentPage() {
   const user = useAuthStore((state) => state.user)
   const [activeTab, setActiveTab] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState(() => getAIContentRecords())
   const [view, setView] = useState('list') // 'list' | 'detail' | 'edit'
   const [selectedItem, setSelectedItem] = useState(null)
@@ -594,9 +596,14 @@ function AiContentPage() {
         const matchesOwner = activeTab === 'others'
           ? !isOwnedByCurrentUser(item)
           : isOwnedByCurrentUser(item)
-        return matchesType && matchesStatus && matchesOwner
+        const keyword = searchTerm.trim().toLowerCase()
+        const matchesSearch = !keyword || 
+          (item.title || '').toLowerCase().includes(keyword) ||
+          (item.content || '').toLowerCase().includes(keyword)
+        
+        return matchesType && matchesStatus && matchesOwner && matchesSearch
       }),
-    [items, activeTab, statusFilter, isOwnedByCurrentUser, showTrash],
+    [items, activeTab, statusFilter, searchTerm, isOwnedByCurrentUser, showTrash],
   )
 
   const refresh = () => {
@@ -787,47 +794,31 @@ function AiContentPage() {
   return (
     <main className="flex-1 bg-canvas p-4 sm:p-6">
       <div className="space-y-5">
-        {/* Filter bar */}
-        <div className="rounded-xl border border-line bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-          <div className="flex flex-wrap items-center gap-2">
-            {STATUS_FILTERS.map((filter) => {
-              const active = statusFilter === filter.value
-              const count = statusCounts[filter.value] ?? 0
-              return (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setStatusFilter(filter.value)}
-                  className={[
-                    'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                    active
-                      ? 'border-navy-700 bg-navy-700 text-white shadow-sm'
-                      : 'border-line bg-white text-ink-muted hover:border-brand-200 hover:text-brand-500',
-                  ].join(' ')}
-                >
-                  <span>{filter.label}</span>
-                  <span
-                    className={[
-                      'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold',
-                      active ? 'bg-white/20 text-white' : 'bg-canvas text-navy-700',
-                    ].join(' ')}
-                  >
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Tabs + actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Tabs + Search + Status dropdown + Actions */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap">
           <Tabs
             tabs={TABS}
             value={activeTab}
             onChange={setActiveTab}
           />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <SearchInput
+              placeholder="Tìm nội dung..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="min-w-[180px]"
+            />
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-40"
+            >
+              {STATUS_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </Select>
             <Button icon={Plus} onClick={() => setShowCreationForm(true)}>
               Tạo nội dung AI
             </Button>

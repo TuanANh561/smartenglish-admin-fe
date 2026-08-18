@@ -25,14 +25,14 @@ import DataTable from '@/components/ui/DataTable/DataTable'
 import DataTableToolbar from '@/components/ui/DataTable/DataTableToolbar'
 import Drawer from '@/components/ui/Drawer'
 import FilterChip from '@/components/ui/FilterChip'
-import FilterChipRow from '@/components/ui/DataTable/FilterChipRow'
+import SearchInput from '@/components/ui/SearchInput'
+
 import EmptyState from '@/components/ui/EmptyState'
-import Select from '@/components/ui/Select'
 import Tabs from '@/components/ui/Tabs'
 import { formatNumber } from '@/lib/utils'
 import { quizQuestions } from '@/mocks/data/quizQuestions'
 import { EXAM_TRACK_META, quizSets, VERIFICATION_META } from '@/mocks/data/quizSets'
-import { buildPublicContent } from '@/features/aiContent/aiContentService'
+import { buildPublicContent, getApprovedAIContent } from '@/features/aiContent/aiContentService'
 import { buildQuizColumns, QUESTION_TYPE_META } from './columns'
 import { useAuthStore } from '@/store/authStore'
 
@@ -41,20 +41,8 @@ const SETS_PAGE_SIZE = 6
 
 const TABS = [
   { value: 'questions', label: 'Ngân hàng câu hỏi' },
-  { value: 'sets', label: 'Bộ đề thi (IELTS · TOEIC · Placement)' },
+  { value: 'sets', label: 'Bộ đề thi (TOEIC · Placement)' },
 ]
-
-const TYPE_OPTIONS = Object.entries(QUESTION_TYPE_META)
-const CEFR_OPTIONS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const TOPIC_OPTIONS = ['Từ vựng', 'Ngữ pháp', 'Đọc hiểu']
-const SOURCE_OPTIONS = [
-  { value: 'ai', label: 'AI tạo' },
-  { value: 'manual', label: 'Thủ công' },
-]
-const EXAM_TRACK_CHIPS = Object.entries(EXAM_TRACK_META).map(([key, meta]) => ({
-  key,
-  label: meta.label,
-}))
 
 function QuizBankPage() {
   const user = useAuthStore((s) => s.user)
@@ -64,14 +52,10 @@ function QuizBankPage() {
   const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
   const [activeTab, setActiveTab] = useState('questions')
   const [search, setSearch] = useState('')
-  const [type, setType] = useState('all')
-  const [cefr, setCefr] = useState('all')
-  const [topic, setTopic] = useState('all')
-  const [source, setSource] = useState('all')
   const [page, setPage] = useState(1)
   const [activeQuestion, setActiveQuestion] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const [examTrackFilter, setExamTrackFilter] = useState('all')
+  const [collectionFilter, setCollectionFilter] = useState('all')
   const [setsPage, setSetsPage] = useState(1)
 
   const checkOwnership = useCallback((item) => {
@@ -108,6 +92,34 @@ function QuizBankPage() {
     return quizSets.filter((s) => checkOwnership(s)).length
   }, [checkOwnership])
 
+  // Combine mock quizSets with AI-generated quiz content
+  const combinedQuizSets = useMemo(() => {
+    const approved = getApprovedAIContent('quiz')
+    const aiSets = approved.map((item) => ({
+      id: item.id,
+      title: item.title,
+      subtitle: item.content || '',
+      examTrack: 'toeic2',
+      collection: 'AI',
+      authorName: item.createdBy || 'AI System',
+      authorEmail: 'ai@smartenglish.vn',
+      verificationStatus: 'verified',
+      durationMinutes: 45,
+      questionCount: Array.isArray(item.questions) ? item.questions.length : 10,
+      attempts: 0,
+      attemptsType: 'practice',
+      createdAt: new Date(item.createdAt),
+      isAI: true,
+    }))
+    return [...quizSets, ...aiSets]
+  }, [])
+
+  // Get unique collections for filter chips
+  const allCollections = useMemo(() => {
+    const unique = new Set(combinedQuizSets.map((s) => s.collection))
+    return Array.from(unique).sort()
+  }, [combinedQuizSets])
+
   // Lọc câu hỏi theo ownership + search + filter
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -131,25 +143,22 @@ function QuizBankPage() {
         (q.title || '').toLowerCase().includes(keyword) ||
         (q.questionText || '').toLowerCase().includes(keyword) ||
         (q.relatedWord || '').toLowerCase().includes(keyword)
-      const matchType = type === 'all' || q.questionType === type
-      const matchCefr = cefr === 'all' || q.cefrLevel === cefr
-      const matchTopic = topic === 'all' || q.topic === topic
-      const matchSource = source === 'all' || (q.isAI ? 'ai' : q.source) === source
 
-      return matchOwner && matchSearch && matchType && matchCefr && matchTopic && matchSource
+      return matchOwner && matchSearch
     })
-  }, [search, type, cefr, topic, source, publicQuizQuestions, ownershipFilter, checkOwnership])
+  }, [search, publicQuizQuestions, ownershipFilter, checkOwnership])
 
   const total = filtered.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const start = (page - 1) * PAGE_SIZE
   const pageData = filtered.slice(start, start + PAGE_SIZE)
 
-  // Lọc bộ đề thi theo ownership + examTrack
+  // Lọc bộ đề thi theo ownership + collection + search
   const filteredSets = useMemo(() => {
-    return quizSets.filter((set) => {
-      const isOwned = checkOwnership(set)
-      const isSystem = set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống')
+    const keyword = search.trim().toLowerCase()
+    return combinedQuizSets.filter((set) => {
+      const isOwned = set.isAI ? false : checkOwnership(set)
+      const isSystem = set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống') || set.authorEmail === 'ai@smartenglish.vn'
 
       let matchOwner = true
       if (ownershipFilter === 'mine') {
@@ -162,10 +171,15 @@ function QuizBankPage() {
         matchOwner = set.authorName === ownershipFilter || set.authorEmail === ownershipFilter
       }
 
-      const matchTrack = examTrackFilter === 'all' || set.examTrack === examTrackFilter
-      return matchOwner && matchTrack
+      const matchCollection = collectionFilter === 'all' || set.collection === collectionFilter
+      const matchSearch =
+        !keyword ||
+        (set.title || '').toLowerCase().includes(keyword) ||
+        (set.subtitle || '').toLowerCase().includes(keyword)
+
+      return matchOwner && matchCollection && matchSearch
     })
-  }, [examTrackFilter, ownershipFilter, checkOwnership])
+  }, [search, collectionFilter, ownershipFilter, checkOwnership, combinedQuizSets])
 
   const setsTotal = filteredSets.length
   const setsTotalPages = Math.max(1, Math.ceil(setsTotal / SETS_PAGE_SIZE))
@@ -194,11 +208,6 @@ function QuizBankPage() {
       }),
     [checkOwnership, user],
   )
-
-  const handleFilterChange = (setter) => (event) => {
-    setter(event.target.value)
-    setPage(1)
-  }
 
   const handleEditSet = (set) => {
     if (!checkOwnership(set) && user?.role !== 'admin') {
@@ -235,7 +244,17 @@ function QuizBankPage() {
           </div>
         ) : <div />}
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex flex-1 items-center gap-3 self-end sm:self-auto">
+          <SearchInput
+            placeholder="Tìm đề thi, câu hỏi..."
+            value={search}
+            onChange={(value) => {
+              setSearch(value)
+              setPage(1)
+              setSetsPage(1)
+            }}
+            className="flex-1 min-w-[200px]"
+          />
           <Button variant="secondary" icon={Upload} onClick={() => toast.success('Mở popup Import đề/câu hỏi')}>
             Import
           </Button>
@@ -245,17 +264,13 @@ function QuizBankPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
-
-      {/* Bộ lọc quyền sở hữu chung cho cả 2 tab */}
+      {/* Merged Tabs + Filter Row */}
       <Card className="p-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
-              Nguồn học liệu:
-            </span>
-            <div className="flex items-center gap-1.5">
+        <div className="space-y-3">
+          {/* Row 1: Tabs + Ownership Filter */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+            <div className="flex items-center gap-1.5 flex-wrap">
               <FilterChip
                 active={ownershipFilter === 'mine'}
                 onClick={() => { setOwnershipFilter('mine'); setPage(1); setSetsPage(1) }}
@@ -272,32 +287,46 @@ function QuizBankPage() {
                 active={ownershipFilter === 'system'}
                 onClick={() => { setOwnershipFilter('system'); setPage(1); setSetsPage(1) }}
               >
-                🏢 Hệ thống SmartEnglish
+                🏢 Hệ thống
               </FilterChip>
               {isTeacher && (
                 <FilterChip
                   active={ownershipFilter === 'others'}
                   onClick={() => { setOwnershipFilter('others'); setPage(1); setSetsPage(1) }}
                 >
-                  👥 Giáo viên khác
+                  👥 Khác
                 </FilterChip>
               )}
             </div>
           </div>
 
-          {!isTeacher && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-muted">Lọc tác giả:</span>
-              <Select
-                value={ownershipFilter}
-                onChange={(e) => { setOwnershipFilter(e.target.value); setPage(1); setSetsPage(1) }}
-                className="w-48 text-xs"
+          {/* Row 2: Collection chips for sets tab */}
+          {activeTab === 'sets' && (
+            <div className="flex items-center gap-2 flex-wrap border-t border-line pt-3">
+              <FilterChip
+                active={collectionFilter === 'all'}
+                onClick={() => {
+                  setCollectionFilter('all')
+                  setSetsPage(1)
+                }}
               >
-                <option value="all">Tất cả tác giả</option>
-                <option value="Hoàng Thị Mai">Hoàng Thị Mai (GV)</option>
-                <option value="Vũ Đức Thắng">Vũ Đức Thắng (GV)</option>
-                <option value="Hệ thống SmartEnglish">Hệ thống SmartEnglish</option>
-              </Select>
+                Tất cả
+              </FilterChip>
+              {allCollections.map((collection) => {
+                const count = combinedQuizSets.filter((s) => s.collection === collection).length
+                return (
+                  <FilterChip
+                    key={collection}
+                    active={collectionFilter === collection}
+                    onClick={() => {
+                      setCollectionFilter(collection)
+                      setSetsPage(1)
+                    }}
+                  >
+                    {collection === 'AI' ? `✨ ${collection}` : collection} ({count})
+                  </FilterChip>
+                )
+              })}
             </div>
           )}
         </div>
@@ -313,42 +342,7 @@ function QuizBankPage() {
               setPage(1)
             }}
             searchPlaceholder="Tìm theo câu hỏi hoặc từ vựng..."
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={type} onChange={handleFilterChange(setType)} className="w-40">
-                <option value="all">Tất cả dạng bài</option>
-                {TYPE_OPTIONS.map(([value, meta]) => (
-                  <option key={value} value={value}>
-                    {meta.label}
-                  </option>
-                ))}
-              </Select>
-              <Select value={cefr} onChange={handleFilterChange(setCefr)} className="w-32">
-                <option value="all">Tất cả CEFR</option>
-                {CEFR_OPTIONS.map((level) => (
-                  <option key={level} value={level}>
-                    {level}
-                  </option>
-                ))}
-              </Select>
-              <Select value={topic} onChange={handleFilterChange(setTopic)} className="w-36">
-                <option value="all">Tất cả chủ đề</option>
-                {TOPIC_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </Select>
-              <Select value={source} onChange={handleFilterChange(setSource)} className="w-36">
-                <option value="all">Tất cả nguồn</option>
-                {SOURCE_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </DataTableToolbar>
+          />
 
           <div className="mt-4">
             <DataTable
@@ -371,17 +365,6 @@ function QuizBankPage() {
       {/* TAB 2: Bộ đề thi */}
       {activeTab === 'sets' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <FilterChipRow
-              chips={EXAM_TRACK_CHIPS}
-              value={examTrackFilter}
-              onChange={(value) => {
-                setExamTrackFilter(value)
-                setSetsPage(1)
-              }}
-            />
-          </div>
-
           {setsPageData.length === 0 ? (
             <EmptyState
               title="Chưa có đề thi nào phù hợp"
@@ -396,8 +379,8 @@ function QuizBankPage() {
               {setsPageData.map((set) => {
                 const trackMeta = EXAM_TRACK_META[set.examTrack] || EXAM_TRACK_META.ielts
                 const verificationMeta = VERIFICATION_META[set.verificationStatus] || VERIFICATION_META.pending
-                const isOwned = checkOwnership(set)
-                const isSystem = set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống')
+                const isOwned = set.isAI ? false : checkOwnership(set)
+                const isSystem = set.isAI || set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống')
 
                 return (
                   <Card key={set.id} className="flex flex-col justify-between hover:border-brand-500 hover:shadow-md transition-all group">
@@ -411,6 +394,10 @@ function QuizBankPage() {
                           {isTeacher && isOwned ? (
                             <Badge tone="success" className="text-[10px]">
                               👤 Của tôi
+                            </Badge>
+                          ) : set.isAI ? (
+                            <Badge tone="info" className="text-[10px]">
+                              ✨ AI sinh
                             </Badge>
                           ) : isSystem ? (
                             <Badge tone="neutral" className="text-[10px]">
@@ -429,12 +416,21 @@ function QuizBankPage() {
                         </Badge>
                       </div>
 
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          set.isAI
+                            ? 'border-purple-300 bg-purple-50 text-purple-600'
+                            : 'border-brand-200 bg-brand-50 text-brand-600'
+                        }`}>
+                          {set.isAI ? '✨' : ''} {set.collection || 'Collection'}
+                        </span>
+                      </div>
+
                       <h3 className="mt-2 text-base font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
                         {set.title}
                       </h3>
-                      <p className="mt-0.5 text-xs text-ink-muted">{set.subtitle}</p>
 
-                      <div className="mt-4 space-y-1.5 text-xs text-ink-muted">
+                      <div className="mt-3 space-y-1.5 text-xs text-ink-muted">
                         <p className="flex items-center gap-1.5">
                           <Clock size={13} strokeWidth={1.75} />
                           {set.durationMinutes} phút
@@ -460,8 +456,36 @@ function QuizBankPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Nút giao đề cho lớp: Chỉ dành cho giáo viên và đề thuộc sở hữu của mình */}
-                        {isTeacher && checkOwnership(set) ? (
+                        {set.examTrack === 'placement' ? (
+                          <>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              icon={Send}
+                              onClick={() => toast.success(`Bắt đầu thi Placement: "${set.title}"`)}
+                              className="flex-1 text-xs"
+                            >
+                              Thi thử
+                            </Button>
+                            <Button
+                              size="sm"
+                              icon={Pencil}
+                              onClick={() => handleEditSet(set)}
+                              className="flex-1 text-xs"
+                            >
+                              Tạo đề
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              icon={Eye}
+                              onClick={() => toast.success(`Xem cấu trúc placement: "${set.title}"`)}
+                              className="text-xs"
+                            >
+                              Chi tiết
+                            </Button>
+                          </>
+                        ) : isTeacher && checkOwnership(set) ? (
                           <>
                             <Button
                               variant="secondary"
