@@ -102,29 +102,20 @@ function ReportsPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">Báo cáo vi phạm</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            Quản lý và xử lý các nội dung vi phạm tiêu chuẩn cộng đồng.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" icon={Filter} size="sm">
-            Lọc
-          </Button>
-          <Button
-            variant="primary"
-            icon={Layers}
-            size="sm"
-            onClick={() => handleBulkAction('Khóa nội dung vi phạm')}
-          >
-            Hành động hàng loạt
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {/* Top Actions */}
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="secondary" icon={Filter} size="sm">
+          Lọc
+        </Button>
+        <Button
+          variant="primary"
+          icon={Layers}
+          size="sm"
+          onClick={() => handleBulkAction('Khóa nội dung vi phạm')}
+        >
+          Hành động hàng loạt
+        </Button>
       </div>
 
       {/* 3 KPI Cards */}
@@ -185,13 +176,13 @@ function ReportsPage() {
       </div>
 
       {/* Main Table Card */}
-      <Card className="p-0 overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Search Bar & Title */}
-        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-bold text-navy-700">Danh sách báo cáo</h3>
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-bold text-slate-900">Danh sách báo cáo</h3>
 
-          <div className="relative min-w-[260px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+          <div className="relative min-w-[280px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm kiếm người dùng, nội dung..."
@@ -200,37 +191,37 @@ function ReportsPage() {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="w-full rounded-lg border border-line bg-canvas pl-8 pr-3 py-1.5 text-xs focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 font-bold uppercase tracking-wider text-ink-muted border-b border-line">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50/50 font-bold uppercase tracking-wider text-slate-500 text-xs border-b border-slate-100">
               <tr>
-                <th className="w-10 px-4 py-3">
+                <th className="w-12 px-6 py-3.5">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === pageData.length}
                     onChange={handleSelectAll}
-                    className="rounded border-line text-brand-500"
+                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                 </th>
-                <th className="px-4 py-3">Người bị báo cáo</th>
-                <th className="px-4 py-3">Nội dung</th>
-                <th className="px-4 py-3">Lý do</th>
-                <th className="px-4 py-3 text-center">Mức độ</th>
-                <th className="px-4 py-3">Thời gian</th>
-                <th className="px-4 py-3 text-center">Thao tác</th>
+                <th className="px-6 py-3.5">NGƯỜI BỊ BÁO CÁO</th>
+                <th className="px-6 py-3.5">NỘI DUNG</th>
+                <th className="px-6 py-3.5">LÝ DO</th>
+                <th className="px-6 py-3.5 text-center">MỨC ĐỘ</th>
+                <th className="px-6 py-3.5">THỜI GIAN</th>
+                <th className="px-6 py-3.5 text-center">THAO TÁC</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-line bg-white">
+            <tbody className="divide-y divide-slate-100">
               {pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-ink-muted">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
                     Không có báo cáo vi phạm nào.
                   </td>
                 </tr>
@@ -242,88 +233,78 @@ function ReportsPage() {
                     <tr
                       key={item.id}
                       className={cn(
-                        'hover:bg-slate-50/70 transition-colors',
+                        'hover:bg-slate-50/50 transition-colors border-b border-slate-100',
                         isSelected && 'bg-brand-50/40',
                       )}
                     >
                       {/* Checkbox */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-6 py-4.5">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(item.id)}
-                          className="rounded border-line text-brand-500"
+                          className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                         />
                       </td>
 
                       {/* Người bị báo cáo */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2.5">
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
                           <span
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold text-white text-xs"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-bold text-white text-xs shadow-2xs"
                             style={{ backgroundColor: item.reportedUser.avatarColor || '#64748b' }}
                           >
                             {item.reportedUser.initials}
                           </span>
                           <div>
-                            <p className="font-bold text-navy-700 leading-none">{item.reportedUser.name}</p>
-                            <p className="text-[10px] text-ink-muted mt-0.5">{item.reportedUser.handle}</p>
+                            <p className="font-bold text-slate-900 text-sm leading-none">{item.reportedUser.name}</p>
+                            <p className="text-xs text-slate-500 mt-1">{item.reportedUser.handle}</p>
                           </div>
                         </div>
                       </td>
 
                       {/* Loại nội dung */}
-                      <td className="px-4 py-3.5 font-medium text-navy-700">
+                      <td className="px-6 py-4.5 text-sm font-medium text-slate-800">
                         {item.contentType}
                       </td>
 
                       {/* Lý do */}
-                      <td className="px-4 py-3.5 font-semibold text-navy-700">
+                      <td className="px-6 py-4.5 text-sm font-medium text-slate-700">
                         {item.reason}
                       </td>
 
                       {/* Mức độ */}
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-6 py-4.5 text-center">
                         {item.severity === 'critical' ? (
-                          <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-600">
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
                             {item.severityLabel}
                           </span>
                         ) : item.severity === 'medium' ? (
-                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
                             {item.severityLabel}
                           </span>
                         ) : (
-                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
+                          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
                             {item.severityLabel}
                           </span>
                         )}
                       </td>
 
                       {/* Thời gian */}
-                      <td className="px-4 py-3.5 text-ink-muted">
-                        {item.createdAt}
+                      <td className="px-6 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+                        {item.timeAgo || item.createdAt}
                       </td>
 
                       {/* Thao tác */}
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setActiveReport(item)}
-                            className="rounded-md p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 cursor-pointer"
-                            title="Xem chi tiết báo cáo"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleResolveReport(item.id, 'Đã khóa nội dung')}
-                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 cursor-pointer"
-                            title="Xử lý / Khóa nội dung"
-                          >
-                            <Ban size={16} />
-                          </button>
-                        </div>
+                      <td className="px-6 py-4.5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setActiveReport(item)}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors cursor-pointer"
+                        >
+                          <Eye size={15} />
+                          <span>Chi tiết</span>
+                        </button>
                       </td>
                     </tr>
                   )
@@ -334,14 +315,15 @@ function ReportsPage() {
         </div>
 
         {/* Footer Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-          <p className="text-xs text-ink-muted">
-            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
-            <strong>{total}</strong> báo cáo
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+          <p className="text-xs text-slate-500">
+            Hiển thị <strong>{filtered.length === 0 ? 0 : start + 1}</strong>-
+            <strong>{Math.min(start + PAGE_SIZE, filtered.length)}</strong> trong tổng số{' '}
+            <strong>{filtered.length}</strong> báo cáo
           </p>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-      </Card>
+      </div>
 
       {/* Drawer Chi Tiết & Xử Lý Báo Cáo */}
       <Drawer
@@ -437,7 +419,7 @@ function ReportsPage() {
           </div>
         )}
       </Drawer>
-    </main>
+    </div>
   )
 }
 

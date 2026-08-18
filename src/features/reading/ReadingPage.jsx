@@ -1,19 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  BookOpen,
   Clock,
   Crown,
+  Eye,
   FileText,
   Lock,
   Pencil,
   Plus,
+  Search,
   Send,
-  Settings,
-  Share2,
-  SlidersHorizontal,
+  Sparkles,
   Trash2,
-  User,
-  Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
@@ -21,17 +20,23 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
 import EmptyState from '@/components/ui/EmptyState'
-import FilterChip from '@/components/ui/FilterChip'
 import Pagination from '@/components/ui/Pagination'
-import SearchInput from '@/components/ui/SearchInput'
-import Select from '@/components/ui/Select'
 import { formatDate } from '@/lib/utils'
 import { readings } from '@/mocks/data/readings'
 import { LEVEL_GROUPS, LEVEL_LABEL, LEVEL_TONE } from './levels'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { useAuthStore } from '@/store/authStore'
 
-const PAGE_SIZE = 6
+const PAGE_SIZE = 8
+
+const LEVEL_COLOR = {
+  A1: { bg: '#f0fdf4', text: '#15803d' },
+  A2: { bg: '#f0fdf4', text: '#15803d' },
+  B1: { bg: '#eff6ff', text: '#1d4ed8' },
+  B2: { bg: '#eef2ff', text: '#4f46e5' },
+  C1: { bg: '#faf5ff', text: '#7c3aed' },
+  C2: { bg: '#faf5ff', text: '#7c3aed' },
+}
 
 function ReadingPage() {
   const user = useAuthStore((s) => s.user)
@@ -151,252 +156,269 @@ function ReadingPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
+    <div className="space-y-4">
       {/* Top action & Quota */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Quota indicator cho giáo viên */}
-        {isTeacher ? (
-          <div className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50/70 px-4 py-2 text-xs">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
-              <Crown size={13} />
+      {isTeacher && (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-brand-50/70 px-4 py-2.5 text-xs shadow-2xs">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
+            <Crown size={13} />
+          </span>
+          <div>
+            <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
+            <span className="text-ink-muted">
+              Bạn đã tạo <strong className="text-brand-600 font-bold">{myReadingsCount}</strong> bài đọc · Hạn mức{' '}
+              <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
             </span>
-            <div>
-              <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
-              <span className="text-ink-muted">
-                Bạn đã tạo <strong className="text-brand-600 font-bold">{myReadingsCount}</strong> bài đọc · Hạn mức{' '}
-                <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
-              </span>
-            </div>
-            <Link
-              to="/goi-dich-vu"
-              className="ml-2 font-semibold text-brand-600 hover:underline"
-            >
-              Chi tiết gói →
-            </Link>
           </div>
-        ) : <div />}
-
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Button icon={Plus} onClick={() => toast.success('Mở form tạo bài đọc mới')}>
-            Thêm bài đọc mới
-          </Button>
-        </div>
-      </div>
-
-      {/* Filter Card */}
-      <Card className="space-y-4">
-        {/* Dòng 1: Bộ lọc quyền sở hữu theo Giáo viên */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
-              Học liệu:
-            </span>
-            <div className="flex items-center gap-1.5">
-              <FilterChip
-                active={ownershipFilter === 'mine'}
-                onClick={() => handleOwnershipChange('mine')}
-              >
-                👤 Của tôi ({myReadingsCount})
-              </FilterChip>
-              <FilterChip
-                active={ownershipFilter === 'all'}
-                onClick={() => handleOwnershipChange('all')}
-              >
-                🌐 Tất cả bài đọc ({publicReadings.length})
-              </FilterChip>
-              <FilterChip
-                active={ownershipFilter === 'system'}
-                onClick={() => handleOwnershipChange('system')}
-              >
-                🏢 Hệ thống SmartEnglish
-              </FilterChip>
-              {isTeacher && (
-                <FilterChip
-                  active={ownershipFilter === 'others'}
-                  onClick={() => handleOwnershipChange('others')}
-                >
-                  👥 Giáo viên khác
-                </FilterChip>
-              )}
-            </div>
-          </div>
-
-          {!isTeacher && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-muted">Lọc theo tác giả:</span>
-              <Select
-                value={ownershipFilter}
-                onChange={(e) => handleOwnershipChange(e.target.value)}
-                className="w-48 text-xs"
-              >
-                <option value="all">Tất cả tác giả</option>
-                <option value="Hoàng Thị Mai">Hoàng Thị Mai (GV)</option>
-                <option value="Vũ Đức Thắng">Vũ Đức Thắng (GV)</option>
-                <option value="Hệ thống SmartEnglish">Hệ thống SmartEnglish</option>
-              </Select>
-            </div>
-          )}
-        </div>
-
-        {/* Dòng 2: Search + Cấp độ */}
-        <div className="flex flex-wrap items-center gap-3">
-          <SearchInput
-            value={search}
-            onChange={handleSearchChange}
-            placeholder="Tìm theo tiêu đề, chủ đề, từ khoá..."
-            className="min-w-xs flex-1"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              Cấp độ:
-            </span>
-            {LEVEL_GROUPS.map((group) => (
-              <FilterChip
-                key={group.key}
-                active={levelGroup === group.key}
-                onClick={() => handleLevelChange(group.key)}
-              >
-                {group.label}
-              </FilterChip>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {/* Grid danh sách */}
-      {pageData.length === 0 ? (
-        <EmptyState
-          title="Không tìm thấy bài đọc nào"
-          description={
-            ownershipFilter === 'mine'
-              ? 'Bạn chưa tạo bài đọc nào khớp với bộ lọc. Hãy nhấn "+ Thêm bài đọc mới" hoặc bấm tab "Tất cả bài đọc" để khám phá thêm.'
-              : 'Thử đổi từ khoá hoặc bộ lọc cấp độ.'
-          }
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {pageData.map((item) => {
-            const isOwned = checkOwnership(item)
-            const isSystem = item.authorEmail === 'system@smartenglish.vn' || item.authorName?.includes('Hệ thống')
-
-            return (
-              <Card
-                key={item.id}
-                className="flex cursor-pointer flex-col justify-between hover:border-brand-500 hover:shadow-md transition-all group"
-                onClick={() => setActiveReading(item)}
-              >
-                <div>
-                  {/* Top badges */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge tone={LEVEL_TONE[item.level]}>{LEVEL_LABEL[item.level]}</Badge>
-                      {item.isAI && <Badge tone="info">🤖 AI sinh</Badge>}
-                      {isTeacher && isOwned ? (
-                        <Badge tone="success" className="font-semibold">
-                          👤 Của tôi
-                        </Badge>
-                      ) : isSystem ? (
-                        <Badge tone="neutral">🏢 Hệ thống</Badge>
-                      ) : (
-                        <Badge tone="warning">👨‍🏫 {item.authorName}</Badge>
-                      )}
-                    </div>
-
-                    {/* Ownership badge / Lock indicator */}
-                    {!canManage(item) && (
-                      <span
-                        className="rounded-full bg-slate-100 p-1 text-slate-400"
-                        title="Chỉ xem (Không có quyền sửa)"
-                      >
-                        <Lock size={13} />
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="mt-3 line-clamp-2 text-base font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 line-clamp-3 text-xs text-ink-muted leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-line">
-                  <div className="flex items-center justify-between text-xs text-ink-muted mb-3">
-                    <span className="flex items-center gap-1">
-                      <FileText size={14} />
-                      {item.wordCount} từ
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={14} />
-                      {item.minutes} phút
-                    </span>
-                  </div>
-
-                  {/* Actions bar */}
-                  <div className="flex items-center justify-between pt-2 border-t border-dashed border-line">
-                    <span className="text-[11px] text-ink-muted truncate max-w-[140px]">
-                      Tác giả: <strong>{item.authorName || 'SmartEnglish'}</strong>
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                      {/* Nút giao bài: Chỉ dành cho giáo viên và bài thuộc sở hữu của mình */}
-                      {isTeacher && checkOwnership(item) && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleAssignToClass(e, item)}
-                          className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
-                          title="Giao bài cho lớp học"
-                        >
-                          <Send size={12} />
-                          Giao bài
-                        </button>
-                      )}
-
-                      {/* Nút Sửa/Xóa: Hiển thị cho bài thuộc sở hữu hoặc Admin */}
-                      {canManage(item) ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => handleEditClick(e, item)}
-                            className="rounded-md p-1.5 text-ink-muted hover:bg-slate-100 hover:text-navy-700 cursor-pointer"
-                            title="Chỉnh sửa bài đọc"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteClick(e, item)}
-                            className="rounded-md p-1.5 text-ink-muted hover:bg-red-50 hover:text-red-500 cursor-pointer"
-                            title="Xóa bài đọc"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </>
-                      ) : (
-                        <span
-                          className="text-[10px] text-ink-muted italic px-2 py-1 bg-slate-50 rounded-md border border-slate-100 flex items-center gap-1"
-                          title="Chỉ tác giả mới có quyền giao bài hoặc chỉnh sửa bài đọc này"
-                        >
-                          <Lock size={11} /> Chỉ xem
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
+          <Link
+            to="/goi-dich-vu"
+            className="ml-auto font-semibold text-brand-600 hover:underline"
+          >
+            Chi tiết gói →
+          </Link>
         </div>
       )}
 
-      {/* Phân trang */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <p className="text-xs text-ink-muted">
-          Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
-          <strong>{total}</strong> bài đọc
-        </p>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      {/* Table Card (Matching Classes & Grammar reference design) */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+          {/* Search */}
+          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
+            <Search size={18} className="shrink-0 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Tìm theo tiêu đề, chủ đề, từ khóa..."
+              className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+            />
+          </div>
+
+          {/* Filters & Add Button */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Học liệu */}
+            <select
+              value={ownershipFilter}
+              onChange={(e) => handleOwnershipChange(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+            >
+              <option value="all">Học liệu: Tất cả ({publicReadings.length})</option>
+              <option value="mine">Học liệu: Của tôi ({myReadingsCount})</option>
+              <option value="system">Học liệu: Hệ thống SmartEnglish</option>
+              {isTeacher && <option value="others">Học liệu: Giáo viên khác</option>}
+            </select>
+
+            {/* Cấp độ */}
+            <select
+              value={levelGroup}
+              onChange={(e) => handleLevelChange(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+            >
+              {LEVEL_GROUPS.map((group) => (
+                <option key={group.key} value={group.key}>
+                  {group.key === 'all' ? 'Cấp độ: Tất cả' : `Cấp độ: ${group.label}`}
+                </option>
+              ))}
+            </select>
+
+            {/* Nút thêm mới */}
+            <button
+              type="button"
+              onClick={() => toast.success('Mở form tạo bài đọc mới')}
+              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>Thêm bài đọc</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Table Content */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-3.5 w-[36%] min-w-[260px]">BÀI ĐỌC HIỂU</th>
+                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
+                <th className="px-4 py-3.5 text-center w-[13%] min-w-[110px]">ĐỘ DÀI</th>
+                <th className="px-4 py-3.5 w-[14%] min-w-[130px]">NGUỒN / TÁC GIẢ</th>
+                <th className="px-4 py-3.5 text-center w-[10%] min-w-[90px]">CÂU HỎI</th>
+                <th className="px-4 py-3.5 w-[11%] min-w-[110px]">NGÀY TẠO</th>
+                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    Không tìm thấy bài đọc nào phù hợp
+                  </td>
+                </tr>
+              ) : (
+                pageData.map((item) => {
+                  const isOwned = checkOwnership(item)
+                  const isSystem =
+                    item.authorEmail === 'system@smartenglish.vn' ||
+                    item.authorName?.includes('Hệ thống')
+                  const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.B1
+
+                  return (
+                    <tr
+                      key={item.id}
+                      onClick={() => setActiveReading(item)}
+                      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+                    >
+                      {/* Tiêu đề bài đọc */}
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600">
+                            <BookOpen size={18} strokeWidth={1.75} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
+                                {item.title}
+                              </span>
+                              {item.isAI && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200">
+                                  <Sparkles size={10} />
+                                  AI
+                                </span>
+                              )}
+                            </div>
+                            <span className="line-clamp-1 text-xs text-slate-500 mt-0.5">
+                              {item.description}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Cấp độ */}
+                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
+                          style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
+                        >
+                          {item.level}
+                        </span>
+                      </td>
+
+                      {/* Độ dài */}
+                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+                        <span className="font-bold text-slate-800 text-sm block">
+                          {item.wordCount} từ
+                        </span>
+                        <span className="text-xs text-slate-400 block mt-0.5">
+                          ~{item.minutes} phút
+                        </span>
+                      </td>
+
+                      {/* Tác giả / Nguồn */}
+                      <td className="px-4 py-4.5 whitespace-nowrap">
+                        {isTeacher && isOwned ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Của tôi
+                          </span>
+                        ) : isSystem ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                            Hệ thống
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-100">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            {item.authorName}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Số câu hỏi */}
+                      <td className="px-4 py-4.5 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
+                        {item.questions?.length || 5} câu
+                      </td>
+
+                      {/* Ngày tạo */}
+                      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+                        {formatDate(item.createdAt)}
+                      </td>
+
+                      {/* Thao tác */}
+                      <td className="px-6 py-4.5 whitespace-nowrap">
+                        <div
+                          className="flex items-center justify-end gap-1 text-slate-400"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Nút giao bài */}
+                          {isTeacher && isOwned && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleAssignToClass(e, item)}
+                              className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+                              title="Giao bài cho lớp học"
+                            >
+                              <Send size={17} />
+                            </button>
+                          )}
+
+                          {/* Nút xem chi tiết */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveReading(item)}
+                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                            title="Xem chi tiết bài đọc"
+                          >
+                            <Eye size={17} />
+                          </button>
+
+                          {/* Sửa / Xóa hoặc Lock */}
+                          {canManage(item) ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => handleEditClick(e, item)}
+                                className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                                title="Chỉnh sửa"
+                              >
+                                <Pencil size={17} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteClick(e, item)}
+                                className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                                title="Xóa bài đọc"
+                              >
+                                <Trash2 size={17} />
+                              </button>
+                            </>
+                          ) : (
+                            <span
+                              className="p-1.5 text-slate-300"
+                              title="Chỉ xem (Không có quyền chỉnh sửa)"
+                            >
+                              <Lock size={15} />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Phân trang */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+          <p className="text-xs text-slate-500">
+            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-
+            <strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+            <strong>{total}</strong> bài đọc
+          </p>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </div>
       </div>
 
       {/* Drawer xem chi tiết */}
@@ -507,7 +529,7 @@ function ReadingPage() {
           </div>
         )}
       </Drawer>
-    </main>
+    </div>
   )
 }
 

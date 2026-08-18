@@ -81,15 +81,7 @@ function SettingsPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-navy-700">Cài đặt hệ thống</h1>
-        <p className="mt-0.5 text-sm text-ink-muted">
-          Quản lý cấu hình chung, bảo mật, thanh toán và thông báo hệ thống.
-        </p>
-      </div>
-
+    <div className="space-y-4">
       {/* 2-Column Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Vertical Menu */}
@@ -564,7 +556,7 @@ function SettingsPage() {
           </Card>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

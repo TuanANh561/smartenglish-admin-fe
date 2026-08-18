@@ -58,7 +58,7 @@ function TransactionsPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-6 space-y-5">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <Card className="flex items-start gap-3">
           <span className="rounded-lg bg-navy-700/10 p-2.5 text-navy-700">
@@ -223,7 +223,7 @@ function TransactionsPage() {
           />
         </div>
       </Card>
-    </main>
+    </div>
   )
 }
 

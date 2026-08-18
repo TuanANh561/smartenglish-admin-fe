@@ -68,7 +68,7 @@ function StudentsPage() {
   }, [isAdmin, currentUser])
 
   return (
-    <main className="flex-1 bg-canvas p-6 space-y-5">
+    <div className="space-y-4">
       <Card>
         <DataTableToolbar
           searchValue={dataTable.search}
@@ -99,12 +99,12 @@ function StudentsPage() {
             renderExpandedRow={(user) => (
               <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 <div>
-                  <p className="text-xs text-ink-muted">Email xác thực</p>
-                  <p className="text-ink">{user.isEmailVerified ? 'Đã xác thực' : 'Chưa xác thực'}</p>
+                  <p className="text-xs text-ink-muted">Ngày tạo tài khoản</p>
+                  <p className="text-ink font-medium">{user.createdAt ?? '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-ink-muted">Mã người dùng</p>
-                  <p className="font-mono text-ink">{user.id}</p>
+                  <p className="text-xs text-ink-muted">Khóa học đăng ký</p>
+                  <p className="text-ink">{user.enrolledCoursesCount ?? 0} khóa</p>
                 </div>
                 <div>
                   <p className="text-xs text-ink-muted">Số bài nộp</p>
@@ -136,7 +136,7 @@ function StudentsPage() {
         onClose={() => setLockTarget(null)}
         loading={isProcessing}
       />
-    </main>
+    </div>
   )
 }
 

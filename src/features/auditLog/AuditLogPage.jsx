@@ -55,34 +55,25 @@ function AuditLogPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">Nhật ký hoạt động</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            System-wide audit trail and security logging.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            icon={FileSpreadsheet}
-            onClick={() => handleExport('csv')}
-            size="sm"
-          >
-            Export CSV
-          </Button>
-          <Button
-            variant="primary"
-            icon={FileText}
-            onClick={() => handleExport('pdf')}
-            size="sm"
-          >
-            Export PDF
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {/* Top Actions */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="secondary"
+          icon={FileSpreadsheet}
+          onClick={() => handleExport('csv')}
+          size="sm"
+        >
+          Xuất CSV
+        </Button>
+        <Button
+          variant="primary"
+          icon={FileText}
+          onClick={() => handleExport('pdf')}
+          size="sm"
+        >
+          Xuất PDF
+        </Button>
       </div>
 
       {/* Filter Bar */}
@@ -167,25 +158,24 @@ function AuditLogPage() {
         </div>
       </Card>
 
-      {/* Main Audit Table Card */}
-      <Card className="p-0 overflow-hidden shadow-sm">
+      {/* Table Card */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 font-bold uppercase tracking-wider text-ink-muted border-b border-line">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50/50 border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-4 py-3">Timestamp</th>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Action</th>
-                <th className="px-4 py-3">IP Address</th>
-                <th className="px-4 py-3">Device</th>
-                <th className="px-4 py-3 text-center">Details</th>
+                <th className="px-6 py-3.5">THỜI GIAN</th>
+                <th className="px-6 py-3.5">NGƯỜI THỰC HIỆN</th>
+                <th className="px-6 py-3.5">HÀNH ĐỘNG</th>
+                <th className="px-6 py-3.5">ĐỊA CHỈ IP</th>
+                <th className="px-6 py-3.5">THIẾT BỊ</th>
+                <th className="px-6 py-3.5 text-center">CHI TIẾT</th>
               </tr>
             </thead>
-
-            <tbody className="divide-y divide-line bg-white">
+            <tbody className="divide-y divide-slate-100">
               {pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-ink-muted">
+                  <td colSpan={6} className="py-12 text-center text-sm text-slate-400">
                     Không tìm thấy bản ghi nhật ký nào khớp bộ lọc.
                   </td>
                 </tr>
@@ -194,72 +184,72 @@ function AuditLogPage() {
                   <tr
                     key={log.id}
                     onClick={() => setActiveLog(log)}
-                    className="hover:bg-slate-50/70 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer border-b border-slate-100"
                   >
                     {/* Timestamp */}
-                    <td className="px-4 py-3.5 font-mono text-ink-muted whitespace-nowrap">
+                    <td className="px-6 py-4.5 font-mono text-sm text-slate-600 whitespace-nowrap">
                       {log.timestamp} <span className="text-[10px] text-slate-400">UTC+7</span>
                     </td>
 
                     {/* User */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-6 py-4.5">
+                      <div className="flex items-center gap-3">
                         <span
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-bold text-white text-xs uppercase"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-bold text-white text-xs uppercase shadow-2xs"
                           style={{ backgroundColor: log.avatarColor || '#1B3A57' }}
                         >
                           {log.userInitials}
                         </span>
                         <div>
-                          <p className="font-semibold text-navy-700 leading-none">{log.user}</p>
-                          <p className="text-[10px] text-ink-muted mt-0.5">{log.userRoleLabel}</p>
+                          <p className="font-bold text-slate-900 text-sm leading-none">{log.user}</p>
+                          <p className="text-xs text-slate-500 mt-1">{log.userRoleLabel}</p>
                         </div>
                       </div>
                     </td>
 
                     {/* Action */}
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4.5">
                       {log.actionTone === 'danger' ? (
-                        <span className="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600 border border-red-100">
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 border border-red-100">
                           {log.action}
                         </span>
                       ) : log.actionTone === 'info' ? (
-                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600 border border-blue-100">
+                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 border border-blue-100">
                           {log.action}
                         </span>
                       ) : log.actionTone === 'warning' ? (
-                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 border border-amber-100">
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 border border-amber-100">
                           {log.action}
                         </span>
                       ) : (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                           {log.action}
                         </span>
                       )}
                     </td>
 
                     {/* IP Address */}
-                    <td className="px-4 py-3.5 font-mono text-ink-muted">
+                    <td className="px-6 py-4.5 font-mono text-sm text-slate-600">
                       {log.ipAddress}
                     </td>
 
                     {/* Device */}
-                    <td className="px-4 py-3.5 text-ink">
+                    <td className="px-6 py-4.5 text-sm text-slate-700">
                       {log.device}
                     </td>
 
                     {/* Details */}
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-6 py-4.5 text-center">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
                           setActiveLog(log)
                         }}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-colors"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-colors"
                         title="Xem chi tiết"
                       >
-                        <Eye size={16} />
+                        <Eye size={17} />
                       </button>
                     </td>
                   </tr>
@@ -270,14 +260,15 @@ function AuditLogPage() {
         </div>
 
         {/* Footer Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-          <p className="text-xs text-ink-muted">
-            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
-            <strong>{total}</strong> nhật ký
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+          <p className="text-xs text-slate-500">
+            Hiển thị <strong>{filtered.length === 0 ? 0 : start + 1}</strong>-
+            <strong>{Math.min(start + PAGE_SIZE, filtered.length)}</strong> trong tổng số{' '}
+            <strong>{filtered.length}</strong> bản ghi nhật ký
           </p>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-      </Card>
+      </div>
 
       {/* Drawer Xem Chi Tiết Nhật Ký */}
       <Drawer
@@ -339,7 +330,7 @@ function AuditLogPage() {
           </div>
         )}
       </Drawer>
-    </main>
+    </div>
   )
 }
 

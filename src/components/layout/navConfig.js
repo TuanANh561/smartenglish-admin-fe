@@ -126,6 +126,10 @@ export const ROUTE_META = {
     title: 'Dashboard Tổng quan',
     description: 'Chào mừng trở lại, hệ thống đang hoạt động ổn định.',
   },
+  '/cong-dong': {
+    title: 'Cộng đồng Giáo viên & Học liệu',
+    description: 'Không gian chia sẻ kiến thức, tài liệu bài giảng, mẹo luyện thi và thảo luận học thuật.',
+  },
   '/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
   '/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
@@ -139,6 +143,7 @@ export const ROUTE_META = {
     description: 'Quản lý học liệu luyện phát âm, trọng âm và ngữ điệu AI.',
   },
   '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
+  '/hoc-lieu/khoa-hoc/tao-moi': { title: 'Tạo Khóa học mới', description: 'Thiết lập thông tin cơ bản và cấu trúc chương trình học.' },
   '/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },
   '/hoc-lieu/bai-nghe': { title: 'Bài nghe', description: 'Quản lý bài nghe, bản ghi âm và bản chép lời' },
   '/hoc-lieu/bai-kiem-tra': {

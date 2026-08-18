@@ -761,7 +761,7 @@ function AiContentPage() {
   /* ── DETAIL VIEW ── */
   if (view === 'detail' && selectedItem) {
     return (
-      <main className="flex-1 bg-canvas p-4 sm:p-6">
+      <div className="space-y-4">
         <DetailView
           item={selectedItem}
           onBack={handleBack}
@@ -773,26 +773,26 @@ function AiContentPage() {
           onRestore={() => handleRestore(selectedItem.id)}
           canManage={isOwnedByCurrentUser(selectedItem)}
         />
-      </main>
+      </div>
     )
   }
 
   /* ── EDIT VIEW ── */
   if (view === 'edit' && selectedItem) {
     return (
-      <main className="flex-1 bg-canvas p-4 sm:p-6">
+      <div className="space-y-4">
         <EditView
           item={selectedItem}
           onBack={handleBack}
           onSave={handleSaveEdit}
         />
-      </main>
+      </div>
     )
   }
 
   /* ── LIST VIEW ── */
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6">
+    <div className="space-y-4">
       <div className="space-y-5">
         {/* Tabs + Search + Status dropdown + Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap">
@@ -1077,7 +1077,7 @@ function AiContentPage() {
           </div>
         )}
       </Modal>
-    </main>
+    </div>
   )
 }
 

@@ -213,22 +213,16 @@ function CreateCoursePage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Top Breadcrumb & Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3">
         <div>
           <Link
             to="/hoc-lieu/khoa-hoc"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-navy-700 transition-colors mb-1"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-navy-700 transition-colors"
           >
-            <ArrowLeft size={14} /> Quay lại danh sách
+            <ArrowLeft size={14} /> Quay lại danh sách khóa học
           </Link>
-          <h1 className="text-2xl font-bold text-navy-700">
-            {isEditing ? 'Chỉnh sửa khóa học' : 'Tạo khóa học mới'}
-          </h1>
-          <p className="text-xs text-ink-muted">
-            Thiết lập thông tin cơ bản và cấu trúc chương trình học.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -595,7 +589,7 @@ function CreateCoursePage() {
           {isEditing ? 'Lưu & Cập nhật' : 'Lưu và tiếp tục'}
         </Button>
       </div>
-    </main>
+    </div>
   )
 }
 

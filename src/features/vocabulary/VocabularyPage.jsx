@@ -55,27 +55,32 @@ function VocabularyPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-6 space-y-5">
-      <Card>
+    <div className="space-y-4">
+      {/* Table card */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-line">
-          <div className="flex-1 min-w-xs">
-            <Input
-              placeholder="Tìm kiếm từ vựng, ý nghĩa..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="w-full max-w-sm"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
+          <div className="flex-1 min-w-[260px] max-w-md">
+            <div className="relative flex items-center">
+              <Search size={18} className="pointer-events-none absolute left-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" icon={Upload}>
-              Import file Excel/CSV
+              Import Excel/CSV
             </Button>
             <Button size="sm" variant="secondary" icon={Download}>
-              Export dữ liệu
+              Xuất dữ liệu
             </Button>
             <Button size="sm" icon={Plus}>
               Thêm từ mới
@@ -86,9 +91,9 @@ function VocabularyPage() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-canvas border-b border-line">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <th className="w-10 px-4 py-2">
+                <th className="w-12 px-6 py-3.5">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -96,60 +101,60 @@ function VocabularyPage() {
                       if (el) el.indeterminate = someSelected
                     }}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="h-4 w-4 rounded border-line text-brand-500"
+                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                 </th>
                 {vocabularyColumns.map((col) => (
                   <th
                     key={col.accessorKey}
-                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted"
+                    className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500"
                   >
                     {typeof col.header === 'function' ? col.header() : col.header}
                   </th>
                 ))}
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <th className="px-6 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
                   Audio
                 </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Hành động
+                <th className="px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-line">
+            <tbody className="divide-y divide-slate-100">
               {pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 3} className="px-4 py-6 text-center text-ink-muted">
+                  <td colSpan={vocabularyColumns.length + 3} className="px-6 py-8 text-center text-sm text-slate-400">
                     Chưa có từ vựng nào khớp với tìm kiếm
                   </td>
                 </tr>
               ) : (
                 pageData.map((vocab) => (
-                  <tr key={vocab.id} className="hover:bg-canvas transition-colors">
-                    <td className="w-10 px-4 py-3">
+                  <tr key={vocab.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="w-12 px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(vocab.id)}
                         onChange={(e) => handleSelectRow(vocab.id, e.target.checked)}
-                        className="h-4 w-4 rounded border-line text-brand-500"
+                        className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                       />
                     </td>
                     {vocabularyColumns.map((col) => (
-                      <td key={`${vocab.id}-${col.accessorKey}`} className="px-4 py-3">
+                      <td key={`${vocab.id}-${col.accessorKey}`} className="px-6 py-4 text-sm">
                         {col.cell({ getValue: () => vocab[col.accessorKey], row: { original: vocab } })}
                       </td>
                     ))}
-                    <td className="px-4 py-3">
-                      <button className="text-ink-muted hover:text-brand-500 transition-colors">
-                        <Play size={18} strokeWidth={1.75} />
+                    <td className="px-6 py-4 text-center">
+                      <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer" title="Phát âm thanh">
+                        <Play size={16} strokeWidth={2} />
                       </button>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button className="text-ink-muted hover:text-brand-500 transition-colors">
-                          <Pencil size={18} strokeWidth={1.75} />
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1 text-slate-400">
+                        <button className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer" title="Sửa">
+                          <Pencil size={16} strokeWidth={1.75} />
                         </button>
-                        <button className="text-ink-muted hover:text-red-600 transition-colors">
-                          <Trash2 size={18} strokeWidth={1.75} />
+                        <button className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer" title="Xóa">
+                          <Trash2 size={16} strokeWidth={1.75} />
                         </button>
                       </div>
                     </td>
@@ -161,15 +166,15 @@ function VocabularyPage() {
         </div>
 
         {/* Pagination */}
-        <div className="mt-4 px-5 pb-4 pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line">
-          <p className="text-xs text-ink-muted">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+          <p className="text-xs text-slate-500">
             Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
             <strong>{total}</strong> từ vựng
           </p>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-      </Card>
-    </main>
+      </div>
+    </div>
   )
 }
 

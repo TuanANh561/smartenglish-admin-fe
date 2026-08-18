@@ -145,7 +145,7 @@ function DataTable({
     <div className={className}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-canvas">
+          <thead className="bg-slate-50/50 border-b border-slate-100">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -157,7 +157,7 @@ function DataTable({
                     <th
                       key={header.id}
                       className={cn(
-                        'px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted',
+                        'px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500',
                         alignClass(align),
                       )}
                     >
@@ -166,17 +166,17 @@ function DataTable({
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
                           className={cn(
-                            'inline-flex items-center gap-1 hover:text-ink',
+                            'inline-flex items-center gap-1 hover:text-slate-900 transition-colors cursor-pointer',
                             align === 'right' && 'flex-row-reverse',
                           )}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {sortDir === 'asc' ? (
-                            <SortAsc size={14} strokeWidth={1.75} />
+                            <SortAsc size={14} strokeWidth={2} className="text-brand-600" />
                           ) : sortDir === 'desc' ? (
-                            <SortDesc size={14} strokeWidth={1.75} />
+                            <SortDesc size={14} strokeWidth={2} className="text-brand-600" />
                           ) : (
-                            <ChevronsUpDown size={14} strokeWidth={1.75} className="text-ink-muted/50" />
+                            <ChevronsUpDown size={14} strokeWidth={1.75} className="text-slate-400" />
                           )}
                         </button>
                       ) : (
@@ -188,12 +188,12 @@ function DataTable({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
                   {finalColumns.map((_, colIndex) => (
-                    <td key={colIndex} className="px-4 py-3">
+                    <td key={colIndex} className="px-6 py-4.5">
                       <Skeleton className="h-4 w-full max-w-[160px]" />
                     </td>
                   ))}
@@ -201,13 +201,13 @@ function DataTable({
               ))
             ) : error ? (
               <tr>
-                <td colSpan={columnCount} className="px-4 py-6">
+                <td colSpan={columnCount} className="px-6 py-8">
                   <ErrorState error={error} onRetry={onRetry} />
                 </td>
               </tr>
             ) : !data.length ? (
               <tr>
-                <td colSpan={columnCount} className="px-4 py-6">
+                <td colSpan={columnCount} className="px-6 py-8">
                   <EmptyState title={emptyMessage} />
                 </td>
               </tr>
@@ -217,25 +217,25 @@ function DataTable({
                   <tr
                     onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                     className={cn(
-                      'border-b border-line transition-colors last:border-0',
+                      'border-b border-slate-100 transition-colors last:border-0',
                       onRowClick && 'cursor-pointer',
                       selectedRowId === row.original.id || rowSelection[row.original.id]
-                        ? 'bg-brand-500/5'
-                        : 'hover:bg-canvas',
+                        ? 'bg-brand-50/50'
+                        : 'hover:bg-slate-50/50',
                     )}
                   >
                     {row.getAllCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={cn('px-4 py-3', alignClass(cell.column.columnDef.meta?.align))}
+                        className={cn('px-6 py-4.5 text-sm text-slate-800', alignClass(cell.column.columnDef.meta?.align))}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
                   </tr>
                   {expandable && expandedRows[row.original.id] && (
-                    <tr className="border-b border-line bg-canvas last:border-0">
-                      <td colSpan={columnCount} className="px-4 py-3">
+                    <tr className="border-b border-slate-100 bg-slate-50/70 last:border-0">
+                      <td colSpan={columnCount} className="px-6 py-4 text-sm">
                         {renderExpandedRow?.(row.original)}
                       </td>
                     </tr>
@@ -248,8 +248,8 @@ function DataTable({
       </div>
 
       {showFooter && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line px-2">
-          <p className="text-xs text-ink-muted">
+        <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-slate-100 px-6 py-3">
+          <p className="text-xs text-slate-500">
             Hiển thị <strong>{(pagination.page - 1) * pagination.size + 1}</strong>-
             <strong>{Math.min(pagination.page * pagination.size, pagination.total)}</strong> trong tổng số{' '}
             <strong>{formatNumber(pagination.total)}</strong> mục

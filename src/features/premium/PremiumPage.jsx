@@ -293,35 +293,19 @@ function PremiumPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-700 text-white shadow-sm">
-              <Crown size={17} />
-            </span>
-            <h1 className="text-xl font-bold text-navy-700">
-              Cấu hình Gói Premium & Bảng Giá
-            </h1>
-          </div>
-          <p className="mt-1 text-xs text-ink-muted">
-            Quản lý bảng giá, hạn mức học liệu và chính sách mã ưu đãi.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            to="/goi-dich-vu"
-            className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-navy-700 shadow-sm hover:border-brand-500 hover:text-brand-600 transition-colors"
-          >
-            <ExternalLink size={13} />
-            Xem trang Giáo viên
-          </Link>
-          <Button icon={Save} loading={isSaving} onClick={handleSaveAll}>
-            Lưu Cấu Hình
-          </Button>
-        </div>
+    <div className="space-y-5">
+      {/* Top Actions */}
+      <div className="flex items-center justify-end gap-2">
+        <Link
+          to="/goi-dich-vu"
+          className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-navy-700 shadow-sm hover:border-brand-500 hover:text-brand-600 transition-colors"
+        >
+          <ExternalLink size={13} />
+          Xem trang Giáo viên
+        </Link>
+        <Button icon={Save} loading={isSaving} onClick={handleSaveAll}>
+          Lưu Cấu Hình
+        </Button>
       </div>
 
       {/* KPI Overview with Subtle Accent Tops */}
@@ -1133,7 +1117,7 @@ function PremiumPage() {
           </div>
         </form>
       </Drawer>
-    </main>
+    </div>
   )
 }
 

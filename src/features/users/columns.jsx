@@ -22,18 +22,18 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
       cell: (info) => {
         const user = info.row.original
         return (
-          <div className="flex items-center gap-2.5">
-            <Avatar name={user.displayName} src={user.avatarUrl} size="sm" />
+          <div className="flex items-center gap-3">
+            <Avatar name={user.displayName} src={user.avatarUrl} size="md" />
             <div>
-              <div className="flex items-center gap-1.5">
-                <p className="font-medium text-navy-700">{user.displayName}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-bold text-slate-900 text-sm">{user.displayName}</p>
                 {user.id === currentUser?.id && (
-                  <span className="rounded bg-brand-50 px-1.5 py-0.2 text-[10px] font-bold text-brand-600 border border-brand-200">
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-600 border border-brand-200">
                     Bạn
                   </span>
                 )}
               </div>
-              <p className="text-xs text-ink-muted">{user.email}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
             </div>
           </div>
         )
@@ -42,10 +42,14 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
     columnHelper.accessor('role', {
       header: 'Vai trò',
       enableSorting: false,
-      cell: (info) => ROLE_LABEL[info.getValue()] ?? info.getValue(),
+      cell: (info) => (
+        <span className="text-sm font-medium text-slate-700">
+          {ROLE_LABEL[info.getValue()] ?? info.getValue()}
+        </span>
+      ),
     }),
     columnHelper.accessor('plan', {
-      header: 'Gói',
+      header: 'Gói dịch vụ',
       enableSorting: false,
       cell: (info) => {
         const plan = info.getValue()
@@ -55,7 +59,11 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
     columnHelper.accessor('cefrLevel', {
       header: 'Trình độ',
       enableSorting: false,
-      cell: (info) => info.getValue() ?? '—',
+      cell: (info) => (
+        <span className="text-sm font-bold text-slate-800">
+          {info.getValue() ?? '—'}
+        </span>
+      ),
     }),
     columnHelper.accessor('isActive', {
       header: 'Trạng thái',
@@ -63,31 +71,44 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
       cell: (info) => {
         const isActive = info.getValue()
         return (
-          <Badge tone={isActive ? 'success' : 'danger'} className="gap-1">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
+              isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
+            )}
+          >
             {isActive ? (
               <>
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Đang hoạt động
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Đang hoạt động</span>
               </>
             ) : (
               <>
-                <Lock size={11} strokeWidth={2} />
-                Đã khoá
+                <span className="h-2 w-2 rounded-full bg-red-500" />
+                <span>Đã khoá</span>
               </>
             )}
-          </Badge>
+          </span>
         )
       },
     }),
     columnHelper.accessor('lastLoginAt', {
       header: 'Đăng nhập gần nhất',
       enableSorting: true,
-      cell: (info) => formatRelativeTime(info.getValue()),
+      cell: (info) => (
+        <span className="text-sm text-slate-600">
+          {formatRelativeTime(info.getValue())}
+        </span>
+      ),
     }),
     columnHelper.accessor('createdAt', {
       header: 'Ngày tạo',
       enableSorting: true,
-      cell: (info) => formatDate(info.getValue()),
+      cell: (info) => (
+        <span className="text-sm text-slate-600">
+          {formatDate(info.getValue())}
+        </span>
+      ),
     }),
   ]
 

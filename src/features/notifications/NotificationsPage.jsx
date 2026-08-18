@@ -124,24 +124,10 @@ function NotificationsPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">Thông báo hệ thống</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            Quản lý và gửi thông báo đến người dùng nền tảng.
-          </p>
-        </div>
-
-        <Button icon={Plus} onClick={() => setIsCreateOpen(true)}>
-          Tạo thông báo mới
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {/* Main Container Card */}
       <Card className="p-0 overflow-hidden shadow-sm">
-        {/* Top bar: Tabs + Search */}
+        {/* Top bar: Tabs + Search + Action */}
         <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-1">
             {TABS.map((tab) => (
@@ -169,18 +155,23 @@ function NotificationsPage() {
             ))}
           </div>
 
-          <div className="relative min-w-[240px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm thông báo..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="w-full rounded-lg border border-line bg-canvas pl-8 pr-3 py-1.5 text-xs focus:border-brand-500 focus:outline-none"
-            />
+          <div className="flex items-center gap-2.5">
+            <div className="relative min-w-[220px]">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm thông báo..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="h-9 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-xs text-navy-700 placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <Button size="sm" icon={Plus} onClick={() => setIsCreateOpen(true)}>
+              Tạo thông báo mới
+            </Button>
           </div>
         </div>
 
@@ -399,7 +390,7 @@ function NotificationsPage() {
           </div>
         </form>
       </Drawer>
-    </main>
+    </div>
   )
 }
 

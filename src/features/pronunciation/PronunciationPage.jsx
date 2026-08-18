@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   CheckCircle2,
   Copy,
+  Crown,
   Eye,
   Filter,
   Headphones,
@@ -12,6 +14,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Send,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -31,7 +34,7 @@ import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
-import { cn, formatNumber } from '@/lib/utils'
+import { cn, formatNumber, formatRelativeTime } from '@/lib/utils'
 import {
   PRONUNCIATION_CATEGORIES,
   pronunciationLessons,
@@ -52,6 +55,15 @@ const LEVEL_TONE = {
   B2: 'warning',
   C1: 'danger',
   C2: 'danger',
+}
+
+const LEVEL_COLOR = {
+  A1: { bg: '#f0fdf4', text: '#15803d' },
+  A2: { bg: '#f0fdf4', text: '#15803d' },
+  B1: { bg: '#eff6ff', text: '#1d4ed8' },
+  B2: { bg: '#eef2ff', text: '#4f46e5' },
+  C1: { bg: '#faf5ff', text: '#7c3aed' },
+  C2: { bg: '#faf5ff', text: '#7c3aed' },
 }
 
 const PAGE_SIZE = 8
@@ -255,202 +267,121 @@ function PronunciationPage() {
     }
   }
 
-  const formatRelativeTime = (isoString) => {
-    if (!isoString) return 'Vừa xong'
-    const diffHours = Math.floor((Date.now() - new Date(isoString).getTime()) / (1000 * 60 * 60))
-    if (diffHours < 1) return 'Vừa xong'
-    if (diffHours < 24) return `Cập nhật: ${diffHours} giờ trước`
-    const diffDays = Math.floor(diffHours / 24)
-    if (diffDays === 1) return 'Cập nhật: Hôm qua'
-    if (diffDays < 7) return `Cập nhật: ${diffDays} ngày trước`
-    return `Cập nhật: ${new Date(isoString).toLocaleDateString('vi-VN')}`
-  }
+  const isTeacher = user?.role === 'teacher'
 
   return (
-    <main className="flex-1 bg-[#f8fafc] p-4 sm:p-6 space-y-6">
-      {/* ─── Header & Top Actions ────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-900 tracking-tight">
-            Quản lý Bài học Phát âm
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Quản lý học liệu luyện phát âm, trọng âm và ngữ điệu AI.
-          </p>
+    <div className="space-y-4">
+      {/* Top action & Quota */}
+      {isTeacher && (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-brand-50/70 px-4 py-2.5 text-xs shadow-2xs">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
+            <Crown size={13} />
+          </span>
+          <div>
+            <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
+            <span className="text-ink-muted">
+              Bạn đã tạo <strong className="text-brand-600 font-bold">{lessons.length}</strong> bài phát âm · Hạn mức{' '}
+              <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
+            </span>
+          </div>
+          <Link to="/goi-dich-vu" className="ml-auto font-semibold text-brand-600 hover:underline">
+            Chi tiết gói →
+          </Link>
         </div>
+      )}
 
-        <Button
-          icon={Plus}
-          onClick={handleOpenCreate}
-          className="bg-navy-800 hover:bg-navy-900 text-white shadow-sm font-semibold px-4 py-2.5 rounded-xl cursor-pointer"
-        >
-          Thêm bài học phát âm
-        </Button>
-      </div>
-
-      {/* ─── Quick Stats ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Tổng bài phát âm
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-600">
-              <Headphones size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">{stats.totalLessons}</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Đã xuất bản
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-              <CheckCircle2 size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-emerald-700">{stats.publishedCount}</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Mẫu Audio chuẩn
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-              <Volume2 size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">{stats.totalSamples}+</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Điểm AI chuẩn
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
-              <Sparkles size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">{stats.avgAccuracy}%</p>
-        </Card>
-      </div>
-
-      {/* ─── Filter Bar (Image 2 Mockup) ─────────────────────────────────── */}
-      <Card className="p-4 bg-white border border-line shadow-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search Input */}
-          <div className="flex-1 min-w-[240px] relative">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
-            />
+      {/* ─── Table Card (Matching Benchmark Design) ────────────────────── */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Toolbar & Search */}
+        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
+            <Search size={18} className="shrink-0 text-slate-400" />
             <input
-              type="text"
-              placeholder="Tìm kiếm bài học..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="w-full rounded-xl border border-line bg-canvas pl-10 pr-3.5 py-2.5 text-xs focus:border-brand-500 focus:outline-none transition-colors"
+              placeholder="Tìm kiếm bài học phát âm, âm IPA..."
+              className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
             />
           </div>
-
-          {/* Loại âm */}
-          <div className="w-full sm:w-auto min-w-[170px]">
-            <Select
+          <div className="flex flex-wrap items-center gap-2.5">
+            <select
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value)
                 setPage(1)
               }}
-              className="text-xs bg-canvas rounded-xl border-line py-2"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {PRONUNCIATION_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
-                  Loại âm: {cat}
+                  {cat === 'Tất cả phân loại' ? 'Phân loại: Tất cả' : cat}
                 </option>
               ))}
-            </Select>
-          </div>
+            </select>
 
-          {/* Cấp độ CEFR */}
-          <div className="w-full sm:w-auto min-w-[150px]">
-            <Select
+            <select
               value={selectedLevel}
               onChange={(e) => {
                 setSelectedLevel(e.target.value)
                 setPage(1)
               }}
-              className="text-xs bg-canvas rounded-xl border-line py-2"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {CEFR_LEVELS.map((lvl) => (
                 <option key={lvl} value={lvl}>
-                  {lvl === 'Tất cả' ? 'Cấp độ CEFR: Tất cả' : `Cấp độ ${lvl}`}
+                  {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : `Cấp độ ${lvl}`}
                 </option>
               ))}
-            </Select>
-          </div>
+            </select>
 
-          {/* Trạng thái */}
-          <div className="w-full sm:w-auto min-w-[150px]">
-            <Select
+            <select
               value={selectedStatus}
               onChange={(e) => {
                 setSelectedStatus(e.target.value)
                 setPage(1)
               }}
-              className="text-xs bg-canvas rounded-xl border-line py-2"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
-            </Select>
+            </select>
+
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>Thêm bài phát âm</span>
+            </button>
           </div>
-
-          {/* Nút Lọc / Reset */}
-          <Button
-            variant="secondary"
-            icon={SlidersHorizontal}
-            onClick={() => {
-              setSearch('')
-              setSelectedCategory('Tất cả phân loại')
-              setSelectedLevel('Tất cả')
-              setSelectedStatus('all')
-              setPage(1)
-            }}
-            className="rounded-xl px-3.5 text-xs font-semibold"
-          >
-            Lọc
-          </Button>
         </div>
-      </Card>
 
-      {/* ─── Table View (Image 2 Mockup) ─────────────────────────────────── */}
-      <Card className="p-0 overflow-hidden bg-white border border-line shadow-xs">
+        {/* Table View */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 font-bold uppercase tracking-wider text-ink-muted border-b border-line">
-              <tr>
-                <th className="px-5 py-3.5">Tên bài học</th>
-                <th className="px-4 py-3.5">Phân loại âm</th>
-                <th className="px-4 py-3.5 text-center">Cấp độ</th>
-                <th className="px-4 py-3.5">Audio</th>
-                <th className="px-4 py-3.5 text-center">Trạng thái</th>
-                <th className="px-5 py-3.5 text-right">Thao tác</th>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-3.5 w-[36%] min-w-[260px]">BÀI HỌC PHÁT ÂM</th>
+                <th className="px-4 py-3.5 w-[14%] min-w-[120px]">PHÂN LOẠI ÂM</th>
+                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
+                <th className="px-4 py-3.5 text-center w-[13%] min-w-[110px]">MẪU AUDIO</th>
+                <th className="px-4 py-3.5 w-[13%] min-w-[120px]">TRẠNG THÁI</th>
+                <th className="px-4 py-3.5 w-[11%] min-w-[100px]">CẬP NHẬT</th>
+                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-line bg-white">
+            <tbody className="divide-y divide-slate-100">
               {pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-ink-muted">
+                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
                     Không tìm thấy bài học phát âm nào khớp bộ lọc.
                   </td>
                 </tr>
@@ -458,116 +389,127 @@ function PronunciationPage() {
                 pageData.map((item) => {
                   const isPublished = item.status === 'published'
                   const isPlaying = playingAudioId === item.id
+                  const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.A1
 
                   return (
                     <tr
                       key={item.id}
                       onClick={() => setActiveLesson(item)}
-                      className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
                     >
                       {/* Tên bài học */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3.5">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600 group-hover:scale-105 transition-transform">
-                            <Headphones size={18} strokeWidth={2} />
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600">
+                            <Headphones size={18} strokeWidth={1.75} />
                           </div>
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-navy-800 text-sm group-hover:text-brand-600 transition-colors">
+                              <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
                                 {item.title}
                               </span>
                               {item.ipaSymbol && (
-                                <span className="font-mono text-xs text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-md font-semibold">
+                                <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md font-semibold border border-brand-100">
                                   {item.ipaSymbol}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-ink-muted mt-0.5">
-                              {formatRelativeTime(item.updatedAt)}
-                            </p>
+                            <span className="line-clamp-1 text-xs text-slate-500 mt-0.5">
+                              {item.description}
+                            </span>
                           </div>
                         </div>
                       </td>
 
                       {/* Phân loại âm */}
-                      <td className="px-4 py-4 font-medium text-navy-800">
+                      <td className="px-4 py-4.5 text-sm font-medium text-slate-700 whitespace-nowrap">
                         {item.category}
                       </td>
 
                       {/* Cấp độ */}
-                      <td className="px-4 py-4 text-center">
-                        <span className="inline-flex items-center justify-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-brand-600 border border-blue-100">
+                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
+                          style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
+                        >
                           {item.level}
                         </span>
                       </td>
 
-                      {/* Audio */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
+                      {/* Mẫu Audio */}
+                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center gap-2">
                           <button
                             type="button"
                             onClick={(e) => handlePlayAudio(e, item)}
                             className={cn(
-                              'flex h-7 w-7 items-center justify-center rounded-full transition-colors cursor-pointer',
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all cursor-pointer shadow-2xs',
                               isPlaying
                                 ? 'bg-brand-500 text-white animate-pulse'
-                                : 'bg-slate-100 text-navy-800 hover:bg-brand-100 hover:text-brand-600',
+                                : 'bg-blue-50 text-brand-600 hover:bg-brand-500 hover:text-white',
                             )}
-                            title="Nghe thử âm mẫu"
+                            title={isPlaying ? 'Dừng audio' : 'Nghe thử âm mẫu'}
                           >
-                            <Play size={13} fill="currentColor" />
+                            <Volume2 size={14} />
                           </button>
-                          <span className="text-xs text-ink-muted font-medium">
-                            {item.audioSampleCount || 24} samples
+                          <span className="font-bold text-slate-800 text-sm">
+                            {item.audioSampleCount || 24} mẫu
                           </span>
                         </div>
                       </td>
 
                       {/* Trạng thái */}
-                      <td className="px-4 py-4 text-center">
-                        {isPublished ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            Published
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                            Draft
-                          </span>
-                        )}
+                      <td className="px-4 py-4.5 whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: isPublished ? '#ecfdf5' : '#f1f5f9',
+                            color: isPublished ? '#059669' : '#475569',
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: isPublished ? '#10b981' : '#94a3b8' }}
+                          />
+                          <span>{isPublished ? 'Published' : 'Draft'}</span>
+                        </span>
+                      </td>
+
+                      {/* Cập nhật */}
+                      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+                        {formatRelativeTime(item.updatedAt)}
                       </td>
 
                       {/* Thao tác */}
                       <td
                         onClick={(e) => e.stopPropagation()}
-                        className="px-5 py-4 text-right"
+                        className="px-6 py-4.5 whitespace-nowrap text-right"
                       >
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1 text-slate-400">
                           <button
                             type="button"
                             onClick={() => setActiveLesson(item)}
-                            className="rounded-lg p-1.5 text-ink-muted hover:bg-slate-100 hover:text-brand-600 transition-colors cursor-pointer"
+                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
                             title="Xem chi tiết bài học"
                           >
-                            <Eye size={15} />
+                            <Eye size={17} />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleOpenEdit(e, item)}
-                            className="rounded-lg p-1.5 text-ink-muted hover:bg-slate-100 hover:text-navy-800 transition-colors cursor-pointer"
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                             title="Chỉnh sửa bài học"
                           >
-                            <Pencil size={15} />
+                            <Pencil size={17} />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleDuplicate(e, item)}
-                            className="rounded-lg p-1.5 text-ink-muted hover:bg-slate-100 hover:text-navy-800 transition-colors cursor-pointer"
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                             title="Nhân bản bài học"
                           >
-                            <Copy size={15} />
+                            <Copy size={17} />
                           </button>
                           <button
                             type="button"
@@ -575,10 +517,10 @@ function PronunciationPage() {
                               e.stopPropagation()
                               setDeleteTarget(item)
                             }}
-                            className="rounded-lg p-1.5 text-ink-muted hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
+                            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
                             title="Xóa bài học"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={17} />
                           </button>
                         </div>
                       </td>
@@ -590,15 +532,15 @@ function PronunciationPage() {
           </table>
         </div>
 
-        {/* ─── Footer Pagination (Image 2 Mockup) ─────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-          <p className="text-xs text-ink-muted">
+        {/* ─── Footer Pagination ─────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-3.5">
+          <p className="text-xs text-slate-500">
             Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
             <strong>{total}</strong> bài học
           </p>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-      </Card>
+      </div>
 
       {/* ─── Modal Create / Edit Lesson ──────────────────────────────────── */}
       <Modal
@@ -946,7 +888,7 @@ function PronunciationPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </main>
+    </div>
   )
 }
 

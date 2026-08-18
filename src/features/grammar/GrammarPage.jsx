@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   BookOpen,
   CheckCircle2,
   Copy,
+  Crown,
   Eye,
   FileCheck2,
   FileText,
@@ -11,6 +13,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Send,
   Sparkles,
   Tag,
   Trash2,
@@ -29,7 +32,7 @@ import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
-import { cn, formatNumber } from '@/lib/utils'
+import { cn, formatNumber, formatRelativeTime } from '@/lib/utils'
 import { GRAMMAR_TOPICS, grammarLessons } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
 
@@ -47,6 +50,15 @@ const LEVEL_TONE = {
   B2: 'warning',
   C1: 'danger',
   C2: 'danger',
+}
+
+const LEVEL_COLOR = {
+  A1: { bg: '#f0fdf4', text: '#15803d' },
+  A2: { bg: '#f0fdf4', text: '#15803d' },
+  B1: { bg: '#eff6ff', text: '#1d4ed8' },
+  B2: { bg: '#eef2ff', text: '#4f46e5' },
+  C1: { bg: '#faf5ff', text: '#7c3aed' },
+  C2: { bg: '#faf5ff', text: '#7c3aed' },
 }
 
 const PAGE_SIZE = 8
@@ -233,317 +245,241 @@ function GrammarPage() {
     }
   }
 
-  const formatRelativeTime = (isoString) => {
-    if (!isoString) return 'Vừa xong'
-    const diffHours = Math.floor((Date.now() - new Date(isoString).getTime()) / (1000 * 60 * 60))
-    if (diffHours < 1) return 'Vừa xong'
-    if (diffHours < 24) return `${diffHours} giờ trước`
-    const diffDays = Math.floor(diffHours / 24)
-    if (diffDays === 1) return 'Hôm qua'
-    if (diffDays < 7) return `${diffDays} ngày trước`
-    return new Date(isoString).toLocaleDateString('vi-VN')
-  }
+  const isTeacher = user?.role === 'teacher'
 
   return (
-    <main className="flex-1 bg-[#f8fafc] p-4 sm:p-6 space-y-6">
-      {/* ─── Header & Top Actions ────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-900 tracking-tight">
-            Quản lý Bài học Ngữ pháp
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Biên soạn và quản lý các bài học cấu trúc ngữ pháp hệ thống.
-          </p>
+    <div className="space-y-4">
+      {/* Top action & Quota */}
+      {isTeacher && (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-brand-50/70 px-4 py-2.5 text-xs shadow-2xs">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
+            <Crown size={13} />
+          </span>
+          <div>
+            <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
+            <span className="text-ink-muted">
+              Bạn đã tạo <strong className="text-brand-600 font-bold">{lessons.length}</strong> bài học · Hạn mức{' '}
+              <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
+            </span>
+          </div>
+          <Link to="/goi-dich-vu" className="ml-auto font-semibold text-brand-600 hover:underline">
+            Chi tiết gói →
+          </Link>
         </div>
+      )}
 
-        <Button
-          icon={Plus}
-          onClick={handleOpenCreate}
-          className="bg-navy-800 hover:bg-navy-900 text-white shadow-sm font-semibold px-4 py-2.5 rounded-xl cursor-pointer"
-        >
-          Thêm bài học ngữ pháp
-        </Button>
-      </div>
-
-      {/* ─── Quick Stats Summary ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Tổng bài học
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-brand-600">
-              <BookOpen size={16} />
-            </span>
+      {/* ─── Table Card (Matching Benchmark Design) ────────────────────── */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Toolbar & Search */}
+        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
+            <Search size={18} className="shrink-0 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              placeholder="Tìm kiếm bài học, cấu trúc ngữ pháp..."
+              className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+            />
           </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">{stats.totalLessons}</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Đã xuất bản
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-              <CheckCircle2 size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-emerald-700">{stats.publishedCount}</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Tổng bài tập
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-              <FileCheck2 size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">{stats.totalExercises}</p>
-        </Card>
-
-        <Card className="p-4 bg-white border border-line shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Lượt thực hành
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
-              <Users size={16} />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-navy-800">
-            {formatNumber(stats.totalAttempts)}
-          </p>
-        </Card>
-      </div>
-
-      {/* ─── Filter Bar ─────────────────────────────────────────────────── */}
-      <Card className="p-4 bg-white border border-line shadow-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Chủ điểm */}
-          <div className="w-full sm:w-auto min-w-[200px]">
-            <Select
+          <div className="flex flex-wrap items-center gap-2.5">
+            <select
               value={selectedTopic}
-              onChange={(e) => {
-                setSelectedTopic(e.target.value)
-                setPage(1)
-              }}
-              className="text-xs bg-canvas rounded-lg border-line"
+              onChange={(e) => { setSelectedTopic(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {GRAMMAR_TOPICS.map((topic) => (
                 <option key={topic} value={topic}>
-                  Chủ điểm: {topic}
+                  {topic === 'Tất cả chủ điểm' ? 'Chủ điểm: Tất cả' : topic}
                 </option>
               ))}
-            </Select>
-          </div>
+            </select>
 
-          {/* CEFR Level */}
-          <div className="w-full sm:w-auto min-w-[140px]">
-            <Select
+            <select
               value={selectedLevel}
-              onChange={(e) => {
-                setSelectedLevel(e.target.value)
-                setPage(1)
-              }}
-              className="text-xs bg-canvas rounded-lg border-line"
+              onChange={(e) => { setSelectedLevel(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {CEFR_LEVELS.map((lvl) => (
                 <option key={lvl} value={lvl}>
-                  {lvl === 'Tất cả' ? 'Cấp độ CEFR: Tất cả' : `Cấp độ ${lvl}`}
+                  {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : `Cấp độ ${lvl}`}
                 </option>
               ))}
-            </Select>
-          </div>
+            </select>
 
-          {/* Trạng thái */}
-          <div className="w-full sm:w-auto min-w-[160px]">
-            <Select
+            <select
               value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value)
-                setPage(1)
-              }}
-              className="text-xs bg-canvas rounded-lg border-line"
+              onChange={(e) => { setSelectedStatus(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
-            </Select>
-          </div>
+            </select>
 
-          {/* Search Bar */}
-          <div className="flex-1 min-w-[220px] relative">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
-            />
-            <input
-              type="text"
-              placeholder="Lọc nhanh bài học, cấu trúc..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="w-full rounded-lg border border-line bg-canvas pl-9 pr-3 py-2 text-xs focus:border-brand-500 focus:outline-none transition-colors"
-            />
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>Thêm bài học</span>
+            </button>
           </div>
         </div>
-      </Card>
 
-      {/* ─── Lessons Card List (Image 1 Mockup) ─────────────────────────── */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          title="Không tìm thấy bài học ngữ pháp nào"
-          description="Thử thay đổi bộ lọc hoặc tạo bài học ngữ pháp mới."
-          actionLabel="+ Thêm bài học ngữ pháp"
-          onAction={handleOpenCreate}
-        />
-      ) : (
-        <div className="space-y-3.5">
-          {pageData.map((item) => {
-            const isPublished = item.status === 'published'
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-3.5 w-[36%] min-w-[260px]">BÀI HỌC NGỮ PHÁP</th>
+                <th className="px-4 py-3.5 w-[14%] min-w-[120px]">CHỦ ĐIỂM</th>
+                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
+                <th className="px-4 py-3.5 text-center w-[11%] min-w-[90px]">SỐ BÀI TẬP</th>
+                <th className="px-4 py-3.5 w-[14%] min-w-[130px]">TRẠNG THÁI</th>
+                <th className="px-4 py-3.5 w-[11%] min-w-[100px]">CẬP NHẬT</th>
+                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                    Không tìm thấy bài học ngữ pháp nào phù hợp
+                  </td>
+                </tr>
+              ) : (
+                pageData.map((item) => {
+                  const isPublished = item.status === 'published'
+                  const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.B1
 
-            return (
-              <div
-                key={item.id}
-                onClick={() => setActiveLesson(item)}
-                className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4 sm:p-5 shadow-xs transition-all hover:border-brand-400 hover:shadow-md cursor-pointer"
-              >
-                {/* Left: Icon & Title & Topic */}
-                <div className="flex items-center gap-4 min-w-0 md:w-[35%]">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50/80 text-brand-600 transition-transform group-hover:scale-105">
-                    <BookOpen size={22} strokeWidth={1.75} />
-                  </div>
+                  return (
+                    <tr
+                      key={item.id}
+                      onClick={() => setActiveLesson(item)}
+                      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+                    >
+                      {/* Tên bài học */}
+                      <td className="px-6 py-4.5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600">
+                            <BookOpen size={18} strokeWidth={1.75} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 text-sm tracking-tight block group-hover:text-brand-600 transition-colors">
+                              {item.title}
+                            </span>
+                            {item.formula && (
+                              <span className="font-mono text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                {item.formula}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
 
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm sm:text-base font-bold text-navy-800 group-hover:text-brand-600 transition-colors">
-                      {item.title}
-                    </h3>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
-                      <Layers size={13} className="text-slate-400" />
-                      <span>{item.topic}</span>
-                    </div>
-                  </div>
-                </div>
+                      {/* Chủ điểm */}
+                      <td className="px-4 py-4.5 text-sm font-medium text-slate-700 whitespace-nowrap">
+                        {item.topic}
+                      </td>
 
-                {/* Middle Attributes: CẤP ĐỘ, BÀI TẬP, TRẠNG THÁI */}
-                <div className="grid grid-cols-3 sm:grid-cols-3 gap-3 md:gap-8 items-center border-t md:border-t-0 border-line/60 pt-3 md:pt-0">
-                  {/* CẤP ĐỘ */}
-                  <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                      CẤP ĐỘ
-                    </span>
-                    <div className="mt-1">
-                      <span className="inline-flex items-center justify-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-brand-600 border border-blue-100">
-                        {item.level}
-                      </span>
-                    </div>
-                  </div>
+                      {/* Cấp độ */}
+                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
+                          style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
+                        >
+                          {item.level}
+                        </span>
+                      </td>
 
-                  {/* BÀI TẬP */}
-                  <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                      BÀI TẬP
-                    </span>
-                    <p className="mt-1 text-sm font-bold text-navy-800">
-                      {item.exerciseCount || 15}
-                    </p>
-                  </div>
+                      {/* Số bài tập */}
+                      <td className="px-4 py-4.5 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
+                        {item.exerciseCount || 15} bài
+                      </td>
 
-                  {/* TRẠNG THÁI */}
-                  <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                      TRẠNG THÁI
-                    </span>
-                    <div className="mt-1 flex items-center gap-1.5">
-                      <span
-                        className={cn(
-                          'h-2 w-2 rounded-full',
-                          isPublished ? 'bg-brand-500' : 'bg-slate-400',
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'text-xs font-medium',
-                          isPublished ? 'text-brand-700' : 'text-slate-500',
-                        )}
-                      >
-                        {isPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      {/* Trạng thái */}
+                      <td className="px-4 py-4.5 whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: isPublished ? '#ecfdf5' : '#f1f5f9',
+                            color: isPublished ? '#059669' : '#475569',
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: isPublished ? '#10b981' : '#94a3b8' }}
+                          />
+                          <span>{isPublished ? 'Published' : 'Draft'}</span>
+                        </span>
+                      </td>
 
-                {/* Author & Timestamp */}
-                <div className="hidden lg:block text-right min-w-[130px]">
-                  <p className="text-xs font-semibold text-navy-800">{item.authorName}</p>
-                  <p className="text-[11px] text-ink-muted mt-0.5">
-                    {formatRelativeTime(item.updatedAt)}
-                  </p>
-                </div>
+                      {/* Cập nhật */}
+                      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+                        {formatRelativeTime(item.updatedAt)}
+                      </td>
 
-                {/* Action Buttons */}
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center justify-end gap-1 shrink-0 border-t sm:border-t-0 border-line/60 pt-2.5 sm:pt-0"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveLesson(item)}
-                    className="rounded-lg p-2 text-ink-muted hover:bg-slate-100 hover:text-brand-600 transition-colors cursor-pointer"
-                    title="Xem chi tiết bài học"
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleOpenEdit(e, item)}
-                    className="rounded-lg p-2 text-ink-muted hover:bg-slate-100 hover:text-navy-800 transition-colors cursor-pointer"
-                    title="Chỉnh sửa bài học"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDuplicate(e, item)}
-                    className="rounded-lg p-2 text-ink-muted hover:bg-slate-100 hover:text-navy-800 transition-colors cursor-pointer"
-                    title="Nhân bản bài học"
-                  >
-                    <Copy size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteTarget(item)
-                    }}
-                    className="rounded-lg p-2 text-ink-muted hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-                    title="Xóa bài học"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-
-          {/* ─── Pagination Footer ──────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
-            <p className="text-xs text-ink-muted">
-              Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-
-              <strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
-              <strong>{total}</strong> bài học
-            </p>
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-          </div>
+                      {/* Thao tác */}
+                      <td className="px-6 py-4.5 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1 text-slate-400" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => setActiveLesson(item)}
+                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEdit(e, item)}
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Chỉnh sửa"
+                          >
+                            <Pencil size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDuplicate(e, item)}
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Nhân bản"
+                          >
+                            <Copy size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteTarget(item)
+                            }}
+                            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Pagination */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+          <p className="text-xs text-slate-500">
+            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-
+            <strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+            <strong>{total}</strong> bài học
+          </p>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </div>
+      </div>
 
       {/* ─── Modal Create / Edit Lesson ──────────────────────────────────── */}
       <Modal
@@ -851,7 +787,7 @@ function GrammarPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </main>
+    </div>
   )
 }
 

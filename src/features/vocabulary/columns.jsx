@@ -25,12 +25,16 @@ export const vocabularyColumns = [
   columnHelper.accessor('word', {
     header: 'Từ vựng',
     enableSorting: true,
-    cell: (info) => <span className="font-semibold text-brand-500">{info.getValue()}</span>,
+    cell: (info) => <span className="font-bold text-slate-900 text-sm tracking-tight">{info.getValue()}</span>,
   }),
   columnHelper.accessor('pronunciation', {
     header: 'Phiên âm IPA',
     enableSorting: false,
-    cell: (info) => <span className="font-mono text-sm text-ink-muted">{info.getValue()}</span>,
+    cell: (info) => (
+      <span className="font-mono text-xs text-slate-600 bg-slate-100/80 px-2 py-1 rounded-md border border-slate-200/60 font-medium">
+        {info.getValue()}
+      </span>
+    ),
   }),
   columnHelper.accessor('partOfSpeech', {
     header: 'Từ loại',
@@ -42,7 +46,7 @@ export const vocabularyColumns = [
   columnHelper.accessor('vietnameseMeaning', {
     header: 'Nghĩa tiếng Việt',
     enableSorting: false,
-    cell: (info) => <span>{info.getValue()}</span>,
+    cell: (info) => <span className="text-sm font-medium text-slate-800">{info.getValue()}</span>,
   }),
   columnHelper.accessor('cefrLevel', {
     header: 'Cấp độ CEFR',
@@ -52,6 +56,6 @@ export const vocabularyColumns = [
   columnHelper.accessor('topic', {
     header: 'Chủ đề',
     enableSorting: false,
-    cell: (info) => <span>{info.getValue()}</span>,
+    cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
   }),
 ]

@@ -223,7 +223,7 @@ function QuizBankPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
+    <div className="space-y-4">
       {/* Header & Quota */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {isTeacher ? (
@@ -538,8 +538,8 @@ function QuizBankPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line">
             <p className="text-xs text-ink-muted">
-              Hiển thị <strong>{setsTotal === 0 ? 0 : (setsPage - 1) * setsPageSize + 1}</strong>-
-              <strong>{Math.min(setsPage * setsPageSize, setsTotal)}</strong> trong tổng số{' '}
+              Hiển thị <strong>{setsTotal === 0 ? 0 : (setsPage - 1) * SETS_PAGE_SIZE + 1}</strong>-
+              <strong>{Math.min(setsPage * SETS_PAGE_SIZE, setsTotal)}</strong> trong tổng số{' '}
               <strong>{formatNumber(setsTotal)}</strong> đề thi
             </p>
             <Pagination page={setsPage} totalPages={setsTotalPages} onChange={setSetsPage} />
@@ -650,7 +650,7 @@ function QuizBankPage() {
         description={`Câu hỏi "${deleteTarget?.id}" sẽ bị xoá khỏi ngân hàng câu hỏi. Hành động này không thể hoàn tác.`}
         confirmText="Xoá câu hỏi"
       />
-    </main>
+    </div>
   )
 }
 

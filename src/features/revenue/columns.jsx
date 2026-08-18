@@ -30,7 +30,7 @@ export const transactionColumns = [
   columnHelper.accessor('createdAt', {
     header: 'Ngày',
     enableSorting: true,
-    cell: (info) => formatDate(info.getValue()),
+    cell: (info) => <span className="text-sm text-slate-600 font-medium">{formatDate(info.getValue())}</span>,
   }),
   columnHelper.accessor('studentName', {
     header: 'Học viên',
@@ -38,27 +38,31 @@ export const transactionColumns = [
     cell: (info) => {
       const transaction = info.row.original
       return (
-        <div className="flex items-center gap-2.5">
-          <Avatar name={transaction.studentName} src={transaction.studentAvatar} size="sm" />
+        <div className="flex items-center gap-3">
+          <Avatar name={transaction.studentName} src={transaction.studentAvatar} size="md" />
           <div>
-            <p className="font-medium text-navy-700">{transaction.studentName}</p>
-            <p className="text-xs text-ink-muted">{transaction.studentEmail}</p>
+            <p className="font-bold text-slate-900 text-sm">{transaction.studentName}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{transaction.studentEmail}</p>
           </div>
         </div>
       )
     },
   }),
   columnHelper.accessor('plan', {
-    header: 'Gói',
+    header: 'Gói dịch vụ',
     enableSorting: false,
-    cell: (info) => PLAN_LABEL[info.getValue()] ?? info.getValue(),
+    cell: (info) => (
+      <span className="text-sm font-medium text-slate-700">
+        {PLAN_LABEL[info.getValue()] ?? info.getValue()}
+      </span>
+    ),
   }),
   columnHelper.accessor('amount', {
     header: 'Khoản tiền',
     enableSorting: true,
     meta: { align: 'right' },
     cell: (info) => (
-      <span className="font-medium text-navy-700">{formatCurrency(info.getValue(), { compact: false })}</span>
+      <span className="font-bold text-slate-900 text-sm">{formatCurrency(info.getValue(), { compact: false })}</span>
     ),
   }),
   columnHelper.accessor('status', {
@@ -70,7 +74,7 @@ export const transactionColumns = [
     },
   }),
   columnHelper.accessor('paymentMethod', {
-    header: 'Phương thức',
+    header: 'Phương thức thanh toán',
     enableSorting: false,
     cell: (info) => {
       const method = info.getValue()
@@ -79,7 +83,7 @@ export const transactionColumns = [
         bank_transfer: 'Chuyển khoản',
         e_wallet: 'Ví điện tử',
       }
-      return methodLabel[method] ?? method
+      return <span className="text-sm text-slate-600">{methodLabel[method] ?? method}</span>
     },
   }),
 ]

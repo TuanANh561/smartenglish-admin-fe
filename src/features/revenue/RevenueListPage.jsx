@@ -28,7 +28,7 @@ function RevenueListPage() {
   })
 
   return (
-    <main className="flex-1 bg-canvas p-6 space-y-5">
+    <div className="space-y-4">
       {/* KPI row */}
       {statsQuery.data && (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -106,7 +106,7 @@ function RevenueListPage() {
           />
         </div>
       </Card>
-    </main>
+    </div>
   )
 }
 

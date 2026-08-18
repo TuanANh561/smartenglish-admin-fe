@@ -130,21 +130,7 @@ function PermissionsPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">Phân quyền hệ thống</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            Quản lý vai trò người dùng và cấu hình quyền truy cập chi tiết cho từng nhóm trong SmartEnglish AI Admin Portal.
-          </p>
-        </div>
-
-        <Button icon={Plus} onClick={() => setIsCreateOpen(true)}>
-          Tạo vai trò mới
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {/* Master - Detail 2-Column Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Danh sách vai trò */}
@@ -153,6 +139,9 @@ function PermissionsPage() {
             <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
               Danh sách vai trò ({roles.length})
             </span>
+            <Button size="sm" icon={Plus} onClick={() => setIsCreateOpen(true)}>
+              Tạo vai trò mới
+            </Button>
           </div>
 
           <div className="space-y-3">
@@ -377,7 +366,7 @@ function PermissionsPage() {
           </div>
         </form>
       </Drawer>
-    </main>
+    </div>
   )
 }
 

@@ -108,7 +108,7 @@ function CourseDetailPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Top Breadcrumb */}
       <div>
         <Link
@@ -159,9 +159,9 @@ function CourseDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-2xl font-bold text-navy-700 leading-tight">
+              <h2 className="text-2xl font-bold text-navy-700 leading-tight">
                 {course.title}
-              </h1>
+              </h2>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-ink-muted">
                 <span className="flex items-center gap-1.5">
@@ -514,7 +514,7 @@ function CourseDetailPage() {
           </Card>
         </div>
       )}
-    </main>
+    </div>
   )
 }
 

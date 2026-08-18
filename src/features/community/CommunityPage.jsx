@@ -7,6 +7,7 @@ import {
   Heart,
   Image as ImageIcon,
   MessageCircle,
+  MessageSquare,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -214,29 +215,7 @@ function CommunityPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Top Header with Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">Cộng đồng Giáo viên & Học liệu</h1>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            Không gian chia sẻ kiến thức, tài liệu bài giảng, mẹo luyện thi và thảo luận học thuật.
-          </p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-80">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm bài viết, giáo viên..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border border-line bg-white pl-10 pr-4 py-2 text-xs focus:border-brand-500 focus:outline-none shadow-xs"
-          />
-        </div>
-      </div>
-
+    <div className="space-y-4">
       {/* Main 2-Column Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* ─── LEFT COLUMN: FEED & POST CREATOR (68%) ───────────────────── */}
@@ -448,7 +427,7 @@ function CommunityPage() {
                     </div>
 
                     {/* Post Content */}
-                    <div className="text-xs text-ink leading-relaxed space-y-2 whitespace-pre-line">
+                    <div className="text-sm text-slate-800 leading-relaxed space-y-2.5 whitespace-pre-line">
                       <p>
                         {post.content.split(' ').map((word, idx) => {
                           if (word.startsWith('#')) {
@@ -477,7 +456,7 @@ function CommunityPage() {
                           className="w-full object-contain max-h-[420px] bg-slate-900/5"
                         />
                         {post.mediaCaption && (
-                          <div className="px-3 py-1.5 text-[11px] text-ink-muted bg-slate-50 border-t border-line text-center italic">
+                          <div className="px-3 py-1.5 text-xs text-slate-500 bg-slate-50 border-t border-line text-center italic">
                             {post.mediaCaption}
                           </div>
                         )}
@@ -486,44 +465,44 @@ function CommunityPage() {
 
                     {/* Attached Document File */}
                     {post.attachment && (
-                      <div className="flex items-center justify-between rounded-xl border border-line bg-slate-50/70 p-3 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold">
+                      <div className="flex items-center justify-between rounded-xl border border-line bg-slate-50/70 p-3.5 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-xs">
                             PDF
                           </span>
                           <div>
-                            <p className="font-semibold text-navy-700">{post.attachment.name}</p>
-                            <p className="text-[10px] text-ink-muted">{post.attachment.size}</p>
+                            <p className="font-bold text-slate-900 text-sm">{post.attachment.name}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{post.attachment.size}</p>
                           </div>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => toast.success(`Đang tải tập tin: ${post.attachment.name}`)}
-                          className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 cursor-pointer shadow-xs"
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600 cursor-pointer shadow-2xs transition-colors"
                         >
-                          <Download size={13} /> Tải về
+                          <Download size={14} /> Tải về
                         </button>
                       </div>
                     )}
 
                     {/* Engagement Actions */}
-                    <div className="flex items-center justify-between border-t border-line pt-3 text-xs text-ink-muted">
-                      <div className="flex items-center gap-5">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-sm text-slate-500">
+                      <div className="flex items-center gap-6">
                         {/* Like Button */}
                         <button
                           type="button"
                           onClick={() => handleLikePost(post.id)}
                           className={cn(
-                            'flex items-center gap-1.5 font-semibold transition-colors cursor-pointer',
+                            'flex items-center gap-1.5 font-semibold text-sm transition-colors cursor-pointer',
                             post.isLiked
                               ? 'text-red-500 font-bold'
                               : 'hover:text-red-500',
                           )}
                         >
                           <Heart
-                            size={16}
-                            fill={post.isLiked ? 'currentColor' : 'none'}
+                            size={18}
+                            className={cn(post.isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400')}
                           />
                           <span>{post.likesCount}</span>
                         </button>
@@ -536,10 +515,10 @@ function CommunityPage() {
                               activeCommentPostId === post.id ? null : post.id,
                             )
                           }
-                          className="flex items-center gap-1.5 font-semibold hover:text-navy-700 cursor-pointer transition-colors"
+                          className="flex items-center gap-1.5 font-semibold text-sm hover:text-brand-600 transition-colors cursor-pointer"
                         >
-                          <MessageCircle size={16} />
-                          <span>{post.commentsCount} Comments</span>
+                          <MessageSquare size={18} className="text-slate-400" />
+                          <span>{post.commentsCount}</span>
                         </button>
                       </div>
 
@@ -547,33 +526,26 @@ function CommunityPage() {
                       <button
                         type="button"
                         onClick={() => handleSharePost(post)}
-                        className="flex items-center gap-1.5 font-semibold hover:text-navy-700 cursor-pointer transition-colors"
+                        className="flex items-center gap-1.5 font-semibold text-sm hover:text-brand-600 transition-colors cursor-pointer"
                       >
-                        <Share2 size={15} />
-                        <span>Share</span>
+                        <Share2 size={18} className="text-slate-400" />
+                        <span>Chia sẻ</span>
                       </button>
                     </div>
 
                     {/* ─── EXPANDABLE COMMENTS SECTION ────────────────────── */}
                     {isCommentOpen && (
-                      <div className="border-t border-line pt-3 space-y-3 bg-slate-50/60 -mx-5 -mb-5 p-4 rounded-b-xl">
+                      <div className="border-t border-slate-100 pt-4 space-y-3">
                         {/* Existing comments */}
                         {post.comments?.length > 0 ? (
-                          <div className="space-y-2.5">
+                          <div className="space-y-2.5 pl-10">
                             {post.comments.map((cmt) => (
-                              <div key={cmt.id} className="flex items-start gap-2.5 text-xs">
-                                <img
-                                  src={cmt.authorAvatar}
-                                  alt={cmt.authorName}
-                                  className="h-7 w-7 rounded-full object-cover border border-line shrink-0 mt-0.5"
-                                />
-                                <div className="flex-1 rounded-xl bg-white p-2.5 border border-line shadow-xs space-y-1">
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-bold text-navy-700">{cmt.authorName}</span>
-                                    <span className="text-[10px] text-ink-muted">{cmt.createdAt}</span>
-                                  </div>
-                                  <p className="text-ink">{cmt.content}</p>
+                              <div key={cmt.id} className="rounded-xl bg-slate-50 p-3 text-sm space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-slate-900 text-xs">{cmt.authorName}</span>
+                                  <span className="text-[10px] text-slate-400">{cmt.createdAt}</span>
                                 </div>
+                                <p className="text-slate-700 text-sm">{cmt.content}</p>
                               </div>
                             ))}
                           </div>
@@ -584,7 +556,7 @@ function CommunityPage() {
                         )}
 
                         {/* Add comment input */}
-                        <div className="flex items-center gap-2 pt-1">
+                        <div className="flex items-center gap-2.5 pt-1">
                           <input
                             type="text"
                             placeholder="Viết câu trả lời hoặc thảo luận..."
@@ -595,16 +567,15 @@ function CommunityPage() {
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleAddComment(post.id)
                             }}
-                            className="flex-1 rounded-full border border-line bg-white px-3.5 py-1.5 text-xs focus:border-brand-500 focus:outline-none"
+                            className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
                           />
-                          <Button
-                            size="sm"
-                            icon={Send}
+                          <button
+                            type="button"
                             onClick={() => handleAddComment(post.id)}
-                            className="rounded-full px-3"
+                            className="rounded-xl bg-brand-500 hover:bg-brand-600 p-2 text-white cursor-pointer transition-colors"
                           >
-                            Gửi
-                          </Button>
+                            <Send size={16} />
+                          </button>
                         </div>
                       </div>
                     )}
@@ -617,27 +588,41 @@ function CommunityPage() {
 
         {/* ─── RIGHT COLUMN: TOPICS & TOP TEACHERS (32%) ───────────────── */}
         <div className="lg:col-span-4 space-y-5">
+          {/* Search Bar */}
+          <div className="flex w-full justify-end">
+            <div className="relative w-full">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài viết, giáo viên..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-xs"
+              />
+            </div>
+          </div>
+
           {/* Chủ đề thảo luận (Trending Topics - Mockup Top Right) */}
           <Card className="p-5 border border-line shadow-xs space-y-4">
-            <h2 className="text-base font-bold text-navy-700">Chủ đề thảo luận</h2>
+            <h2 className="text-base font-bold text-slate-900">Chủ đề thảo luận</h2>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {TRENDING_TOPICS.map((topic) => (
                 <div
                   key={topic.tag}
                   onClick={() => setSelectedTag(selectedTag === topic.tag ? null : topic.tag)}
                   className={cn(
-                    'flex items-center justify-between p-2 rounded-xl transition-colors cursor-pointer group',
+                    'flex items-center justify-between p-2.5 rounded-xl transition-colors cursor-pointer group',
                     selectedTag === topic.tag
                       ? 'bg-blue-50 border border-blue-200'
                       : 'hover:bg-slate-50',
                   )}
                 >
                   <div>
-                    <p className="font-bold text-xs text-navy-700 group-hover:text-brand-600 transition-colors">
+                    <p className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition-colors">
                       {topic.label}
                     </p>
-                    <p className="text-[11px] text-ink-muted">{topic.postCount}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{topic.postCount}</p>
                   </div>
 
                   <span className="text-slate-400 group-hover:text-brand-600 transition-colors">
@@ -651,21 +636,21 @@ function CommunityPage() {
           {/* Giáo viên tiêu biểu (Featured Teachers - Mockup Bottom Right) */}
           <Card className="p-5 border border-line shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-navy-700">Giáo viên tiêu biểu</h2>
+              <h2 className="text-base font-bold text-slate-900">Giáo viên tiêu biểu</h2>
             </div>
 
             <div className="space-y-3.5">
               {teachers.map((teacher) => (
                 <div key={teacher.id} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <img
                       src={teacher.avatar}
                       alt={teacher.name}
-                      className="h-9 w-9 rounded-full object-cover border border-line shrink-0"
+                      className="h-10 w-10 rounded-full object-cover border border-slate-200 shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="font-bold text-xs text-navy-700 truncate">{teacher.name}</p>
-                      <p className="text-[10px] text-ink-muted truncate">{teacher.role}</p>
+                      <p className="font-bold text-sm text-slate-900 truncate">{teacher.name}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{teacher.role}</p>
                     </div>
                   </div>
 
@@ -673,10 +658,10 @@ function CommunityPage() {
                     type="button"
                     onClick={() => handleToggleFollow(teacher.id)}
                     className={cn(
-                      'rounded-full px-3 py-1 text-[11px] font-semibold transition-all cursor-pointer shrink-0',
+                      'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-2xs',
                       teacher.isFollowing
                         ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        : 'bg-blue-100 text-brand-700 hover:bg-blue-200 font-bold',
+                        : 'bg-blue-50 text-brand-700 hover:bg-blue-100 border border-blue-200 font-bold',
                     )}
                   >
                     {teacher.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
@@ -697,7 +682,7 @@ function CommunityPage() {
           </Card>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

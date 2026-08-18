@@ -101,22 +101,6 @@ function TeacherDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Lời chào + ngày ─────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">
-            Chào mừng trở lại, {user?.displayName?.split(' ').pop() ?? 'Giáo viên'} 👋
-          </h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            Dưới đây là tình hình lớp học của bạn hôm nay.
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-ink-muted">Hôm nay</p>
-          <p className="text-base font-semibold text-navy-700">{today}</p>
-        </div>
-      </div>
-
       {/* ── 4 KPI card ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {/* Tổng số lớp */}

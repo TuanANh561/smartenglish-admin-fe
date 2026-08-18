@@ -125,21 +125,10 @@ function TeacherPackagesPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700 flex items-center gap-2">
-            <Crown className="text-amber-500" size={26} />
-            Gói Dịch Vụ & Nâng Cấp Giảng Dạy
-          </h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            Mở rộng giới hạn lớp học, mở khóa tính năng AI nâng cao và nhận quyền lợi hỗ trợ giảng dạy độc quyền.
-          </p>
-        </div>
-
-        {/* Chu kỳ thanh toán toggle */}
-        <div className="flex items-center gap-2 rounded-xl border border-line bg-white p-1 shadow-sm self-start sm:self-auto">
+    <div className="space-y-6">
+      {/* Top action: Chu kỳ thanh toán toggle */}
+      <div className="flex items-center justify-end">
+        <div className="flex items-center gap-2 rounded-xl border border-line bg-white p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setBillingCycle('monthly')}
@@ -396,7 +385,7 @@ function TeacherPackagesPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

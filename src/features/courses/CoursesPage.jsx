@@ -102,30 +102,21 @@ function CoursesPage() {
   }
 
   return (
-    <main className="flex-1 bg-canvas p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-700">
-            {isAdmin ? 'Quản lý khóa học' : 'Quản lý Khóa học của tôi'}
-          </h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            {isAdmin
-              ? 'Xem, tạo mới và quản lý nội dung các khóa học trên toàn hệ thống.'
-              : 'Xem và quản lý các khóa học bạn đang phụ trách giảng dạy và biên soạn.'}
-          </p>
-        </div>
-
-        <Button
-          icon={Plus}
-          onClick={() => navigate('/hoc-lieu/khoa-hoc/tao-moi')}
-        >
-          Tạo khóa học mới
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {/* Filter Bar */}
       <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+            Bộ lọc & Danh sách khóa học
+          </span>
+          <Button
+            size="sm"
+            icon={Plus}
+            onClick={() => navigate('/hoc-lieu/khoa-hoc/tao-moi')}
+          >
+            Tạo khóa học mới
+          </Button>
+        </div>
         {/* Ownership quick filter for Teacher */}
         {isTeacher && (
           <div className="flex items-center gap-2 border-b border-line pb-3">
@@ -165,7 +156,7 @@ function CoursesPage() {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="relative lg:col-span-2">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+            <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm tên khóa học, giảng viên..."
@@ -174,7 +165,7 @@ function CoursesPage() {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="w-full rounded-lg border border-line bg-canvas pl-9 pr-3 py-2 text-xs focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -185,7 +176,7 @@ function CoursesPage() {
                 setCategoryFilter(e.target.value)
                 setPage(1)
               }}
-              className="text-xs"
+              className="text-sm rounded-xl"
             >
               <option value="all">Tất cả thể loại</option>
               <option value="Giao tiếp">Giao tiếp</option>
@@ -202,13 +193,13 @@ function CoursesPage() {
                 setCefrFilter(e.target.value)
                 setPage(1)
               }}
-              className="text-xs"
+              className="text-sm rounded-xl"
             >
               <option value="all">Cấp độ CEFR</option>
               <option value="A1">A1 Sơ cấp</option>
               <option value="A2">A2 Tiền trung cấp</option>
               <option value="B1">B1 Trung cấp</option>
-              <option value="B2">B2 Trung cấp cao</option>
+              <option value="B2">B2 Trung cao cấp</option>
               <option value="C1">C1 Cao cấp</option>
             </Select>
           </div>
@@ -220,9 +211,9 @@ function CoursesPage() {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="text-xs"
+              className="text-sm rounded-xl"
             >
-              <option value="all">Tất cả trạng thái</option>
+              <option value="all">Trạng thái</option>
               <option value="published">Đã xuất bản</option>
               <option value="pending">Chờ duyệt</option>
               <option value="draft">Bản nháp</option>
@@ -520,7 +511,7 @@ function CoursesPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }
 
