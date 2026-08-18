@@ -15,11 +15,6 @@ const DIFFICULTY_META = {
   hard: { label: 'Khó', tone: 'danger' },
 }
 
-const SOURCE_META = {
-  ai: { label: 'AI', tone: 'info' },
-  manual: { label: 'Thủ công', tone: 'neutral' },
-}
-
 const columnHelper = createColumnHelper()
 
 export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
@@ -50,9 +45,17 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
   }
 
   return [
-    columnHelper.accessor('id', {
-      header: 'ID',
-      cell: (info) => <span className="font-mono text-xs text-ink-muted">{info.getValue()}</span>,
+    columnHelper.accessor((row) => row.title || row.questionText || row.id, {
+      id: 'title',
+      header: 'Tiêu đề bài kiểm tra',
+      cell: (info) => {
+        const text = info.getValue() || 'Bài kiểm tra'
+        return (
+          <span className="text-ink font-medium" title={text}>
+            {text.length > 55 ? `${text.slice(0, 55)}…` : text}
+          </span>
+        )
+      },
     }),
     columnHelper.accessor('questionType', {
       header: 'Dạng bài',
@@ -71,9 +74,9 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
       },
     }),
     columnHelper.accessor('questionText', {
-      header: 'Câu hỏi',
+      header: 'Mục tiêu',
       cell: (info) => {
-        const text = info.getValue()
+        const text = info.getValue() || 'Bài kiểm tra'
         return (
           <span className="text-ink font-medium" title={text}>
             {text.length > 55 ? `${text.slice(0, 55)}…` : text}

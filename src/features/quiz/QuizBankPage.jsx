@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BarChart3,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -9,17 +8,13 @@ import {
   Crown,
   Eye,
   FileText,
-  ListFilter,
   Lock,
   Pencil,
   Plus,
   Send,
-  Settings,
-  Sparkles,
   Trash2,
   Upload,
   Users,
-  XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
@@ -35,7 +30,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import Select from '@/components/ui/Select'
 import Tabs from '@/components/ui/Tabs'
 import { formatNumber } from '@/lib/utils'
-import { QUIZ_STATS, quizQuestions } from '@/mocks/data/quizQuestions'
+import { quizQuestions } from '@/mocks/data/quizQuestions'
 import { EXAM_TRACK_META, quizSets, VERIFICATION_META } from '@/mocks/data/quizSets'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { buildQuizColumns, QUESTION_TYPE_META } from './columns'
@@ -79,7 +74,7 @@ function QuizBankPage() {
   const [examTrackFilter, setExamTrackFilter] = useState('all')
   const [setsPage, setSetsPage] = useState(1)
 
-  const checkOwnership = (item) => {
+  const checkOwnership = useCallback((item) => {
     if (!user) return false
     if (isTeacher) {
       return (
@@ -95,7 +90,7 @@ function QuizBankPage() {
       item.authorName?.includes('Hệ thống') ||
       item.authorName?.includes('Quản trị')
     )
-  }
+  }, [isTeacher, user])
 
   const canManage = (item) => {
     if (!user) return false
@@ -107,11 +102,11 @@ function QuizBankPage() {
 
   const myQuestionsCount = useMemo(() => {
     return publicQuizQuestions.filter((q) => checkOwnership(q)).length
-  }, [publicQuizQuestions, user])
+  }, [publicQuizQuestions, checkOwnership])
 
   const mySetsCount = useMemo(() => {
     return quizSets.filter((s) => checkOwnership(s)).length
-  }, [user])
+  }, [checkOwnership])
 
   // Lọc câu hỏi theo ownership + search + filter
   const filtered = useMemo(() => {
@@ -133,6 +128,7 @@ function QuizBankPage() {
 
       const matchSearch =
         !keyword ||
+        (q.title || '').toLowerCase().includes(keyword) ||
         (q.questionText || '').toLowerCase().includes(keyword) ||
         (q.relatedWord || '').toLowerCase().includes(keyword)
       const matchType = type === 'all' || q.questionType === type
@@ -142,7 +138,7 @@ function QuizBankPage() {
 
       return matchOwner && matchSearch && matchType && matchCefr && matchTopic && matchSource
     })
-  }, [search, type, cefr, topic, source, publicQuizQuestions, ownershipFilter, user])
+  }, [search, type, cefr, topic, source, publicQuizQuestions, ownershipFilter, checkOwnership])
 
   const total = filtered.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -169,7 +165,7 @@ function QuizBankPage() {
       const matchTrack = examTrackFilter === 'all' || set.examTrack === examTrackFilter
       return matchOwner && matchTrack
     })
-  }, [examTrackFilter, ownershipFilter, user])
+  }, [examTrackFilter, ownershipFilter, checkOwnership])
 
   const setsTotal = filteredSets.length
   const setsTotalPages = Math.max(1, Math.ceil(setsTotal / SETS_PAGE_SIZE))
@@ -196,7 +192,7 @@ function QuizBankPage() {
         },
         currentUser: user,
       }),
-    [user],
+    [checkOwnership, user],
   )
 
   const handleFilterChange = (setter) => (event) => {

@@ -382,44 +382,28 @@ export function buildPublicContent(type, fallbackItems = []) {
     }
 
     if (group === 'quiz') {
-      // Nếu có câu hỏi từ Gemini, flatten thành danh sách individual questions
-      if (item.questions && item.questions.length > 0) {
-        return item.questions.map((q, idx) => ({
-          id: q.id || `${item.id}-q${idx}`,
-          questionType: 'multiple_choice',
-          questionText: q.questionText || q.question || '',
-          options: q.options || [],
-          correctAnswer: q.correctAnswer || 'A',
-          explanationVi: q.explanationVi || '',
-          relatedWord: item.title,
-          cefrLevel: item.level,
-          topic: 'AI sinh',
-          difficulty: 'medium',
-          authorName: item.approvedBy || item.createdBy || 'Hoàng Thị Mai',
-          authorEmail: 'mai.ht@gmail.com',
-          source: 'ai',
-          status: 'approved',
-          createdAt: item.createdAt,
-          isAI: true,
-        }))
-      }
+      const quizTitle = item.title || 'Bài kiểm tra AI'
+      const questionCount = Array.isArray(item.questions) ? item.questions.length : 0
 
-      // Fallback: create placeholder questions from content
       return {
         id: item.id,
+        title: quizTitle,
         questionType: 'multiple_choice',
-        questionText: item.content || item.title,
-        options: ['Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'],
-        correctAnswer: 'Đáp án A',
-        explanationVi: 'Nội dung do AI sinh đã được duyệt và công bố.',
-        relatedWord: item.title,
+        questionText: quizTitle,
+        options: [],
+        correctAnswer: '',
+        explanationVi: item.content || item.definition || 'Nội dung do AI sinh đã được duyệt và công bố.',
+        relatedWord: quizTitle,
         cefrLevel: item.level,
-        topic: 'Từ vựng',
+        topic: 'AI sinh',
         difficulty: 'medium',
+        authorName: item.approvedBy || item.createdBy || 'Hoàng Thị Mai',
+        authorEmail: 'mai.ht@gmail.com',
         source: 'ai',
         status: 'approved',
         createdAt: item.createdAt,
         isAI: true,
+        questionCount,
       }
     }
 
