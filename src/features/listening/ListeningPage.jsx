@@ -23,6 +23,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
 import FilterChip from '@/components/ui/FilterChip'
+import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import { cn } from '@/lib/utils'
 import {
@@ -65,6 +66,8 @@ function ListeningPage() {
   const [topic, setTopic] = useState('all')
   const [accent, setAccent] = useState('all')
   const [view, setView] = useState('grid')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 6
 
   const publicLessons = useMemo(() => buildPublicContent('listening', listeningLessons), [])
 
@@ -117,6 +120,11 @@ function ListeningPage() {
       return matchOwner && matchTopic && matchAccent
     })
   }, [publicLessons, topic, accent, ownershipFilter, user])
+
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const start = (page - 1) * PAGE_SIZE
+  const pageData = filtered.slice(start, start + PAGE_SIZE)
 
   const handleEditClick = (e, item) => {
     e.stopPropagation()
@@ -290,7 +298,7 @@ function ListeningPage() {
             view === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1',
           )}
         >
-          {filtered.map((item) => {
+          {pageData.map((item) => {
             const status = STATUS_META[item.status]
             const isOwned = checkOwnership(item)
             const isSystem = item.authorEmail === 'system@smartenglish.vn' || item.authorName?.includes('Hệ thống')
@@ -314,79 +322,86 @@ function ListeningPage() {
                     <status.Icon size={12} strokeWidth={1.75} />
                     {status.label}
                   </Badge>
-                  <Waveform bars={item.waveform} />
-                  <button
-                    type="button"
-                    aria-label={`Nghe thử ${item.title}`}
-                    onClick={() => toast.success(`Đang phát: "${item.title}"`)}
-                    className="absolute inline-flex h-10 w-10 items-center justify-center rounded-full bg-navy-700 text-white shadow-[0_1px_2px_rgba(16,24,40,0.2)] hover:bg-navy-800 cursor-pointer"
-                  >
-                    <Play size={18} strokeWidth={1.75} fill="currentColor" />
-                  </button>
+
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-brand-600 group-hover:scale-105 transition-transform">
+                    <Play size={28} strokeWidth={1.75} className="ml-1" />
+                  </div>
                 </div>
 
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge tone="neutral">{item.level}</Badge>
-                    <Badge tone="neutral">{item.accent}</Badge>
-                    {item.isAI && <Badge tone="info">🤖 AI sinh</Badge>}
+                <div className="flex flex-1 flex-col justify-between p-4">
+                  <div>
+                    <h3 className="line-clamp-1 font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-ink-muted leading-relaxed">
+                      {item.description}
+                    </p>
+
+                    <div className="mt-3">
+                      <Waveform bars={item.waveform} />
+                    </div>
                   </div>
-                  <h3 className="mt-3 line-clamp-2 text-base font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-ink-muted">{item.description}</p>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
-                    <span className="flex items-center gap-1.5 text-sm text-ink-muted">
-                      <Clock size={16} strokeWidth={1.75} />
-                      {item.duration}
-                    </span>
+                  <div className="mt-4 border-t border-line pt-3">
+                    <div className="flex items-center justify-between text-xs text-ink-muted">
+                      <span className="flex items-center gap-1">
+                        <Clock size={13} strokeWidth={1.75} />
+                        {item.duration}
+                      </span>
+                      <span>{item.accent}</span>
+                      <span>{item.topic}</span>
+                    </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {/* Nút giao bài: Chỉ dành cho giáo viên và bài thuộc sở hữu của mình */}
-                      {isTeacher && checkOwnership(item) && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleAssignToClass(e, item)}
-                          className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
-                          title="Giao bài nghe cho lớp"
-                        >
-                          <Send size={12} />
-                          Giao bài
-                        </button>
-                      )}
+                    <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2.5">
+                      <span className="text-[11px] text-ink-muted truncate max-w-[120px]">
+                        {item.authorName || 'SmartEnglish'}
+                      </span>
 
-                      {/* Nút Sửa/Xóa: Hiển thị cho bài thuộc sở hữu hoặc Admin */}
-                      {canManage(item) ? (
-                        <>
+                      <div className="flex items-center gap-1">
+                        {isTeacher && (
                           <button
                             type="button"
-                            onClick={(e) => handleEditClick(e, item)}
-                            aria-label="Sửa bài nghe"
-                            className="p-1.5 text-ink-muted hover:text-brand-500 rounded-md cursor-pointer"
-                            title="Chỉnh sửa bài nghe"
+                            onClick={(e) => handleAssignToClass(e, item)}
+                            className="rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1 cursor-pointer"
+                            title="Giao bài nghe cho lớp"
                           >
-                            <Pencil size={15} strokeWidth={1.75} />
+                            <Send size={12} />
+                            Giao bài
                           </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteClick(e, item)}
-                            aria-label="Xoá bài nghe"
-                            className="p-1.5 text-ink-muted hover:text-[#B91C1C] rounded-md cursor-pointer"
-                            title="Xoá bài nghe"
+                        )}
+
+                        {/* Nút Sửa/Xóa */}
+                        {canManage(item) ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => handleEditClick(e, item)}
+                              aria-label="Sửa bài nghe"
+                              className="p-1.5 text-ink-muted hover:text-brand-500 rounded-md cursor-pointer"
+                              title="Chỉnh sửa bài nghe"
+                            >
+                              <Pencil size={15} strokeWidth={1.75} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteClick(e, item)}
+                              aria-label="Xoá bài nghe"
+                              className="p-1.5 text-ink-muted hover:text-[#B91C1C] rounded-md cursor-pointer"
+                              title="Xoá bài nghe"
+                            >
+                              <Trash2 size={15} strokeWidth={1.75} />
+                            </button>
+                          </>
+                        ) : (
+                          <span
+                            className="text-[10px] text-ink-muted italic px-2 py-1 bg-slate-50 rounded-md border border-slate-100 flex items-center gap-1"
+                            title="Chỉ tác giả mới có quyền giao bài hoặc chỉnh sửa bài nghe này"
                           >
-                            <Trash2 size={15} strokeWidth={1.75} />
-                          </button>
-                        </>
-                      ) : (
-                        <span
-                          className="text-[10px] text-ink-muted italic px-2 py-1 bg-slate-50 rounded-md border border-slate-100 flex items-center gap-1"
-                          title="Chỉ tác giả mới có quyền giao bài hoặc chỉnh sửa bài nghe này"
-                        >
-                          <Lock size={11} />
-                          Chỉ xem
-                        </span>
-                      )}
+                            <Lock size={11} />
+                            Chỉ xem
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -407,6 +422,15 @@ function ListeningPage() {
           </button>
         </div>
       )}
+
+      {/* Phân trang */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <p className="text-xs text-ink-muted">
+          Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+          <strong>{total}</strong> bài nghe
+        </p>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </div>
     </main>
   )
 }

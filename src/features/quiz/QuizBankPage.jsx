@@ -28,6 +28,7 @@ import FilterChip from '@/components/ui/FilterChip'
 import SearchInput from '@/components/ui/SearchInput'
 
 import EmptyState from '@/components/ui/EmptyState'
+import Pagination from '@/components/ui/Pagination'
 import Tabs from '@/components/ui/Tabs'
 import { formatNumber } from '@/lib/utils'
 import { quizQuestions } from '@/mocks/data/quizQuestions'
@@ -535,30 +536,13 @@ function QuizBankPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-ink-muted">
-              Trang {setsPage} / {setsTotalPages} · {formatNumber(setsTotal)} đề thi
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line">
+            <p className="text-xs text-ink-muted">
+              Hiển thị <strong>{setsTotal === 0 ? 0 : (setsPage - 1) * setsPageSize + 1}</strong>-
+              <strong>{Math.min(setsPage * setsPageSize, setsTotal)}</strong> trong tổng số{' '}
+              <strong>{formatNumber(setsTotal)}</strong> đề thi
             </p>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label="Trang trước"
-                disabled={setsPage <= 1}
-                onClick={() => setSetsPage((p) => p - 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-              >
-                <ChevronLeft size={18} strokeWidth={1.75} />
-              </button>
-              <button
-                type="button"
-                aria-label="Trang sau"
-                disabled={setsPage >= setsTotalPages}
-                onClick={() => setSetsPage((p) => p + 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-              >
-                <ChevronRight size={18} strokeWidth={1.75} />
-              </button>
-            </div>
+            <Pagination page={setsPage} totalPages={setsTotalPages} onChange={setSetsPage} />
           </div>
         </div>
       )}

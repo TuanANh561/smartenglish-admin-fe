@@ -11,11 +11,13 @@ import CourseDetailPage from '@/features/courses/CourseDetailPage'
 import CoursesPage from '@/features/courses/CoursesPage'
 import CreateCoursePage from '@/features/courses/CreateCoursePage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
+import GrammarPage from '@/features/grammar/GrammarPage'
 import ListeningPage from '@/features/listening/ListeningPage'
 import NotificationsPage from '@/features/notifications/NotificationsPage'
 import PermissionsPage from '@/features/permissions/PermissionsPage'
 import PremiumPage from '@/features/premium/PremiumPage'
 import TeacherPackagesPage from '@/features/premium/TeacherPackagesPage'
+import PronunciationPage from '@/features/pronunciation/PronunciationPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
 import ReadingPage from '@/features/reading/ReadingPage'
 import ReportsPage from '@/features/reports/ReportsPage'
@@ -38,12 +40,11 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'cong-dong', element: <CommunityPage /> },
-          { path: 'du-lieu-chi-tiet', element: <PlaceholderPage /> },
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
-          { path: 'hoc-lieu/ngu-phap', element: <PlaceholderPage /> },
-          { path: 'hoc-lieu/phat-am', element: <PlaceholderPage /> },
+          { path: 'hoc-lieu/ngu-phap', element: <GrammarPage /> },
+          { path: 'hoc-lieu/phat-am', element: <PronunciationPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
           { path: 'hoc-lieu/khoa-hoc/tao-moi', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },

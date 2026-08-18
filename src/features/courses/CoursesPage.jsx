@@ -27,6 +27,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import { cn, formatNumber } from '@/lib/utils'
 import { INITIAL_COURSES } from '@/mocks/data/courses'
@@ -376,45 +377,12 @@ function CoursesPage() {
             </table>
           </div>
 
-          {/* Footer Pagination */}
-          <div className="flex items-center justify-between border-t border-line px-5 py-3.5">
+          {/* Admin Footer Pagination */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
             <p className="text-xs text-ink-muted">
-              Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong số <strong>{total}</strong> khóa học
+              Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số <strong>{total}</strong> khóa học
             </p>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i + 1}
-                  type="button"
-                  onClick={() => setPage(i + 1)}
-                  className={cn(
-                    'inline-flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold cursor-pointer',
-                    page === i + 1
-                      ? 'bg-navy-700 text-white'
-                      : 'bg-white border border-line text-ink-muted hover:bg-slate-50',
-                  )}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         </Card>
       ) : (
@@ -544,32 +512,11 @@ function CoursesPage() {
           </div>
 
           {/* Teacher Footer Pagination */}
-          <div className="flex items-center justify-between border-t border-line pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
             <p className="text-xs text-ink-muted">
-              Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong số <strong>{total}</strong> khóa học
+              Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số <strong>{total}</strong> khóa học
             </p>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-3 py-1 text-xs font-semibold text-navy-700 bg-white border border-line rounded-md">
-                {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>
       )}

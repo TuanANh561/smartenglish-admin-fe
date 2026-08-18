@@ -248,11 +248,11 @@ function DataTable({
       </div>
 
       {showFooter && (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-ink-muted">
-            Hiển thị {(pagination.page - 1) * pagination.size + 1}-
-            {Math.min(pagination.page * pagination.size, pagination.total)} trên{' '}
-            {formatNumber(pagination.total)} mục
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line px-2">
+          <p className="text-xs text-ink-muted">
+            Hiển thị <strong>{(pagination.page - 1) * pagination.size + 1}</strong>-
+            <strong>{Math.min(pagination.page * pagination.size, pagination.total)}</strong> trong tổng số{' '}
+            <strong>{formatNumber(pagination.total)}</strong> mục
           </p>
           <Pagination page={pagination.page} totalPages={pagination.totalPages} onChange={onPageChange} />
         </div>

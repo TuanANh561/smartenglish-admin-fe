@@ -18,6 +18,7 @@ import {
   Users,
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
 import { CLASSES, CLASS_STATUS, CLASS_STUDENTS, LEVEL_COLOR } from '@/mocks/data/classes'
 import { useAuthStore } from '@/store/authStore'
 
@@ -240,48 +241,13 @@ function ClassListView({ onViewClass }) {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between border-t border-line px-4 py-3">
-          <span className="text-xs text-ink-muted">
-            Hiển thị{' '}
-            <span className="font-semibold text-navy-700">
-              {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–
-              {Math.min(page * PAGE_SIZE, filtered.length)}
-            </span>{' '}
-            trong <span className="font-semibold text-navy-700">{filtered.length}</span> lớp học
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-white text-ink-muted disabled:opacity-40 hover:bg-canvas"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={[
-                  'flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold transition-colors',
-                  p === page
-                    ? 'bg-navy-700 text-white'
-                    : 'border border-line bg-white text-ink-muted hover:bg-canvas',
-                ].join(' ')}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled={page === totalPages || totalPages === 0}
-              onClick={() => setPage((p) => p + 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-white text-ink-muted disabled:opacity-40 hover:bg-canvas"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
+          <p className="text-xs text-ink-muted">
+            Hiển thị <strong>{filtered.length === 0 ? 0 : Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}</strong>-
+            <strong>{Math.min(page * PAGE_SIZE, filtered.length)}</strong> trong tổng số{' '}
+            <strong>{filtered.length}</strong> lớp học
+          </p>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </div>
     </main>

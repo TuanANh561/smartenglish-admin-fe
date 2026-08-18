@@ -24,6 +24,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
 import Input from '@/components/ui/Input'
+import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import Tabs from '@/components/ui/Tabs'
 import { cn } from '@/lib/utils'
@@ -284,29 +285,12 @@ function NotificationsPage() {
         )}
 
         {/* Footer Pagination */}
-        <div className="flex items-center justify-between border-t border-line px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
           <p className="text-xs text-ink-muted">
-            Hiển thị {total === 0 ? 0 : start + 1}-{Math.min(start + PAGE_SIZE, total)} của {total} thông báo
+            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+            <strong>{total}</strong> thông báo
           </p>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </Card>
 

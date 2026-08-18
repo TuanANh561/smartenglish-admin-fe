@@ -25,6 +25,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
+import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import { cn } from '@/lib/utils'
 import { INITIAL_REPORTS, INITIAL_REPORTS_STATS } from '@/mocks/data/reports'
@@ -333,29 +334,12 @@ function ReportsPage() {
         </div>
 
         {/* Footer Pagination */}
-        <div className="flex items-center justify-between border-t border-line px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
           <p className="text-xs text-ink-muted">
-            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trên <strong>{total}</strong> báo cáo
+            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+            <strong>{total}</strong> báo cáo
           </p>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted hover:bg-canvas disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </Card>
 

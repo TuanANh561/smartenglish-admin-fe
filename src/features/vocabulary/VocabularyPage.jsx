@@ -161,14 +161,13 @@ function VocabularyPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-4 px-5 pb-5 flex items-center justify-between">
-            <p className="text-sm text-ink-muted">
-              Showing {start + 1} to {Math.min(start + PAGE_SIZE, total)} of {total} entries
-            </p>
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-          </div>
-        )}
+        <div className="mt-4 px-5 pb-4 pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line">
+          <p className="text-xs text-ink-muted">
+            Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
+            <strong>{total}</strong> từ vựng
+          </p>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </div>
       </Card>
     </main>
   )

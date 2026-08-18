@@ -15,7 +15,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Skeleton, { SkeletonCard, SkeletonText } from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
-import Pagination from '@/components/ui/Pagination'
+import Pagination, { PaginationBar } from '@/components/ui/Pagination'
 import Avatar from '@/components/ui/Avatar'
 import Tabs from '@/components/ui/Tabs'
 import Switch from '@/components/ui/Switch'
@@ -357,9 +357,14 @@ function UiKitchenSink() {
           />
         </Section>
 
-        <Section title="13. Pagination">
-          <Pagination page={page} totalPages={25} onChange={setPage} />
-          <p className="mt-2 text-xs text-ink-muted">Trang hiện tại: {page} / 25</p>
+        <Section title="13. Pagination & PaginationBar">
+          <div className="space-y-4">
+            <PaginationBar page={page} pageSize={10} total={245} itemLabel="học viên" onChange={setPage} />
+            <div className="pt-2">
+              <Pagination page={page} totalPages={25} onChange={setPage} />
+              <p className="mt-2 text-xs text-ink-muted">Trang hiện tại: {page} / 25</p>
+            </div>
+          </div>
         </Section>
 
         <Section title="14. Avatar">
