@@ -114,14 +114,18 @@ export const handlers = {
     ...findOr404(users, path.id),
     ...data,
   }),
-  [`POST ${ENDPOINTS.users.lock}`]: ({ path }) => ({
-    ...findOr404(users, path.id),
-    isActive: false,
-  }),
-  [`POST ${ENDPOINTS.users.unlock}`]: ({ path }) => ({
-    ...findOr404(users, path.id),
-    isActive: true,
-  }),
+  [`POST ${ENDPOINTS.users.lock}`]: ({ path }) => {
+    const target = users.find((item) => item.id === path.id)
+    if (!target) throw notFound
+    target.isActive = false
+    return structuredClone(target)
+  },
+  [`POST ${ENDPOINTS.users.unlock}`]: ({ path }) => {
+    const target = users.find((item) => item.id === path.id)
+    if (!target) throw notFound
+    target.isActive = true
+    return structuredClone(target)
+  },
 
   // ── Vai trò ─────────────────────────────────────────────────────
   [`GET ${ENDPOINTS.roles.list}`]: roles,

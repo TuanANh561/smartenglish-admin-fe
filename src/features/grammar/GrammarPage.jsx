@@ -262,7 +262,7 @@ function GrammarPage() {
           onClick={handleOpenCreate}
           className="bg-navy-800 hover:bg-navy-900 text-white shadow-sm font-semibold px-4 py-2.5 rounded-xl cursor-pointer"
         >
-          + Thêm bài học ngữ pháp
+          Thêm bài học ngữ pháp
         </Button>
       </div>
 

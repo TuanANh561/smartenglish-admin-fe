@@ -6,7 +6,7 @@ function Modal({ open, onClose, title, children, className }) {
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onClose?.()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
@@ -17,7 +17,7 @@ function Modal({ open, onClose, title, children, className }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
+      onClick={() => onClose?.()}
     >
       <div
         role="dialog"
@@ -32,9 +32,12 @@ function Modal({ open, onClose, title, children, className }) {
           {title && <h3 className="text-base font-semibold text-navy-700">{title}</h3>}
           <button
             type="button"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose?.()
+            }}
             aria-label="Đóng"
-            className="ml-auto rounded-full p-1 text-ink-muted hover:bg-canvas hover:text-ink"
+            className="ml-auto rounded-full p-1 text-ink-muted hover:bg-canvas hover:text-ink cursor-pointer transition-colors"
           >
             <X size={18} strokeWidth={1.75} />
           </button>
