@@ -1,5 +1,6 @@
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
+import AiChatWidget from '@/features/aiChat/AiChatWidget'
 
 function AppShell({ children, actions }) {
   return (
@@ -14,6 +15,9 @@ function AppShell({ children, actions }) {
           © 2026 SmartEnglish AI — Trang quản trị nội bộ
         </footer>
       </div>
+
+      {/* ─── Floating AI Chat Assistant Widget (Góc dưới bên phải) ────────── */}
+      <AiChatWidget />
     </div>
   )
 }
