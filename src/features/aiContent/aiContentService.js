@@ -2,12 +2,14 @@ import { aiContentItems } from '@/mocks/data/aiContent'
 
 // Key lưu trữ trong localStorage — thay đổi key này nếu muốn reset toàn bộ dữ liệu
 const STORAGE_KEY = 'smartenglish_ai_content_v1'
+const MEMORY_STORE = []
 
 const STATUS_LABELS = {
   GENERATING: 'GENERATING',
   PENDING_REVIEW: 'PENDING_REVIEW',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
+  DELETED: 'DELETED',
 }
 
 const TYPE_GROUPS = {
@@ -17,6 +19,11 @@ const TYPE_GROUPS = {
   listening: 'listening',
   quiz: 'quiz',
   exam: 'quiz',
+  toeic_part_5: 'quiz',
+  toeic_part_6: 'quiz',
+  toeic_part_7: 'quiz',
+  cloze_sentence: 'quiz',
+  cloze_paragraph: 'quiz',
 }
 
 function normalizeStatus(status) {
@@ -29,8 +36,15 @@ function normalizeType(type) {
 }
 
 function getStorage() {
-  if (typeof window === 'undefined') return null
-  return window.localStorage
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return window.localStorage
+  }
+
+  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+    return globalThis.localStorage
+  }
+
+  return null
 }
 
 // Chuẩn hóa một record để đảm bảo luôn có đầy đủ các field cần thiết
@@ -59,22 +73,29 @@ function normalizeRecord(item) {
     chartData: item.chartData ?? null,
     questions: item.questions ?? [],
     geminiPrompt: item.geminiPrompt ?? '',
+    deletedAt: item.deletedAt ?? null,
+    deletedBy: item.deletedBy ?? null,
   }
 }
 
-// Khởi tạo dữ liệu mẫu từ file mock khi localStorage chưa có gì
+// Khởi tạo dữ liệu mẫu từ file mock khi storage chưa có gì
 function seedRecords() {
   const base = (aiContentItems || []).map((item) => normalizeRecord(item))
   const storage = getStorage()
 
   if (storage) {
     storage.setItem(STORAGE_KEY, JSON.stringify(base))
+    return base
   }
 
-  return base
+  if (MEMORY_STORE.length === 0) {
+    MEMORY_STORE.push(...base)
+  }
+
+  return [...MEMORY_STORE]
 }
 
-// Đọc tất cả records từ localStorage, nếu chưa có thì seed dữ liệu mẫu
+// Đọc tất cả records từ storage, nếu chưa có thì seed dữ liệu mẫu
 export function getAIContentRecords() {
   const storage = getStorage()
 
@@ -90,6 +111,10 @@ export function getAIContentRecords() {
     // ignore and fallback to seed
   }
 
+  if (!storage && MEMORY_STORE.length > 0) {
+    return [...MEMORY_STORE].map((item) => normalizeRecord(item))
+  }
+
   return seedRecords()
 }
 
@@ -99,8 +124,11 @@ function persistRecords(records) {
 
   if (storage) {
     storage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+    return normalized
   }
 
+  MEMORY_STORE.length = 0
+  MEMORY_STORE.push(...normalized)
   return normalized
 }
 
@@ -133,6 +161,7 @@ export function getAIContentStats() {
     pending: records.filter((item) => item.status === 'PENDING_REVIEW').length,
     approved: records.filter((item) => item.status === 'APPROVED').length,
     rejected: records.filter((item) => item.status === 'REJECTED').length,
+    deleted: records.filter((item) => item.status === 'DELETED').length,
   }
 }
 
@@ -177,6 +206,9 @@ export function updateAIContent(id, payload = {}) {
   if (!target) return null
   if (target.status === 'APPROVED') {
     throw new Error('Không thể chỉnh sửa nội dung đã được duyệt.')
+  }
+  if (target.status === 'DELETED') {
+    throw new Error('Không thể chỉnh sửa nội dung trong thùng rác.')
   }
 
   const updated = normalizeRecord({
@@ -233,11 +265,12 @@ export function rejectAIContent(id, reason = '', currentUser = null) {
 
 // ─── Thu hồi nội dung đã duyệt (kéo về PENDING_REVIEW) ──────────────────────
 // Dùng khi nội dung đã publish nhưng phát hiện vi phạm — cần xét duyệt lại
-export function revokeAIContent(id, reason = '', currentUser = null) {
+export function revokeAIContent(id, reason = '') {
   const records = getAIContentRecords()
   const target = records.find((item) => item.id === id)
 
   if (!target) return null
+  if (target.status === 'DELETED') return target
   if (target.status !== 'APPROVED') return target
 
   const revoked = normalizeRecord({
@@ -251,6 +284,44 @@ export function revokeAIContent(id, reason = '', currentUser = null) {
 
   persistRecords(records.map((item) => (item.id === id ? revoked : item)))
   return revoked
+}
+
+export function softDeleteAIContent(id, currentUser = null) {
+  const records = getAIContentRecords()
+  const target = records.find((item) => item.id === id)
+
+  if (!target) return null
+  if (target.status === 'DELETED') return target
+
+  const deleted = normalizeRecord({
+    ...target,
+    status: 'DELETED',
+    deletedBy: currentUser?.displayName || currentUser?.email || 'Admin',
+    deletedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
+
+  persistRecords(records.map((item) => (item.id === id ? deleted : item)))
+  return deleted
+}
+
+export function restoreAIContent(id) {
+  const records = getAIContentRecords()
+  const target = records.find((item) => item.id === id)
+
+  if (!target) return null
+  if (target.status !== 'DELETED') return target
+
+  const restored = normalizeRecord({
+    ...target,
+    status: 'PENDING_REVIEW',
+    deletedBy: null,
+    deletedAt: null,
+    updatedAt: new Date().toISOString(),
+  })
+
+  persistRecords(records.map((item) => (item.id === id ? restored : item)))
+  return restored
 }
 
 export function buildPublicContent(type, fallbackItems = []) {

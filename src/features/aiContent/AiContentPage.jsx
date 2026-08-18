@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
+  ArchiveRestore,
   ArrowLeft,
   BookOpen,
   CheckCheck,
@@ -26,13 +27,15 @@ import Textarea from '@/components/ui/Textarea'
 import {
   approveAIContent,
   getAIContentRecords,
-  getAIContentStats,
   rejectAIContent,
+  restoreAIContent,
   revokeAIContent,
   saveGeminiContent,
+  softDeleteAIContent,
   updateAIContent,
 } from './aiContentService'
 import {
+  generateCloze,
   generateReading,
   generateQuiz,
   GeminiServiceError,
@@ -40,9 +43,31 @@ import {
 import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
+  { value: 'all', label: 'Tất cả' },
   { value: 'reading', label: 'Bài đọc' },
   { value: 'quiz', label: 'Bài kiểm tra' },
+  { value: 'others', label: 'Khác' },
 ]
+
+const CONTENT_TYPE_OPTIONS = [
+  { value: 'reading', label: 'Bài đọc' },
+  { value: 'quiz', label: 'Bài kiểm tra' },
+  { value: 'toeic_part_5', label: 'TOEIC Part 5' },
+  { value: 'toeic_part_6', label: 'TOEIC Part 6' },
+  { value: 'toeic_part_7', label: 'TOEIC Part 7' },
+  { value: 'cloze_sentence', label: 'Điền khuyết câu' },
+  { value: 'cloze_paragraph', label: 'Điền khuyết đoạn văn' },
+]
+
+const TYPE_LABELS = {
+  reading: 'Bài đọc',
+  quiz: 'Bài kiểm tra',
+  toeic_part_5: 'TOEIC Part 5',
+  toeic_part_6: 'TOEIC Part 6',
+  toeic_part_7: 'TOEIC Part 7',
+  cloze_sentence: 'Điền khuyết câu',
+  cloze_paragraph: 'Điền khuyết đoạn văn',
+}
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
@@ -50,11 +75,17 @@ const STATUS_FILTERS = [
   { value: 'PENDING_REVIEW', label: 'Chờ duyệt' },
   { value: 'APPROVED', label: 'Đã duyệt' },
   { value: 'REJECTED', label: 'Từ chối' },
+  { value: 'DELETED', label: 'Đã xóa' },
 ]
 
 const TYPE_ICON = {
   reading: BookOpen,
   quiz: ClipboardList,
+  toeic_part_5: ClipboardList,
+  toeic_part_6: ClipboardList,
+  toeic_part_7: BookOpen,
+  cloze_sentence: ClipboardList,
+  cloze_paragraph: ClipboardList,
 }
 
 const STATUS_BADGE = {
@@ -62,6 +93,7 @@ const STATUS_BADGE = {
   APPROVED: { label: 'Đã duyệt', tone: 'success' },
   REJECTED: { label: 'Từ chối', tone: 'danger' },
   GENERATING: { label: 'Đang tạo', tone: 'info' },
+  DELETED: { label: 'Đã xóa', tone: 'danger' },
 }
 
 function confidenceTone(score) {
@@ -74,7 +106,7 @@ function confidenceTone(score) {
 /* ─────────────────────────────────────────
    DETAIL VIEW
 ───────────────────────────────────────── */
-function DetailView({ item, onBack, onEdit, onApprove, onReject, onRevoke }) {
+function DetailView({ item, onBack, onEdit, onApprove, onReject, onRevoke, onDelete, onRestore, canManage }) {
   const [questionIndex, setQuestionIndex] = useState(0)
   const questions = item.questions || []
   const q = questions[questionIndex] ?? null
@@ -100,9 +132,13 @@ function DetailView({ item, onBack, onEdit, onApprove, onReject, onRevoke }) {
           <Badge tone={STATUS_BADGE[item.status]?.tone ?? 'info'}>
             {STATUS_BADGE[item.status]?.label ?? item.status}
           </Badge>
-          <Badge tone={confidenceTone(item.confidenceScore ?? 92)}>
-            Độ tin cậy {item.confidenceScore ?? 92}%
-          </Badge>
+          {canManage ? (
+            <Badge tone={confidenceTone(item.confidenceScore ?? 92)}>
+              Độ tin cậy {item.confidenceScore ?? 92}%
+            </Badge>
+          ) : (
+            <Badge tone="info">Chỉ xem</Badge>
+          )}
         </div>
       </div>
 
@@ -120,32 +156,45 @@ function DetailView({ item, onBack, onEdit, onApprove, onReject, onRevoke }) {
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {item.status === 'APPROVED' ? null : (
-              <Button size="sm" variant="secondary" icon={Pencil} onClick={onEdit}>
-                Sửa
-              </Button>
-            )}
-            {(item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') && (
-              <Button size="sm" onClick={onApprove}>
-                Duyệt
-              </Button>
-            )}
-            {item.status === 'PENDING_REVIEW' && (
-              <Button size="sm" variant="danger" onClick={onReject} aria-label="Từ chối">
-                <X size={16} />
-              </Button>
-            )}
-            {item.status === 'APPROVED' && (
-              <button
-                type="button"
-                onClick={onRevoke}
-                className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100"
-              >
-                ↩ Thu hồi
-              </button>
-            )}
-          </div>
+          {canManage && (
+            <div className="flex shrink-0 items-center gap-2">
+              {item.status === 'DELETED' ? (
+                <Button size="sm" variant="secondary" icon={ArchiveRestore} onClick={onRestore}>
+                  Khôi phục
+                </Button>
+              ) : (
+                <>
+                  {item.status === 'APPROVED' ? null : (
+                    <Button size="sm" variant="secondary" icon={Pencil} onClick={onEdit}>
+                      Sửa
+                    </Button>
+                  )}
+                  {(item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') && (
+                    <Button size="sm" onClick={onApprove}>
+                      Duyệt
+                    </Button>
+                  )}
+                  {item.status === 'PENDING_REVIEW' && (
+                    <Button size="sm" variant="danger" onClick={onReject} aria-label="Từ chối">
+                      <X size={16} />
+                    </Button>
+                  )}
+                  {item.status === 'APPROVED' && (
+                    <button
+                      type="button"
+                      onClick={onRevoke}
+                      className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+                    >
+                      ↩ Thu hồi
+                    </button>
+                  )}
+                  <Button size="sm" variant="danger" icon={Trash2} onClick={onDelete}>
+                    Xóa
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -186,7 +235,9 @@ function DetailView({ item, onBack, onEdit, onApprove, onReject, onRevoke }) {
               <div className="space-y-4 px-5 py-4">
                 <div className="rounded-lg border-l-4 border-brand-400 bg-canvas p-4">
                   <p className="text-sm font-semibold text-navy-700">
-                    {questionIndex + 1}. {q.questionText}
+                    {/^\d+\.?\s*$/.test(String(q.questionText || '').trim())
+                      ? q.questionText
+                      : `${questionIndex + 1}. ${q.questionText || ''}`}
                   </p>
                 </div>
 
@@ -484,7 +535,7 @@ function EditView({ item, onBack, onSave }) {
 ───────────────────────────────────────── */
 function AiContentPage() {
   const user = useAuthStore((state) => state.user)
-  const [activeTab, setActiveTab] = useState('reading')
+  const [activeTab, setActiveTab] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [items, setItems] = useState(() => getAIContentRecords())
   const [view, setView] = useState('list') // 'list' | 'detail' | 'edit'
@@ -492,22 +543,60 @@ function AiContentPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatingStatus, setGeneratingStatus] = useState('')
   const [showCreationForm, setShowCreationForm] = useState(false)
+  const [showTrash, setShowTrash] = useState(false)
   const [draft, setDraft] = useState({
     type: 'reading',
     topic: '',
     prompt: '',
     level: 'B2',
+    questionCount: 3,
   })
 
-  const stats = getAIContentStats()
+  const normalizeOwner = (value) => String(value ?? '').trim().toLowerCase()
+  const isOwnedByCurrentUser = useMemo(() => {
+    return (item) => {
+      if (!user) return true
+      const current = normalizeOwner(user.displayName || user.email || 'admin')
+      const created = normalizeOwner(item?.createdBy || '')
+      const approved = normalizeOwner(item?.approvedBy || '')
+      return created === current || approved === current
+    }
+  }, [user])
+
+  const trashCount = useMemo(
+    () => items.filter((item) => item.status === 'DELETED').length,
+    [items],
+  )
+  const statusCounts = useMemo(
+    () => ({
+      all: items.length,
+      GENERATING: items.filter((item) => item.status === 'GENERATING').length,
+      PENDING_REVIEW: items.filter((item) => item.status === 'PENDING_REVIEW').length,
+      APPROVED: items.filter((item) => item.status === 'APPROVED').length,
+      REJECTED: items.filter((item) => item.status === 'REJECTED').length,
+      DELETED: items.filter((item) => item.status === 'DELETED').length,
+    }),
+    [items],
+  )
   const visibleItems = useMemo(
     () =>
       items.filter((item) => {
-        const matchesType = item.type === activeTab
+        const isDeleted = item.status === 'DELETED'
+
+        if (showTrash) {
+          return isDeleted && (activeTab === 'all' || activeTab === 'others' || item.type === activeTab)
+        }
+
+        if (isDeleted) return false
+
+        const matchesType = activeTab === 'all' || item.type === activeTab
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
-        return matchesType && matchesStatus
+        const matchesOwner = activeTab === 'others'
+          ? !isOwnedByCurrentUser(item)
+          : isOwnedByCurrentUser(item)
+        return matchesType && matchesStatus && matchesOwner
       }),
-    [items, activeTab, statusFilter],
+    [items, activeTab, statusFilter, isOwnedByCurrentUser, showTrash],
   )
 
   const refresh = () => {
@@ -532,9 +621,14 @@ function AiContentPage() {
   }
 
   const handleBulkApprove = () => {
-    for (const item of visibleItems) approveAIContent(item.id, user)
+    const manageableItems = visibleItems.filter((item) => isOwnedByCurrentUser(item))
+    for (const item of manageableItems) approveAIContent(item.id, user)
     refresh()
-    toast.success('Đã duyệt tất cả nội dung trong tab này')
+    toast.success(
+      manageableItems.length > 0
+        ? 'Đã duyệt tất cả nội dung thuộc quyền quản lý của bạn trong tab này'
+        : 'Không có nội dung nào thuộc quyền quản lý của bạn để duyệt',
+    )
   }
 
   const handleCardClick = (item) => {
@@ -574,6 +668,30 @@ function AiContentPage() {
     }
   }
 
+  const handleSoftDelete = (id) => {
+    try {
+      softDeleteAIContent(id, user)
+      refresh()
+      setSelectedItem(null)
+      setView('list')
+      toast.success('Đã chuyển nội dung vào thùng rác')
+    } catch (error) {
+      toast.error(error.message || 'Không thể xóa nội dung')
+    }
+  }
+
+  const handleRestore = (id) => {
+    try {
+      restoreAIContent(id)
+      refresh()
+      setSelectedItem(null)
+      setView('list')
+      toast.success('Đã khôi phục nội dung từ thùng rác')
+    } catch (error) {
+      toast.error(error.message || 'Không thể khôi phục nội dung')
+    }
+  }
+
   const formatGeminiError = (error) => {
     if (error.code === 'NO_API_KEY') return '❌ Chưa cấu hình VITE_GEMINI_API_KEY trong .env'
     if (error.code === 'RATE_LIMIT') return '❌ Gemini đang vượt giới hạn sử dụng. Vui lòng thử lại sau.'
@@ -590,20 +708,30 @@ function AiContentPage() {
       setIsGenerating(true)
       setGeneratingStatus('Đang gửi yêu cầu đến Gemini...')
 
+      const questionCount = Math.min(Math.max(Number(draft.questionCount) || 3, 1), 5)
       let result
       if (draft.type === 'reading') {
         setGeneratingStatus('Đang sinh bài đọc và câu hỏi (có thể mất 10-20s)...')
-        result = await generateReading({ topic: draft.topic, level: draft.level })
-      } else {
+        result = await generateReading({ topic: draft.topic, level: draft.level, questionCount })
+      } else if (draft.type === 'quiz') {
         setGeneratingStatus('Đang sinh câu hỏi kiểm tra (có thể mất 15-30s)...')
-        result = await generateQuiz({ topic: draft.topic, level: draft.level })
+        result = await generateQuiz({ topic: draft.topic, level: draft.level, questionCount })
+      } else {
+        setGeneratingStatus('Đang sinh dạng điền khuyết TOEIC (có thể mất 15-30s)...')
+        result = await generateCloze({
+          topic: draft.topic,
+          level: draft.level,
+          type: draft.type,
+          questionCount,
+        })
       }
 
       setGeneratingStatus('Đang lưu nội dung...')
+      const finalTitle = `${draft.topic.trim()} - ${TYPE_LABELS[draft.type] || 'Nội dung AI'}`
       const saved = saveGeminiContent({
         type: draft.type,
-        title: result.title || draft.topic,
-        content: result.text || '',
+        title: finalTitle,
+        content: result.text || draft.topic,
         level: draft.level,
         questions: result.questions || [],
         geminiPrompt: draft.prompt || draft.topic,
@@ -613,7 +741,7 @@ function AiContentPage() {
       refresh()
       setIsGenerating(false)
       setGeneratingStatus('')
-      setDraft({ type: 'reading', topic: '', prompt: '', level: 'B2' })
+      setDraft({ type: 'reading', topic: '', prompt: '', level: 'B2', questionCount: 3 })
       toast.success(`✅ Đã tạo ${saved.title} · ${saved.questions?.length || 0} câu hỏi · đang chờ duyệt`)
     } catch (error) {
       setIsGenerating(false)
@@ -634,6 +762,9 @@ function AiContentPage() {
           onApprove={() => updateStatus(selectedItem.id, 'APPROVED')}
           onReject={() => updateStatus(selectedItem.id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.')}
           onRevoke={handleRevoke}
+          onDelete={() => handleSoftDelete(selectedItem.id)}
+          onRestore={() => handleRestore(selectedItem.id)}
+          canManage={isOwnedByCurrentUser(selectedItem)}
         />
       </main>
     )
@@ -657,42 +788,45 @@ function AiContentPage() {
     <main className="flex-1 bg-canvas p-4 sm:p-6">
       <div className="space-y-5">
         {/* Filter bar */}
-        <div className="flex flex-col gap-4 rounded-xl border border-line bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-xl border border-line bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="flex flex-wrap items-center gap-2">
             {STATUS_FILTERS.map((filter) => {
               const active = statusFilter === filter.value
+              const count = statusCounts[filter.value] ?? 0
               return (
                 <button
                   key={filter.value}
                   type="button"
                   onClick={() => setStatusFilter(filter.value)}
                   className={[
-                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                    'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
                     active
                       ? 'border-navy-700 bg-navy-700 text-white shadow-sm'
                       : 'border-line bg-white text-ink-muted hover:border-brand-200 hover:text-brand-500',
                   ].join(' ')}
                 >
-                  {filter.label}
+                  <span>{filter.label}</span>
+                  <span
+                    className={[
+                      'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold',
+                      active ? 'bg-white/20 text-white' : 'bg-canvas text-navy-700',
+                    ].join(' ')}
+                  >
+                    {count}
+                  </span>
                 </button>
               )
             })}
-          </div>
-
-          <div className="flex items-center gap-3 self-end rounded-xl bg-canvas px-3 py-2 sm:self-auto">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500/10 text-sm font-semibold text-brand-500">
-              {stats.total || 0}
-            </div>
-            <div className="leading-none">
-              <div className="text-[10px] uppercase tracking-wide text-ink-muted">Tổng nội dung</div>
-              <div className="mt-1 text-xl font-semibold text-navy-700">{stats.total || 0}</div>
-            </div>
           </div>
         </div>
 
         {/* Tabs + actions */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+          <Tabs
+            tabs={TABS}
+            value={activeTab}
+            onChange={setActiveTab}
+          />
           <div className="flex flex-wrap items-center gap-2">
             <Button icon={Plus} onClick={() => setShowCreationForm(true)}>
               Tạo nội dung AI
@@ -700,14 +834,25 @@ function AiContentPage() {
             <Button icon={CheckCheck} onClick={handleBulkApprove}>
               Duyệt tất cả
             </Button>
+            <Button
+              variant="secondary"
+              icon={Trash2}
+              onClick={() => setShowTrash((value) => !value)}
+            >
+              {showTrash ? 'Đóng thùng rác' : `Thùng rác${trashCount > 0 ? ` (${trashCount})` : ''}`}
+            </Button>
           </div>
         </div>
 
         {/* Grid */}
         {visibleItems.length === 0 && !isGenerating ? (
           <EmptyState
-            title="Không có nội dung"
-            description="Mọi mục trong tab này đã được xử lý hoặc chưa có dữ liệu."
+            title={showTrash ? 'Thùng rác trống' : 'Không có nội dung'}
+            description={
+              showTrash
+                ? 'Các nội dung đã xóa mềm sẽ hiển thị ở đây.'
+                : 'Mọi mục trong tab này đã được xử lý hoặc chưa có dữ liệu.'
+            }
           />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -730,6 +875,7 @@ function AiContentPage() {
             {visibleItems.map((item) => {
               const Icon = TYPE_ICON[item.type] || BookOpen
               const statusMeta = STATUS_BADGE[item.status]
+              const canManage = isOwnedByCurrentUser(item)
               return (
                 <div
                   key={item.id}
@@ -750,7 +896,7 @@ function AiContentPage() {
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-bold text-navy-700">{item.title}</h3>
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-500">
-                            {item.type === 'reading' ? 'Bài đọc' : 'Bài kiểm tra'} · {item.level}
+                            {TYPE_LABELS[item.type] || 'Nội dung AI'} · {item.level}
                           </p>
                         </div>
                       </div>
@@ -781,24 +927,46 @@ function AiContentPage() {
                           {item.confidenceScore ?? 92}%
                         </Badge>
                       </div>
-                      {item.status === 'PENDING_REVIEW' && (
+                      {canManage && !showTrash && item.status !== 'DELETED' && (
                         <div className="flex items-center gap-1.5">
+                          {item.status === 'PENDING_REVIEW' && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); updateStatus(item.id, 'APPROVED') }}
+                              className="rounded-md bg-navy-700 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-navy-800"
+                            >
+                              Duyệt
+                            </button>
+                          )}
+                          {item.status === 'PENDING_REVIEW' && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); updateStatus(item.id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.') }}
+                              className="rounded-md border border-line bg-white p-1 text-ink-muted transition-colors hover:border-red-300 hover:text-red-500"
+                              aria-label="Từ chối"
+                            >
+                              <X size={13} />
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); updateStatus(item.id, 'APPROVED') }}
-                            className="rounded-md bg-navy-700 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-navy-800"
+                            onClick={(e) => { e.stopPropagation(); handleSoftDelete(item.id) }}
+                            className="rounded-md border border-red-200 bg-red-50 p-1 text-red-600 transition-colors hover:bg-red-100"
+                            aria-label="Xóa mềm"
                           >
-                            Duyệt
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); updateStatus(item.id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.') }}
-                            className="rounded-md border border-line bg-white p-1 text-ink-muted transition-colors hover:border-red-300 hover:text-red-500"
-                            aria-label="Từ chối"
-                          >
-                            <X size={13} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
+                      )}
+                      {showTrash && canManage && item.status === 'DELETED' && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleRestore(item.id) }}
+                          className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                        >
+                          <ArchiveRestore size={12} />
+                          Khôi phục
+                        </button>
                       )}
                     </div>
                   </div>
@@ -835,8 +1003,9 @@ function AiContentPage() {
               value={draft.type}
               onChange={(e) => setDraft((prev) => ({ ...prev, type: e.target.value }))}
             >
-              <option value="reading">Bài đọc (3 câu hỏi)</option>
-              <option value="quiz">Bài kiểm tra (3 câu hỏi)</option>
+              {CONTENT_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </Select>
 
             <Select
@@ -852,33 +1021,53 @@ function AiContentPage() {
               <option value="C2">C2 - Nâng cao 2</option>
             </Select>
 
+            <Select
+              label="Số lượng câu"
+              value={String(draft.questionCount)}
+              onChange={(e) => setDraft((prev) => ({ ...prev, questionCount: Number(e.target.value) }))}
+            >
+              <option value={3}>3 câu</option>
+              <option value={4}>4 câu</option>
+              <option value={5}>5 câu (khuyến nghị)</option>
+            </Select>
+
             <div>
               <label className="text-sm font-semibold text-ink-muted">Chủ đề / Nội dung *</label>
               <Input
-                placeholder={draft.type === 'reading' ? 'VD: Lịch sử của Internet' : 'VD: Từ vựng về công nghệ'}
+                placeholder={
+                  draft.type === 'reading'
+                    ? 'VD: Lịch sử của Internet / History of the Internet'
+                    : 'VD: Từ vựng công việc văn phòng / Workplace vocabulary'
+                }
                 value={draft.topic}
                 onChange={(e) => setDraft((prev) => ({ ...prev, topic: e.target.value }))}
                 className="mt-1"
               />
+              <p className="mt-2 text-xs text-ink-muted">
+                Hệ thống tự hiểu chủ đề bằng tiếng Việt/Anh và sinh nội dung bằng tiếng Anh.
+              </p>
             </div>
 
             <div>
               <label className="text-sm font-semibold text-ink-muted">Prompt chi tiết (tùy chọn)</label>
               <Textarea
-                placeholder="VD: Tạo bài đọc về lịch sử internet với trọng tâm vào sự phát triển của web 2.0"
+                placeholder="VD: 3 câu hỏi ngắn theo chủ đề công việc văn phòng, mức B2."
                 rows={3}
                 value={draft.prompt}
                 onChange={(e) => setDraft((prev) => ({ ...prev, prompt: e.target.value }))}
                 className="mt-1"
               />
+              <p className="mt-2 text-xs text-ink-muted">
+                Có thể thêm mục tiêu học tập hoặc độ khó; nội dung chính vẫn là tiếng Anh.
+              </p>
             </div>
 
             <div className="rounded-lg border-l-4 border-brand-400 bg-brand-500/5 p-3">
               <p className="text-xs font-semibold text-brand-600">📊 Kết quả dự kiến:</p>
               <p className="mt-1 whitespace-pre-line text-xs text-ink-muted">
                 {draft.type === 'reading'
-                  ? '• 1 bài đọc 120-180 từ\n• 3 câu hỏi trắc nghiệm'
-                  : '• 3 câu hỏi trắc nghiệm\n• 4 đáp án mỗi câu'}
+                  ? '• Bài đọc 120–180 từ\n• 3–5 câu hỏi\n• Tiếng Anh chuẩn'
+                  : '• 3–5 câu hỏi\n• 4 đáp án mỗi câu\n• Tiếng Anh chuẩn'}
               </p>
             </div>
 
