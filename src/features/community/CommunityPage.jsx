@@ -6,7 +6,6 @@ import {
   FileText,
   Heart,
   Image as ImageIcon,
-  MessageCircle,
   MessageSquare,
   MoreHorizontal,
   Paperclip,
@@ -19,17 +18,12 @@ import {
   Tag,
   Trash2,
   TrendingUp,
-  UserCheck,
-  UserPlus,
-  Users,
-  Video,
   X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import Input from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 import { INITIAL_POSTS, TOP_TEACHERS, TRENDING_TOPICS } from '@/mocks/data/posts'
 import { useAuthStore } from '@/store/authStore'
@@ -43,6 +37,8 @@ function CommunityPage() {
   const [teachers, setTeachers] = useState(TOP_TEACHERS)
   const [selectedTag, setSelectedTag] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'popular' | 'docs' | 'mine'
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState(new Set())
 
   // New Post Form State
   const [postContent, setPostContent] = useState('')
@@ -50,10 +46,10 @@ function CommunityPage() {
   const [attachedDoc, setAttachedDoc] = useState(null)
   const [isPosting, setIsPosting] = useState(false)
   const [isAiGenerating, setIsAiGenerating] = useState(false)
+
+  // Interactive States
   const [activeCommentPostId, setActiveCommentPostId] = useState(null)
   const [commentInputs, setCommentInputs] = useState({})
-
-  // Dropdown open states
   const [activeMenuPostId, setActiveMenuPostId] = useState(null)
 
   const checkPostOwnership = (post) => {
@@ -69,16 +65,25 @@ function CommunityPage() {
   // Filtered Posts
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
+      // Tab filter
+      if (activeTab === 'popular' && post.likesCount < 40) return false
+      if (activeTab === 'docs' && !post.attachment) return false
+      if (activeTab === 'mine' && !checkPostOwnership(post)) return false
+
+      // Tag filter
       const matchTag = !selectedTag || post.tags.includes(selectedTag)
+
+      // Search filter
+      const keyword = searchQuery.trim().toLowerCase()
       const matchSearch =
-        !searchQuery.trim() ||
-        post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.authorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+        !keyword ||
+        post.content.toLowerCase().includes(keyword) ||
+        post.authorName.toLowerCase().includes(keyword) ||
+        post.tags.some((t) => t.toLowerCase().includes(keyword))
 
       return matchTag && matchSearch
     })
-  }, [posts, selectedTag, searchQuery])
+  }, [posts, selectedTag, searchQuery, activeTab, user])
 
   // Handlers
   const handleLikePost = (postId) => {
@@ -97,6 +102,18 @@ function CommunityPage() {
     )
   }
 
+  const handleBookmarkPost = (postId) => {
+    const next = new Set(bookmarkedPostIds)
+    if (next.has(postId)) {
+      next.delete(postId)
+      toast.success('Đã bỏ lưu bài viết')
+    } else {
+      next.add(postId)
+      toast.success('Đã lưu bài viết')
+    }
+    setBookmarkedPostIds(next)
+  }
+
   const handleSharePost = (post) => {
     navigator.clipboard?.writeText(window.location.href)
     toast.success(`Đã sao chép liên kết bài viết của "${post.authorName}"`)
@@ -111,16 +128,12 @@ function CommunityPage() {
 
   const handleToggleFollow = (teacherId) => {
     setTeachers((prev) =>
-      prev.map((t) =>
-        t.id === teacherId ? { ...t, isFollowing: !t.isFollowing } : t,
-      ),
+      prev.map((t) => (t.id === teacherId ? { ...t, isFollowing: !t.isFollowing } : t)),
     )
     const target = teachers.find((t) => t.id === teacherId)
     if (target) {
       toast.success(
-        target.isFollowing
-          ? `Đã hủy theo dõi ${target.name}`
-          : `Đã theo dõi ${target.name}`,
+        target.isFollowing ? `Đã hủy theo dõi ${target.name}` : `Đã theo dõi ${target.name}`,
       )
     }
   }
@@ -130,14 +143,14 @@ function CommunityPage() {
     setTimeout(() => {
       setIsAiGenerating(false)
       setPostContent(
-        '🚀 Tổng hợp 7 Collocations chủ đề "Environment & Sustainability" cực kỳ đắt giá cho IELTS Writing & Speaking!\n\n1. Carbon footprint\n2. Renewable energy sources\n3. Ecological balance\n\nCác thầy cô có thể tải tài liệu đính kèm bên dưới về giảng dạy nhé! 📚✨ #IELTS_Tips #WritingTips #AI_in_Education',
+        'Gợi ý 7 Collocations chủ đề "Environment & Sustainability" cho IELTS Writing & Speaking:\n\n1. Carbon footprint\n2. Renewable energy sources\n3. Ecological balance\n\nCác thầy cô có thể tải tài liệu đính kèm bên dưới về giảng dạy. #IELTS_Tips #WritingTips #AI_in_Education',
       )
       setAttachedImage(
         'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=80',
       )
       setAttachedDoc({ name: 'IELTS_Collocations_Environment.pdf', size: '3.1 MB' })
-      toast.success('Trợ lý AI đã tạo nội dung gợi ý bài viết mẫu!')
-    }, 600)
+      toast.success('Đã tạo gợi ý bài viết mẫu')
+    }, 500)
   }
 
   const handleCreatePost = (e) => {
@@ -164,22 +177,21 @@ function CommunityPage() {
         content: postContent,
         mediaType: attachedImage ? 'image' : null,
         mediaUrl: attachedImage,
-        mediaCaption: attachedImage ? 'Tài liệu học tập đính kèm' : null,
+        mediaCaption: attachedImage ? 'Hình ảnh học liệu đính kèm' : null,
         attachment: attachedDoc,
         likesCount: 0,
         isLiked: false,
         commentsCount: 0,
         comments: [],
-        tags: postContent
-          .match(/#[\w_]+/g)
-          ?.map((t) => t.replace('#', '')) || ['SmartEnglish'],
+        tags:
+          postContent.match(/#[\w_]+/g)?.map((t) => t.replace('#', '')) || ['SmartEnglish'],
       }
 
       setPosts([newPost, ...posts])
       setPostContent('')
       setAttachedImage(null)
       setAttachedDoc(null)
-      toast.success('Đã đăng bài viết thành công lên Cộng đồng!')
+      toast.success('Đã đăng bài viết thành công')
     }, 400)
   }
 
@@ -216,28 +228,50 @@ function CommunityPage() {
 
   return (
     <div className="space-y-4">
-      {/* Main 2-Column Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* ─── LEFT COLUMN: FEED & POST CREATOR (68%) ───────────────────── */}
-        <div className="lg:col-span-8 space-y-5">
-          {/* Active Tag Filter Indicator */}
-          {selectedTag && (
-            <div className="flex items-center justify-between rounded-xl bg-blue-50 border border-blue-200 px-4 py-2.5 text-xs text-brand-700">
-              <span className="flex items-center gap-1.5 font-semibold">
-                <Tag size={14} /> Đang lọc theo chủ đề: <strong>#{selectedTag}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedTag(null)}
-                className="font-bold text-brand-600 hover:text-brand-800 cursor-pointer flex items-center gap-1"
-              >
-                <X size={14} /> Bỏ lọc
-              </button>
+      {/* ─── MAIN 2-COLUMN LAYOUT ──────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS) ──────────────────── */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Feed Filter Navigation Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 rounded-2xl border border-slate-200/90 shadow-xs">
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {[
+                { id: 'all', label: 'Tất cả' },
+                { id: 'popular', label: 'Nổi bật' },
+                { id: 'docs', label: 'Có tài liệu PDF' },
+                { id: 'mine', label: 'Của tôi' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap',
+                    activeTab === tab.id
+                      ? 'bg-navy-800 text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-          )}
 
-          {/* ─── POST COMPOSER WIDGET (Mockup Top Widget) ───────────────── */}
-          <Card className="p-4 border border-line shadow-xs space-y-3.5">
+            {selectedTag && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-700 font-semibold">
+                <span>#{selectedTag}</span>
+                <button
+                  onClick={() => setSelectedTag(null)}
+                  className="hover:text-red-600 cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ─── POST COMPOSER CARD ────────────────────────────────────── */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
             <div className="flex items-start gap-3">
               <img
                 src={
@@ -245,27 +279,27 @@ function CommunityPage() {
                     ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
                     : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
                 }
-                alt="My Avatar"
-                className="h-10 w-10 rounded-full object-cover border border-line shrink-0"
+                alt="Avatar"
+                className="h-10 w-10 rounded-full object-cover border border-slate-200 shrink-0"
               />
 
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <textarea
                   rows={3}
-                  placeholder="Chia sẻ kiến thức hoặc tài liệu mới..."
+                  placeholder="Chia sẻ kiến thức, bài giảng hoặc tài liệu với đồng nghiệp..."
                   value={postContent}
                   onChange={(e) => setPostContent(e.target.value)}
-                  className="w-full rounded-2xl border border-line bg-slate-50/70 p-3 text-xs placeholder:text-ink-muted focus:border-brand-500 focus:bg-white focus:outline-none transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none transition-all leading-relaxed"
                 />
 
                 {/* Attached Image Preview */}
                 {attachedImage && (
-                  <div className="relative mt-2 inline-block rounded-xl overflow-hidden border border-line">
-                    <img src={attachedImage} alt="Attachment" className="h-28 w-auto object-cover rounded-lg" />
+                  <div className="relative inline-block rounded-lg overflow-hidden border border-slate-200">
+                    <img src={attachedImage} alt="Attachment" className="h-24 w-auto object-cover" />
                     <button
                       type="button"
                       onClick={() => setAttachedImage(null)}
-                      className="absolute top-1.5 right-1.5 rounded-full bg-navy-900/80 p-1 text-white hover:bg-red-500 cursor-pointer"
+                      className="absolute top-1 right-1 rounded-full bg-slate-900/80 p-1 text-white hover:bg-red-600 cursor-pointer"
                     >
                       <X size={12} />
                     </button>
@@ -274,17 +308,17 @@ function CommunityPage() {
 
                 {/* Attached Document Preview */}
                 {attachedDoc && (
-                  <div className="mt-2 flex items-center justify-between rounded-lg border border-line bg-slate-100 p-2 text-xs">
-                    <span className="flex items-center gap-2 font-semibold text-navy-700">
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+                    <span className="flex items-center gap-2 font-semibold text-slate-700">
                       <FileText size={15} className="text-red-500" />
                       {attachedDoc.name} ({attachedDoc.size})
                     </span>
                     <button
                       type="button"
                       onClick={() => setAttachedDoc(null)}
-                      className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-red-600 cursor-pointer"
                     >
-                      <X size={14} />
+                      <X size={13} />
                     </button>
                   </div>
                 )}
@@ -292,8 +326,8 @@ function CommunityPage() {
             </div>
 
             {/* Bottom Actions of Composer */}
-            <div className="flex items-center justify-between border-t border-line pt-3 text-xs">
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-ink-muted">
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-500">
                 <button
                   type="button"
                   onClick={() =>
@@ -301,10 +335,10 @@ function CommunityPage() {
                       'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
                     )
                   }
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 hover:text-navy-700 font-semibold cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer"
                 >
-                  <ImageIcon size={16} className="text-blue-500" />
-                  <span>Image/Video</span>
+                  <ImageIcon size={15} className="text-slate-500" />
+                  <span>Ảnh / Media</span>
                 </button>
 
                 <button
@@ -312,20 +346,20 @@ function CommunityPage() {
                   onClick={() =>
                     setAttachedDoc({ name: 'IELTS_Speaking_Structures.pdf', size: '2.4 MB' })
                   }
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 hover:text-navy-700 font-semibold cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer"
                 >
-                  <Paperclip size={16} className="text-emerald-500" />
-                  <span>Document</span>
+                  <Paperclip size={15} className="text-slate-500" />
+                  <span>File PDF</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleAiSuggest}
                   disabled={isAiGenerating}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-brand-50 hover:text-brand-600 font-semibold text-brand-600 cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-brand-600 transition-colors cursor-pointer"
                 >
-                  <Sparkles size={16} className="text-amber-500" />
-                  <span>{isAiGenerating ? 'AI đang soạn...' : 'AI Assistant'}</span>
+                  <Sparkles size={15} className="text-brand-600" />
+                  <span>{isAiGenerating ? 'Đang tạo...' : 'Gợi ý AI'}</span>
                 </button>
               </div>
 
@@ -334,61 +368,65 @@ function CommunityPage() {
                 size="sm"
                 onClick={handleCreatePost}
                 loading={isPosting}
-                className="px-5 rounded-full"
+                className="bg-navy-800 hover:bg-navy-900 text-white font-semibold px-4"
               >
-                Post
+                Đăng bài
               </Button>
             </div>
-          </Card>
+          </div>
 
           {/* ─── POSTS FEED LIST ────────────────────────────────────────── */}
           <div className="space-y-4">
             {filteredPosts.length === 0 ? (
-              <Card className="p-10 text-center text-xs text-ink-muted">
-                Không tìm thấy bài viết nào phù hợp với bộ lọc.
-              </Card>
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-8 text-center text-xs text-slate-400">
+                Không tìm thấy bài viết nào phù hợp.
+              </div>
             ) : (
               filteredPosts.map((post) => {
                 const isOwner = checkPostOwnership(post)
                 const isCommentOpen = activeCommentPostId === post.id
+                const isBookmarked = bookmarkedPostIds.has(post.id)
 
                 return (
-                  <Card key={post.id} className="p-5 border border-line shadow-xs space-y-4">
+                  <div
+                    key={post.id}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3.5"
+                  >
                     {/* Post Header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
                           src={post.authorAvatar}
                           alt={post.authorName}
-                          className="h-10 w-10 rounded-full object-cover border border-line"
+                          className="h-10 w-10 rounded-full object-cover border border-slate-200 shrink-0"
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-sm text-navy-700">{post.authorName}</h3>
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                            <h3 className="font-bold text-sm text-slate-900">{post.authorName}</h3>
+                            <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                               {post.authorRole}
                             </span>
                           </div>
-                          <p className="text-[11px] text-ink-muted">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             {post.authorTitle} • {post.createdAt}
                           </p>
                         </div>
                       </div>
 
-                      {/* Options Dropdown */}
+                      {/* Options */}
                       <div className="relative">
                         <button
                           type="button"
                           onClick={() =>
                             setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
                           }
-                          className="rounded-full p-1.5 text-ink-muted hover:bg-slate-100 hover:text-navy-700 cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
                         >
                           <MoreHorizontal size={18} />
                         </button>
 
                         {activeMenuPostId === post.id && (
-                          <div className="absolute right-0 top-8 z-20 w-44 rounded-xl border border-line bg-white py-1.5 shadow-lg text-xs">
+                          <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 bg-white py-1 shadow-md text-xs font-semibold">
                             {isOwner ? (
                               <>
                                 <button
@@ -397,9 +435,9 @@ function CommunityPage() {
                                     setActiveMenuPostId(null)
                                     toast.success('Mở trình chỉnh sửa bài viết')
                                   }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-slate-50 cursor-pointer"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 cursor-pointer"
                                 >
-                                  <Pencil size={14} /> Chỉnh sửa bài viết
+                                  <Pencil size={14} /> Chỉnh sửa
                                 </button>
                                 <button
                                   type="button"
@@ -414,11 +452,11 @@ function CommunityPage() {
                                 type="button"
                                 onClick={() => {
                                   setActiveMenuPostId(null)
-                                  toast.success('Đã gửi báo cáo vi phạm tới Ban quản trị')
+                                  toast.success('Đã gửi báo cáo vi phạm')
                                 }}
                                 className="flex w-full items-center gap-2 px-3 py-2 text-amber-700 hover:bg-amber-50 cursor-pointer"
                               >
-                                🚩 Báo cáo vi phạm
+                                🚩 Báo cáo
                               </button>
                             )}
                           </div>
@@ -427,7 +465,7 @@ function CommunityPage() {
                     </div>
 
                     {/* Post Content */}
-                    <div className="text-sm text-slate-800 leading-relaxed space-y-2.5 whitespace-pre-line">
+                    <div className="text-sm text-slate-800 leading-relaxed space-y-2 whitespace-pre-line">
                       <p>
                         {post.content.split(' ').map((word, idx) => {
                           if (word.startsWith('#')) {
@@ -447,39 +485,36 @@ function CommunityPage() {
                       </p>
                     </div>
 
-                    {/* Attached Infographic / Media */}
+                    {/* Attached Media */}
                     {post.mediaUrl && (
-                      <div className="rounded-xl overflow-hidden border border-line bg-slate-50">
+                      <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                         <img
                           src={post.mediaUrl}
-                          alt={post.mediaCaption || 'Infographic'}
-                          className="w-full object-contain max-h-[420px] bg-slate-900/5"
+                          alt={post.mediaCaption || 'Media'}
+                          className="w-full object-contain max-h-[380px]"
                         />
-                        {post.mediaCaption && (
-                          <div className="px-3 py-1.5 text-xs text-slate-500 bg-slate-50 border-t border-line text-center italic">
-                            {post.mediaCaption}
-                          </div>
-                        )}
                       </div>
                     )}
 
                     {/* Attached Document File */}
                     {post.attachment && (
-                      <div className="flex items-center justify-between rounded-xl border border-line bg-slate-50/70 p-3.5 text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-xs">
+                      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-[11px]">
                             PDF
                           </span>
                           <div>
-                            <p className="font-bold text-slate-900 text-sm">{post.attachment.name}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{post.attachment.size}</p>
+                            <p className="font-semibold text-slate-900">{post.attachment.name}</p>
+                            <p className="text-[11px] text-slate-500">{post.attachment.size}</p>
                           </div>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => toast.success(`Đang tải tập tin: ${post.attachment.name}`)}
-                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600 cursor-pointer shadow-2xs transition-colors"
+                          onClick={() =>
+                            toast.success(`Đang tải tập tin: ${post.attachment.name}`)
+                          }
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs transition-colors"
                         >
                           <Download size={14} /> Tải về
                         </button>
@@ -487,27 +522,25 @@ function CommunityPage() {
                     )}
 
                     {/* Engagement Actions */}
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-sm text-slate-500">
-                      <div className="flex items-center gap-6">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+                      <div className="flex items-center gap-5">
                         {/* Like Button */}
                         <button
                           type="button"
                           onClick={() => handleLikePost(post.id)}
                           className={cn(
-                            'flex items-center gap-1.5 font-semibold text-sm transition-colors cursor-pointer',
-                            post.isLiked
-                              ? 'text-red-500 font-bold'
-                              : 'hover:text-red-500',
+                            'flex items-center gap-1.5 font-semibold transition-colors cursor-pointer',
+                            post.isLiked ? 'text-red-500 font-bold' : 'hover:text-slate-800',
                           )}
                         >
                           <Heart
-                            size={18}
+                            size={16}
                             className={cn(post.isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400')}
                           />
                           <span>{post.likesCount}</span>
                         </button>
 
-                        {/* Comments Button */}
+                        {/* Comments Toggle Button */}
                         <button
                           type="button"
                           onClick={() =>
@@ -515,51 +548,72 @@ function CommunityPage() {
                               activeCommentPostId === post.id ? null : post.id,
                             )
                           }
-                          className="flex items-center gap-1.5 font-semibold text-sm hover:text-brand-600 transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 font-semibold hover:text-slate-800 transition-colors cursor-pointer"
                         >
-                          <MessageSquare size={18} className="text-slate-400" />
+                          <MessageSquare size={16} className="text-slate-400" />
                           <span>{post.commentsCount}</span>
                         </button>
                       </div>
 
-                      {/* Share Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleSharePost(post)}
-                        className="flex items-center gap-1.5 font-semibold text-sm hover:text-brand-600 transition-colors cursor-pointer"
-                      >
-                        <Share2 size={18} className="text-slate-400" />
-                        <span>Chia sẻ</span>
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleBookmarkPost(post.id)}
+                          className={cn(
+                            'flex items-center gap-1 font-semibold hover:text-slate-800 transition-colors cursor-pointer',
+                            isBookmarked && 'text-navy-800 font-bold',
+                          )}
+                        >
+                          <Bookmark
+                            size={16}
+                            className={cn(isBookmarked ? 'fill-navy-800 text-navy-800' : 'text-slate-400')}
+                          />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSharePost(post)}
+                          className="flex items-center gap-1 font-semibold hover:text-slate-800 transition-colors cursor-pointer"
+                        >
+                          <Share2 size={16} className="text-slate-400" />
+                          <span>Chia sẻ</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* ─── EXPANDABLE COMMENTS SECTION ────────────────────── */}
                     {isCommentOpen && (
-                      <div className="border-t border-slate-100 pt-4 space-y-3">
-                        {/* Existing comments */}
+                      <div className="border-t border-slate-100 pt-3 space-y-2.5">
                         {post.comments?.length > 0 ? (
-                          <div className="space-y-2.5 pl-10">
+                          <div className="space-y-2">
                             {post.comments.map((cmt) => (
-                              <div key={cmt.id} className="rounded-xl bg-slate-50 p-3 text-sm space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-bold text-slate-900 text-xs">{cmt.authorName}</span>
-                                  <span className="text-[10px] text-slate-400">{cmt.createdAt}</span>
+                              <div key={cmt.id} className="flex items-start gap-2.5">
+                                <img
+                                  src={cmt.authorAvatar}
+                                  alt={cmt.authorName}
+                                  className="h-7 w-7 rounded-full object-cover border border-slate-200 mt-0.5 shrink-0"
+                                />
+                                <div className="flex-1 rounded-xl bg-slate-50 p-2.5 text-xs space-y-0.5 border border-slate-100">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-bold text-slate-900">{cmt.authorName}</span>
+                                    <span className="text-[10px] text-slate-400">{cmt.createdAt}</span>
+                                  </div>
+                                  <p className="text-slate-700">{cmt.content}</p>
                                 </div>
-                                <p className="text-slate-700 text-sm">{cmt.content}</p>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-[11px] text-ink-muted text-center py-1">
-                            Chưa có bình luận nào. Hãy là người đầu tiên thảo luận!
+                          <p className="text-[11px] text-slate-400 text-center py-1">
+                            Chưa có bình luận nào.
                           </p>
                         )}
 
                         {/* Add comment input */}
-                        <div className="flex items-center gap-2.5 pt-1">
+                        <div className="flex items-center gap-2 pt-1">
                           <input
                             type="text"
-                            placeholder="Viết câu trả lời hoặc thảo luận..."
+                            placeholder="Viết bình luận..."
                             value={commentInputs[post.id] || ''}
                             onChange={(e) =>
                               setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
@@ -567,90 +621,88 @@ function CommunityPage() {
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleAddComment(post.id)
                             }}
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
+                            className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => handleAddComment(post.id)}
-                            className="rounded-xl bg-brand-500 hover:bg-brand-600 p-2 text-white cursor-pointer transition-colors"
+                            className="rounded-xl bg-navy-800 hover:bg-navy-900 px-3 py-1.5 text-white cursor-pointer transition-colors"
                           >
-                            <Send size={16} />
+                            <Send size={13} />
                           </button>
                         </div>
                       </div>
                     )}
-                  </Card>
+                  </div>
                 )
               })
             )}
           </div>
         </div>
 
-        {/* ─── RIGHT COLUMN: TOPICS & TOP TEACHERS (32%) ───────────────── */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Search Bar */}
-          <div className="flex w-full justify-end">
-            <div className="relative w-full">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm bài viết, giáo viên..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-xs"
-              />
-            </div>
+        {/* ─── RIGHT COLUMN: TOPICS & FEATURED TEACHERS (4 COLS) ───────── */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Search Input Bar */}
+          <div className="relative w-full">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm bài viết, giáo viên..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-2xs"
+            />
           </div>
 
-          {/* Chủ đề thảo luận (Trending Topics - Mockup Top Right) */}
-          <Card className="p-5 border border-line shadow-xs space-y-4">
-            <h2 className="text-base font-bold text-slate-900">Chủ đề thảo luận</h2>
+          {/* Chủ đề thảo luận hot */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Chủ Đề Thảo Luận
+            </h2>
 
-            <div className="space-y-2.5">
+            <div className="space-y-1">
               {TRENDING_TOPICS.map((topic) => (
                 <div
                   key={topic.tag}
                   onClick={() => setSelectedTag(selectedTag === topic.tag ? null : topic.tag)}
                   className={cn(
-                    'flex items-center justify-between p-2.5 rounded-xl transition-colors cursor-pointer group',
+                    'flex items-center justify-between p-2 rounded-xl transition-colors cursor-pointer group',
                     selectedTag === topic.tag
-                      ? 'bg-blue-50 border border-blue-200'
+                      ? 'bg-slate-100 font-bold'
                       : 'hover:bg-slate-50',
                   )}
                 >
                   <div>
-                    <p className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition-colors">
+                    <p className="font-semibold text-xs text-slate-900 group-hover:text-brand-600 transition-colors">
                       {topic.label}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">{topic.postCount}</p>
+                    <p className="text-[11px] text-slate-400">{topic.postCount}</p>
                   </div>
 
-                  <span className="text-slate-400 group-hover:text-brand-600 transition-colors">
-                    <TrendingUp size={16} />
-                  </span>
+                  <TrendingUp size={14} className="text-slate-400" />
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Giáo viên tiêu biểu (Featured Teachers - Mockup Bottom Right) */}
-          <Card className="p-5 border border-line shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900">Giáo viên tiêu biểu</h2>
-            </div>
+          {/* Giáo viên tiêu biểu */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Giáo Viên Nổi Bật
+            </h2>
 
-            <div className="space-y-3.5">
+            <div className="space-y-3">
               {teachers.map((teacher) => (
                 <div key={teacher.id} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <img
                       src={teacher.avatar}
                       alt={teacher.name}
-                      className="h-10 w-10 rounded-full object-cover border border-slate-200 shrink-0"
+                      className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="font-bold text-sm text-slate-900 truncate">{teacher.name}</p>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{teacher.role}</p>
+                      <p className="font-bold text-xs text-slate-900 truncate">{teacher.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{teacher.role}</p>
                     </div>
                   </div>
 
@@ -658,28 +710,18 @@ function CommunityPage() {
                     type="button"
                     onClick={() => handleToggleFollow(teacher.id)}
                     className={cn(
-                      'rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-2xs',
+                      'rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer shrink-0',
                       teacher.isFollowing
                         ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        : 'bg-blue-50 text-brand-700 hover:bg-blue-100 border border-blue-200 font-bold',
+                        : 'bg-navy-800 text-white hover:bg-navy-900',
                     )}
                   >
-                    {teacher.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                    {teacher.isFollowing ? 'Đã theo dõi' : 'Theo dõi'}
                   </button>
                 </div>
               ))}
             </div>
-
-            <div className="border-t border-line pt-3 text-center">
-              <button
-                type="button"
-                onClick={() => toast.success('Mở danh bạ toàn bộ 420 giáo viên trong hệ thống')}
-                className="text-xs font-bold text-brand-600 hover:underline cursor-pointer"
-              >
-                Xem tất cả
-              </button>
-            </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
