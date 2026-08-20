@@ -17,7 +17,6 @@ import {
   Send,
   Square,
   Trash2,
-  Upload,
   Volume2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -252,16 +251,6 @@ function ListeningPage() {
                 </option>
               ))}
             </select>
-
-            {/* Tải lên hàng loạt */}
-            <button
-              type="button"
-              onClick={() => toast.success('Mở popup tải lên hàng loạt')}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-            >
-              <Upload size={14} />
-              <span>Tải lên</span>
-            </button>
 
             {/* Thêm bài nghe */}
             <button

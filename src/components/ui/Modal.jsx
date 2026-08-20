@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-function Modal({ open, onClose, title, children, className }) {
+function Modal({ open, onClose, title, showCloseButton = true, children, className }) {
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (event) => {
@@ -13,6 +13,8 @@ function Modal({ open, onClose, title, children, className }) {
   }, [open, onClose])
 
   if (!open) return null
+
+  const hasHeader = Boolean(title || showCloseButton)
 
   return (
     <div
@@ -28,20 +30,24 @@ function Modal({ open, onClose, title, children, className }) {
           className,
         )}
       >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          {title && <h3 className="text-base font-semibold text-navy-700">{title}</h3>}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onClose?.()
-            }}
-            aria-label="Đóng"
-            className="ml-auto rounded-full p-1 text-ink-muted hover:bg-canvas hover:text-ink cursor-pointer transition-colors"
-          >
-            <X size={18} strokeWidth={1.75} />
-          </button>
-        </div>
+        {hasHeader && (
+          <div className="mb-4 flex items-start justify-between gap-4">
+            {title && <h3 className="text-base font-semibold text-navy-700">{title}</h3>}
+            {showCloseButton && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClose?.()
+                }}
+                aria-label="Đóng"
+                className="ml-auto rounded-full p-1 text-ink-muted hover:bg-canvas hover:text-ink cursor-pointer transition-colors"
+              >
+                <X size={18} strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
+        )}
         {children}
       </div>
     </div>

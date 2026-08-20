@@ -13,6 +13,7 @@ import {
   Send,
   Sparkles,
   Trash2,
+  Upload,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
@@ -21,6 +22,7 @@ import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
 import EmptyState from '@/components/ui/EmptyState'
 import Pagination from '@/components/ui/Pagination'
+import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { formatDate } from '@/lib/utils'
 import { readings } from '@/mocks/data/readings'
 import { LEVEL_GROUPS, LEVEL_LABEL, LEVEL_TONE } from './levels'
@@ -42,14 +44,18 @@ function ReadingPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = user?.role === 'teacher'
 
+  // Dynamic reading items list
+  const [readingItems, setReadingItems] = useState(readings)
+
   // Mặc định giáo viên chỉ xem bài của mình
   const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
   const [search, setSearch] = useState('')
   const [levelGroup, setLevelGroup] = useState('all')
   const [page, setPage] = useState(1)
   const [activeReading, setActiveReading] = useState(null)
+  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
 
-  const publicReadings = useMemo(() => buildPublicContent('reading', readings), [])
+  const publicReadings = useMemo(() => buildPublicContent('reading', readingItems), [readingItems])
   const activeGroup = LEVEL_GROUPS.find((group) => group.key === levelGroup)
 
   // Kiểm tra bài đọc có do chính user này tạo hay không
@@ -221,6 +227,11 @@ function ReadingPage() {
                 </option>
               ))}
             </select>
+
+            {/* Nút Import */}
+            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+              Import
+            </Button>
 
             {/* Nút thêm mới */}
             <button
@@ -529,6 +540,32 @@ function ReadingPage() {
           </div>
         )}
       </Drawer>
+
+      {/* Modal Import PDF AI */}
+      <DataImportWizardModal
+        open={isPdfImportOpen}
+        onClose={() => setIsPdfImportOpen(false)}
+        defaultType="reading"
+        onImportSuccess={(newItems) => {
+          const formatted = newItems.map((item, idx) => ({
+            id: `read-imported-${Date.now()}-${idx}`,
+            title: item.title,
+            topic: item.topic || 'General Science',
+            level: item.level || 'B2',
+            status: item.status || 'published',
+            wordCount: item.wordCount || 350,
+            readingTime: item.readingTime || '4 phút',
+            summary: item.summary || 'Trích xuất tự động từ file PDF...',
+            content: item.content || '',
+            questions: item.questions || [],
+            authorName: user?.displayName || 'Admin AI Extractor',
+            authorEmail: user?.email || 'admin@smartenglish.vn',
+            createdAt: new Date().toISOString(),
+          }))
+          setReadingItems((prev) => [...formatted, ...prev])
+          toast.success(`Đã thêm thành công ${formatted.length} bài đọc hiểu bóc tách từ PDF!`)
+        }}
+      />
     </div>
   )
 }

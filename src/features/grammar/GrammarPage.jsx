@@ -17,6 +17,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  Upload,
   Users,
   X,
 } from 'lucide-react'
@@ -32,6 +33,7 @@ import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
+import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { cn, formatNumber, formatRelativeTime } from '@/lib/utils'
 import { GRAMMAR_TOPICS, grammarLessons } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
@@ -76,6 +78,7 @@ function GrammarPage() {
   const [activeLesson, setActiveLesson] = useState(null)
   const [editingLesson, setEditingLesson] = useState(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
   // Form State
@@ -317,6 +320,10 @@ function GrammarPage() {
                 </option>
               ))}
             </select>
+
+            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+              Import
+            </Button>
 
             <button
               type="button"
@@ -786,6 +793,32 @@ function GrammarPage() {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* ─── Modal Import PDF AI ────────────────────────────────────────── */}
+      <DataImportWizardModal
+        open={isPdfImportOpen}
+        onClose={() => setIsPdfImportOpen(false)}
+        defaultType="grammar"
+        onImportSuccess={(newItems) => {
+          const formatted = newItems.map((item, idx) => ({
+            id: `gram-imported-${Date.now()}-${idx}`,
+            title: item.title,
+            topic: item.topic || 'Advanced Grammar',
+            level: item.level || 'B2',
+            status: item.status || 'published',
+            exerciseCount: item.exerciseCount || 10,
+            description: item.description || '',
+            formula: item.formula || '',
+            keyRules: item.keyRules || [],
+            examples: item.examples || [],
+            authorName: user?.displayName || 'Admin AI Parser',
+            authorEmail: user?.email || 'admin@smartenglish.vn',
+            updatedAt: new Date().toISOString(),
+          }))
+          setLessons((prev) => [...formatted, ...prev])
+          toast.success(`Đã thêm thành công ${formatted.length} bài học ngữ pháp bóc tách từ PDF!`)
+        }}
       />
     </div>
   )

@@ -1,30 +1,34 @@
-import { Download, Plus, Upload, Play, Pencil, Trash2 } from 'lucide-react'
+import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Sparkles } from 'lucide-react'
 import { useState, useMemo } from 'react'
+import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Pagination from '@/components/ui/Pagination'
+import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { vocabularies } from '@/mocks/data/vocabulary'
 import { vocabularyColumns } from './columns'
 
 const PAGE_SIZE = 10
 
 function VocabularyPage() {
+  const [vocabList, setVocabList] = useState(vocabularies)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
 
   // Lọc dữ liệu theo tìm kiếm
   const filtered = useMemo(() => {
-    if (!search.trim()) return vocabularies
+    if (!search.trim()) return vocabList
     const keyword = search.toLowerCase()
-    return vocabularies.filter(
+    return vocabList.filter(
       (v) =>
         v.word.toLowerCase().includes(keyword) ||
         v.vietnameseMeaning.toLowerCase().includes(keyword) ||
         v.pronunciation.toLowerCase().includes(keyword),
     )
-  }, [search])
+  }, [search, vocabList])
 
   const total = filtered.length
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -76,8 +80,8 @@ function VocabularyPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" icon={Upload}>
-              Import Excel/CSV
+            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+              Import
             </Button>
             <Button size="sm" variant="secondary" icon={Download}>
               Xuất dữ liệu
@@ -174,6 +178,28 @@ function VocabularyPage() {
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </div>
+
+      {/* Modal Import PDF AI */}
+      <DataImportWizardModal
+        open={isPdfImportOpen}
+        onClose={() => setIsPdfImportOpen(false)}
+        defaultType="vocabulary"
+        onImportSuccess={(newItems) => {
+          // Format & map imported items into vocabulary data structure
+          const formatted = newItems.map((item, idx) => ({
+            id: `imported-${Date.now()}-${idx}`,
+            word: item.word,
+            pronunciation: item.phonetic || '/.../',
+            vietnameseMeaning: item.vietnameseMeaning,
+            englishMeaning: item.exampleSentence || 'Imported from PDF',
+            partOfSpeech: item.partOfSpeech || 'noun',
+            cefrLevel: item.cefrLevel || 'B2',
+            audioUrl: '',
+          }))
+          setVocabList((prev) => [...formatted, ...prev])
+          toast.success(`Đã thêm thành công ${formatted.length} từ vựng từ PDF vào danh sách!`)
+        }}
+      />
     </div>
   )
 }

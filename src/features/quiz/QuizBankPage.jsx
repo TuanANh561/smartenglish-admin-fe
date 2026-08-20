@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   Send,
+  Sparkles,
   Trash2,
   Upload,
   Users,
@@ -23,6 +24,7 @@ import Card from '@/components/ui/Card'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import DataTable from '@/components/ui/DataTable/DataTable'
 import DataTableToolbar from '@/components/ui/DataTable/DataTableToolbar'
+import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import Drawer from '@/components/ui/Drawer'
 import FilterChip from '@/components/ui/FilterChip'
 import SearchInput from '@/components/ui/SearchInput'
@@ -48,6 +50,10 @@ const TABS = [
 function QuizBankPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = user?.role === 'teacher'
+
+  // Dynamic state cho danh sách câu hỏi
+  const [questionsData, setQuestionsData] = useState(quizQuestions)
+  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
 
   // Mặc định giáo viên chỉ xem đề/câu hỏi của mình
   const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
@@ -83,7 +89,7 @@ function QuizBankPage() {
     return checkOwnership(item)
   }
 
-  const publicQuizQuestions = useMemo(() => buildPublicContent('quiz', quizQuestions), [])
+  const publicQuizQuestions = useMemo(() => buildPublicContent('quiz', questionsData), [questionsData])
 
   const myQuestionsCount = useMemo(() => {
     return publicQuizQuestions.filter((q) => checkOwnership(q)).length
@@ -256,7 +262,7 @@ function QuizBankPage() {
             }}
             className="flex-1 min-w-[200px]"
           />
-          <Button variant="secondary" icon={Upload} onClick={() => toast.success('Mở popup Import đề/câu hỏi')}>
+          <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
             Import
           </Button>
           <Button icon={Plus} onClick={() => toast.success('Mở form tạo Quiz mới')}>
@@ -649,6 +655,31 @@ function QuizBankPage() {
         title="Xoá câu hỏi này?"
         description={`Câu hỏi "${deleteTarget?.id}" sẽ bị xoá khỏi ngân hàng câu hỏi. Hành động này không thể hoàn tác.`}
         confirmText="Xoá câu hỏi"
+      />
+
+      {/* Modal Import PDF AI */}
+      <DataImportWizardModal
+        open={isPdfImportOpen}
+        onClose={() => setIsPdfImportOpen(false)}
+        defaultType="quiz"
+        onImportSuccess={(newItems) => {
+          const formatted = newItems.map((item, idx) => ({
+            id: `Q-PDF-${Date.now()}-${idx}`,
+            question: item.question,
+            options: item.options || [],
+            correctAnswer: item.correctAnswer || 'A',
+            explanation: item.explanation || '',
+            topic: item.topic || 'TOEIC Part 5',
+            difficulty: item.difficulty || 'Medium',
+            skill: item.skill || 'Grammar',
+            authorName: user?.displayName || 'Admin AI OCR',
+            authorEmail: user?.email || 'admin@smartenglish.vn',
+            type: 'multiple_choice',
+            createdAt: new Date().toISOString(),
+          }))
+          setQuestionsData((prev) => [...formatted, ...prev])
+          toast.success(`Đã thêm thành công ${formatted.length} câu hỏi bóc tách từ PDF!`)
+        }}
       />
     </div>
   )
