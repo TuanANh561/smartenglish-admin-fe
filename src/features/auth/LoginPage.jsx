@@ -3,7 +3,7 @@ import { AlertTriangle, Eye, EyeOff, GraduationCap, Lock, Mail } from 'lucide-re
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -113,6 +113,13 @@ function LoginPage() {
           <Button type="submit" fullWidth loading={isSubmitting || login.isPending}>
             Đăng nhập
           </Button>
+
+          <div className="text-center text-xs pt-1 border-t border-line">
+            <span className="text-ink-muted">Bạn là Giáo viên mới? </span>
+            <Link to="/dang-ky-giao-vien" className="font-bold text-brand-600 hover:underline">
+              Đăng ký tài khoản Giảng dạy →
+            </Link>
+          </div>
 
           <p className="text-center text-xs text-ink-muted">
             Tài khoản demo: admin@smartenglish.vn / admin123 · mai.ht@gmail.com / teacher123

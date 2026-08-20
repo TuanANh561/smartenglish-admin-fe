@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import AiContentPage from '@/features/aiContent/AiContentPage'
 import AuditLogPage from '@/features/auditLog/AuditLogPage'
 import LoginPage from '@/features/auth/LoginPage'
+import RegisterTeacherPage from '@/features/auth/RegisterTeacherPage'
 import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
 import CommunityPage from '@/features/community/CommunityPage'
 import CourseDetailPage from '@/features/courses/CourseDetailPage'
@@ -31,6 +32,7 @@ import UiKitchenSink from '@/pages/UiKitchenSink'
 
 export const router = createBrowserRouter([
   { path: '/dang-nhap', element: <LoginPage /> },
+  { path: '/dang-ky-giao-vien', element: <RegisterTeacherPage /> },
   {
     path: '/',
     element: <ProtectedRoute />,
