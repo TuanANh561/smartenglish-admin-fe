@@ -47,3 +47,15 @@ input:disabled,
 select:disabled {
   cursor: not-allowed;
 }
+
+/* Ẩn scrollbar hiển thị ra ngoài nhưng vẫn cuộn mượt mà */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+

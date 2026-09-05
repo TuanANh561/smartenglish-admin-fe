@@ -19,7 +19,10 @@ function Avatar({ src, name = '', size = 'md', status, className }) {
         </span>
       )}
       {status === 'online' && (
-        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#15803D]" />
+        <span className="absolute bottom-0 right-0 flex h-3 w-3">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#15803D] opacity-60" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#15803D]" />
+        </span>
       )}
     </span>
   )

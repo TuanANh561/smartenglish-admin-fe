@@ -101,8 +101,23 @@ function Sidebar() {
                       )
                     }
                   >
-                    <item.icon size={18} strokeWidth={1.75} />
-                    {item.label}
+                    {({ isActive }) => (
+                      <>
+                        <item.icon size={18} strokeWidth={1.75} />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {item.unreadCount > 0 && (
+                          <span
+                            aria-label={`${item.unreadCount} tin nhắn chưa đọc`}
+                            className={cn(
+                              'min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold leading-none',
+                              isActive ? 'bg-white text-brand-600' : 'bg-brand-500 text-white',
+                            )}
+                          >
+                            {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </NavLink>
                 ),
               )}

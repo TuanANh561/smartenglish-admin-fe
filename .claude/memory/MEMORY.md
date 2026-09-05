@@ -60,7 +60,7 @@ Phạm vi: Dashboard tổng quan, Dữ liệu chi tiết, Học viên, Doanh thu
 
 ## Đang làm
 
-Chưa có.
+- 2026-09-04 — Gộp community messaging trực tiếp vào `CommunityPage.jsx`: bỏ hai row shortcut/filter, danh sách hội thoại (cá nhân + nhóm dạng avatar) nằm ở sidebar phải, click mở chat widget nổi giống Messenger. Hỗ trợ tối đa 3 cửa sổ cùng lúc; cửa sổ thứ 4 thay cửa sổ cũ nhất. Tách tab IDs và open IDs: avatar tab bấm bật/tắt cửa sổ nhưng vẫn tồn tại, X mới đóng hẳn tab; các avatar xếp cùng hàng cạnh Teacher Cáo, chat window dịch sang trái. Nút `...` chat đã xóa. `Tạo nhóm` nằm trong header card cạnh icon. `Avatar.jsx` có chấm online animate. Sidebar chỉ còn mục `Cộng đồng`, badge tin chưa đọc; bỏ route/page chat riêng và không thêm call/video.
 
 ## Việc tiếp theo
 

@@ -31,3 +31,25 @@ export function formatPercent(value) {
   const rounded = Math.round(value * 10) / 10
   return `${rounded}%`
 }
+
+export function maskEmail(email) {
+  if (!email || typeof email !== 'string' || !email.includes('@')) return '••••••••'
+  const [name, domain] = email.split('@')
+  if (name.length <= 2) return `${name.charAt(0)}***@${domain}`
+  return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`
+}
+
+export function maskIdentityCard(card) {
+  if (!card) return '••••••••••••'
+  const str = String(card).trim()
+  if (str.length <= 4) return '••••••••••••'
+  return `${str.slice(0, 4)}******${str.slice(-2)}`
+}
+
+export function maskPhone(phone) {
+  if (!phone) return '••••••••••'
+  const str = String(phone).trim()
+  if (str.length <= 4) return '••••••••••'
+  return `${str.slice(0, 3)}****${str.slice(-3)}`
+}
+

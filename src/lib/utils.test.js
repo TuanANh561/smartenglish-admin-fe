@@ -5,6 +5,9 @@ import {
   formatNumber,
   formatPercent,
   formatRelativeTime,
+  maskEmail,
+  maskIdentityCard,
+  maskPhone,
 } from './utils'
 
 describe('formatCurrency', () => {
@@ -58,3 +61,19 @@ describe('formatPercent', () => {
     expect(formatPercent(20)).toBe('20%')
   })
 })
+
+describe('maskEmail, maskIdentityCard, maskPhone', () => {
+  it('mask email an toàn', () => {
+    expect(maskEmail('thuha.le@gmail.com')).toBe('th***e@gmail.com')
+    expect(maskEmail('a@gmail.com')).toBe('a***@gmail.com')
+  })
+
+  it('mask CCCD / CMND an toàn', () => {
+    expect(maskIdentityCard('001198005432')).toBe('0011******32')
+  })
+
+  it('mask số điện thoại an toàn', () => {
+    expect(maskPhone('0981234567')).toBe('098****567')
+  })
+})
+

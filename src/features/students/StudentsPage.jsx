@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   UserPlus,
-  Plus,
   FileCheck2,
   CheckCircle2,
   XCircle,
@@ -10,12 +9,7 @@ import {
   Eye,
   FileText,
   ShieldCheck,
-  Award,
-  Download,
-  X,
-  User,
   Mail,
-  Lock,
   Phone,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -34,6 +28,11 @@ import { getUsers, lockUser, unlockUser } from '@/features/users/api'
 import { buildUserColumns } from '@/features/users/columns'
 import { INITIAL_TEACHER_REGISTRATIONS } from '@/mocks/data/teacherRegistrations'
 import { useAuthStore } from '@/store/authStore'
+import { maskEmail, maskIdentityCard, maskPhone } from '@/lib/utils'
+
+function generateTimestampId(prefix) {
+  return `${prefix}-${Date.now()}`
+}
 
 const ROLE_CHIPS = [
   { key: 'student', label: 'Học viên' },
@@ -82,13 +81,16 @@ function StudentsPage() {
     return [...customCreatedUsers, ...fetched]
   }, [usersQuery.data?.items, customCreatedUsers])
 
-  const handleToggleLock = (user) => {
-    if (user.id === currentUser?.id) {
-      toast.error('Bạn không thể tự khóa tài khoản quản trị viên của chính mình!')
-      return
-    }
-    setLockTarget(user)
-  }
+  const handleToggleLock = useCallback(
+    (user) => {
+      if (user.id === currentUser?.id) {
+        toast.error('Bạn không thể tự khóa tài khoản quản trị viên của chính mình!')
+        return
+      }
+      setLockTarget(user)
+    },
+    [currentUser?.id],
+  )
 
   const handleConfirmLockToggle = async () => {
     if (!lockTarget) return
@@ -121,7 +123,7 @@ function StudentsPage() {
       return toast.error('Mật khẩu tối thiểu 6 ký tự')
 
     const newUser = {
-      id: `user-new-${Date.now()}`,
+      id: generateTimestampId('user-new'),
       displayName: createUserForm.displayName.trim(),
       email: createUserForm.email.trim(),
       role: createUserForm.role,
@@ -156,7 +158,7 @@ function StudentsPage() {
     if (target) {
       // Auto create teacher user account
       const teacherUser = {
-        id: `user-teacher-${Date.now()}`,
+        id: generateTimestampId('user-teacher'),
         displayName: target.fullName,
         email: target.email,
         role: 'teacher',
@@ -185,7 +187,7 @@ function StudentsPage() {
       onToggleLock: handleToggleLock,
       currentUser,
     })
-  }, [isAdmin, currentUser])
+  }, [isAdmin, currentUser, handleToggleLock])
 
   const pendingRegsCount = registrations.filter((r) => r.status === 'pending').length
 
@@ -299,10 +301,22 @@ function StudentsPage() {
                   {registrations.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                       <td className="p-3">
-                        <div>
+                        <div className="space-y-0.5">
                           <p className="font-bold text-slate-900 text-xs">{item.fullName}</p>
-                          <p className="text-[11px] text-slate-500 mt-0.5">{item.email}</p>
-                          <p className="text-[11px] text-slate-400">CCCD: {item.identityCard}</p>
+                          <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                            <Mail size={12} className="text-slate-400 shrink-0" />
+                            <span>{maskEmail(item.email)}</span>
+                          </p>
+                          <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                            <ShieldCheck size={12} className="text-slate-400 shrink-0" />
+                            <span>CCCD: {maskIdentityCard(item.identityCard)}</span>
+                          </p>
+                          {item.phone && (
+                            <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                              <Phone size={12} className="text-slate-400 shrink-0" />
+                              <span>SĐT: {maskPhone(item.phone)}</span>
+                            </p>
+                          )}
                         </div>
                       </td>
 
@@ -475,11 +489,26 @@ function StudentsPage() {
       >
         {selectedProofReg && (
           <div className="space-y-4 text-xs">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
               <p className="font-bold text-slate-900 text-xs">{selectedProofReg.fullName}</p>
               <p className="text-slate-600">{selectedProofReg.education}</p>
               <p className="text-brand-600 font-bold">{selectedProofReg.certificateType}</p>
-              <p className="text-slate-500">Số CCCD: {selectedProofReg.identityCard}</p>
+              <div className="pt-1.5 border-t border-slate-200/60 space-y-1 text-slate-600">
+                <p className="flex items-center gap-1.5">
+                  <Mail size={12} className="text-slate-400 shrink-0" />
+                  <span>Email: {selectedProofReg.email}</span>
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <ShieldCheck size={12} className="text-slate-400 shrink-0" />
+                  <span>Số CCCD: {selectedProofReg.identityCard}</span>
+                </p>
+                {selectedProofReg.phone && (
+                  <p className="flex items-center gap-1.5">
+                    <Phone size={12} className="text-slate-400 shrink-0" />
+                    <span>SĐT: {selectedProofReg.phone}</span>
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>
