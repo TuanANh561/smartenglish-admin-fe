@@ -27,6 +27,9 @@ import SettingsPage from '@/features/settings/SettingsPage'
 import StudentsPage from '@/features/students/StudentsPage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
+import VocabularyFormPage from '@/features/vocabulary/VocabularyFormPage'
+import ReadingFormPage from '@/features/reading/ReadingFormPage'
+import ListeningFormPage from '@/features/listening/ListeningFormPage'
 import NotFound from '@/pages/NotFound'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 
@@ -45,6 +48,8 @@ export const router = createBrowserRouter([
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'hoc-vien', element: <StudentsPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
+          { path: 'hoc-lieu/tu-vung/tao-moi', element: <VocabularyFormPage /> },
+          { path: 'hoc-lieu/tu-vung/:id/chinh-sua', element: <VocabularyFormPage /> },
           { path: 'hoc-lieu/ngu-phap', element: <GrammarPage /> },
           { path: 'hoc-lieu/phat-am', element: <PronunciationPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
@@ -52,7 +57,11 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },
           { path: 'hoc-lieu/khoa-hoc/:id/chinh-sua', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/bai-doc', element: <ReadingPage /> },
+          { path: 'hoc-lieu/bai-doc/tao-moi', element: <ReadingFormPage /> },
+          { path: 'hoc-lieu/bai-doc/:id/chinh-sua', element: <ReadingFormPage /> },
           { path: 'hoc-lieu/bai-nghe', element: <ListeningPage /> },
+          { path: 'hoc-lieu/bai-nghe/tao-moi', element: <ListeningFormPage /> },
+          { path: 'hoc-lieu/bai-nghe/:id/chinh-sua', element: <ListeningFormPage /> },
           { path: 'hoc-lieu/bai-kiem-tra', element: <QuizBankPage /> },
           { path: 'noi-dung-ai', element: <AiContentPage /> },
           { path: 'voice-ai', element: <PlaceholderPage /> },

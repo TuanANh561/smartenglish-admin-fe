@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
   Clock,
   Crown,
@@ -18,13 +19,18 @@ import {
   Square,
   Trash2,
   Volume2,
+  X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Drawer from '@/components/ui/Drawer'
-import EmptyState from '@/components/ui/EmptyState'
+import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
+import Select from '@/components/ui/Select'
+import Textarea from '@/components/ui/Textarea'
 import { cn, formatDate } from '@/lib/utils'
 import {
   LISTENING_ACCENTS,
@@ -33,6 +39,76 @@ import {
 } from '@/mocks/data/listening'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { useAuthStore } from '@/store/authStore'
+
+const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const EMPTY_QUESTION = { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' }
+const EMPTY_FORM = {
+  title: '',
+  description: '',
+  topic: '',
+  accent: 'American',
+  level: 'B1',
+  duration: '3:00',
+  transcript: '',
+  questions: [{ ...EMPTY_QUESTION }],
+}
+
+function QuestionEditor({ questions, onChange }) {
+  const addQuestion = () => {
+    if (questions.length >= 10) { toast.error('Tối đa 10 câu hỏi'); return }
+    onChange([...questions, { ...EMPTY_QUESTION }])
+  }
+  const removeQuestion = (idx) => onChange(questions.filter((_, i) => i !== idx))
+  const updateQ = (idx, field, value) => onChange(questions.map((q, i) => i === idx ? { ...q, [field]: value } : q))
+  const updateOption = (qIdx, optIdx, value) => onChange(questions.map((q, i) => {
+    if (i !== qIdx) return q
+    const options = [...q.options]; options[optIdx] = value; return { ...q, options }
+  }))
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Câu hỏi nghe hiểu ({questions.length}/10)</label>
+        <button type="button" onClick={addQuestion}
+          className="flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer">
+          <Plus size={12} /> Thêm câu hỏi
+        </button>
+      </div>
+      {questions.map((q, qIdx) => (
+        <div key={qIdx} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-600">Câu {qIdx + 1}</span>
+            <button type="button" onClick={() => removeQuestion(qIdx)}
+              className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"><X size={13} /></button>
+          </div>
+          <input type="text" value={q.question} onChange={(e) => updateQ(qIdx, 'question', e.target.value)}
+            placeholder="Nhập câu hỏi về nội dung bài nghe..."
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-brand-400" />
+          <div className="grid grid-cols-2 gap-2">
+            {q.options.map((opt, optIdx) => (
+              <div key={optIdx} className="flex items-center gap-1.5">
+                <button type="button" onClick={() => updateQ(qIdx, 'correctIndex', optIdx)}
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors cursor-pointer ${
+                    q.correctIndex === optIdx ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white hover:border-slate-400'
+                  }`}>
+                  {q.correctIndex === optIdx && <Check size={11} strokeWidth={3} />}
+                </button>
+                <input type="text" value={opt} onChange={(e) => updateOption(qIdx, optIdx, e.target.value)}
+                  placeholder={`Đáp án ${String.fromCharCode(65 + optIdx)}`}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-brand-400" />
+              </div>
+            ))}
+          </div>
+          <input type="text" value={q.explanation} onChange={(e) => updateQ(qIdx, 'explanation', e.target.value)}
+            placeholder="Giải thích đáp án..."
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600 outline-none focus:border-brand-400" />
+        </div>
+      ))}
+      {questions.length === 0 && (
+        <div className="rounded-xl border border-dashed border-slate-300 py-4 text-center text-xs text-slate-400">Chưa có câu hỏi. Nhấn "Thêm câu hỏi" để tạo.</div>
+      )}
+    </div>
+  )
+}
 
 const PAGE_SIZE = 8
 
@@ -54,7 +130,9 @@ function extractCefr(levelStr) {
 function ListeningPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = user?.role === 'teacher'
+  const navigate = useNavigate()
 
+  const [lessons, setLessons] = useState(listeningLessons)
   const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
   const [topic, setTopic] = useState('all')
   const [accent, setAccent] = useState('all')
@@ -62,8 +140,9 @@ function ListeningPage() {
   const [page, setPage] = useState(1)
   const [playingId, setPlayingId] = useState(null)
   const [activeLesson, setActiveLesson] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
-  const publicLessons = useMemo(() => buildPublicContent('listening', listeningLessons), [])
+  const publicLessons = useMemo(() => buildPublicContent('listening', lessons), [lessons])
 
   const checkOwnership = (item) => {
     if (!user) return false
@@ -131,29 +210,38 @@ function ListeningPage() {
     e.stopPropagation()
     if (playingId === item.id) {
       setPlayingId(null)
-      toast('Đã dừng phát âm thanh', { icon: '⏸️' })
+      toast('Dừng phát âm thanh', { icon: '⏸️' })
     } else {
       setPlayingId(item.id)
       toast.success(`Đang phát audio: "${item.title}"`)
     }
   }
 
+  const handleOpenCreate = () => navigate('/hoc-lieu/bai-nghe/tao-moi')
+
   const handleEditClick = (e, item) => {
-    e.stopPropagation()
+    e?.stopPropagation?.()
     if (!canManage(item)) {
       toast.error(`Bạn không có quyền sửa bài nghe của "${item.authorName || 'người khác'}".`)
       return
     }
-    toast.success(`Mở trình sửa bài nghe: "${item.title}"`)
+    navigate(`/hoc-lieu/bai-nghe/${item.id}/chinh-sua`)
   }
 
   const handleDeleteClick = (e, item) => {
-    e.stopPropagation()
+    e?.stopPropagation?.()
     if (!canManage(item)) {
-      toast.error('Chỉ tác giả mới có quyền xoá bài nghe này!')
+      toast.error('Chỉ tác giả mới có quyền xoà bài nghe này!')
       return
     }
-    toast.success(`Đã xoá bài nghe "${item.title}"`)
+    setDeleteTarget(item)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return
+    setLessons(prev => prev.filter(l => l.id !== deleteTarget.id))
+    toast.success(`Đã xoà bài nghe "${deleteTarget.title}"`)
+    setDeleteTarget(null)
   }
 
   const handleAssignToClass = (e, item) => {
@@ -255,7 +343,7 @@ function ListeningPage() {
             {/* Thêm bài nghe */}
             <button
               type="button"
-              onClick={() => toast.success('Mở form tạo bài nghe mới')}
+              onClick={handleOpenCreate}
               className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
             >
               <Plus size={15} />
@@ -550,20 +638,35 @@ function ListeningPage() {
                   variant={isTeacher && checkOwnership(activeLesson) ? 'secondary' : 'primary'}
                   fullWidth={!isTeacher || !checkOwnership(activeLesson)}
                   icon={Pencil}
-                  onClick={(e) => handleEditClick(e, activeLesson)}
+                  onClick={(e) => { setActiveLesson(null); handleEditClick(e, activeLesson) }}
                 >
-                  Chỉnh sửa
+                  Chỉnh sửa bài nghe
                 </Button>
               ) : (
                 <div className="w-full text-center text-xs text-ink-muted py-2 bg-slate-50 rounded-lg">
                   <Lock size={13} className="inline mr-1" />
-                  Bạn đang xem bài nghe của tác giả khác (Không có quyền giao bài hoặc chỉnh sửa)
+                  Bạn đang xem bài nghe của tác giả khác
                 </div>
               )}
             </div>
           </div>
         )}
       </Drawer>
+
+      {/* Form hiện ở trang riêng: /hoc-lieu/bai-nghe/tao-moi hoặc /:id/chinh-sua */}
+
+
+      {/* ─── Confirm Xóa ─── */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Xoà bài nghe"
+        description={`Bạn có chắc muốn xoà bài nghe "${deleteTarget?.title}"?`}
+        confirmLabel="Xoà bài nghe"
+        cancelLabel="Hủy"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }
