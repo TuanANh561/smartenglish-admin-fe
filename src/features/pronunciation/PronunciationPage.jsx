@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   CheckCircle2,
   Copy,
@@ -40,6 +40,7 @@ import {
   pronunciationLessons,
 } from '@/mocks/data/pronunciation'
 import { useAuthStore } from '@/store/authStore'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 const CEFR_LEVELS = ['Tất cả', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const STATUS_OPTIONS = [
@@ -69,6 +70,7 @@ const LEVEL_COLOR = {
 const PAGE_SIZE = 8
 
 function PronunciationPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [lessons, setLessons] = useState(pronunciationLessons)
   const [search, setSearch] = useState('')
@@ -79,26 +81,8 @@ function PronunciationPage() {
 
   // Drawer / Modal states
   const [activeLesson, setActiveLesson] = useState(null)
-  const [editingLesson, setEditingLesson] = useState(null)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [playingAudioId, setPlayingAudioId] = useState(null)
-
-  // Form State
-  const [formData, setFormData] = useState({
-    title: '',
-    ipaSymbol: '',
-    category: 'Vowels',
-    level: 'B1',
-    status: 'published',
-    audioSampleCount: 24,
-    aiMinScoreThreshold: 85,
-    description: '',
-    mouthShapeGuide: '',
-    sampleWord: '',
-    sampleWordIpa: '',
-    sampleSentence: '',
-  })
 
   // Filter logic
   const filtered = useMemo(() => {
@@ -139,48 +123,27 @@ function PronunciationPage() {
 
   const handlePlayAudio = (e, item) => {
     e.stopPropagation()
-    setPlayingAudioId(item.id)
-    toast.success(`Đang phát audio phát âm chuẩn: ${item.ipaSymbol || item.title}`)
-    setTimeout(() => {
+    if (playingAudioId === item.id) {
       setPlayingAudioId(null)
-    }, 2000)
+      stopAudio()
+    } else {
+      setPlayingAudioId(item.id)
+      const wordToSpeak = item.sampleWords?.[0]?.word || item.title || item.ipaSymbol
+      speakWord(wordToSpeak)
+      toast.success(`Phát âm mẫu: ${item.ipaSymbol || item.title}`)
+      setTimeout(() => {
+        setPlayingAudioId(null)
+      }, 2000)
+    }
   }
 
   const handleOpenCreate = () => {
-    setFormData({
-      title: '',
-      ipaSymbol: '',
-      category: 'Vowels',
-      level: 'B1',
-      status: 'published',
-      audioSampleCount: 24,
-      aiMinScoreThreshold: 85,
-      description: '',
-      mouthShapeGuide: '',
-      sampleWord: '',
-      sampleWordIpa: '',
-      sampleSentence: '',
-    })
-    setIsCreateOpen(true)
+    navigate('/hoc-lieu/phat-am/tao-moi')
   }
 
   const handleOpenEdit = (e, item) => {
-    e.stopPropagation()
-    setEditingLesson(item)
-    setFormData({
-      title: item.title,
-      ipaSymbol: item.ipaSymbol || '',
-      category: item.category,
-      level: item.level,
-      status: item.status,
-      audioSampleCount: item.audioSampleCount || 20,
-      aiMinScoreThreshold: item.aiMinScoreThreshold || 85,
-      description: item.description || '',
-      mouthShapeGuide: item.mouthShapeGuide || '',
-      sampleWord: item.sampleWords?.[0]?.word || '',
-      sampleWordIpa: item.sampleWords?.[0]?.ipa || '',
-      sampleSentence: item.sampleSentences?.[0]?.text || '',
-    })
+    e?.stopPropagation?.()
+    navigate(`/hoc-lieu/phat-am/${item.id}/chinh-sua`)
   }
 
   const handleDuplicate = (e, item) => {
@@ -202,69 +165,6 @@ function PronunciationPage() {
     setLessons((prev) => prev.filter((l) => l.id !== deleteTarget.id))
     toast.success(`Đã xóa bài học "${deleteTarget.title}"`)
     setDeleteTarget(null)
-  }
-
-  const handleSaveForm = (e) => {
-    e.preventDefault()
-    if (!formData.title.trim()) {
-      toast.error('Vui lòng nhập tên bài học phát âm')
-      return
-    }
-
-    const sampleWordsArray = formData.sampleWord
-      ? [{ word: formData.sampleWord, ipa: formData.sampleWordIpa || '', meaning: '' }]
-      : []
-
-    const sampleSentencesArray = formData.sampleSentence
-      ? [{ text: formData.sampleSentence, ipa: '' }]
-      : []
-
-    if (editingLesson) {
-      setLessons((prev) =>
-        prev.map((item) =>
-          item.id === editingLesson.id
-            ? {
-                ...item,
-                title: formData.title.trim(),
-                ipaSymbol: formData.ipaSymbol.trim(),
-                category: formData.category,
-                level: formData.level,
-                status: formData.status,
-                audioSampleCount: Number(formData.audioSampleCount) || 20,
-                aiMinScoreThreshold: Number(formData.aiMinScoreThreshold) || 85,
-                description: formData.description,
-                mouthShapeGuide: formData.mouthShapeGuide,
-                sampleWords: sampleWordsArray.length > 0 ? sampleWordsArray : item.sampleWords,
-                sampleSentences: sampleSentencesArray.length > 0 ? sampleSentencesArray : item.sampleSentences,
-                updatedAt: new Date().toISOString(),
-              }
-            : item,
-        ),
-      )
-      toast.success('Đã cập nhật bài học phát âm!')
-      setEditingLesson(null)
-    } else {
-      const newLesson = {
-        id: `pron-${Date.now()}`,
-        title: formData.title.trim(),
-        ipaSymbol: formData.ipaSymbol.trim(),
-        category: formData.category,
-        level: formData.level,
-        status: formData.status,
-        audioSampleCount: Number(formData.audioSampleCount) || 24,
-        aiMinScoreThreshold: Number(formData.aiMinScoreThreshold) || 85,
-        description: formData.description,
-        mouthShapeGuide: formData.mouthShapeGuide,
-        sampleWords: sampleWordsArray,
-        sampleSentences: sampleSentencesArray,
-        authorName: user?.displayName || 'Hoàng Thị Mai',
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      }
-      setLessons((prev) => [newLesson, ...prev])
-      toast.success('Đã thêm bài học phát âm mới!')
-      setIsCreateOpen(false)
-    }
   }
 
   const isTeacher = user?.role === 'teacher'
@@ -542,202 +442,7 @@ function PronunciationPage() {
         </div>
       </div>
 
-      {/* ─── Modal Create / Edit Lesson ──────────────────────────────────── */}
-      <Modal
-        open={isCreateOpen || Boolean(editingLesson)}
-        onClose={() => {
-          setIsCreateOpen(false)
-          setEditingLesson(null)
-        }}
-        title={editingLesson ? 'Chỉnh sửa bài học phát âm' : 'Thêm bài học phát âm mới'}
-        className="max-w-2xl"
-      >
-        <form onSubmit={handleSaveForm} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Tên bài học phát âm *
-              </label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="VD: Mastering the Schwa Sound..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Ký hiệu IPA trọng tâm *
-              </label>
-              <Input
-                value={formData.ipaSymbol}
-                onChange={(e) => setFormData({ ...formData, ipaSymbol: e.target.value })}
-                placeholder="VD: /ə/, /s/ - /z/, /θ/..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Phân loại âm
-              </label>
-              <Select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                {PRONUNCIATION_CATEGORIES.filter((c) => c !== 'Tất cả phân loại').map(
-                  (cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ),
-                )}
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Cấp độ CEFR
-              </label>
-              <Select
-                value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-              >
-                {CEFR_LEVELS.filter((l) => l !== 'Tất cả').map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    Cấp độ {lvl}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Số lượng mẫu Audio (samples)
-              </label>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={formData.audioSampleCount}
-                onChange={(e) =>
-                  setFormData({ ...formData, audioSampleCount: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Ngưỡng đạt chuẩn AI (%)
-              </label>
-              <Input
-                type="number"
-                min={50}
-                max={100}
-                value={formData.aiMinScoreThreshold}
-                onChange={(e) =>
-                  setFormData({ ...formData, aiMinScoreThreshold: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Trạng thái
-              </label>
-              <Select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <option value="published">Published (Đã xuất bản)</option>
-                <option value="draft">Draft (Bản nháp)</option>
-              </Select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Mô tả đặc điểm phát âm
-              </label>
-              <Textarea
-                rows={2}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Mô tả các lưu ý và vị trí xuất hiện của âm trong từ..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Hướng dẫn đặt khẩu hình miệng & lưỡi
-              </label>
-              <Textarea
-                rows={2}
-                value={formData.mouthShapeGuide}
-                onChange={(e) =>
-                  setFormData({ ...formData, mouthShapeGuide: e.target.value })
-                }
-                placeholder="VD: Môi mở tự nhiên, đầu lưỡi đặt nhẹ ở chân răng cửa trên..."
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Từ vựng mẫu luyện âm
-              </label>
-              <Input
-                value={formData.sampleWord}
-                onChange={(e) => setFormData({ ...formData, sampleWord: e.target.value })}
-                placeholder="VD: Banana, About..."
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Phiên âm IPA của từ mẫu
-              </label>
-              <Input
-                value={formData.sampleWordIpa}
-                onChange={(e) =>
-                  setFormData({ ...formData, sampleWordIpa: e.target.value })
-                }
-                placeholder="VD: /bəˈnæn.ə/..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Câu mẫu thực hành ngữ điệu
-              </label>
-              <Input
-                value={formData.sampleSentence}
-                onChange={(e) =>
-                  setFormData({ ...formData, sampleSentence: e.target.value })
-                }
-                placeholder="VD: A cup of tea and a banana for breakfast."
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-2 border-t border-line pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsCreateOpen(false)
-                setEditingLesson(null)
-              }}
-            >
-              Hủy bỏ
-            </Button>
-            <Button type="submit" className="bg-navy-800 hover:bg-navy-900 text-white font-semibold">
-              {editingLesson ? 'Lưu thay đổi' : 'Tạo bài học'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Form hiện ở trang riêng: /hoc-lieu/phat-am/tao-moi hoặc /:id/chinh-sua */}
 
       {/* ─── Drawer View Lesson Details ─────────────────────────────────── */}
       <Drawer
@@ -824,9 +529,11 @@ function PronunciationPage() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          toast.success(`Phát âm từ: ${sw.word}`)
+                          speakWord(sw.word)
+                          toast.success(`Phát âm: "${sw.word}"`)
                         }}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                        title="Phát âm từ mẫu"
                       >
                         <Volume2 size={14} />
                       </button>
@@ -867,7 +574,7 @@ function PronunciationPage() {
                 onClick={() => {
                   const target = activeLesson
                   setActiveLesson(null)
-                  handleOpenEdit({ stopPropagation: () => {} }, target)
+                  navigate(`/hoc-lieu/phat-am/${target.id}/chinh-sua`)
                 }}
               >
                 Chỉnh sửa bài học

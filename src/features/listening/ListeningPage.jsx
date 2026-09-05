@@ -39,6 +39,7 @@ import {
 } from '@/mocks/data/listening'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { useAuthStore } from '@/store/authStore'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const EMPTY_QUESTION = { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' }
@@ -210,9 +211,11 @@ function ListeningPage() {
     e.stopPropagation()
     if (playingId === item.id) {
       setPlayingId(null)
+      stopAudio()
       toast('Dừng phát âm thanh', { icon: '⏸️' })
     } else {
       setPlayingId(item.id)
+      speakWord(item.title + '. ' + (item.description || ''), item.audioUrl)
       toast.success(`Đang phát audio: "${item.title}"`)
     }
   }

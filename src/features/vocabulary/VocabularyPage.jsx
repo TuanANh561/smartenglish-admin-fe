@@ -8,6 +8,7 @@ import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { vocabularies } from '@/mocks/data/vocabulary'
 import { vocabularyColumns } from './columns'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 const PAGE_SIZE = 10
 
@@ -208,11 +209,12 @@ function VocabularyPage() {
     e.stopPropagation()
     if (playingId === item.id) {
       setPlayingId(null)
+      stopAudio()
       toast('Đã dừng phát âm', { icon: '⏸️' })
     } else {
       setPlayingId(item.id)
-      toast.success(`Phát âm: "${item.word}"`)
-      setTimeout(() => setPlayingId(null), 2500)
+      speakWord(item.word, item.audioUrl)
+      setTimeout(() => setPlayingId(null), 2000)
     }
   }
 

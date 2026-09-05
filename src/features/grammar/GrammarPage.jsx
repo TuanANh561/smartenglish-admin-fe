@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   CheckCircle2,
@@ -48,9 +48,9 @@ const STATUS_OPTIONS = [
 const LEVEL_TONE = {
   A1: 'info',
   A2: 'info',
-  B1: 'success',
-  B2: 'warning',
-  C1: 'danger',
+  B1: 'brand',
+  B2: 'brand',
+  C1: 'warning',
   C2: 'danger',
 }
 
@@ -66,6 +66,7 @@ const LEVEL_COLOR = {
 const PAGE_SIZE = 8
 
 function GrammarPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [lessons, setLessons] = useState(grammarLessons)
   const [selectedTopic, setSelectedTopic] = useState('Tất cả chủ điểm')
@@ -76,24 +77,8 @@ function GrammarPage() {
 
   // Drawer / Modal states
   const [activeLesson, setActiveLesson] = useState(null)
-  const [editingLesson, setEditingLesson] = useState(null)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
-
-  // Form State
-  const [formData, setFormData] = useState({
-    title: '',
-    topic: 'Tenses',
-    level: 'B1',
-    status: 'published',
-    exerciseCount: 15,
-    description: '',
-    formula: '',
-    keyRules: '',
-    exampleEn: '',
-    exampleVi: '',
-  })
 
   // Filtering
   const filtered = useMemo(() => {
@@ -133,36 +118,12 @@ function GrammarPage() {
   }, [lessons])
 
   const handleOpenCreate = () => {
-    setFormData({
-      title: '',
-      topic: 'Tenses',
-      level: 'B1',
-      status: 'published',
-      exerciseCount: 15,
-      description: '',
-      formula: '',
-      keyRules: '',
-      exampleEn: '',
-      exampleVi: '',
-    })
-    setIsCreateOpen(true)
+    navigate('/hoc-lieu/ngu-phap/tao-moi')
   }
 
   const handleOpenEdit = (e, item) => {
-    e.stopPropagation()
-    setEditingLesson(item)
-    setFormData({
-      title: item.title,
-      topic: item.topic,
-      level: item.level,
-      status: item.status,
-      exerciseCount: item.exerciseCount || 10,
-      description: item.description || '',
-      formula: item.formula || '',
-      keyRules: Array.isArray(item.keyRules) ? item.keyRules.join('\n') : item.keyRules || '',
-      exampleEn: item.examples?.[0]?.en || '',
-      exampleVi: item.examples?.[0]?.vi || '',
-    })
+    e?.stopPropagation?.()
+    navigate(`/hoc-lieu/ngu-phap/${item.id}/chinh-sua`)
   }
 
   const handleDuplicate = (e, item) => {
@@ -185,67 +146,6 @@ function GrammarPage() {
     setLessons((prev) => prev.filter((l) => l.id !== deleteTarget.id))
     toast.success(`Đã xóa bài học "${deleteTarget.title}"`)
     setDeleteTarget(null)
-  }
-
-  const handleSaveForm = (e) => {
-    e.preventDefault()
-    if (!formData.title.trim()) {
-      toast.error('Vui lòng nhập tên bài học ngữ pháp')
-      return
-    }
-
-    const rulesArray = formData.keyRules
-      .split('\n')
-      .map((r) => r.trim())
-      .filter(Boolean)
-
-    const examplesArray = formData.exampleEn
-      ? [{ en: formData.exampleEn, vi: formData.exampleVi || '' }]
-      : []
-
-    if (editingLesson) {
-      setLessons((prev) =>
-        prev.map((item) =>
-          item.id === editingLesson.id
-            ? {
-                ...item,
-                title: formData.title.trim(),
-                topic: formData.topic,
-                level: formData.level,
-                status: formData.status,
-                exerciseCount: Number(formData.exerciseCount) || 10,
-                description: formData.description,
-                formula: formData.formula,
-                keyRules: rulesArray,
-                examples: examplesArray.length > 0 ? examplesArray : item.examples,
-                updatedAt: new Date().toISOString(),
-              }
-            : item,
-        ),
-      )
-      toast.success('Đã cập nhật bài học ngữ pháp!')
-      setEditingLesson(null)
-    } else {
-      const newLesson = {
-        id: `gram-${Date.now()}`,
-        title: formData.title.trim(),
-        topic: formData.topic,
-        level: formData.level,
-        status: formData.status,
-        exerciseCount: Number(formData.exerciseCount) || 15,
-        description: formData.description,
-        formula: formData.formula,
-        keyRules: rulesArray,
-        examples: examplesArray,
-        authorName: user?.displayName || 'Nguyen Van A',
-        authorEmail: user?.email || 'nguyenvana@smartenglish.vn',
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      }
-      setLessons((prev) => [newLesson, ...prev])
-      toast.success('Đã thêm bài học ngữ pháp mới!')
-      setIsCreateOpen(false)
-    }
   }
 
   const isTeacher = user?.role === 'teacher'
@@ -488,173 +388,7 @@ function GrammarPage() {
         </div>
       </div>
 
-      {/* ─── Modal Create / Edit Lesson ──────────────────────────────────── */}
-      <Modal
-        open={isCreateOpen || Boolean(editingLesson)}
-        onClose={() => {
-          setIsCreateOpen(false)
-          setEditingLesson(null)
-        }}
-        title={editingLesson ? 'Chỉnh sửa bài học ngữ pháp' : 'Thêm bài học ngữ pháp mới'}
-        className="max-w-2xl"
-      >
-        <form onSubmit={handleSaveForm} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Tên bài học ngữ pháp *
-              </label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="VD: Present Perfect vs Past Simple..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Chủ điểm ngữ pháp
-              </label>
-              <Select
-                value={formData.topic}
-                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-              >
-                {GRAMMAR_TOPICS.filter((t) => t !== 'Tất cả chủ điểm').map((topic) => (
-                  <option key={topic} value={topic}>
-                    {topic}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Cấp độ CEFR
-              </label>
-              <Select
-                value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-              >
-                {CEFR_LEVELS.filter((l) => l !== 'Tất cả').map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    Cấp độ {lvl}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Số lượng bài tập
-              </label>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={formData.exerciseCount}
-                onChange={(e) =>
-                  setFormData({ ...formData, exerciseCount: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Trạng thái
-              </label>
-              <Select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <option value="published">Published (Đã xuất bản)</option>
-                <option value="draft">Draft (Bản nháp)</option>
-              </Select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Công thức / Cấu trúc tổng quát
-              </label>
-              <Input
-                value={formData.formula}
-                onChange={(e) => setFormData({ ...formData, formula: e.target.value })}
-                placeholder="VD: S + have/has + V3/ed vs S + V2/ed..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Mô tả khái quát
-              </label>
-              <Textarea
-                rows={2}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Mô tả mục tiêu và ngữ cảnh sử dụng của cấu trúc ngữ pháp này..."
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Quy tắc trọng tâm (Mỗi dòng một quy tắc)
-              </label>
-              <Textarea
-                rows={3}
-                value={formData.keyRules}
-                onChange={(e) =>
-                  setFormData({ ...formData, keyRules: e.target.value })
-                }
-                placeholder="Nhập các quy tắc ngữ pháp quan trọng..."
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Ví dụ mẫu (Tiếng Anh)
-              </label>
-              <Input
-                value={formData.exampleEn}
-                onChange={(e) =>
-                  setFormData({ ...formData, exampleEn: e.target.value })
-                }
-                placeholder="VD: I have lived in Hanoi for 5 years."
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-800">
-                Dịch nghĩa ví dụ (Tiếng Việt)
-              </label>
-              <Input
-                value={formData.exampleVi}
-                onChange={(e) =>
-                  setFormData({ ...formData, exampleVi: e.target.value })
-                }
-                placeholder="VD: Tôi đã sống ở Hà Nội được 5 năm."
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-2 border-t border-line pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsCreateOpen(false)
-                setEditingLesson(null)
-              }}
-            >
-              Hủy bỏ
-            </Button>
-            <Button type="submit" className="bg-navy-800 hover:bg-navy-900 text-white font-semibold">
-              {editingLesson ? 'Lưu thay đổi' : 'Tạo bài học'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Form hiện ở trang riêng: /hoc-lieu/ngu-phap/tao-moi hoặc /:id/chinh-sua */}
 
       {/* ─── Drawer View Lesson Details ─────────────────────────────────── */}
       <Drawer
@@ -773,7 +507,7 @@ function GrammarPage() {
                 onClick={() => {
                   const target = activeLesson
                   setActiveLesson(null)
-                  handleOpenEdit({ stopPropagation: () => {} }, target)
+                  navigate(`/hoc-lieu/ngu-phap/${target.id}/chinh-sua`)
                 }}
               >
                 Chỉnh sửa bài học

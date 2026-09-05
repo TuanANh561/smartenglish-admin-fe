@@ -17,6 +17,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
+import IpaInputField from '@/components/ui/IpaInputField'
 import { vocabularies } from '@/mocks/data/vocabulary'
 import { useAuthStore } from '@/store/authStore'
 
@@ -247,10 +248,13 @@ function VocabularyFormPage() {
                     <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ vựng *</label>
                     <Input value={form.word} onChange={set('word')} placeholder="VD: serendipity" required />
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Phiên âm IPA</label>
-                    <Input value={form.pronunciation} onChange={set('pronunciation')} placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/" />
-                  </div>
+                  <IpaInputField
+                    value={form.pronunciation}
+                    onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
+                    sourceWord={form.word}
+                    onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
+                    placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
+                  />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ loại</label>

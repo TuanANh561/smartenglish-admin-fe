@@ -134,9 +134,17 @@ export const ROUTE_META = {
     title: 'Quản lý Bài học Ngữ pháp',
     description: 'Biên soạn và quản lý các bài học cấu trúc ngữ pháp hệ thống.',
   },
+  '/hoc-lieu/ngu-phap/tao-moi': {
+    title: 'Biên soạn Bài học Ngữ pháp',
+    description: 'Thiết lập cấu trúc, quy tắc ngữ pháp và hệ thống bài tập trắc nghiệm.',
+  },
   '/hoc-lieu/phat-am': {
     title: 'Quản lý Bài học Phát âm',
     description: 'Quản lý học liệu luyện phát âm, trọng âm và ngữ điệu AI.',
+  },
+  '/hoc-lieu/phat-am/tao-moi': {
+    title: 'Biên soạn Bài học Phát âm',
+    description: 'Thiết lập ký hiệu IPA, từ mẫu âm thanh và bài tập nhận diện âm.',
   },
   '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
   '/hoc-lieu/khoa-hoc/tao-moi': { title: 'Tạo Khóa học mới', description: 'Thiết lập thông tin cơ bản và cấu trúc chương trình học.' },

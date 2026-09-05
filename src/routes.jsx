@@ -30,6 +30,8 @@ import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import VocabularyFormPage from '@/features/vocabulary/VocabularyFormPage'
 import ReadingFormPage from '@/features/reading/ReadingFormPage'
 import ListeningFormPage from '@/features/listening/ListeningFormPage'
+import GrammarFormPage from '@/features/grammar/GrammarFormPage'
+import PronunciationFormPage from '@/features/pronunciation/PronunciationFormPage'
 import NotFound from '@/pages/NotFound'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 
@@ -51,7 +53,11 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/tu-vung/tao-moi', element: <VocabularyFormPage /> },
           { path: 'hoc-lieu/tu-vung/:id/chinh-sua', element: <VocabularyFormPage /> },
           { path: 'hoc-lieu/ngu-phap', element: <GrammarPage /> },
+          { path: 'hoc-lieu/ngu-phap/tao-moi', element: <GrammarFormPage /> },
+          { path: 'hoc-lieu/ngu-phap/:id/chinh-sua', element: <GrammarFormPage /> },
           { path: 'hoc-lieu/phat-am', element: <PronunciationPage /> },
+          { path: 'hoc-lieu/phat-am/tao-moi', element: <PronunciationFormPage /> },
+          { path: 'hoc-lieu/phat-am/:id/chinh-sua', element: <PronunciationFormPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
           { path: 'hoc-lieu/khoa-hoc/tao-moi', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },
