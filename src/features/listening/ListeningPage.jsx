@@ -1,125 +1,26 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import {
-  AlertTriangle,
-  Check,
-  CheckCircle2,
-  Clock,
-  Crown,
-  Eye,
-  FileText,
-  Headphones,
-  Lock,
-  Mic,
-  Pencil,
-  Play,
-  Plus,
-  Search,
-  Send,
-  Square,
-  Trash2,
-  Volume2,
-  X,
-} from 'lucide-react'
+import { Crown } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Badge from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import Drawer from '@/components/ui/Drawer'
-import Input from '@/components/ui/Input'
-import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
-import Select from '@/components/ui/Select'
-import Textarea from '@/components/ui/Textarea'
-import { cn, formatDate } from '@/lib/utils'
-import {
-  LISTENING_ACCENTS,
-  LISTENING_TOPICS,
-  listeningLessons,
-} from '@/mocks/data/listening'
+import { listeningLessons } from '@/mocks/data/listening'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
-
-const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const EMPTY_QUESTION = { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' }
-const EMPTY_FORM = {
-  title: '',
-  description: '',
-  topic: '',
-  accent: 'American',
-  level: 'B1',
-  duration: '3:00',
-  transcript: '',
-  questions: [{ ...EMPTY_QUESTION }],
-}
-
-function QuestionEditor({ questions, onChange }) {
-  const addQuestion = () => {
-    if (questions.length >= 10) { toast.error('Tối đa 10 câu hỏi'); return }
-    onChange([...questions, { ...EMPTY_QUESTION }])
-  }
-  const removeQuestion = (idx) => onChange(questions.filter((_, i) => i !== idx))
-  const updateQ = (idx, field, value) => onChange(questions.map((q, i) => i === idx ? { ...q, [field]: value } : q))
-  const updateOption = (qIdx, optIdx, value) => onChange(questions.map((q, i) => {
-    if (i !== qIdx) return q
-    const options = [...q.options]; options[optIdx] = value; return { ...q, options }
-  }))
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Câu hỏi nghe hiểu ({questions.length}/10)</label>
-        <button type="button" onClick={addQuestion}
-          className="flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer">
-          <Plus size={12} /> Thêm câu hỏi
-        </button>
-      </div>
-      {questions.map((q, qIdx) => (
-        <div key={qIdx} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600">Câu {qIdx + 1}</span>
-            <button type="button" onClick={() => removeQuestion(qIdx)}
-              className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"><X size={13} /></button>
-          </div>
-          <input type="text" value={q.question} onChange={(e) => updateQ(qIdx, 'question', e.target.value)}
-            placeholder="Nhập câu hỏi về nội dung bài nghe..."
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-brand-400" />
-          <div className="grid grid-cols-2 gap-2">
-            {q.options.map((opt, optIdx) => (
-              <div key={optIdx} className="flex items-center gap-1.5">
-                <button type="button" onClick={() => updateQ(qIdx, 'correctIndex', optIdx)}
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors cursor-pointer ${
-                    q.correctIndex === optIdx ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white hover:border-slate-400'
-                  }`}>
-                  {q.correctIndex === optIdx && <Check size={11} strokeWidth={3} />}
-                </button>
-                <input type="text" value={opt} onChange={(e) => updateOption(qIdx, optIdx, e.target.value)}
-                  placeholder={`Đáp án ${String.fromCharCode(65 + optIdx)}`}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-brand-400" />
-              </div>
-            ))}
-          </div>
-          <input type="text" value={q.explanation} onChange={(e) => updateQ(qIdx, 'explanation', e.target.value)}
-            placeholder="Giải thích đáp án..."
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600 outline-none focus:border-brand-400" />
-        </div>
-      ))}
-      {questions.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 py-4 text-center text-xs text-slate-400">Chưa có câu hỏi. Nhấn "Thêm câu hỏi" để tạo.</div>
-      )}
-    </div>
-  )
-}
+import ListeningDetailDrawer from './components/ListeningDetailDrawer'
+import ListeningToolbar from './components/ListeningToolbar'
+import ListeningTableRow from './components/ListeningTableRow'
 
 const PAGE_SIZE = 8
 
 const CEFR_MAP = {
-  'A1': { bg: '#f0fdf4', text: '#15803d', code: 'A1' },
-  'A2': { bg: '#f0fdf4', text: '#15803d', code: 'A2' },
-  'B1': { bg: '#eff6ff', text: '#1d4ed8', code: 'B1' },
-  'B2': { bg: '#eef2ff', text: '#4f46e5', code: 'B2' },
-  'C1': { bg: '#faf5ff', text: '#7c3aed', code: 'C1' },
-  'C2': { bg: '#faf5ff', text: '#7c3aed', code: 'C2' },
+  A1: { bg: '#f0fdf4', text: '#15803d', code: 'A1' },
+  A2: { bg: '#f0fdf4', text: '#15803d', code: 'A2' },
+  B1: { bg: '#eff6ff', text: '#1d4ed8', code: 'B1' },
+  B2: { bg: '#eef2ff', text: '#4f46e5', code: 'B2' },
+  C1: { bg: '#faf5ff', text: '#7c3aed', code: 'C1' },
+  C2: { bg: '#faf5ff', text: '#7c3aed', code: 'C2' },
 }
 
 function extractCefr(levelStr) {
@@ -131,6 +32,7 @@ function extractCefr(levelStr) {
 function ListeningPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = user?.role === 'teacher'
+  const isAdmin = user?.role === 'admin'
   const navigate = useNavigate()
 
   const [lessons, setLessons] = useState(listeningLessons)
@@ -146,7 +48,7 @@ function ListeningPage() {
   const publicLessons = useMemo(() => buildPublicContent('listening', lessons), [lessons])
 
   const checkOwnership = (item) => {
-    if (!user) return false
+    if (!user || !item) return false
     if (isTeacher) {
       return (
         item.authorEmail === user.email ||
@@ -163,8 +65,8 @@ function ListeningPage() {
   }
 
   const canManage = (item) => {
-    if (!user) return false
-    if (user.role === 'admin') return true
+    if (!user || !item) return false
+    if (isAdmin) return true
     return checkOwnership(item)
   }
 
@@ -242,7 +144,7 @@ function ListeningPage() {
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return
-    setLessons(prev => prev.filter(l => l.id !== deleteTarget.id))
+    setLessons((prev) => prev.filter((l) => l.id !== deleteTarget.id))
     toast.success(`Đã xoà bài nghe "${deleteTarget.title}"`)
     setDeleteTarget(null)
   }
@@ -273,87 +175,24 @@ function ListeningPage() {
         </div>
       )}
 
-      {/* Table Card (Matching Classes & Grammar reference design) */}
+      {/* Table Card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Toolbar */}
-        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
-          {/* Search */}
-          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
-            <Search size={18} className="shrink-0 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Tìm theo tên bài nghe, chủ đề, giọng đọc..."
-              className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
-            />
-          </div>
-
-          {/* Filters & Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Học liệu */}
-            <select
-              value={ownershipFilter}
-              onChange={(e) => {
-                setOwnershipFilter(e.target.value)
-                setPage(1)
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Học liệu: Tất cả ({publicLessons.length})</option>
-              <option value="mine">Học liệu: Của tôi ({myLessonsCount})</option>
-              <option value="system">Học liệu: Hệ thống SmartEnglish</option>
-              {isTeacher && <option value="others">Học liệu: Giáo viên khác</option>}
-            </select>
-
-            {/* Chủ đề */}
-            <select
-              value={topic}
-              onChange={(e) => {
-                setTopic(e.target.value)
-                setPage(1)
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Chủ đề: Tất cả</option>
-              {LISTENING_TOPICS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            {/* Giọng đọc */}
-            <select
-              value={accent}
-              onChange={(e) => {
-                setAccent(e.target.value)
-                setPage(1)
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Giọng đọc: Tất cả</option>
-              {LISTENING_ACCENTS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            {/* Thêm bài nghe */}
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
-            >
-              <Plus size={15} />
-              <span>Thêm bài nghe</span>
-            </button>
-          </div>
-        </div>
+        <ListeningToolbar
+          search={search}
+          setSearch={setSearch}
+          setPage={setPage}
+          ownershipFilter={ownershipFilter}
+          setOwnershipFilter={setOwnershipFilter}
+          topic={topic}
+          setTopic={setTopic}
+          accent={accent}
+          setAccent={setAccent}
+          totalLessons={publicLessons.length}
+          myLessonsCount={myLessonsCount}
+          isTeacher={isTeacher}
+          onOpenCreate={handleOpenCreate}
+        />
 
         {/* Table Content */}
         <div className="overflow-x-auto">
@@ -377,178 +216,26 @@ function ListeningPage() {
                   </td>
                 </tr>
               ) : (
-                pageData.map((item) => {
-                  const isOwned = checkOwnership(item)
-                  const isSystem =
-                    item.authorEmail === 'system@smartenglish.vn' ||
-                    item.authorName?.includes('Hệ thống')
-                  const cefr = extractCefr(item.level)
-                  const isPlaying = playingId === item.id
-                  const isReady = item.status === 'ready'
-
-                  return (
-                    <tr
-                      key={item.id}
-                      onClick={() => setActiveLesson(item)}
-                      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
-                    >
-                      {/* Tiêu đề + Nút Play Audio */}
-                      <td className="px-6 py-4.5">
-                        <div className="flex items-center gap-3.5">
-                          <button
-                            type="button"
-                            onClick={(e) => handlePlayToggle(e, item)}
-                            className={cn(
-                              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all cursor-pointer shadow-2xs',
-                              isPlaying
-                                ? 'bg-brand-500 text-white animate-pulse'
-                                : 'bg-blue-50 text-brand-600 hover:bg-brand-500 hover:text-white',
-                            )}
-                            title={isPlaying ? 'Dừng audio' : 'Nghe thử audio'}
-                          >
-                            {isPlaying ? (
-                              <Volume2 size={16} />
-                            ) : (
-                              <Play size={16} className="ml-0.5" />
-                            )}
-                          </button>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
-                                {item.title}
-                              </span>
-                              <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                                {item.accent}
-                              </span>
-                            </div>
-                            <span className="line-clamp-1 text-xs text-slate-500 mt-0.5">
-                              {item.description}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Chủ đề */}
-                      <td className="px-4 py-4.5 text-sm font-medium text-slate-700 whitespace-nowrap">
-                        {item.topic}
-                      </td>
-
-                      {/* Cấp độ */}
-                      <td className="px-4 py-4.5 text-center whitespace-nowrap">
-                        <span
-                          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
-                          style={{ backgroundColor: cefr.bg, color: cefr.text }}
-                        >
-                          {cefr.code}
-                        </span>
-                      </td>
-
-                      {/* Thời lượng */}
-                      <td className="px-4 py-4.5 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
-                        {item.duration}
-                      </td>
-
-                      {/* Tác giả / Nguồn */}
-                      <td className="px-4 py-4.5 whitespace-nowrap">
-                        {isTeacher && isOwned ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            Của tôi
-                          </span>
-                        ) : isSystem ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                            Hệ thống
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-100">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                            {item.authorName}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Bản chép lời / Transcript status */}
-                      <td className="px-4 py-4.5 whitespace-nowrap">
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
-                            isReady
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                              : 'bg-amber-50 text-amber-800 border border-amber-100',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'h-1.5 w-1.5 rounded-full',
-                              isReady ? 'bg-emerald-500' : 'bg-amber-500',
-                            )}
-                          />
-                          {isReady ? 'Bản chép sẵn sàng' : 'Cần kiểm tra'}
-                        </span>
-                      </td>
-
-                      {/* Thao tác */}
-                      <td className="px-6 py-4.5 whitespace-nowrap">
-                        <div
-                          className="flex items-center justify-end gap-1 text-slate-400"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {/* Nút giao bài */}
-                          {isTeacher && isOwned && (
-                            <button
-                              type="button"
-                              onClick={(e) => handleAssignToClass(e, item)}
-                              className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
-                              title="Giao bài nghe cho lớp học"
-                            >
-                              <Send size={17} />
-                            </button>
-                          )}
-
-                          {/* Nút xem chi tiết */}
-                          <button
-                            type="button"
-                            onClick={() => setActiveLesson(item)}
-                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
-                            title="Xem chi tiết bài nghe"
-                          >
-                            <Eye size={17} />
-                          </button>
-
-                          {/* Sửa / Xóa hoặc Lock */}
-                          {canManage(item) ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={(e) => handleEditClick(e, item)}
-                                className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-                                title="Chỉnh sửa"
-                              >
-                                <Pencil size={17} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleDeleteClick(e, item)}
-                                className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                                title="Xóa bài nghe"
-                              >
-                                <Trash2 size={17} />
-                              </button>
-                            </>
-                          ) : (
-                            <span
-                              className="p-1.5 text-slate-300"
-                              title="Chỉ xem (Không có quyền chỉnh sửa)"
-                            >
-                              <Lock size={15} />
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
+                pageData.map((item) => (
+                  <ListeningTableRow
+                    key={item.id}
+                    item={item}
+                    isOwned={checkOwnership(item)}
+                    isSystem={
+                      item.authorEmail === 'system@smartenglish.vn' ||
+                      item.authorName?.includes('Hệ thống')
+                    }
+                    cefr={extractCefr(item.level)}
+                    isPlaying={playingId === item.id}
+                    canManage={canManage(item)}
+                    isTeacher={isTeacher}
+                    onPlayToggle={handlePlayToggle}
+                    onRowClick={setActiveLesson}
+                    onAssignToClass={handleAssignToClass}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                  />
+                ))
               )}
             </tbody>
           </table>
@@ -566,100 +253,19 @@ function ListeningPage() {
       </div>
 
       {/* Drawer xem chi tiết bài nghe */}
-      <Drawer
-        open={Boolean(activeLesson)}
+      <ListeningDetailDrawer
+        lesson={activeLesson}
         onClose={() => setActiveLesson(null)}
-        title={activeLesson?.title}
-      >
-        {activeLesson && (
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="info">{activeLesson.level}</Badge>
-              <Badge tone="neutral">{activeLesson.topic}</Badge>
-              <Badge tone="neutral">{activeLesson.accent}</Badge>
-              <Badge tone={checkOwnership(activeLesson) ? 'success' : 'neutral'}>
-                Tác giả: {activeLesson.authorName || 'Hệ thống'}
-              </Badge>
-              <span className="text-xs text-ink-muted">
-                Cập nhật {formatDate(activeLesson.createdAt)}
-              </span>
-            </div>
+        isTeacher={isTeacher}
+        isOwner={checkOwnership(activeLesson)}
+        canManage={canManage(activeLesson)}
+        isPlaying={playingId === activeLesson?.id}
+        onPlayToggle={handlePlayToggle}
+        onAssignToClass={handleAssignToClass}
+        onEditClick={handleEditClick}
+      />
 
-            {/* Audio Waveform Player */}
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={(e) => handlePlayToggle(e, activeLesson)}
-                    className={cn(
-                      'flex h-12 w-12 items-center justify-center rounded-2xl shadow-xs transition-transform hover:scale-105 cursor-pointer',
-                      playingId === activeLesson.id
-                        ? 'bg-brand-500 text-white'
-                        : 'bg-navy-800 text-white',
-                    )}
-                  >
-                    {playingId === activeLesson.id ? (
-                      <Volume2 size={22} />
-                    ) : (
-                      <Play size={22} className="ml-1" />
-                    )}
-                  </button>
-                  <div>
-                    <h5 className="text-sm font-bold text-slate-900">
-                      {playingId === activeLesson.id ? 'Đang phát âm thanh...' : 'Audio chuẩn Studio'}
-                    </h5>
-                    <p className="text-xs text-slate-500">
-                      Thời lượng: {activeLesson.duration} · Định dạng MP3 320kbps
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm font-semibold text-navy-700">Mô tả bài nghe</h4>
-              <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-ink">
-                {activeLesson.description}
-              </p>
-            </div>
-
-            {/* Bottom Actions trong Drawer */}
-            <div className="flex gap-2 border-t border-line pt-4">
-              {isTeacher && checkOwnership(activeLesson) && (
-                <Button
-                  variant="primary"
-                  fullWidth
-                  icon={Send}
-                  onClick={(e) => handleAssignToClass(e, activeLesson)}
-                >
-                  Giao bài nghe này cho lớp
-                </Button>
-              )}
-              {canManage(activeLesson) ? (
-                <Button
-                  variant={isTeacher && checkOwnership(activeLesson) ? 'secondary' : 'primary'}
-                  fullWidth={!isTeacher || !checkOwnership(activeLesson)}
-                  icon={Pencil}
-                  onClick={(e) => { setActiveLesson(null); handleEditClick(e, activeLesson) }}
-                >
-                  Chỉnh sửa bài nghe
-                </Button>
-              ) : (
-                <div className="w-full text-center text-xs text-ink-muted py-2 bg-slate-50 rounded-lg">
-                  <Lock size={13} className="inline mr-1" />
-                  Bạn đang xem bài nghe của tác giả khác
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </Drawer>
-
-      {/* Form hiện ở trang riêng: /hoc-lieu/bai-nghe/tao-moi hoặc /:id/chinh-sua */}
-
-
-      {/* ─── Confirm Xóa ─── */}
+      {/* Confirm Xóa */}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="Xoà bài nghe"

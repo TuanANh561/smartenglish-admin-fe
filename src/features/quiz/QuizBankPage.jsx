@@ -1,59 +1,37 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Building2,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Crown,
-  Eye,
-  FileText,
-  Globe,
-  GraduationCap,
-  Lock,
-  Pencil,
   Plus,
-  Send,
-  Sparkles,
-  Trash2,
   Upload,
-  User,
-  Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import DataTable from '@/components/ui/DataTable/DataTable'
 import DataTableToolbar from '@/components/ui/DataTable/DataTableToolbar'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
-import Drawer from '@/components/ui/Drawer'
-import FilterChip from '@/components/ui/FilterChip'
 import SearchInput from '@/components/ui/SearchInput'
-
 import EmptyState from '@/components/ui/EmptyState'
 import Pagination from '@/components/ui/Pagination'
-import Tabs from '@/components/ui/Tabs'
 import { formatNumber } from '@/lib/utils'
 import { quizQuestions } from '@/mocks/data/quizQuestions'
-import { EXAM_TRACK_META, quizSets, VERIFICATION_META } from '@/mocks/data/quizSets'
+import { quizSets } from '@/mocks/data/quizSets'
 import { buildPublicContent, getApprovedAIContent } from '@/features/aiContent/aiContentService'
-import { buildQuizColumns, QUESTION_TYPE_META } from './columns'
+import { buildQuizColumns } from './columns'
 import { useAuthStore } from '@/store/authStore'
+import QuestionDetailDrawer from './components/QuestionDetailDrawer'
+import QuizSetCard from './components/QuizSetCard'
+import QuizFilterBar from './components/QuizFilterBar'
 
 const PAGE_SIZE = 10
 const SETS_PAGE_SIZE = 6
 
-const TABS = [
-  { value: 'questions', label: 'Ngân hàng câu hỏi' },
-  { value: 'sets', label: 'Bộ đề thi (TOEIC · Placement)' },
-]
-
 function QuizBankPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = user?.role === 'teacher'
+  const isAdmin = user?.role === 'admin'
 
   // Dynamic state cho danh sách câu hỏi
   const [questionsData, setQuestionsData] = useState(quizQuestions)
@@ -69,31 +47,36 @@ function QuizBankPage() {
   const [collectionFilter, setCollectionFilter] = useState('all')
   const [setsPage, setSetsPage] = useState(1)
 
-  const checkOwnership = useCallback((item) => {
-    if (!user) return false
-    if (isTeacher) {
+  const checkOwnership = useCallback(
+    (item) => {
+      if (!user || !item) return false
+      if (isTeacher) {
+        return (
+          item.authorEmail === user.email ||
+          item.authorName === user.displayName ||
+          item.authorName === 'Hoàng Thị Mai'
+        )
+      }
       return (
         item.authorEmail === user.email ||
-        item.authorName === user.displayName ||
-        item.authorName === 'Hoàng Thị Mai'
+        item.authorEmail === 'system@smartenglish.vn' ||
+        item.authorName?.includes('Hệ thống') ||
+        item.authorName?.includes('Quản trị')
       )
-    }
-    // Đối với admin: chỉ bài do admin/hệ thống tạo mới là của admin
-    return (
-      item.authorEmail === user.email ||
-      item.authorEmail === 'system@smartenglish.vn' ||
-      item.authorName?.includes('Hệ thống') ||
-      item.authorName?.includes('Quản trị')
-    )
-  }, [isTeacher, user])
+    },
+    [isTeacher, user],
+  )
 
   const canManage = (item) => {
-    if (!user) return false
-    if (user.role === 'admin') return true
+    if (!user || !item) return false
+    if (isAdmin) return true
     return checkOwnership(item)
   }
 
-  const publicQuizQuestions = useMemo(() => buildPublicContent('quiz', questionsData), [questionsData])
+  const publicQuizQuestions = useMemo(
+    () => buildPublicContent('quiz', questionsData),
+    [questionsData],
+  )
 
   const myQuestionsCount = useMemo(() => {
     return publicQuizQuestions.filter((q) => checkOwnership(q)).length
@@ -136,7 +119,8 @@ function QuizBankPage() {
     const keyword = search.trim().toLowerCase()
     return publicQuizQuestions.filter((q) => {
       const isOwned = checkOwnership(q)
-      const isSystem = q.authorEmail === 'system@smartenglish.vn' || q.authorName?.includes('Hệ thống')
+      const isSystem =
+        q.authorEmail === 'system@smartenglish.vn' || q.authorName?.includes('Hệ thống')
 
       let matchOwner = true
       if (ownershipFilter === 'mine') {
@@ -169,7 +153,11 @@ function QuizBankPage() {
     const keyword = search.trim().toLowerCase()
     return combinedQuizSets.filter((set) => {
       const isOwned = set.isAI ? false : checkOwnership(set)
-      const isSystem = set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống') || set.authorEmail === 'ai@smartenglish.vn'
+      const isSystem =
+        set.isAI ||
+        set.authorEmail === 'system@smartenglish.vn' ||
+        set.authorName?.includes('Hệ thống') ||
+        set.authorEmail === 'ai@smartenglish.vn'
 
       let matchOwner = true
       if (ownershipFilter === 'mine') {
@@ -182,7 +170,8 @@ function QuizBankPage() {
         matchOwner = set.authorName === ownershipFilter || set.authorEmail === ownershipFilter
       }
 
-      const matchCollection = collectionFilter === 'all' || set.collection === collectionFilter
+      const matchCollection =
+        collectionFilter === 'all' || set.collection === collectionFilter
       const matchSearch =
         !keyword ||
         (set.title || '').toLowerCase().includes(keyword) ||
@@ -202,14 +191,14 @@ function QuizBankPage() {
       buildQuizColumns({
         onView: setActiveQuestion,
         onEdit: (q) => {
-          if (!checkOwnership(q) && user?.role !== 'admin') {
+          if (!checkOwnership(q) && !isAdmin) {
             toast.error(`Bạn không thể sửa câu hỏi của "${q.authorName || 'tác giả khác'}".`)
             return
           }
           setActiveQuestion(q)
         },
         onDelete: (q) => {
-          if (!checkOwnership(q) && user?.role !== 'admin') {
+          if (!checkOwnership(q) && !isAdmin) {
             toast.error('Chỉ tác giả mới có quyền xoá câu hỏi này!')
             return
           }
@@ -217,11 +206,11 @@ function QuizBankPage() {
         },
         currentUser: user,
       }),
-    [checkOwnership, user],
+    [checkOwnership, user, isAdmin],
   )
 
   const handleEditSet = (set) => {
-    if (!checkOwnership(set) && user?.role !== 'admin') {
+    if (!checkOwnership(set) && !isAdmin) {
       toast.error(`Bạn không thể sửa đề thi của "${set.authorName || 'người khác'}".`)
       return
     }
@@ -230,6 +219,11 @@ function QuizBankPage() {
 
   const handleAssignSet = (set) => {
     toast.success(`Đã mở popup giao đề thi "${set.title}" cho lớp học`)
+  }
+
+  const handleResetPages = () => {
+    setPage(1)
+    setSetsPage(1)
   }
 
   return (
@@ -253,7 +247,9 @@ function QuizBankPage() {
               Chi tiết gói →
             </Link>
           </div>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
 
         <div className="flex flex-1 items-center gap-3 self-end sm:self-auto">
           <SearchInput
@@ -261,12 +257,16 @@ function QuizBankPage() {
             value={search}
             onChange={(value) => {
               setSearch(value)
-              setPage(1)
-              setSetsPage(1)
+              handleResetPages()
             }}
             className="flex-1 min-w-[200px]"
           />
-          <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={Upload}
+            onClick={() => setIsPdfImportOpen(true)}
+          >
             Import
           </Button>
           <Button icon={Plus} onClick={() => toast.success('Mở form tạo Quiz mới')}>
@@ -276,77 +276,22 @@ function QuizBankPage() {
       </div>
 
       {/* Merged Tabs + Filter Row */}
-      <Card className="p-3">
-        <div className="space-y-3">
-          {/* Row 1: Tabs + Ownership Filter */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <FilterChip
-                active={ownershipFilter === 'mine'}
-                onClick={() => { setOwnershipFilter('mine'); setPage(1); setSetsPage(1) }}
-              >
-                <User size={13} className="mr-1.5 inline-block shrink-0" />
-                Của tôi ({activeTab === 'questions' ? myQuestionsCount : mySetsCount})
-              </FilterChip>
-              <FilterChip
-                active={ownershipFilter === 'all'}
-                onClick={() => { setOwnershipFilter('all'); setPage(1); setSetsPage(1) }}
-              >
-                <Globe size={13} className="mr-1.5 inline-block shrink-0" />
-                Tất cả ({activeTab === 'questions' ? publicQuizQuestions.length : quizSets.length})
-              </FilterChip>
-              <FilterChip
-                active={ownershipFilter === 'system'}
-                onClick={() => { setOwnershipFilter('system'); setPage(1); setSetsPage(1) }}
-              >
-                <Building2 size={13} className="mr-1.5 inline-block shrink-0" />
-                Hệ thống
-              </FilterChip>
-              {isTeacher && (
-                <FilterChip
-                  active={ownershipFilter === 'others'}
-                  onClick={() => { setOwnershipFilter('others'); setPage(1); setSetsPage(1) }}
-                >
-                  <Users size={13} className="mr-1.5 inline-block shrink-0" />
-                  Khác
-                </FilterChip>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2: Collection chips for sets tab */}
-          {activeTab === 'sets' && (
-            <div className="flex items-center gap-2 flex-wrap border-t border-line pt-3">
-              <FilterChip
-                active={collectionFilter === 'all'}
-                onClick={() => {
-                  setCollectionFilter('all')
-                  setSetsPage(1)
-                }}
-              >
-                Tất cả
-              </FilterChip>
-              {allCollections.map((collection) => {
-                const count = combinedQuizSets.filter((s) => s.collection === collection).length
-                return (
-                  <FilterChip
-                    key={collection}
-                    active={collectionFilter === collection}
-                    onClick={() => {
-                      setCollectionFilter(collection)
-                      setSetsPage(1)
-                    }}
-                  >
-                    {collection === 'AI' && <Sparkles size={12} className="mr-1 inline-block shrink-0 text-purple-500" />}
-                    {collection} ({count})
-                  </FilterChip>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </Card>
+      <QuizFilterBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        ownershipFilter={ownershipFilter}
+        setOwnershipFilter={setOwnershipFilter}
+        collectionFilter={collectionFilter}
+        setCollectionFilter={setCollectionFilter}
+        allCollections={allCollections}
+        combinedQuizSets={combinedQuizSets}
+        myQuestionsCount={myQuestionsCount}
+        mySetsCount={mySetsCount}
+        publicQuizQuestionsCount={publicQuizQuestions.length}
+        quizSetsCount={quizSets.length}
+        isTeacher={isTeacher}
+        onResetPage={handleResetPages}
+      />
 
       {/* TAB 1: Ngân hàng câu hỏi */}
       {activeTab === 'questions' && (
@@ -392,163 +337,19 @@ function QuizBankPage() {
             />
           ) : (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {setsPageData.map((set) => {
-                const trackMeta = EXAM_TRACK_META[set.examTrack] || EXAM_TRACK_META.ielts
-                const verificationMeta = VERIFICATION_META[set.verificationStatus] || VERIFICATION_META.pending
-                const isOwned = set.isAI ? false : checkOwnership(set)
-                const isSystem = set.isAI || set.authorEmail === 'system@smartenglish.vn' || set.authorName?.includes('Hệ thống')
-
-                return (
-                  <Card key={set.id} className="flex flex-col justify-between hover:border-brand-500 hover:shadow-md transition-all group">
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted">
-                            <span className={`h-1.5 w-1.5 rounded-full ${trackMeta.dotClass}`} />
-                            {trackMeta.label}
-                          </span>
-                          {isTeacher && isOwned ? (
-                            <Badge tone="success" className="gap-1 text-[10px]">
-                              <User size={10} strokeWidth={2} /> Của tôi
-                            </Badge>
-                          ) : set.isAI ? (
-                            <Badge tone="info" className="gap-1 text-[10px]">
-                              <Sparkles size={10} strokeWidth={2} /> AI sinh
-                            </Badge>
-                          ) : isSystem ? (
-                            <Badge tone="neutral" className="gap-1 text-[10px]">
-                              <Building2 size={10} strokeWidth={2} /> Hệ thống
-                            </Badge>
-                          ) : (
-                            <Badge tone="warning" className="gap-1 text-[10px]">
-                              <GraduationCap size={10} strokeWidth={2} /> {set.authorName}
-                            </Badge>
-                          )}
-                        </div>
-
-                        <Badge tone={verificationMeta.tone} className="gap-1 text-[11px]">
-                          <CheckCircle2 size={11} strokeWidth={1.75} />
-                          {verificationMeta.label}
-                        </Badge>
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                          set.isAI
-                            ? 'border-purple-300 bg-purple-50 text-purple-600'
-                            : 'border-brand-200 bg-brand-50 text-brand-600'
-                        }`}>
-                          {set.isAI && <Sparkles size={10} />}
-                          {set.collection || 'Collection'}
-                        </span>
-                      </div>
-
-                      <h3 className="mt-2 text-base font-semibold text-navy-700 group-hover:text-brand-600 transition-colors">
-                        {set.title}
-                      </h3>
-
-                      <div className="mt-3 space-y-1.5 text-xs text-ink-muted">
-                        <p className="flex items-center gap-1.5">
-                          <Clock size={13} strokeWidth={1.75} />
-                          {set.durationMinutes} phút
-                          <FileText size={13} strokeWidth={1.75} className="ml-2" />
-                          {set.questionCount} câu
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <Users size={13} strokeWidth={1.75} />
-                          {formatNumber(set.attempts)} lượt{' '}
-                          {set.attemptsType === 'full' ? 'thi đầy đủ' : 'luyện tập'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-line">
-                      <div className="flex items-center justify-between text-[11px] text-ink-muted mb-2.5">
-                        <span>Tác giả: <strong>{set.authorName || 'SmartEnglish'}</strong></span>
-                        {!canManage(set) && (
-                          <span className="flex items-center gap-0.5 text-slate-400">
-                            <Lock size={11} /> Chỉ xem
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {set.examTrack === 'placement' ? (
-                          <>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={Send}
-                              onClick={() => toast.success(`Bắt đầu thi Placement: "${set.title}"`)}
-                              className="flex-1 text-xs"
-                            >
-                              Thi thử
-                            </Button>
-                            <Button
-                              size="sm"
-                              icon={Pencil}
-                              onClick={() => handleEditSet(set)}
-                              className="flex-1 text-xs"
-                            >
-                              Tạo đề
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={Eye}
-                              onClick={() => toast.success(`Xem cấu trúc placement: "${set.title}"`)}
-                              className="text-xs"
-                            >
-                              Chi tiết
-                            </Button>
-                          </>
-                        ) : isTeacher && checkOwnership(set) ? (
-                          <>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={Send}
-                              onClick={() => handleAssignSet(set)}
-                              className="flex-1 text-xs"
-                            >
-                              Giao lớp
-                            </Button>
-                            <Button
-                              size="sm"
-                              icon={Pencil}
-                              onClick={() => handleEditSet(set)}
-                              className="flex-1 text-xs"
-                            >
-                              Sửa đề
-                            </Button>
-                          </>
-                        ) : canManage(set) ? (
-                          <Button
-                            size="sm"
-                            fullWidth
-                            icon={Pencil}
-                            onClick={() => handleEditSet(set)}
-                            className="text-xs"
-                          >
-                            Sửa đề thi
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            fullWidth
-                            icon={Eye}
-                            onClick={() => toast.success(`Xem cấu trúc đề: "${set.title}"`)}
-                            className="text-xs"
-                          >
-                            Xem chi tiết đề thi
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                )
-              })}
+              {setsPageData.map((set) => (
+                <QuizSetCard
+                  key={set.id}
+                  set={set}
+                  isTeacher={isTeacher}
+                  isOwned={set.isAI ? false : checkOwnership(set)}
+                  canManage={canManage(set)}
+                  onEditSet={() => handleEditSet(set)}
+                  onAssignSet={() => handleAssignSet(set)}
+                  onStartPlacement={() => toast.success(`Bắt đầu thi Placement: "${set.title}"`)}
+                  onViewDetails={() => toast.success(`Xem chi tiết đề: "${set.title}"`)}
+                />
+              ))}
             </div>
           )}
 
@@ -564,96 +365,18 @@ function QuizBankPage() {
       )}
 
       {/* Drawer xem chi tiết câu hỏi */}
-      <Drawer
-        open={Boolean(activeQuestion)}
+      <QuestionDetailDrawer
+        question={activeQuestion}
         onClose={() => setActiveQuestion(null)}
-        title="Chi tiết câu hỏi"
-        className="max-w-[480px]"
-      >
-        {activeQuestion && (
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="info">{activeQuestion.cefrLevel}</Badge>
-              <Badge tone="neutral">
-                {QUESTION_TYPE_META[activeQuestion.questionType]?.label || 'Trắc nghiệm'}
-              </Badge>
-              <Badge tone={checkOwnership(activeQuestion) ? 'success' : 'neutral'}>
-                Tác giả: {activeQuestion.authorName || 'Hệ thống'}
-              </Badge>
-              {activeQuestion.status === 'pending' && <Badge tone="warning">Chờ duyệt</Badge>}
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm font-semibold text-navy-700">Câu hỏi</h4>
-              <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-ink">
-                {activeQuestion.questionText}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm font-semibold text-navy-700">Đáp án</h4>
-              <ul className="space-y-1.5">
-                {activeQuestion.options?.map((option) => (
-                  <li
-                    key={option}
-                    className={
-                      option === activeQuestion.correctAnswer
-                        ? 'flex items-center gap-2 rounded-md bg-[#DCFCE7] px-2 py-1.5 text-sm font-medium text-[#15803D]'
-                        : 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink'
-                    }
-                  >
-                    {option === activeQuestion.correctAnswer && (
-                      <CheckCircle2 size={16} strokeWidth={1.75} />
-                    )}
-                    {option}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {activeQuestion.explanationVi && (
-              <div>
-                <h4 className="mb-2 text-sm font-semibold text-navy-700">Giải thích</h4>
-                <p className="text-sm text-ink-muted leading-relaxed bg-canvas p-3 rounded-lg">
-                  {activeQuestion.explanationVi}
-                </p>
-              </div>
-            )}
-
-            {/* Bottom Actions */}
-            <div className="flex gap-2 border-t border-line pt-4">
-              {checkOwnership(activeQuestion) || user?.role === 'admin' ? (
-                <>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    icon={Trash2}
-                    onClick={() => {
-                      setActiveQuestion(null)
-                      setDeleteTarget(activeQuestion)
-                    }}
-                  >
-                    Xóa câu hỏi
-                  </Button>
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    icon={Pencil}
-                    onClick={() => toast.success(`Mở trình sửa câu hỏi ${activeQuestion.id}`)}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                </>
-              ) : (
-                <div className="w-full text-center text-xs text-ink-muted py-2 bg-slate-50 rounded-lg">
-                  <Lock size={13} className="inline mr-1" />
-                  Bạn đang xem câu hỏi của tác giả khác (Không có quyền chỉnh sửa)
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </Drawer>
+        isOwner={checkOwnership(activeQuestion)}
+        isAdmin={isAdmin}
+        onDeleteRequest={() => {
+          const q = activeQuestion
+          setActiveQuestion(null)
+          setDeleteTarget(q)
+        }}
+        onEditRequest={() => toast.success(`Mở trình sửa câu hỏi ${activeQuestion?.id}`)}
+      />
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

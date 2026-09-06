@@ -1,10 +1,11 @@
 import { ChevronDown, GraduationCap, LogOut } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
 import { getVisibleNavGroups } from '@/components/layout/navConfig'
+import { getConversationsForUser } from '@/features/community/chatData'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
 
@@ -64,6 +65,11 @@ function Sidebar() {
   const role = user?.role ?? 'admin'
   const navGroups = getVisibleNavGroups(role)
 
+  const communityUnread = useMemo(() => {
+    const convs = getConversationsForUser(user)
+    return convs.reduce((acc, c) => acc + (c.unread || 0), 0)
+  }, [user])
+
   const handleLogout = async () => {
     await logout()
     setConfirmOpen(false)
@@ -84,8 +90,9 @@ function Sidebar() {
               {group.label}
             </p>
             <div className="flex flex-col gap-0.5">
-              {group.items.map((item) =>
-                item.children ? (
+              {group.items.map((item) => {
+                const unread = item.to === '/cong-dong' ? communityUnread : item.unreadCount
+                return item.children ? (
                   <NavItemGroup key={item.label} item={item} role={role} />
                 ) : (
                   <NavLink
@@ -105,22 +112,22 @@ function Sidebar() {
                       <>
                         <item.icon size={18} strokeWidth={1.75} />
                         <span className="flex-1 truncate">{item.label}</span>
-                        {item.unreadCount > 0 && (
+                        {unread > 0 && (
                           <span
-                            aria-label={`${item.unreadCount} tin nhắn chưa đọc`}
+                            aria-label={`${unread} tin nhắn chưa đọc`}
                             className={cn(
                               'min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold leading-none',
                               isActive ? 'bg-white text-brand-600' : 'bg-brand-500 text-white',
                             )}
                           >
-                            {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                            {unread > 99 ? '99+' : unread}
                           </span>
                         )}
                       </>
                     )}
                   </NavLink>
-                ),
-              )}
+                )
+              })}
             </div>
           </div>
         ))}

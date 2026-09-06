@@ -34,7 +34,7 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
   const isAdmin = currentUser?.role === 'admin'
 
   const checkOwnership = (row) => {
-    if (!currentUser) return false
+    if (!currentUser || !row) return false
     if (isTeacher) {
       return (
         row.authorEmail === currentUser.email ||
@@ -51,7 +51,7 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
   }
 
   const canManage = (row) => {
-    if (!currentUser) return false
+    if (!currentUser || !row) return false
     if (isAdmin) return true
     return checkOwnership(row)
   }

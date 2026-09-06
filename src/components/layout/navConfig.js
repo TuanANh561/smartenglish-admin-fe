@@ -48,7 +48,7 @@ export const NAV_GROUPS = [
     label: 'Menu',
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
-      { to: '/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 11, roles: ['admin', 'teacher'] },
+      { to: '/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 6, roles: ['admin', 'teacher'] },
       { to: '/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
       { to: '/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
       { to: '/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },

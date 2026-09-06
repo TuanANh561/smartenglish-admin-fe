@@ -42,6 +42,8 @@ function DataTable({
   expandable = false,
   renderExpandedRow,
   onSelectionChange,
+  controlsPosition = 'end',
+  separateControls = false,
   className,
 }) {
   const [rowSelection, setRowSelectionState] = useState({})
@@ -61,70 +63,131 @@ function DataTable({
   const finalColumns = useMemo(() => {
     const extra = []
 
-    if (expandable) {
+    if (expandable && enableSelection && !separateControls) {
       extra.push(
         localColumnHelper.display({
-          id: '__expand',
-          header: () => null,
-          cell: ({ row }) => (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                setExpandedRows((prev) => ({ ...prev, [row.original.id]: !prev[row.original.id] }))
-              }}
-              aria-label={expandedRows[row.original.id] ? 'Thu gọn' : 'Mở rộng'}
-              className="rounded-lg p-1 text-ink-muted hover:bg-canvas hover:text-ink"
-            >
-              <ChevronRight
-                size={18}
-                strokeWidth={1.75}
-                className={cn('transition-transform', expandedRows[row.original.id] && 'rotate-90')}
-              />
-            </button>
-          ),
-          meta: { align: 'center' },
-        }),
-      )
-    }
-
-    if (enableSelection) {
-      extra.push(
-        localColumnHelper.display({
-          id: '__select',
+          id: '__controls',
           header: () => (
-            <input
-              type="checkbox"
-              checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = someSelected
-              }}
-              onChange={(event) => {
-                const checked = event.target.checked
-                setRowSelection(checked ? Object.fromEntries(data.map((row) => [row.id, true])) : {})
-              }}
-              className="h-4 w-4 rounded border-line text-brand-500 focus:ring-brand-500"
-            />
+            <div className="flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected
+                }}
+                onChange={(event) => {
+                  const checked = event.target.checked
+                  setRowSelection(checked ? Object.fromEntries(data.map((row) => [row.id, true])) : {})
+                }}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer accent-brand-600"
+                title="Chọn tất cả"
+              />
+            </div>
           ),
           cell: ({ row }) => (
-            <input
-              type="checkbox"
-              checked={!!rowSelection[row.original.id]}
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) =>
-                setRowSelection((prev) => ({ ...prev, [row.original.id]: event.target.checked }))
-              }
-              className="h-4 w-4 rounded border-line text-brand-500 focus:ring-brand-500"
-            />
+            <div className="inline-flex items-center justify-center gap-1.5" onClick={(event) => event.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={!!rowSelection[row.original.id]}
+                onChange={(event) =>
+                  setRowSelection((prev) => ({ ...prev, [row.original.id]: event.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer accent-brand-600"
+                title="Chọn dòng"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setExpandedRows((prev) => ({ ...prev, [row.original.id]: !prev[row.original.id] }))
+                }}
+                aria-label={expandedRows[row.original.id] ? 'Thu gọn' : 'Mở rộng'}
+                title={expandedRows[row.original.id] ? 'Thu gọn chi tiết' : 'Mở rộng chi tiết'}
+                className="inline-flex items-center justify-center rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <ChevronRight
+                  size={16}
+                  strokeWidth={2}
+                  className={cn('transition-transform duration-200', expandedRows[row.original.id] && 'rotate-90 text-brand-600')}
+                />
+              </button>
+            </div>
           ),
-          meta: { align: 'center' },
+          meta: { align: 'center', compact: true, widthClass: 'w-20 min-w-[76px] max-w-[84px]' },
         }),
       )
+    } else {
+      if (enableSelection) {
+        extra.push(
+          localColumnHelper.display({
+            id: '__select',
+            header: () => (
+              <div className="flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected
+                  }}
+                  onChange={(event) => {
+                    const checked = event.target.checked
+                    setRowSelection(checked ? Object.fromEntries(data.map((row) => [row.id, true])) : {})
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer accent-brand-600"
+                  title="Chọn tất cả"
+                />
+              </div>
+            ),
+            cell: ({ row }) => (
+              <div className="flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={!!rowSelection[row.original.id]}
+                  onChange={(event) =>
+                    setRowSelection((prev) => ({ ...prev, [row.original.id]: event.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer accent-brand-600"
+                  title="Chọn dòng"
+                />
+              </div>
+            ),
+            meta: { align: 'center', compact: true, widthClass: 'w-10 min-w-[40px] max-w-[48px]' },
+          }),
+        )
+      }
+
+      if (expandable) {
+        extra.push(
+          localColumnHelper.display({
+            id: '__expand',
+            header: () => null,
+            cell: ({ row }) => (
+              <div className="flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpandedRows((prev) => ({ ...prev, [row.original.id]: !prev[row.original.id] }))
+                  }}
+                  aria-label={expandedRows[row.original.id] ? 'Thu gọn' : 'Mở rộng'}
+                  title={expandedRows[row.original.id] ? 'Thu gọn chi tiết' : 'Mở rộng chi tiết'}
+                  className="inline-flex items-center justify-center rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <ChevronRight
+                    size={16}
+                    strokeWidth={2}
+                    className={cn('transition-transform duration-200', expandedRows[row.original.id] && 'rotate-90 text-brand-600')}
+                  />
+                </button>
+              </div>
+            ),
+            meta: { align: 'center', compact: true, widthClass: 'w-10 min-w-[40px] max-w-[48px]' },
+          }),
+        )
+      }
     }
 
-    return [...extra, ...columns]
+    return controlsPosition === 'start' ? [...extra, ...columns] : [...columns, ...extra]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns, expandable, enableSelection, data, rowSelection, expandedRows, allSelected, someSelected])
+  }, [columns, expandable, enableSelection, separateControls, controlsPosition, data, rowSelection, expandedRows, allSelected, someSelected])
 
   const table = useTable({
     features: FEATURES,
@@ -152,12 +215,17 @@ function DataTable({
                   const canSort = header.column.getCanSort()
                   const sortDir = header.column.getIsSorted()
                   const align = header.column.columnDef.meta?.align
+                  const meta = header.column.columnDef.meta
+                  const isCompact = meta?.compact
 
                   return (
                     <th
                       key={header.id}
                       className={cn(
-                        'px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500',
+                        isCompact
+                          ? 'px-2 py-3 text-xs font-bold uppercase tracking-wider text-slate-500'
+                          : 'px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500',
+                        meta?.widthClass,
                         alignClass(align),
                       )}
                     >
@@ -192,11 +260,20 @@ function DataTable({
             {isLoading ? (
               Array.from({ length: 5 }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
-                  {finalColumns.map((_, colIndex) => (
-                    <td key={colIndex} className="px-6 py-4.5">
-                      <Skeleton className="h-4 w-full max-w-[160px]" />
-                    </td>
-                  ))}
+                  {finalColumns.map((col, colIndex) => {
+                    const meta = col.columnDef?.meta || col.meta
+                    const isCompact = meta?.compact
+                    return (
+                      <td
+                        key={colIndex}
+                        className={cn(isCompact ? 'px-2 py-3' : 'px-6 py-4.5', meta?.widthClass)}
+                      >
+                        <Skeleton
+                          className={cn('h-4', isCompact ? 'w-5 mx-auto' : 'w-full max-w-[160px]')}
+                        />
+                      </td>
+                    )
+                  })}
                 </tr>
               ))
             ) : error ? (
@@ -224,14 +301,22 @@ function DataTable({
                         : 'hover:bg-slate-50/50',
                     )}
                   >
-                    {row.getAllCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={cn('px-6 py-4.5 text-sm text-slate-800', alignClass(cell.column.columnDef.meta?.align))}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                    {row.getAllCells().map((cell) => {
+                      const meta = cell.column.columnDef.meta
+                      const isCompact = meta?.compact
+                      return (
+                        <td
+                          key={cell.id}
+                          className={cn(
+                            isCompact ? 'px-2 py-3 text-sm text-slate-800' : 'px-6 py-4.5 text-sm text-slate-800',
+                            meta?.widthClass,
+                            alignClass(meta?.align),
+                          )}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      )
+                    })}
                   </tr>
                   {expandable && expandedRows[row.original.id] && (
                     <tr className="border-b border-slate-100 bg-slate-50/70 last:border-0">

@@ -26,6 +26,9 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
+import PronunciationQuestionCard from './components/PronunciationQuestionCard'
+import SampleWordsSection from './components/SampleWordsSection'
+
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const CATEGORY_LIST = PRONUNCIATION_CATEGORIES.filter((c) => c !== 'Tất cả phân loại')
 
@@ -34,131 +37,6 @@ const EMPTY_QUESTION = {
   options: ['', '', '', ''],
   correctIndex: 0,
   explanation: '',
-}
-
-// ── Accordion Question Card ─────────────────────────────────────────────────
-function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove }) {
-  const hasContent = question.question.trim()
-
-  return (
-    <div
-      className={`rounded-2xl border transition-all ${
-        isOpen
-          ? 'border-brand-300 bg-white shadow-md'
-          : 'border-slate-200 bg-slate-50/60 hover:border-slate-300'
-      }`}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-        onClick={onToggle}
-      >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 text-xs font-bold">
-          {index + 1}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-sm truncate ${
-              hasContent ? 'text-slate-800 font-medium' : 'text-slate-400 italic'
-            }`}
-          >
-            {hasContent ? question.question : `Câu hỏi ${index + 1} — chưa nhập nội dung`}
-          </p>
-          {!isOpen && question.options[question.correctIndex] && (
-            <p className="text-xs text-emerald-600 mt-0.5">
-              ✓ Đáp án: {question.options[question.correctIndex]}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onRemove()
-            }}
-            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-            title="Xóa câu hỏi"
-          >
-            <Trash2 size={14} />
-          </button>
-          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
-      </div>
-
-      {/* Body */}
-      {isOpen && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Câu hỏi nhận diện âm / phát âm
-            </label>
-            <Textarea
-              rows={2}
-              value={question.question}
-              onChange={(e) => onChange({ ...question, question: e.target.value })}
-              placeholder="VD: Choose the word whose underlined part is pronounced differently:"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Các đáp án <span className="text-emerald-600 font-normal">(click ô vuông = đáp án đúng)</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {question.options.map((opt, optIdx) => (
-                <div
-                  key={optIdx}
-                  className={`flex items-center gap-2 rounded-xl p-2.5 border transition-colors ${
-                    question.correctIndex === optIdx
-                      ? 'border-emerald-200 bg-emerald-50/60'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => onChange({ ...question, correctIndex: optIdx })}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all cursor-pointer ${
-                      question.correctIndex === optIdx
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-slate-300 bg-white hover:border-emerald-400'
-                    }`}
-                  >
-                    {question.correctIndex === optIdx && <Check size={11} strokeWidth={3} />}
-                  </button>
-                  <span className="text-xs font-bold text-slate-500 shrink-0">
-                    {String.fromCharCode(65 + optIdx)}.
-                  </span>
-                  <input
-                    type="text"
-                    value={opt}
-                    onChange={(e) => {
-                      const options = [...question.options]
-                      options[optIdx] = e.target.value
-                      onChange({ ...question, options })
-                    }}
-                    placeholder={`Đáp án ${String.fromCharCode(65 + optIdx)}...`}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Giải thích phát âm <span className="text-slate-400 font-normal">(không bắt buộc)</span>
-            </label>
-            <Input
-              value={question.explanation}
-              onChange={(e) => onChange({ ...question, explanation: e.target.value })}
-              placeholder="VD: Từ 'banana' có âm /ə/ ở vị trí âm tiết đầu và cuối..."
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ── Main Form Page ──────────────────────────────────────────────────────────
@@ -444,130 +322,17 @@ function PronunciationFormPage() {
             </div>
 
             {/* Card 3: Danh sách từ mẫu & Câu mẫu */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                    3
-                  </span>
-                  Từ vựng mẫu luyện tập ({form.sampleWords.length})
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleAddSampleWord}
-                  className="flex items-center gap-1 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer"
-                >
-                  <Plus size={13} /> Thêm từ mẫu
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {form.sampleWords.map((sw, swIdx) => (
-                  <div
-                    key={swIdx}
-                    className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2 relative group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Từ mẫu {swIdx + 1}</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handlePlaySampleAudio(swIdx, sw.word)}
-                          className="flex items-center gap-1 text-[11px] text-brand-600 font-semibold hover:underline"
-                        >
-                          <Volume2 size={13} /> Nghe thử
-                        </button>
-                        {form.sampleWords.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSampleWord(swIdx)}
-                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                            title="Xóa từ mẫu"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 items-start">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ mẫu</label>
-                        <Input
-                          value={sw.word}
-                          onChange={(e) => handleUpdateSampleWord(swIdx, 'word', e.target.value)}
-                          placeholder="Từ (VD: About)"
-                        />
-                      </div>
-                      <IpaInputField
-                        value={sw.ipa}
-                        onChange={(newVal) => handleUpdateSampleWord(swIdx, 'ipa', newVal)}
-                        sourceWord={sw.word}
-                        onWordCorrect={(corrected) => handleUpdateSampleWord(swIdx, 'word', corrected)}
-                        label="Phiên âm IPA"
-                        placeholder="VD: /əˈbaʊt/"
-                      />
-                      <div>
-                        <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Việt</label>
-                        <Input
-                          value={sw.meaning}
-                          onChange={(e) => handleUpdateSampleWord(swIdx, 'meaning', e.target.value)}
-                          placeholder="Nghĩa (VD: Về, khoảng)"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sample sentences */}
-              <div className="pt-3 border-t border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Câu luyện đọc mẫu ({form.sampleSentences.length})
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={handleAddSampleSentence}
-                    className="flex items-center gap-1 rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-                  >
-                    <Plus size={12} /> Thêm câu mẫu
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {form.sampleSentences.map((st, stIdx) => (
-                    <div
-                      key={stIdx}
-                      className="rounded-xl border border-slate-200 bg-white p-3 space-y-2 relative group shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500">Câu {stIdx + 1}</span>
-                        {form.sampleSentences.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSampleSentence(stIdx)}
-                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                            title="Xóa câu mẫu"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
-                      <Input
-                        value={st.text}
-                        onChange={(e) => handleUpdateSampleSentence(stIdx, 'text', e.target.value)}
-                        placeholder="Câu tiếng Anh (VD: A cup of tea and a banana for breakfast.)"
-                      />
-                      <Input
-                        value={st.ipa}
-                        onChange={(e) => handleUpdateSampleSentence(stIdx, 'ipa', e.target.value)}
-                        placeholder="Phiên âm cả câu (VD: /ə kʌp əv tiː ənd ə bəˈnænə.../)"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <SampleWordsSection
+              sampleWords={form.sampleWords}
+              sampleSentences={form.sampleSentences}
+              onAddWord={handleAddSampleWord}
+              onUpdateWord={handleUpdateSampleWord}
+              onRemoveWord={handleRemoveSampleWord}
+              onAddSentence={handleAddSampleSentence}
+              onUpdateSentence={handleUpdateSampleSentence}
+              onRemoveSentence={handleRemoveSampleSentence}
+              onPlayAudio={handlePlaySampleAudio}
+            />
           </div>
 
           {/* ── RIGHT: Bộ câu hỏi bài tập nhận diện âm (2 cols) ── */}
@@ -598,7 +363,7 @@ function PronunciationFormPage() {
               {/* Accordion List */}
               <div className="space-y-2.5">
                 {questions.map((q, idx) => (
-                  <QuestionCard
+                  <PronunciationQuestionCard
                     key={idx}
                     question={q}
                     index={idx}
