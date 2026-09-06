@@ -20,10 +20,33 @@ const TYPE_GROUPS = {
   quiz: 'quiz',
   exam: 'quiz',
   toeic_part_5: 'quiz',
-  toeic_part_6: 'quiz',
-  toeic_part_7: 'quiz',
   cloze_sentence: 'quiz',
-  cloze_paragraph: 'quiz',
+  short_test: 'short_test',
+  toeic_part_6: 'short_test',
+  toeic_part_7: 'short_test',
+  cloze_paragraph: 'short_test',
+}
+
+export function isShortTestRecord(item) {
+  if (!item) return false
+  const t = (item.rawType || item.type || '').toLowerCase()
+  if (['short_test', 'toeic_part_6', 'toeic_part_7', 'cloze_paragraph'].includes(t)) {
+    return true
+  }
+  const title = (item.title || '').toLowerCase()
+  if (
+    title.includes('part 6') ||
+    title.includes('part 7') ||
+    title.includes('cloze paragraph') ||
+    title.includes('test ngắn') ||
+    title.includes('đoạn văn')
+  ) {
+    return true
+  }
+  if (Array.isArray(item.questions) && item.questions.length > 1 && (item.content || '').length > 60) {
+    return true
+  }
+  return false
 }
 
 function normalizeStatus(status) {
@@ -145,8 +168,14 @@ export function getApprovedAIContent(type) {
   const records = getAIContentRecords()
   return records.filter((item) => {
     const matchStatus = item.status === 'APPROVED'
-    const matchType = !type || normalizeType(item.type) === normalizeType(type)
-    return matchStatus && matchType
+    if (!type) return matchStatus
+    if (type === 'short_test') {
+      return matchStatus && isShortTestRecord(item)
+    }
+    if (type === 'quiz') {
+      return matchStatus && !isShortTestRecord(item) && (normalizeType(item.type) === 'quiz' || item.type === 'toeic_part_5' || item.type === 'cloze_sentence')
+    }
+    return matchStatus && normalizeType(item.type) === normalizeType(type)
   })
 }
 
@@ -381,10 +410,73 @@ export function buildPublicContent(type, fallbackItems = []) {
       }
     }
 
-    if (group === 'quiz') {
-      const quizTitle = item.title || 'Bài kiểm tra AI'
-      const questionCount = Array.isArray(item.questions) ? item.questions.length : 0
+    if (type === 'short_test' || group === 'short_test' || isShortTestRecord(item)) {
+      const testTitle = item.title || 'Bài test ngắn AI'
+      const questions = (item.questions || []).map((q, idx) => ({
+        id: q.id || `${item.id}-${idx + 1}`,
+        questionNumber: q.questionNumber || `${idx + 1}`,
+        questionText: q.questionText || q.question || `Câu hỏi ${idx + 1}`,
+        options: q.options || [],
+        correctAnswer: q.correctAnswer || '',
+        explanationVi: q.explanationVi || '',
+      }))
 
+      let testType = 'reading_short'
+      let testTypeLabel = 'Đọc hiểu đoạn văn ngắn'
+      const lower = (item.title || '').toLowerCase()
+      if (lower.includes('part 6')) {
+        testType = 'toeic_part_6'
+        testTypeLabel = 'TOEIC Part 6 (Điền đoạn văn)'
+      } else if (lower.includes('part 7')) {
+        testType = 'toeic_part_7'
+        testTypeLabel = 'TOEIC Part 7 (Đọc hiểu ngắn)'
+      } else if (lower.includes('cloze') || lower.includes('điền')) {
+        testType = 'cloze_paragraph'
+        testTypeLabel = 'Điền khuyết văn bản'
+      }
+
+      return {
+        id: item.id,
+        title: testTitle,
+        testType,
+        testTypeLabel,
+        level: item.level || 'B2',
+        durationMinutes: Math.max(3, Math.ceil((questions.length || 3) * 1.5)),
+        authorName: item.approvedBy || item.createdBy || 'Hoàng Thị Mai',
+        authorEmail: 'mai.ht@gmail.com',
+        status: 'approved',
+        createdAt: item.createdAt,
+        passage: item.content || item.definition || '',
+        questions,
+        isAI: true,
+      }
+    }
+
+    if (group === 'quiz') {
+      // Nếu có mảng sub-questions, bung từng câu thành 1 record câu hỏi đơn lẻ
+      if (Array.isArray(item.questions) && item.questions.length > 0) {
+        return item.questions.map((q, idx) => ({
+          id: `${item.id}-q${idx + 1}`,
+          title: item.title || 'Câu hỏi trắc nghiệm AI',
+          questionType: 'multiple_choice',
+          questionText: q.questionText || q.question || `${item.title} #${idx + 1}`,
+          options: q.options || [],
+          correctAnswer: q.correctAnswer || (q.options ? q.options[0] : ''),
+          explanationVi: q.explanationVi || 'Câu hỏi do AI sinh đã được duyệt.',
+          relatedWord: item.title || 'Từ vựng',
+          cefrLevel: item.level || 'B2',
+          topic: 'AI sinh',
+          difficulty: 'medium',
+          authorName: item.approvedBy || item.createdBy || 'Hoàng Thị Mai',
+          authorEmail: 'mai.ht@gmail.com',
+          source: 'ai',
+          status: 'approved',
+          createdAt: item.createdAt,
+          isAI: true,
+        }))
+      }
+
+      const quizTitle = item.title || 'Bài kiểm tra AI'
       return {
         id: item.id,
         title: quizTitle,
@@ -394,7 +486,7 @@ export function buildPublicContent(type, fallbackItems = []) {
         correctAnswer: '',
         explanationVi: item.content || item.definition || 'Nội dung do AI sinh đã được duyệt và công bố.',
         relatedWord: quizTitle,
-        cefrLevel: item.level,
+        cefrLevel: item.level || 'B2',
         topic: 'AI sinh',
         difficulty: 'medium',
         authorName: item.approvedBy || item.createdBy || 'Hoàng Thị Mai',
@@ -403,7 +495,6 @@ export function buildPublicContent(type, fallbackItems = []) {
         status: 'approved',
         createdAt: item.createdAt,
         isAI: true,
-        questionCount,
       }
     }
 

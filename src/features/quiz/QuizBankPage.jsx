@@ -18,14 +18,17 @@ import Pagination from '@/components/ui/Pagination'
 import { formatNumber } from '@/lib/utils'
 import { quizQuestions } from '@/mocks/data/quizQuestions'
 import { quizSets } from '@/mocks/data/quizSets'
+import { mockShortTests } from '@/mocks/data/shortTests'
 import { buildPublicContent, getApprovedAIContent } from '@/features/aiContent/aiContentService'
-import { buildQuizColumns } from './columns'
+import { buildQuizColumns, buildShortTestColumns } from './columns'
 import { useAuthStore } from '@/store/authStore'
 import QuestionDetailDrawer from './components/QuestionDetailDrawer'
+import ShortTestDetailDrawer from './components/ShortTestDetailDrawer'
 import QuizSetCard from './components/QuizSetCard'
 import QuizFilterBar from './components/QuizFilterBar'
 
 const PAGE_SIZE = 10
+const SHORT_TESTS_PAGE_SIZE = 10
 const SETS_PAGE_SIZE = 6
 
 function QuizBankPage() {
@@ -33,8 +36,9 @@ function QuizBankPage() {
   const isTeacher = user?.role === 'teacher'
   const isAdmin = user?.role === 'admin'
 
-  // Dynamic state cho danh sách câu hỏi
+  // Dynamic state cho danh sách câu hỏi & bài test ngắn
   const [questionsData, setQuestionsData] = useState(quizQuestions)
+  const [shortTestsData, setShortTestsData] = useState(mockShortTests)
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
 
   // Mặc định giáo viên chỉ xem đề/câu hỏi của mình
@@ -42,8 +46,12 @@ function QuizBankPage() {
   const [activeTab, setActiveTab] = useState('questions')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [shortTestsPage, setShortTestsPage] = useState(1)
+  const [shortTestTypeFilter, setShortTestTypeFilter] = useState('all')
   const [activeQuestion, setActiveQuestion] = useState(null)
+  const [activeShortTest, setActiveShortTest] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteShortTestTarget, setDeleteShortTestTarget] = useState(null)
   const [collectionFilter, setCollectionFilter] = useState('all')
   const [setsPage, setSetsPage] = useState(1)
 
@@ -78,9 +86,18 @@ function QuizBankPage() {
     [questionsData],
   )
 
+  const publicShortTests = useMemo(
+    () => buildPublicContent('short_test', shortTestsData),
+    [shortTestsData],
+  )
+
   const myQuestionsCount = useMemo(() => {
     return publicQuizQuestions.filter((q) => checkOwnership(q)).length
   }, [publicQuizQuestions, checkOwnership])
+
+  const myShortTestsCount = useMemo(() => {
+    return publicShortTests.filter((st) => checkOwnership(st)).length
+  }, [publicShortTests, checkOwnership])
 
   const mySetsCount = useMemo(() => {
     return quizSets.filter((s) => checkOwnership(s)).length
@@ -209,6 +226,72 @@ function QuizBankPage() {
     [checkOwnership, user, isAdmin],
   )
 
+  // Lọc bài test ngắn theo ownership + search + dạng bài
+  const filteredShortTests = useMemo(() => {
+    const keyword = search.trim().toLowerCase()
+    return publicShortTests.filter((st) => {
+      const isOwned = checkOwnership(st)
+      const isSystem =
+        st.authorEmail === 'system@smartenglish.vn' || st.authorName?.includes('Hệ thống')
+
+      let matchOwner = true
+      if (ownershipFilter === 'mine') {
+        matchOwner = isOwned
+      } else if (ownershipFilter === 'system') {
+        matchOwner = isSystem
+      } else if (ownershipFilter === 'others') {
+        matchOwner = !isOwned && !isSystem
+      } else if (ownershipFilter !== 'all') {
+        matchOwner = st.authorName === ownershipFilter || st.authorEmail === ownershipFilter
+      }
+
+      const matchType =
+        shortTestTypeFilter === 'all' || st.testType === shortTestTypeFilter
+
+      const matchSearch =
+        !keyword ||
+        (st.title || '').toLowerCase().includes(keyword) ||
+        (st.passage || '').toLowerCase().includes(keyword) ||
+        (st.testTypeLabel || '').toLowerCase().includes(keyword)
+
+      return matchOwner && matchType && matchSearch
+    })
+  }, [search, publicShortTests, ownershipFilter, shortTestTypeFilter, checkOwnership])
+
+  const shortTestsTotal = filteredShortTests.length
+  const shortTestsTotalPages = Math.max(1, Math.ceil(shortTestsTotal / SHORT_TESTS_PAGE_SIZE))
+  const shortTestsStart = (shortTestsPage - 1) * SHORT_TESTS_PAGE_SIZE
+  const shortTestsPageData = filteredShortTests.slice(
+    shortTestsStart,
+    shortTestsStart + SHORT_TESTS_PAGE_SIZE,
+  )
+
+  const shortTestColumns = useMemo(
+    () =>
+      buildShortTestColumns({
+        onView: setActiveShortTest,
+        onEdit: (st) => {
+          if (!checkOwnership(st) && !isAdmin) {
+            toast.error(`Bạn không thể sửa bài test của "${st.authorName || 'tác giả khác'}".`)
+            return
+          }
+          setActiveShortTest(st)
+        },
+        onDelete: (st) => {
+          if (!checkOwnership(st) && !isAdmin) {
+            toast.error('Chỉ tác giả mới có quyền xoá bài test này!')
+            return
+          }
+          setDeleteShortTestTarget(st)
+        },
+        onAssign: (st) => {
+          toast.success(`Đã mở giao bài test "${st.title}" cho lớp học`)
+        },
+        currentUser: user,
+      }),
+    [checkOwnership, user, isAdmin],
+  )
+
   const handleEditSet = (set) => {
     if (!checkOwnership(set) && !isAdmin) {
       toast.error(`Bạn không thể sửa đề thi của "${set.authorName || 'người khác'}".`)
@@ -223,6 +306,7 @@ function QuizBankPage() {
 
   const handleResetPages = () => {
     setPage(1)
+    setShortTestsPage(1)
     setSetsPage(1)
   }
 
@@ -239,6 +323,7 @@ function QuizBankPage() {
               <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
               <span className="text-ink-muted">
                 Đã tạo <strong className="text-brand-600 font-bold">{myQuestionsCount}</strong> câu hỏi ·{' '}
+                <strong className="text-brand-600 font-bold">{myShortTestsCount}</strong> bài test ngắn ·{' '}
                 <strong className="text-brand-600 font-bold">{mySetsCount}</strong> đề thi · Hạn mức{' '}
                 <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
               </span>
@@ -253,7 +338,13 @@ function QuizBankPage() {
 
         <div className="flex flex-1 items-center gap-3 self-end sm:self-auto">
           <SearchInput
-            placeholder="Tìm đề thi, câu hỏi..."
+            placeholder={
+              activeTab === 'short_tests'
+                ? 'Tìm bài test ngắn, TOEIC Part 6/7...'
+                : activeTab === 'sets'
+                  ? 'Tìm bộ đề thi...'
+                  : 'Tìm câu hỏi, từ vựng...'
+            }
             value={search}
             onChange={(value) => {
               setSearch(value)
@@ -269,8 +360,23 @@ function QuizBankPage() {
           >
             Import
           </Button>
-          <Button icon={Plus} onClick={() => toast.success('Mở form tạo Quiz mới')}>
-            Tạo Quiz Mới
+          <Button
+            icon={Plus}
+            onClick={() =>
+              toast.success(
+                activeTab === 'short_tests'
+                  ? 'Mở form tạo Bài test ngắn mới'
+                  : activeTab === 'sets'
+                    ? 'Mở form tạo Bộ đề thi mới'
+                    : 'Mở form tạo Câu hỏi mới',
+              )
+            }
+          >
+            {activeTab === 'short_tests'
+              ? 'Tạo Test Ngắn'
+              : activeTab === 'sets'
+                ? 'Tạo Đề Thi'
+                : 'Tạo Câu Hỏi'}
           </Button>
         </div>
       </div>
@@ -286,14 +392,18 @@ function QuizBankPage() {
         allCollections={allCollections}
         combinedQuizSets={combinedQuizSets}
         myQuestionsCount={myQuestionsCount}
+        myShortTestsCount={myShortTestsCount}
         mySetsCount={mySetsCount}
         publicQuizQuestionsCount={publicQuizQuestions.length}
+        publicShortTestsCount={publicShortTests.length}
         quizSetsCount={quizSets.length}
+        shortTestTypeFilter={shortTestTypeFilter}
+        setShortTestTypeFilter={setShortTestTypeFilter}
         isTeacher={isTeacher}
         onResetPage={handleResetPages}
       />
 
-      {/* TAB 1: Ngân hàng câu hỏi */}
+      {/* TAB 1: Ngân hàng câu hỏi (Chỉ câu hỏi đơn lẻ) */}
       {activeTab === 'questions' && (
         <Card>
           <DataTableToolbar
@@ -323,7 +433,42 @@ function QuizBankPage() {
         </Card>
       )}
 
-      {/* TAB 2: Bộ đề thi */}
+      {/* TAB 2: Bài test ngắn (Đoạn văn & cụm câu hỏi: TOEIC Part 6/7, Đọc hiểu) */}
+      {activeTab === 'short_tests' && (
+        <Card>
+          <DataTableToolbar
+            searchValue={search}
+            onSearchChange={(value) => {
+              setSearch(value)
+              setShortTestsPage(1)
+            }}
+            searchPlaceholder="Tìm bài test ngắn, đoạn văn, TOEIC Part 6/7..."
+          />
+
+          <div className="mt-4">
+            <DataTable
+              columns={shortTestColumns}
+              data={shortTestsPageData}
+              pagination={{
+                page: shortTestsPage,
+                size: SHORT_TESTS_PAGE_SIZE,
+                total: shortTestsTotal,
+                totalPages: shortTestsTotalPages,
+              }}
+              onPageChange={setShortTestsPage}
+              onRowClick={setActiveShortTest}
+              emptyMessage={
+                ownershipFilter === 'mine'
+                  ? 'Bạn chưa tạo bài test ngắn nào khớp bộ lọc. Bấm "Tất cả" hoặc tạo bài test mới.'
+                  : 'Chưa có bài test ngắn nào khớp bộ lọc'
+              }
+              enableSelection
+            />
+          </div>
+        </Card>
+      )}
+
+      {/* TAB 3: Bộ đề thi (TOEIC · Placement) */}
       {activeTab === 'sets' && (
         <div className="space-y-4">
           {setsPageData.length === 0 ? (
@@ -364,7 +509,7 @@ function QuizBankPage() {
         </div>
       )}
 
-      {/* Drawer xem chi tiết câu hỏi */}
+      {/* Drawer xem chi tiết câu hỏi đơn lẻ */}
       <QuestionDetailDrawer
         question={activeQuestion}
         onClose={() => setActiveQuestion(null)}
@@ -378,16 +523,45 @@ function QuizBankPage() {
         onEditRequest={() => toast.success(`Mở trình sửa câu hỏi ${activeQuestion?.id}`)}
       />
 
+      {/* Drawer xem chi tiết bài test ngắn (Đoạn văn + Các câu hỏi con) */}
+      <ShortTestDetailDrawer
+        test={activeShortTest}
+        onClose={() => setActiveShortTest(null)}
+        isOwner={checkOwnership(activeShortTest)}
+        isAdmin={isAdmin}
+        onDeleteRequest={() => {
+          const target = activeShortTest
+          setActiveShortTest(null)
+          setDeleteShortTestTarget(target)
+        }}
+        onEditRequest={() => toast.success(`Mở trình sửa bài test "${activeShortTest?.title}"`)}
+        onAssignRequest={(t) => toast.success(`Mở giao bài test "${t.title}" cho lớp học`)}
+      />
+
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
+          setQuestionsData((prev) => prev.filter((q) => q.id !== deleteTarget?.id))
           toast.success(`Đã xoá câu hỏi ${deleteTarget?.id}`)
           setDeleteTarget(null)
         }}
         title="Xoá câu hỏi này?"
         description={`Câu hỏi "${deleteTarget?.id}" sẽ bị xoá khỏi ngân hàng câu hỏi. Hành động này không thể hoàn tác.`}
         confirmText="Xoá câu hỏi"
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteShortTestTarget)}
+        onClose={() => setDeleteShortTestTarget(null)}
+        onConfirm={() => {
+          setShortTestsData((prev) => prev.filter((it) => it.id !== deleteShortTestTarget?.id))
+          toast.success(`Đã xoá bài test "${deleteShortTestTarget?.title}"`)
+          setDeleteShortTestTarget(null)
+        }}
+        title="Xoá bài test ngắn này?"
+        description={`Bài test "${deleteShortTestTarget?.title}" sẽ bị xoá khỏi hệ thống. Hành động này không thể hoàn tác.`}
+        confirmText="Xoá bài test"
       />
 
       {/* Modal Import PDF AI */}

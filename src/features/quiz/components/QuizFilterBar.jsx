@@ -5,6 +5,7 @@ import Tabs from '@/components/ui/Tabs'
 
 const TABS = [
   { value: 'questions', label: 'Ngân hàng câu hỏi' },
+  { value: 'short_tests', label: 'Bài test ngắn' },
   { value: 'sets', label: 'Bộ đề thi (TOEIC · Placement)' },
 ]
 
@@ -18,12 +19,30 @@ export default function QuizFilterBar({
   allCollections,
   combinedQuizSets,
   myQuestionsCount,
+  myShortTestsCount = 0,
   mySetsCount,
   publicQuizQuestionsCount,
+  publicShortTestsCount = 0,
   quizSetsCount,
+  shortTestTypeFilter = 'all',
+  setShortTestTypeFilter,
   isTeacher,
   onResetPage,
 }) {
+  const currentMineCount =
+    activeTab === 'questions'
+      ? myQuestionsCount
+      : activeTab === 'short_tests'
+        ? myShortTestsCount
+        : mySetsCount
+
+  const currentAllCount =
+    activeTab === 'questions'
+      ? publicQuizQuestionsCount
+      : activeTab === 'short_tests'
+        ? publicShortTestsCount
+        : quizSetsCount
+
   return (
     <Card className="p-3">
       <div className="space-y-3">
@@ -39,7 +58,7 @@ export default function QuizFilterBar({
               }}
             >
               <User size={13} className="mr-1.5 inline-block shrink-0" />
-              Của tôi ({activeTab === 'questions' ? myQuestionsCount : mySetsCount})
+              Của tôi ({currentMineCount})
             </FilterChip>
             <FilterChip
               active={ownershipFilter === 'all'}
@@ -49,7 +68,7 @@ export default function QuizFilterBar({
               }}
             >
               <Globe size={13} className="mr-1.5 inline-block shrink-0" />
-              Tất cả ({activeTab === 'questions' ? publicQuizQuestionsCount : quizSetsCount})
+              Tất cả ({currentAllCount})
             </FilterChip>
             <FilterChip
               active={ownershipFilter === 'system'}
@@ -75,6 +94,58 @@ export default function QuizFilterBar({
             )}
           </div>
         </div>
+
+        {/* Row 2: Sub-filter for short tests tab */}
+        {activeTab === 'short_tests' && setShortTestTypeFilter && (
+          <div className="flex items-center gap-2 flex-wrap border-t border-line pt-3 text-xs">
+            <span className="text-slate-400 text-xs mr-1 font-medium">Dạng bài:</span>
+            <FilterChip
+              active={shortTestTypeFilter === 'all'}
+              onClick={() => {
+                setShortTestTypeFilter('all')
+                onResetPage()
+              }}
+            >
+              Tất cả
+            </FilterChip>
+            <FilterChip
+              active={shortTestTypeFilter === 'toeic_part_6'}
+              onClick={() => {
+                setShortTestTypeFilter('toeic_part_6')
+                onResetPage()
+              }}
+            >
+              TOEIC Part 6 (Điền đoạn văn)
+            </FilterChip>
+            <FilterChip
+              active={shortTestTypeFilter === 'toeic_part_7'}
+              onClick={() => {
+                setShortTestTypeFilter('toeic_part_7')
+                onResetPage()
+              }}
+            >
+              TOEIC Part 7 (Đọc hiểu)
+            </FilterChip>
+            <FilterChip
+              active={shortTestTypeFilter === 'reading_short'}
+              onClick={() => {
+                setShortTestTypeFilter('reading_short')
+                onResetPage()
+              }}
+            >
+              Đọc hiểu đoạn văn ngắn
+            </FilterChip>
+            <FilterChip
+              active={shortTestTypeFilter === 'cloze_paragraph'}
+              onClick={() => {
+                setShortTestTypeFilter('cloze_paragraph')
+                onResetPage()
+              }}
+            >
+              Điền khuyết văn bản
+            </FilterChip>
+          </div>
+        )}
 
         {/* Row 2: Collection chips for sets tab */}
         {activeTab === 'sets' && (
