@@ -52,14 +52,14 @@ export default function PronunciationTableRow({
       </td>
 
       {/* Phân loại âm */}
-      <td className="px-4 py-4.5 whitespace-nowrap">
+      <td className="px-3 py-4 w-36 whitespace-nowrap">
         <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
           {item.category}
         </span>
       </td>
 
       {/* Cấp độ */}
-      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+      <td className="px-2 py-4 w-20 text-center whitespace-nowrap">
         <span
           className="inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
@@ -69,8 +69,8 @@ export default function PronunciationTableRow({
       </td>
 
       {/* Mẫu Audio */}
-      <td className="px-4 py-4.5 text-center whitespace-nowrap">
-        <div className="inline-flex items-center gap-2">
+      <td className="px-3 py-4 w-28 text-center whitespace-nowrap">
+        <div className="inline-flex items-center gap-1.5">
           <button
             type="button"
             onClick={(e) => onPlayAudio(e, item)}
@@ -91,7 +91,7 @@ export default function PronunciationTableRow({
       </td>
 
       {/* Trạng thái */}
-      <td className="px-4 py-4.5 whitespace-nowrap">
+      <td className="px-3 py-4 w-32 whitespace-nowrap">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
           style={{
@@ -108,14 +108,14 @@ export default function PronunciationTableRow({
       </td>
 
       {/* Cập nhật */}
-      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+      <td className="px-3 py-4 w-32 text-xs text-slate-500 whitespace-nowrap">
         {formatRelativeTime(item.updatedAt)}
       </td>
 
       {/* Thao tác */}
       <td
         onClick={(e) => e.stopPropagation()}
-        className="px-6 py-4.5 whitespace-nowrap text-right"
+        className="px-6 py-4 w-36 whitespace-nowrap text-right"
       >
         <div className="flex items-center justify-end gap-1 text-slate-400">
           <button

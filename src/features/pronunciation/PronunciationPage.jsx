@@ -175,13 +175,13 @@ function PronunciationPage() {
           <table className="w-full min-w-[880px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-6 py-3.5 w-[36%] min-w-[260px]">BÀI HỌC PHÁT ÂM</th>
-                <th className="px-4 py-3.5 w-[14%] min-w-[120px]">PHÂN LOẠI ÂM</th>
-                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
-                <th className="px-4 py-3.5 text-center w-[13%] min-w-[110px]">MẪU AUDIO</th>
-                <th className="px-4 py-3.5 w-[13%] min-w-[120px]">TRẠNG THÁI</th>
-                <th className="px-4 py-3.5 w-[11%] min-w-[100px]">CẬP NHẬT</th>
-                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
+                <th className="px-6 py-3.5 min-w-[280px]">BÀI HỌC PHÁT ÂM</th>
+                <th className="px-3 py-3.5 w-36 whitespace-nowrap">PHÂN LOẠI ÂM</th>
+                <th className="px-2 py-3.5 w-20 text-center whitespace-nowrap">CẤP ĐỘ</th>
+                <th className="px-3 py-3.5 w-28 text-center whitespace-nowrap">MẪU AUDIO</th>
+                <th className="px-3 py-3.5 w-32 whitespace-nowrap">TRẠNG THÁI</th>
+                <th className="px-3 py-3.5 w-32 whitespace-nowrap">CẬP NHẬT</th>
+                <th className="px-6 py-3.5 w-36 text-right whitespace-nowrap">THAO TÁC</th>
               </tr>
             </thead>
 
