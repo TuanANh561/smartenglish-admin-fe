@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  Building2,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -8,6 +9,8 @@ import {
   Crown,
   Eye,
   FileText,
+  Globe,
+  GraduationCap,
   Lock,
   Pencil,
   Plus,
@@ -15,6 +18,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  User,
   Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -282,26 +286,30 @@ function QuizBankPage() {
                 active={ownershipFilter === 'mine'}
                 onClick={() => { setOwnershipFilter('mine'); setPage(1); setSetsPage(1) }}
               >
-                👤 Của tôi ({activeTab === 'questions' ? myQuestionsCount : mySetsCount})
+                <User size={13} className="mr-1.5 inline-block shrink-0" />
+                Của tôi ({activeTab === 'questions' ? myQuestionsCount : mySetsCount})
               </FilterChip>
               <FilterChip
                 active={ownershipFilter === 'all'}
                 onClick={() => { setOwnershipFilter('all'); setPage(1); setSetsPage(1) }}
               >
-                🌐 Tất cả ({activeTab === 'questions' ? publicQuizQuestions.length : quizSets.length})
+                <Globe size={13} className="mr-1.5 inline-block shrink-0" />
+                Tất cả ({activeTab === 'questions' ? publicQuizQuestions.length : quizSets.length})
               </FilterChip>
               <FilterChip
                 active={ownershipFilter === 'system'}
                 onClick={() => { setOwnershipFilter('system'); setPage(1); setSetsPage(1) }}
               >
-                🏢 Hệ thống
+                <Building2 size={13} className="mr-1.5 inline-block shrink-0" />
+                Hệ thống
               </FilterChip>
               {isTeacher && (
                 <FilterChip
                   active={ownershipFilter === 'others'}
                   onClick={() => { setOwnershipFilter('others'); setPage(1); setSetsPage(1) }}
                 >
-                  👥 Khác
+                  <Users size={13} className="mr-1.5 inline-block shrink-0" />
+                  Khác
                 </FilterChip>
               )}
             </div>
@@ -330,7 +338,8 @@ function QuizBankPage() {
                       setSetsPage(1)
                     }}
                   >
-                    {collection === 'AI' ? `✨ ${collection}` : collection} ({count})
+                    {collection === 'AI' && <Sparkles size={12} className="mr-1 inline-block shrink-0 text-purple-500" />}
+                    {collection} ({count})
                   </FilterChip>
                 )
               })}
@@ -399,20 +408,20 @@ function QuizBankPage() {
                             {trackMeta.label}
                           </span>
                           {isTeacher && isOwned ? (
-                            <Badge tone="success" className="text-[10px]">
-                              👤 Của tôi
+                            <Badge tone="success" className="gap-1 text-[10px]">
+                              <User size={10} strokeWidth={2} /> Của tôi
                             </Badge>
                           ) : set.isAI ? (
-                            <Badge tone="info" className="text-[10px]">
-                              ✨ AI sinh
+                            <Badge tone="info" className="gap-1 text-[10px]">
+                              <Sparkles size={10} strokeWidth={2} /> AI sinh
                             </Badge>
                           ) : isSystem ? (
-                            <Badge tone="neutral" className="text-[10px]">
-                              🏢 Hệ thống
+                            <Badge tone="neutral" className="gap-1 text-[10px]">
+                              <Building2 size={10} strokeWidth={2} /> Hệ thống
                             </Badge>
                           ) : (
-                            <Badge tone="warning" className="text-[10px]">
-                              👨‍🏫 {set.authorName}
+                            <Badge tone="warning" className="gap-1 text-[10px]">
+                              <GraduationCap size={10} strokeWidth={2} /> {set.authorName}
                             </Badge>
                           )}
                         </div>
@@ -424,12 +433,13 @@ function QuizBankPage() {
                       </div>
 
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                           set.isAI
                             ? 'border-purple-300 bg-purple-50 text-purple-600'
                             : 'border-brand-200 bg-brand-50 text-brand-600'
                         }`}>
-                          {set.isAI ? '✨' : ''} {set.collection || 'Collection'}
+                          {set.isAI && <Sparkles size={10} />}
+                          {set.collection || 'Collection'}
                         </span>
                       </div>
 

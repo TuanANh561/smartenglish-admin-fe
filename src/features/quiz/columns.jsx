@@ -1,9 +1,21 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { ArrowUpDown, Eye, Lock, Pencil, PenLine, Shuffle, Trash2 } from 'lucide-react'
+import {
+  ArrowUpDown,
+  Building2,
+  CheckSquare,
+  Eye,
+  GraduationCap,
+  Lock,
+  Pencil,
+  PenLine,
+  Shuffle,
+  Trash2,
+  User,
+} from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 
 export const QUESTION_TYPE_META = {
-  multiple_choice: { label: 'Trắc nghiệm', dotClass: 'bg-brand-500' },
+  multiple_choice: { label: 'Trắc nghiệm', Icon: CheckSquare },
   fill_blank: { label: 'Điền từ', Icon: PenLine },
   matching: { label: 'Ghép nối', Icon: Shuffle },
   word_order: { label: 'Sắp xếp', Icon: ArrowUpDown },
@@ -61,13 +73,10 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
       header: 'Dạng bài',
       cell: (info) => {
         const meta = QUESTION_TYPE_META[info.getValue()] || QUESTION_TYPE_META.multiple_choice
+        const Icon = meta.Icon
         return (
           <span className="inline-flex items-center gap-1.5 text-sm text-ink">
-            {meta.dotClass ? (
-              <span className={`h-2 w-2 rounded-full ${meta.dotClass}`} />
-            ) : (
-              <meta.Icon size={14} strokeWidth={1.75} className="text-ink-muted" />
-            )}
+            <Icon size={14} strokeWidth={1.75} className="text-brand-500 shrink-0" />
             {meta.label}
           </span>
         )
@@ -92,12 +101,27 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
         const isSystem = author.includes('Hệ thống') || info.row.original.authorEmail === 'system@smartenglish.vn'
 
         if (isTeacher && isOwned) {
-          return <Badge tone="success">👤 Của tôi</Badge>
+          return (
+            <Badge tone="success" className="inline-flex items-center gap-1">
+              <User size={12} strokeWidth={2} />
+              Của tôi
+            </Badge>
+          )
         }
         if (isSystem) {
-          return <Badge tone="neutral">🏢 Hệ thống</Badge>
+          return (
+            <Badge tone="neutral" className="inline-flex items-center gap-1">
+              <Building2 size={12} strokeWidth={2} />
+              Hệ thống
+            </Badge>
+          )
         }
-        return <Badge tone="warning">👨‍🏫 {author}</Badge>
+        return (
+          <Badge tone="warning" className="inline-flex items-center gap-1">
+            <GraduationCap size={12} strokeWidth={2} />
+            {author}
+          </Badge>
+        )
       },
     }),
     columnHelper.accessor('cefrLevel', {

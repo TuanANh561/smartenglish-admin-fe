@@ -50,6 +50,45 @@ const TABS = [
   { value: 'coupons', label: 'Mã Giảm Giá & Voucher', icon: Tag },
 ]
 
+function CurrencyInput({ value, onChange, className, ...props }) {
+  const [localVal, setLocalVal] = useState(null)
+
+  const displayValue = useMemo(() => {
+    if (localVal !== null) return localVal
+    if (value === 0 || value === '0') return '0'
+    if (!value) return ''
+    return Number(value).toLocaleString('vi-VN')
+  }, [localVal, value])
+
+  const handleChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '')
+    if (raw === '') {
+      setLocalVal('')
+      onChange?.(0)
+    } else {
+      const num = Number(raw)
+      setLocalVal(num.toLocaleString('vi-VN'))
+      onChange?.(num)
+    }
+  }
+
+  const handleBlur = () => {
+    setLocalVal(null)
+  }
+
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className={className}
+      {...props}
+    />
+  )
+}
+
 function PremiumPage() {
   const [activeTab, setActiveTab] = useState('teacher')
   const [isSaving, setIsSaving] = useState(false)
@@ -463,20 +502,18 @@ function PremiumPage() {
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
                         <label className="text-[10px] font-bold text-ink-muted uppercase">Giá / Tháng (đ)</label>
-                        <Input
-                          type="number"
+                        <CurrencyInput
                           value={plan.priceMonthly}
-                          onChange={(e) => updateTeacherPlan(plan.id, 'priceMonthly', Number(e.target.value))}
+                          onChange={(val) => updateTeacherPlan(plan.id, 'priceMonthly', val)}
                           className="font-bold text-navy-700 text-xs mt-0.5"
                         />
                       </div>
 
                       <div>
                         <label className="text-[10px] font-bold text-ink-muted uppercase">Giá / Năm (đ)</label>
-                        <Input
-                          type="number"
+                        <CurrencyInput
                           value={plan.priceYearly}
-                          onChange={(e) => updateTeacherPlan(plan.id, 'priceYearly', Number(e.target.value))}
+                          onChange={(val) => updateTeacherPlan(plan.id, 'priceYearly', val)}
                           className="font-bold text-navy-700 text-xs mt-0.5"
                         />
                       </div>
@@ -534,7 +571,7 @@ function PremiumPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                       {plan.features.map((feature) => (
                         <div
                           key={feature.key}
@@ -698,11 +735,9 @@ function PremiumPage() {
 
                   <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-200/80">
                     <label className="text-[10px] font-bold text-ink-muted uppercase">Giá bán (VNĐ)</label>
-                    <Input
-                      type="number"
+                    <CurrencyInput
                       value={plan.priceYearly > 0 ? plan.priceYearly : plan.priceMonthly}
-                      onChange={(e) => {
-                        const val = Number(e.target.value)
+                      onChange={(val) => {
                         if (plan.durationMonths >= 12) {
                           updateStudentPlan(plan.id, 'priceYearly', val)
                         } else {
@@ -723,7 +758,7 @@ function PremiumPage() {
                     <span className="text-[10px] font-bold text-navy-700 uppercase tracking-wide block">
                       Quyền lợi ({plan.features.filter((f) => f.enabled).length})
                     </span>
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                       {plan.features.map((feature) => (
                         <div
                           key={feature.key}
@@ -822,10 +857,9 @@ function PremiumPage() {
                 <div className="grid grid-cols-2 gap-2.5 rounded-xl bg-slate-50/80 p-3 border border-slate-200/80">
                   <div>
                     <label className="text-[10px] font-bold text-ink-muted uppercase">Giá gốc (đ)</label>
-                    <Input
-                      type="number"
+                    <CurrencyInput
                       value={bundle.originalPrice}
-                      onChange={(e) => updateClassBundle(bundle.id, 'originalPrice', Number(e.target.value))}
+                      onChange={(val) => updateClassBundle(bundle.id, 'originalPrice', val)}
                       className="text-xs text-slate-400 line-through mt-0.5"
                     />
                     <span className="text-[10px] text-slate-400 mt-0.5 block font-medium">
@@ -834,10 +868,9 @@ function PremiumPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-ink-muted uppercase">Giá ưu đãi (đ)</label>
-                    <Input
-                      type="number"
+                    <CurrencyInput
                       value={bundle.discountedPrice}
-                      onChange={(e) => updateClassBundle(bundle.id, 'discountedPrice', Number(e.target.value))}
+                      onChange={(val) => updateClassBundle(bundle.id, 'discountedPrice', val)}
                       className="text-xs font-bold text-brand-600 mt-0.5"
                     />
                     <span className="text-[10px] font-bold text-emerald-600 mt-0.5 block">
