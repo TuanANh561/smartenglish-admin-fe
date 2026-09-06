@@ -81,6 +81,7 @@ export default function ListeningQuestionCard({
             </label>
             <Textarea
               rows={2}
+              autoResize
               value={question.question}
               onChange={(e) => onChange({ ...question, question: e.target.value })}
               placeholder="VD: What did the customer order at the cafe?"
@@ -147,7 +148,9 @@ export default function ListeningQuestionCard({
             <label className="mb-1 block text-xs font-semibold text-slate-700">
               Giải thích <span className="text-slate-400 font-normal">(tùy chọn)</span>
             </label>
-            <Input
+            <Textarea
+              rows={2}
+              autoResize
               value={question.explanation || ''}
               onChange={(e) => onChange({ ...question, explanation: e.target.value })}
               placeholder="Giải thích ngắn gọn lý do..."

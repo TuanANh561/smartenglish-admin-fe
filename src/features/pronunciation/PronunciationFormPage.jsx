@@ -211,132 +211,154 @@ function PronunciationFormPage() {
 
       {/* ── Body Form ── */}
       <form id="pronunciation-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 grid grid-cols-5 gap-6">
-          {/* ── LEFT: Thông tin phát âm (3 cols) ── */}
-          <div className="col-span-3 space-y-5">
-            {/* Card 1: Thông tin cơ bản */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                  1
-                </span>
-                Thông tin bài học & Ký hiệu âm
-              </h3>
+        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Tên bài học phát âm *
-                  </label>
-                  <Input
-                    value={form.title}
-                    onChange={set('title')}
-                    placeholder="VD: Mastering the Schwa Sound /ə/..."
-                    required
-                  />
+          {/* ── TOP: Lý thuyết phát âm (Card 1 & 2 bên trái, Card 3 bên phải) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* LEFT: Card 1 & Card 2 (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Card 1: Thông tin cơ bản */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
+                    1
+                  </span>
+                  Thông tin bài học & Ký hiệu âm
+                </h3>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Tên bài học phát âm *
+                    </label>
+                    <Input
+                      value={form.title}
+                      onChange={set('title')}
+                      placeholder="VD: Mastering the Schwa Sound /ə/..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <IpaInputField
+                      value={form.ipaSymbol}
+                      onChange={(newVal) => setForm((prev) => ({ ...prev, ipaSymbol: newVal }))}
+                      sourceWord={form.title}
+                      label="Ký hiệu IPA"
+                      placeholder="VD: /ə/, /iː/, /θ/..."
+                      required
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Phân loại âm
+                    </label>
+                    <Select value={form.category} onChange={set('category')}>
+                      {CATEGORY_LIST.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Cấp độ CEFR
+                    </label>
+                    <Select value={form.level} onChange={set('level')}>
+                      {CEFR_LEVELS.map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          Cấp độ {lvl}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Ngưỡng đạt AI (%)
+                    </label>
+                    <Input
+                      type="number"
+                      min={50}
+                      max={100}
+                      value={form.aiMinScoreThreshold}
+                      onChange={set('aiMinScoreThreshold')}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <IpaInputField
-                    value={form.ipaSymbol}
-                    onChange={(newVal) => setForm((prev) => ({ ...prev, ipaSymbol: newVal }))}
-                    sourceWord={form.title}
-                    label="Ký hiệu IPA"
-                    placeholder="VD: /ə/, /iː/, /θ/..."
-                    required
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    Mô tả bài học phát âm
+                  </label>
+                  <Textarea
+                    rows={2}
+                    autoResize
+                    value={form.description}
+                    onChange={set('description')}
+                    placeholder="Mô tả đặc điểm và vai trò của âm này trong giao tiếp tiếng Anh..."
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              {/* Card 2: Hướng dẫn khẩu hình miệng */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
+                    2
+                  </span>
+                  Hướng dẫn khẩu hình miệng & Kỹ thuật phát âm
+                </h3>
+
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Phân loại âm
+                    Vị trí môi, răng, lưỡi, thanh quản và luồng hơi
                   </label>
-                  <Select value={form.category} onChange={set('category')}>
-                    {CATEGORY_LIST.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Cấp độ CEFR
-                  </label>
-                  <Select value={form.level} onChange={set('level')}>
-                    {CEFR_LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        Cấp độ {lvl}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Ngưỡng đạt AI (%)
-                  </label>
-                  <Input
-                    type="number"
-                    min={50}
-                    max={100}
-                    value={form.aiMinScoreThreshold}
-                    onChange={set('aiMinScoreThreshold')}
+                  <Textarea
+                    rows={3}
+                    autoResize
+                    value={form.mouthShapeGuide}
+                    onChange={set('mouthShapeGuide')}
+                    placeholder="VD: Thả lỏng toàn bộ cơ mặt, môi hơi mở tự nhiên, lưỡi nằm ở vị trí trung tâm trong khoang miệng, không rung dây thanh quản..."
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Mô tả bài học phát âm
-                </label>
-                <Textarea
-                  rows={2}
-                  value={form.description}
-                  onChange={set('description')}
-                  placeholder="Mô tả đặc điểm và vai trò của âm này trong giao tiếp tiếng Anh..."
-                />
               </div>
             </div>
 
-            {/* Card 2: Hướng dẫn khẩu hình miệng */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                  2
-                </span>
-                Hướng dẫn khẩu hình miệng & Kỹ thuật phát âm
-              </h3>
+            {/* RIGHT: Card 3 & Tip card (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Card 3: Danh sách từ mẫu & Câu mẫu */}
+              <SampleWordsSection
+                sampleWords={form.sampleWords}
+                sampleSentences={form.sampleSentences}
+                onAddWord={handleAddSampleWord}
+                onUpdateWord={handleUpdateSampleWord}
+                onRemoveWord={handleRemoveSampleWord}
+                onAddSentence={handleAddSampleSentence}
+                onUpdateSentence={handleUpdateSampleSentence}
+                onRemoveSentence={handleRemoveSampleSentence}
+                onPlayAudio={handlePlaySampleAudio}
+              />
 
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Vị trí môi, răng, lưỡi, thanh quản và luồng hơi
-                </label>
-                <Textarea
-                  rows={3}
-                  value={form.mouthShapeGuide}
-                  onChange={set('mouthShapeGuide')}
-                  placeholder="VD: Thả lỏng toàn bộ cơ mặt, môi hơi mở tự nhiên, lưỡi nằm ở vị trí trung tâm trong khoang miệng, không rung dây thanh quản..."
-                />
+              {/* AI Pronunciation Tip card */}
+              <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-4 text-xs text-purple-800 space-y-1">
+                <p className="font-bold flex items-center gap-1.5 text-purple-900">
+                  <Headphones size={14} className="text-purple-600" />
+                  Đánh giá AI Speech Recognition:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-purple-700">
+                  <li>Hệ thống Voice AI sẽ đối chiếu file thu âm của học viên với phiên âm IPA chuẩn.</li>
+                  <li>Ngưỡng điểm khuyến nghị là 80-85% để đảm bảo học viên phát âm dễ hiểu.</li>
+                  <li>Câu hỏi trắc nghiệm hỗ trợ học viên rèn luyện phản xạ tai nghe trước khi nói.</li>
+                </ul>
               </div>
             </div>
-
-            {/* Card 3: Danh sách từ mẫu & Câu mẫu */}
-            <SampleWordsSection
-              sampleWords={form.sampleWords}
-              sampleSentences={form.sampleSentences}
-              onAddWord={handleAddSampleWord}
-              onUpdateWord={handleUpdateSampleWord}
-              onRemoveWord={handleRemoveSampleWord}
-              onAddSentence={handleAddSampleSentence}
-              onUpdateSentence={handleUpdateSampleSentence}
-              onRemoveSentence={handleRemoveSampleSentence}
-              onPlayAudio={handlePlaySampleAudio}
-            />
           </div>
 
-          {/* ── RIGHT: Bộ câu hỏi bài tập nhận diện âm (2 cols) ── */}
-          <div className="col-span-2 space-y-4">
+          {/* ── BOTTOM: Bộ câu hỏi bài tập nhận diện âm (FULL ROW) ── */}
+          <div className="w-full space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -344,7 +366,7 @@ function PronunciationFormPage() {
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
                       ✓
                     </span>
-                    Bài tập trắc nghiệm phát âm
+                    Bài tập trắc nghiệm phát âm củng cố
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {questions.length}/10 câu hỏi luyện tập
@@ -361,7 +383,7 @@ function PronunciationFormPage() {
               </div>
 
               {/* Accordion List */}
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {questions.map((q, idx) => (
                   <PronunciationQuestionCard
                     key={idx}
@@ -400,20 +422,8 @@ function PronunciationFormPage() {
                 )}
               </div>
             </div>
-
-            {/* AI Pronunciation Tip card */}
-            <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-4 text-xs text-purple-800 space-y-1">
-              <p className="font-bold flex items-center gap-1.5 text-purple-900">
-                <Headphones size={14} className="text-purple-600" />
-                Đánh giá AI Speech Recognition:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-purple-700">
-                <li>Hệ thống Voice AI sẽ đối chiếu file thu âm của học viên với phiên âm IPA chuẩn.</li>
-                <li>Ngưỡng điểm khuyến nghị là 80-85% để đảm bảo học viên phát âm dễ hiểu.</li>
-                <li>Câu hỏi trắc nghiệm hỗ trợ học viên rèn luyện phản xạ tai nghe trước khi nói.</li>
-              </ul>
-            </div>
           </div>
+
         </div>
       </form>
     </div>

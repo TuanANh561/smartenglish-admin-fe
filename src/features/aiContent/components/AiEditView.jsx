@@ -120,7 +120,8 @@ export default function AiEditView({ item, onBack, onSave }) {
                     value={q.questionText || ''}
                     onChange={(e) => updateQ('questionText', e.target.value)}
                     rows={3}
-                    className="w-full resize-none text-sm"
+                    autoResize
+                    className="w-full text-sm"
                   />
                 </div>
 
@@ -169,7 +170,8 @@ export default function AiEditView({ item, onBack, onSave }) {
                     value={q.explanationVi || ''}
                     onChange={(e) => updateQ('explanationVi', e.target.value)}
                     rows={2}
-                    className="w-full resize-none text-sm"
+                    autoResize
+                    className="w-full text-sm"
                   />
                 </div>
               </div>

@@ -79,6 +79,7 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">Câu hỏi</label>
             <Textarea
               rows={2}
+              autoResize
               value={question.question}
               onChange={(e) => onChange({ ...question, question: e.target.value })}
               placeholder="VD: Choose the correct meaning of 'serendipity':"
@@ -89,7 +90,7 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
               Các đáp án <span className="text-emerald-600 font-normal">(click vào ô vuông để chọn đáp án đúng)</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {question.options.map((opt, optIdx) => (
                 <div key={optIdx} className={`flex items-center gap-2 rounded-xl p-2.5 border transition-colors ${question.correctIndex === optIdx ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
                   <button
@@ -122,7 +123,9 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">Giải thích đáp án <span className="text-slate-400 font-normal">(không bắt buộc)</span></label>
-            <Input
+            <Textarea
+              rows={2}
+              autoResize
               value={question.explanation}
               onChange={(e) => onChange({ ...question, explanation: e.target.value })}
               placeholder="VD: 'Serendipity' means a fortunate accident, so option A is correct..."
@@ -230,12 +233,11 @@ function VocabularyFormPage() {
 
       {/* ── Body ── */}
       <form id="vocab-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 grid grid-cols-5 gap-6">
+        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
 
-          {/* ── LEFT: Thông tin từ (3 cols) ── */}
-          <div className="col-span-3 space-y-5">
-
-            {/* Card: Thông tin cơ bản */}
+          {/* ── TOP: Card 1 & Card 2 side-by-side ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Card 1: Thông tin cơ bản */}
             <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">1</span>
@@ -274,22 +276,22 @@ function VocabularyFormPage() {
                 </div>
                 <div className="col-span-2">
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Anh (định nghĩa)</label>
-                  <Textarea rows={2} value={form.englishMeaning} onChange={set('englishMeaning')} placeholder="VD: the occurrence of events by chance in a happy way" />
+                  <Textarea rows={2} autoResize value={form.englishMeaning} onChange={set('englishMeaning')} placeholder="VD: the occurrence of events by chance in a happy way" />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Chủ đề</label>
                   <Input value={form.topic} onChange={set('topic')} placeholder="VD: Emotions, Travel, Business..." />
                 </div>
               </div>
             </div>
 
-            {/* Card: Ví dụ & Đồng / Trái nghĩa */}
+            {/* Card 2: Ví dụ & Đồng / Trái nghĩa */}
             <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">2</span>
                 Ví dụ & Từ liên quan
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Câu ví dụ (Tiếng Anh)</label>
                   <Input value={form.exampleEn} onChange={set('exampleEn')} placeholder="VD: Finding that job was pure serendipity." />
@@ -298,26 +300,27 @@ function VocabularyFormPage() {
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Dịch câu ví dụ (Tiếng Việt)</label>
                   <Input value={form.exampleVi} onChange={set('exampleVi')} placeholder="VD: Tìm được việc đó hoàn toàn là may mắn." />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ đồng nghĩa</label>
-                  <Input value={form.synonyms} onChange={set('synonyms')} placeholder="VD: luck, fortune (cách nhau bằng dấu phẩy)" />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ trái nghĩa</label>
-                  <Input value={form.antonyms} onChange={set('antonyms')} placeholder="VD: misfortune, bad luck" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ đồng nghĩa</label>
+                    <Input value={form.synonyms} onChange={set('synonyms')} placeholder="VD: luck, fortune" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ trái nghĩa</label>
+                    <Input value={form.antonyms} onChange={set('antonyms')} placeholder="VD: misfortune, bad luck" />
+                  </div>
                 </div>
               </div>
             </div>
-
           </div>
 
-          {/* ── RIGHT: Câu hỏi bài tập (2 cols) ── */}
-          <div className="col-span-2 space-y-4">
+          {/* ── BOTTOM: Câu hỏi bài tập (FULL ROW) ── */}
+          <div className="w-full space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">3</span>
-                  Câu hỏi bài tập
+                  Câu hỏi bài tập củng cố
                   <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                     {questions.length}/10
                   </span>
@@ -346,7 +349,7 @@ function VocabularyFormPage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {questions.map((q, idx) => (
                     <QuestionCard
                       key={idx}

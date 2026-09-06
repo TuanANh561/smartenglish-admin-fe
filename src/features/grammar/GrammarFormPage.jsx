@@ -89,6 +89,7 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
             </label>
             <Textarea
               rows={2}
+              autoResize
               value={question.question}
               onChange={(e) => onChange({ ...question, question: e.target.value })}
               placeholder="VD: She ___ (already / finish) her homework before I called."
@@ -99,7 +100,7 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
               Các phương án <span className="text-emerald-600 font-normal">(click ô vuông = đáp án đúng)</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {question.options.map((opt, optIdx) => (
                 <div
                   key={optIdx}
@@ -143,7 +144,9 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
               Giải thích ngữ pháp <span className="text-slate-400 font-normal">(không bắt buộc)</span>
             </label>
-            <Input
+            <Textarea
+              rows={2}
+              autoResize
               value={question.explanation}
               onChange={(e) => onChange({ ...question, explanation: e.target.value })}
               placeholder="VD: Dùng thì Quá khứ hoàn thành (had finished) vì hành động xảy ra trước..."
@@ -300,167 +303,174 @@ function GrammarFormPage() {
 
       {/* ── Body Form ── */}
       <form id="grammar-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 grid grid-cols-5 gap-6">
-          {/* ── LEFT: Thông tin lý thuyết ngữ pháp (3 cols) ── */}
-          <div className="col-span-3 space-y-5">
-            {/* Card 1: Thông tin cơ bản */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                  1
-                </span>
-                Thông tin bài học
-              </h3>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Tên bài học ngữ pháp *
-                </label>
-                <Input
-                  value={form.title}
-                  onChange={set('title')}
-                  placeholder="VD: Present Perfect vs Past Simple..."
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Chủ điểm ngữ pháp
-                  </label>
-                  <Select value={form.topic} onChange={set('topic')}>
-                    {TOPIC_LIST.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Cấp độ CEFR
-                  </label>
-                  <Select value={form.level} onChange={set('level')}>
-                    {CEFR_LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        Cấp độ {lvl}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Trạng thái
-                  </label>
-                  <Select value={form.status} onChange={set('status')}>
-                    <option value="published">Đã xuất bản (Published)</option>
-                    <option value="draft">Bản nháp (Draft)</option>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Công thức / Cấu trúc tổng quát
-                </label>
-                <Input
-                  value={form.formula}
-                  onChange={set('formula')}
-                  placeholder="VD: S + have/has + V3/ed vs S + V2/ed..."
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Mô tả bài học & ngữ cảnh sử dụng
-                </label>
-                <Textarea
-                  rows={2}
-                  value={form.description}
-                  onChange={set('description')}
-                  placeholder="Mô tả mục tiêu và cách phân biệt cấu trúc ngữ pháp này..."
-                />
-              </div>
-            </div>
-
-            {/* Card 2: Quy tắc trọng tâm */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                  2
-                </span>
-                Quy tắc trọng tâm & Dấu hiệu nhận biết
-              </h3>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                  Mỗi dòng là một quy tắc (hệ thống sẽ tự tạo gạch đầu dòng trực quan)
-                </label>
-                <Textarea
-                  rows={4}
-                  value={form.keyRules}
-                  onChange={set('keyRules')}
-                  placeholder="VD:&#10;Present Perfect dùng với: since, for, already, yet, just, ever, never...&#10;Past Simple dùng với: yesterday, ago, last week, in 1999..."
-                />
-              </div>
-            </div>
-
-            {/* Card 3: Ví dụ minh họa */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <div className="flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
+          {/* ── TOP: Lý thuyết ngữ pháp (Card 1 & Card 2, 3) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Card 1: Thông tin cơ bản (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
-                    3
+                    1
                   </span>
-                  Ví dụ minh họa ({form.examples.length})
+                  Thông tin bài học
                 </h3>
-                <button
-                  type="button"
-                  onClick={handleAddExample}
-                  className="flex items-center gap-1 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer"
-                >
-                  <Plus size={13} /> Thêm ví dụ
-                </button>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    Tên bài học ngữ pháp *
+                  </label>
+                  <Input
+                    value={form.title}
+                    onChange={set('title')}
+                    placeholder="VD: Present Perfect vs Past Simple..."
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Chủ điểm ngữ pháp
+                    </label>
+                    <Select value={form.topic} onChange={set('topic')}>
+                      {TOPIC_LIST.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Cấp độ CEFR
+                    </label>
+                    <Select value={form.level} onChange={set('level')}>
+                      {CEFR_LEVELS.map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          Cấp độ {lvl}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Trạng thái
+                    </label>
+                    <Select value={form.status} onChange={set('status')}>
+                      <option value="published">Đã xuất bản (Published)</option>
+                      <option value="draft">Bản nháp (Draft)</option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    Công thức / Cấu trúc tổng quát
+                  </label>
+                  <Input
+                    value={form.formula}
+                    onChange={set('formula')}
+                    placeholder="VD: S + have/has + V3/ed vs S + V2/ed..."
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    Mô tả bài học & ngữ cảnh sử dụng
+                  </label>
+                  <Textarea
+                    rows={2}
+                    autoResize
+                    value={form.description}
+                    onChange={set('description')}
+                    placeholder="Mô tả mục tiêu và cách phân biệt cấu trúc ngữ pháp này..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right column: Card 2 & Card 3 (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Card 2: Quy tắc trọng tâm */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
+                    2
+                  </span>
+                  Quy tắc trọng tâm & Dấu hiệu nhận biết
+                </h3>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    Mỗi dòng là một quy tắc (hệ thống sẽ tự tạo gạch đầu dòng trực quan)
+                  </label>
+                  <Textarea
+                    rows={4}
+                    autoResize
+                    value={form.keyRules}
+                    onChange={set('keyRules')}
+                    placeholder="VD:&#10;Present Perfect dùng với: since, for, already, yet, just, ever, never...&#10;Past Simple dùng với: yesterday, ago, last week, in 1999..."
+                  />
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {form.examples.map((ex, exIdx) => (
-                  <div
-                    key={exIdx}
-                    className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2 relative group"
+              {/* Card 3: Ví dụ minh họa */}
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">
+                      3
+                    </span>
+                    Ví dụ minh họa ({form.examples.length})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleAddExample}
+                    className="flex items-center gap-1 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-100 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600">Ví dụ {exIdx + 1}</span>
-                      {form.examples.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExample(exIdx)}
-                          className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                          title="Xóa ví dụ"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
+                    <Plus size={13} /> Thêm ví dụ
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {form.examples.map((ex, exIdx) => (
+                    <div
+                      key={exIdx}
+                      className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2 relative group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-600">Ví dụ {exIdx + 1}</span>
+                        {form.examples.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExample(exIdx)}
+                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                            title="Xóa ví dụ"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        value={ex.en}
+                        onChange={(e) => handleUpdateExample(exIdx, 'en', e.target.value)}
+                        placeholder="VD: I have lived in Hanoi for 5 years."
+                      />
+                      <Input
+                        value={ex.vi}
+                        onChange={(e) => handleUpdateExample(exIdx, 'vi', e.target.value)}
+                        placeholder="Dịch nghĩa: Tôi đã sống ở Hà Nội được 5 năm."
+                      />
                     </div>
-                    <Input
-                      value={ex.en}
-                      onChange={(e) => handleUpdateExample(exIdx, 'en', e.target.value)}
-                      placeholder="VD: I have lived in Hanoi for 5 years."
-                    />
-                    <Input
-                      value={ex.vi}
-                      onChange={(e) => handleUpdateExample(exIdx, 'vi', e.target.value)}
-                      placeholder="Dịch nghĩa: Tôi đã sống ở Hà Nội được 5 năm."
-                    />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ── RIGHT: Bộ câu hỏi bài tập trắc nghiệm (2 cols) ── */}
-          <div className="col-span-2 space-y-4">
+          {/* ── BOTTOM: Bộ câu hỏi bài tập trắc nghiệm (FULL ROW) ── */}
+          <div className="w-full space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -468,7 +478,7 @@ function GrammarFormPage() {
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
                       ✓
                     </span>
-                    Bài tập trắc nghiệm
+                    Bài tập trắc nghiệm củng cố
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {questions.length}/10 câu hỏi luyện tập
@@ -485,7 +495,7 @@ function GrammarFormPage() {
               </div>
 
               {/* Accordion List */}
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {questions.map((q, idx) => (
                   <QuestionCard
                     key={idx}

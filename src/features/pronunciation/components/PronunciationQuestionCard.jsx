@@ -67,6 +67,7 @@ export default function PronunciationQuestionCard({
             </label>
             <Textarea
               rows={2}
+              autoResize
               value={question.question}
               onChange={(e) => onChange({ ...question, question: e.target.value })}
               placeholder="VD: Choose the word whose underlined part is pronounced differently:"
@@ -77,7 +78,7 @@ export default function PronunciationQuestionCard({
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
               4 Lựa chọn trả lời & Chọn đáp án đúng
             </label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {question.options.map((opt, optIdx) => {
                 const isCorrect = question.correctIndex === optIdx
                 return (
@@ -113,7 +114,9 @@ export default function PronunciationQuestionCard({
             <label className="mb-1.5 block text-xs font-semibold text-slate-600">
               Giải thích phát âm <span className="text-slate-400 font-normal">(không bắt buộc)</span>
             </label>
-            <Input
+            <Textarea
+              rows={2}
+              autoResize
               value={question.explanation}
               onChange={(e) => onChange({ ...question, explanation: e.target.value })}
               placeholder="VD: Từ 'banana' có âm /ə/ ở vị trí âm tiết đầu và cuối..."

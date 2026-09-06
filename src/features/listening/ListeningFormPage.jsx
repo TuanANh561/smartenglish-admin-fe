@@ -200,192 +200,199 @@ function ListeningFormPage() {
 
       {/* Main Grid Content */}
       <form id="listening-editor-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-7xl px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="mx-auto max-w-7xl px-6 py-6 space-y-6">
 
-          {/* LEFT: Nội dung bài nghe & Studio giọng đọc (7 cols) */}
-          <div className="lg:col-span-7 space-y-5">
-            {/* Card 1: Thông tin cơ bản */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100 text-blue-700 text-xs font-bold">
-                    1
-                  </span>
-                  Thông tin bài học
-                </h3>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                  Tiêu đề bài nghe <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                  value={form.title}
-                  onChange={setField('title')}
-                  placeholder="VD: Client Presentation Prep"
-                  required
-                  className="font-medium"
-                />
-              </div>
-
-              {/* 4 Cột: Chủ đề, CEFR, Accent, Thời lượng */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Chủ đề
-                  </label>
-                  <Select value={form.topic} onChange={setField('topic')}>
-                    {LISTENING_TOPICS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Cấp độ CEFR
-                  </label>
-                  <Select value={form.level} onChange={setField('level')}>
-                    {CEFR_LEVELS.map((l) => (
-                      <option key={l} value={l}>
-                        Cấp độ {l}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Giọng đọc (Accent)
-                  </label>
-                  <Select value={form.accent} onChange={setField('accent')}>
-                    {LISTENING_ACCENTS.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Thời lượng
-                  </label>
-                  <div className="relative flex items-center">
-                    <Clock
-                      size={14}
-                      className="absolute left-3 text-slate-400 pointer-events-none"
-                    />
-                    <input
-                      type="text"
-                      value={form.duration}
-                      onChange={setField('duration')}
-                      placeholder="00:35"
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-8.5 pr-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Mô tả ngắn */}
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                  Mô tả ngắn
-                </label>
-                <Textarea
-                  rows={2}
-                  value={form.description}
-                  onChange={setField('description')}
-                  placeholder="Tóm tắt ngắn gọn nội dung bài nghe..."
-                  className="text-xs leading-relaxed"
-                />
-              </div>
-            </div>
-
-            {/* Card 2: Bản chép lời kịch bản (Transcript) */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3.5">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-xs font-bold">
-                    2
-                  </span>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Bản chép lời (Transcript)
+          {/* TOP: Thông tin bài nghe, Nguồn âm thanh, Bản chép lời & Studio giọng đọc */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* LEFT: Thông tin bài nghe + Nguồn audio (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Card 1: Thông tin cơ bản */}
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100 text-blue-700 text-xs font-bold">
+                      1
+                    </span>
+                    Thông tin bài học
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {!form.transcript.trim() && (
-                    <button
-                      type="button"
-                      onClick={handleInsertSample}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/70 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer"
-                    >
-                      <Sparkles size={12} />
-                      Chèn mẫu kịch bản
-                    </button>
-                  )}
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                    {lineCount} lượt thoại · {wordCount} từ
-                  </span>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Tiêu đề bài nghe <span className="text-rose-500">*</span>
+                  </label>
+                  <Input
+                    value={form.title}
+                    onChange={setField('title')}
+                    placeholder="VD: Client Presentation Prep"
+                    required
+                    className="font-medium"
+                  />
+                </div>
+
+                {/* 4 Cột: Chủ đề, CEFR, Accent, Thời lượng */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Chủ đề
+                    </label>
+                    <Select value={form.topic} onChange={setField('topic')}>
+                      {LISTENING_TOPICS.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Cấp độ CEFR
+                    </label>
+                    <Select value={form.level} onChange={setField('level')}>
+                      {CEFR_LEVELS.map((l) => (
+                        <option key={l} value={l}>
+                          Cấp độ {l}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Giọng đọc (Accent)
+                    </label>
+                    <Select value={form.accent} onChange={setField('accent')}>
+                      {LISTENING_ACCENTS.map((a) => (
+                        <option key={a} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Thời lượng
+                    </label>
+                    <div className="relative flex items-center">
+                      <Clock
+                        size={14}
+                        className="absolute left-3 text-slate-400 pointer-events-none"
+                      />
+                      <input
+                        type="text"
+                        value={form.duration}
+                        onChange={setField('duration')}
+                        placeholder="00:35"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-8.5 pr-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mô tả ngắn */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Mô tả ngắn
+                  </label>
+                  <Textarea
+                    rows={2}
+                    autoResize
+                    value={form.description}
+                    onChange={setField('description')}
+                    placeholder="Tóm tắt ngắn gọn nội dung bài nghe..."
+                    className="text-xs leading-relaxed"
+                  />
                 </div>
               </div>
 
-              <Textarea
-                rows={8}
-                value={form.transcript}
-                onChange={setField('transcript')}
-                placeholder={`Alex: Did you finalize the revenue forecast slides for this afternoon's meeting?\nSarah: Yes, I added the quarterly growth charts and highlighted our top clients.`}
-                className="font-mono text-xs leading-relaxed bg-slate-50/40 focus:bg-white transition-colors"
-              />
+              {/* Card 2: Nguồn file Audio thực tế (Tùy chọn) */}
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">
+                      2
+                    </span>
+                    Nguồn âm thanh
+                  </h3>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
+                    <Link2 size={13} className="text-slate-400" /> URL File âm thanh MP3 (Tùy chọn)
+                  </label>
+                  <Input
+                    value={form.audioUrl}
+                    onChange={setField('audioUrl')}
+                    placeholder="https://example.com/audio/lesson.mp3"
+                    className="text-xs"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Card 3: Studio Giọng đọc & Nghe thử */}
-            <ListeningVoiceConfigCard
-              transcript={form.transcript}
-              description={form.description}
-              title={form.title}
-              voiceConfig={voiceConfig}
-              onChange={setVoiceConfig}
-            />
-          </div>
+            {/* RIGHT: Bản chép lời kịch bản & Studio giọng đọc (6 cols) */}
+            <div className="lg:col-span-6 space-y-5">
+              {/* Card 3: Bản chép lời kịch bản (Transcript) */}
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700 text-xs font-bold">
+                      3
+                    </span>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Bản chép lời (Transcript)
+                    </h3>
+                  </div>
 
-          {/* RIGHT: Nguồn Audio ngoài + Bộ câu hỏi trắc nghiệm (5 cols) */}
-          <div className="lg:col-span-5 space-y-5">
-            {/* Card 4: Nguồn file Audio thực tế (Tùy chọn) */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">
-                    3
-                  </span>
-                  Nguồn âm thanh
-                </h3>
-              </div>
+                  <div className="flex items-center gap-2">
+                    {!form.transcript.trim() && (
+                      <button
+                        type="button"
+                        onClick={handleInsertSample}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/70 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer"
+                      >
+                        <Sparkles size={12} />
+                        Chèn mẫu kịch bản
+                      </button>
+                    )}
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                      {lineCount} lượt thoại · {wordCount} từ
+                    </span>
+                  </div>
+                </div>
 
-              <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
-                  <Link2 size={13} className="text-slate-400" /> URL File âm thanh MP3 (Tùy chọn)
-                </label>
-                <Input
-                  value={form.audioUrl}
-                  onChange={setField('audioUrl')}
-                  placeholder="https://example.com/audio/lesson.mp3"
-                  className="text-xs"
+                <Textarea
+                  rows={8}
+                  autoResize
+                  value={form.transcript}
+                  onChange={setField('transcript')}
+                  placeholder={`Alex: Did you finalize the revenue forecast slides for this afternoon's meeting?\nSarah: Yes, I added the quarterly growth charts and highlighted our top clients.`}
+                  className="font-mono text-xs leading-relaxed bg-slate-50/40 focus:bg-white transition-colors"
                 />
               </div>
-            </div>
 
-            {/* Card 5: Bộ câu hỏi nghe hiểu */}
+              {/* Card 4: Studio Giọng đọc & Nghe thử */}
+              <ListeningVoiceConfigCard
+                transcript={form.transcript}
+                description={form.description}
+                title={form.title}
+                voiceConfig={voiceConfig}
+                onChange={setVoiceConfig}
+              />
+            </div>
+          </div>
+
+          {/* BOTTOM: Bộ câu hỏi trắc nghiệm nghe hiểu (FULL ROW) */}
+          <div className="w-full space-y-5">
             <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
-                    4
+                    5
                   </span>
-                  Câu hỏi trắc nghiệm
+                  Câu hỏi trắc nghiệm nghe hiểu
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
                     {questions.length}/10
                   </span>
@@ -438,8 +445,8 @@ function ListeningFormPage() {
                 </div>
               )}
             </div>
-
           </div>
+
         </div>
       </form>
     </div>
