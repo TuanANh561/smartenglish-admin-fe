@@ -64,42 +64,47 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
   return [
     columnHelper.accessor((row) => row.title || row.questionText || row.id, {
       id: 'title',
-      header: 'Tiêu đề bài kiểm tra',
+      header: 'Tiêu đề câu hỏi',
+      meta: { widthClass: 'min-w-[260px]' },
       cell: (info) => {
-        const text = info.getValue() || 'Bài kiểm tra'
+        const text = info.getValue() || 'Câu hỏi'
         return (
-          <span className="text-ink font-medium" title={text}>
-            {text.length > 55 ? `${text.slice(0, 55)}…` : text}
+          <span className="text-ink font-medium leading-snug line-clamp-2" title={text}>
+            {text}
           </span>
         )
       },
     }),
     columnHelper.accessor('questionType', {
       header: 'Dạng bài',
+      meta: { widthClass: 'w-32 whitespace-nowrap' },
       cell: (info) => {
         const meta = QUESTION_TYPE_META[info.getValue()] || QUESTION_TYPE_META.multiple_choice
         const Icon = meta.Icon
         return (
-          <span className="inline-flex items-center gap-1.5 text-sm text-ink">
-            <Icon size={14} strokeWidth={1.75} className="text-brand-500 shrink-0" />
-            {meta.label}
+          <span className="inline-flex items-center gap-1.5 text-xs text-ink whitespace-nowrap bg-slate-100/70 px-2.5 py-1 rounded-md font-medium">
+            <Icon size={13} strokeWidth={1.75} className="text-brand-500 shrink-0" />
+            <span>{meta.label}</span>
           </span>
         )
       },
     }),
-    columnHelper.accessor('questionText', {
-      header: 'Mục tiêu',
+    columnHelper.accessor((row) => row.topic || row.relatedWord || 'Tổng hợp', {
+      id: 'topic',
+      header: 'Chủ đề',
+      meta: { widthClass: 'w-24 whitespace-nowrap' },
       cell: (info) => {
-        const text = info.getValue() || 'Bài kiểm tra'
+        const text = info.getValue() || 'Tổng hợp'
         return (
-          <span className="text-ink font-medium" title={text}>
-            {text.length > 55 ? `${text.slice(0, 55)}…` : text}
-          </span>
+          <Badge tone="neutral" className="whitespace-nowrap font-normal">
+            {text}
+          </Badge>
         )
       },
     }),
     columnHelper.accessor('authorName', {
       header: 'Tác giả',
+      meta: { widthClass: 'w-48 min-w-[170px] whitespace-nowrap' },
       cell: (info) => {
         const author = info.getValue() || 'Hệ thống'
         const isOwned = checkOwnership(info.row.original)
@@ -107,47 +112,50 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
 
         if (isTeacher && isOwned) {
           return (
-            <Badge tone="success" className="inline-flex items-center gap-1">
-              <User size={12} strokeWidth={2} />
-              Của tôi
+            <Badge tone="success" className="inline-flex items-center gap-1 whitespace-nowrap font-medium px-2.5 py-1">
+              <User size={12} strokeWidth={2} className="shrink-0" />
+              <span>Của tôi</span>
             </Badge>
           )
         }
         if (isSystem) {
           return (
-            <Badge tone="neutral" className="inline-flex items-center gap-1">
-              <Building2 size={12} strokeWidth={2} />
-              Hệ thống
+            <Badge tone="neutral" className="inline-flex items-center gap-1 whitespace-nowrap font-medium px-2.5 py-1">
+              <Building2 size={12} strokeWidth={2} className="shrink-0" />
+              <span>Hệ thống</span>
             </Badge>
           )
         }
         return (
-          <Badge tone="warning" className="inline-flex items-center gap-1">
-            <GraduationCap size={12} strokeWidth={2} />
-            {author}
+          <Badge tone="warning" className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium px-2.5 py-1">
+            <GraduationCap size={13} strokeWidth={2} className="shrink-0 text-amber-600" />
+            <span className="whitespace-nowrap">{author}</span>
           </Badge>
         )
       },
     }),
     columnHelper.accessor('cefrLevel', {
       header: 'CEFR',
-      cell: (info) => <Badge tone="info">{info.getValue()}</Badge>,
+      meta: { widthClass: 'w-16 text-center whitespace-nowrap', align: 'center' },
+      cell: (info) => <Badge tone="info" className="font-bold">{info.getValue()}</Badge>,
     }),
     columnHelper.accessor('difficulty', {
       header: 'Độ khó',
+      meta: { widthClass: 'w-24 text-center whitespace-nowrap', align: 'center' },
       cell: (info) => {
         const meta = DIFFICULTY_META[info.getValue()] || DIFFICULTY_META.medium
-        return <Badge tone={meta.tone}>{meta.label}</Badge>
+        return <Badge tone={meta.tone} className="whitespace-nowrap">{meta.label}</Badge>
       },
     }),
     columnHelper.display({
       id: 'actions',
       header: 'Hành động',
+      meta: { widthClass: 'w-28 text-center whitespace-nowrap', align: 'center' },
       cell: (info) => {
         const manageable = canManage(info.row.original)
 
         return (
-          <div className="flex items-center gap-2 text-ink-muted">
+          <div className="flex items-center justify-center gap-2 text-ink-muted">
             <button
               type="button"
               aria-label="Xem chi tiết"
@@ -190,7 +198,7 @@ export function buildQuizColumns({ onView, onEdit, onDelete, currentUser }) {
               </>
             ) : (
               <span
-                className="text-[10px] text-ink-muted italic flex items-center gap-0.5 px-1"
+                className="text-[10px] text-ink-muted italic flex items-center gap-0.5 px-1 whitespace-nowrap"
                 title="Chỉ tác giả mới có quyền chỉnh sửa câu hỏi này"
               >
                 <Lock size={11} />
@@ -256,6 +264,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     }),
     columnHelper.accessor('testTypeLabel', {
       header: 'Dạng bài test',
+      meta: { widthClass: 'w-44 whitespace-nowrap' },
       cell: (info) => {
         const row = info.row.original
         const meta = SHORT_TEST_TYPE_META[row.testType] || { label: info.getValue() || 'Test ngắn', tone: 'info' }
@@ -269,6 +278,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     columnHelper.accessor((row) => (row.questions ? row.questions.length : 0), {
       id: 'questionCount',
       header: 'Số câu',
+      meta: { widthClass: 'w-20 text-center whitespace-nowrap', align: 'center' },
       cell: (info) => (
         <span className="inline-flex items-center gap-1 font-semibold text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
           <HelpCircle size={12} className="text-slate-500" />
@@ -278,6 +288,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     }),
     columnHelper.accessor('level', {
       header: 'CEFR',
+      meta: { widthClass: 'w-16 text-center whitespace-nowrap', align: 'center' },
       cell: (info) => (
         <Badge tone="info" className="font-bold">
           {info.getValue() || 'B2'}
@@ -286,6 +297,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     }),
     columnHelper.accessor('durationMinutes', {
       header: 'Thời lượng',
+      meta: { widthClass: 'w-24 text-center whitespace-nowrap', align: 'center' },
       cell: (info) => (
         <span className="text-xs text-ink-muted whitespace-nowrap inline-flex items-center gap-1">
           <Clock size={12} className="text-slate-400" />
@@ -295,6 +307,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     }),
     columnHelper.accessor('authorName', {
       header: 'Tác giả',
+      meta: { widthClass: 'w-48 min-w-[170px] whitespace-nowrap' },
       cell: (info) => {
         const author = info.getValue() || 'Hệ thống'
         const isOwned = checkOwnership(info.row.original)
@@ -303,24 +316,24 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
 
         if (isTeacher && isOwned) {
           return (
-            <Badge tone="success" className="inline-flex items-center gap-1">
-              <User size={12} strokeWidth={2} />
-              Của tôi
+            <Badge tone="success" className="inline-flex items-center gap-1 whitespace-nowrap font-medium px-2.5 py-1">
+              <User size={12} strokeWidth={2} className="shrink-0" />
+              <span>Của tôi</span>
             </Badge>
           )
         }
         if (isSystem) {
           return (
-            <Badge tone="neutral" className="inline-flex items-center gap-1">
-              <Building2 size={12} strokeWidth={2} />
-              Hệ thống
+            <Badge tone="neutral" className="inline-flex items-center gap-1 whitespace-nowrap font-medium px-2.5 py-1">
+              <Building2 size={12} strokeWidth={2} className="shrink-0" />
+              <span>Hệ thống</span>
             </Badge>
           )
         }
         return (
-          <Badge tone="warning" className="inline-flex items-center gap-1">
-            <GraduationCap size={12} strokeWidth={2} />
-            {author}
+          <Badge tone="warning" className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium px-2.5 py-1">
+            <GraduationCap size={13} strokeWidth={2} className="shrink-0 text-amber-600" />
+            <span className="whitespace-nowrap">{author}</span>
           </Badge>
         )
       },
@@ -328,6 +341,7 @@ export function buildShortTestColumns({ onView, onEdit, onDelete, onAssign, curr
     columnHelper.display({
       id: 'actions',
       header: 'Hành động',
+      meta: { widthClass: 'w-32 text-right whitespace-nowrap', align: 'right' },
       cell: (info) => {
         const manageable = canManage(info.row.original)
 
