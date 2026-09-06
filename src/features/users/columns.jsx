@@ -56,42 +56,6 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
         return <Badge tone={plan === 'free' ? 'neutral' : 'gold'}>{PLAN_LABEL[plan] ?? plan}</Badge>
       },
     }),
-    columnHelper.accessor('cefrLevel', {
-      header: 'Trình độ',
-      enableSorting: false,
-      cell: (info) => (
-        <span className="text-sm font-bold text-slate-800">
-          {info.getValue() ?? '—'}
-        </span>
-      ),
-    }),
-    columnHelper.accessor('isActive', {
-      header: 'Trạng thái',
-      enableSorting: false,
-      cell: (info) => {
-        const isActive = info.getValue()
-        return (
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
-              isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
-            )}
-          >
-            {isActive ? (
-              <>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Đang hoạt động</span>
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-red-500" />
-                <span>Đã khoá</span>
-              </>
-            )}
-          </span>
-        )
-      },
-    }),
     columnHelper.accessor('lastLoginAt', {
       header: 'Đăng nhập gần nhất',
       enableSorting: true,

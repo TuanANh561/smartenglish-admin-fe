@@ -246,22 +246,35 @@ function StudentsPage() {
               enableSelection
               expandable
               renderExpandedRow={(user) => (
-                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4 py-1">
                   <div>
-                    <p className="text-xs text-ink-muted">Ngày tạo tài khoản</p>
-                    <p className="text-ink font-medium">{user.createdAt ?? '—'}</p>
+                    <p className="text-xs font-semibold text-slate-500 mb-1">Trạng thái tài khoản</p>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        user.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span>{user.isActive ? 'Đang hoạt động' : 'Đã khoá'}</span>
+                    </span>
                   </div>
                   <div>
-                    <p className="text-xs text-ink-muted">Khóa học đăng ký</p>
-                    <p className="text-ink">{user.enrolledCoursesCount ?? 0} khóa</p>
+                    <p className="text-xs font-semibold text-slate-500 mb-0.5">Trình độ CEFR</p>
+                    <span className="font-bold text-slate-800 text-sm">
+                      {user.cefrLevel || 'Chưa xác định'}
+                    </span>
                   </div>
                   <div>
-                    <p className="text-xs text-ink-muted">Số bài nộp</p>
-                    <p className="text-ink">{user.submissionCount ?? 0}</p>
+                    <p className="text-xs font-semibold text-slate-500 mb-0.5">Khóa học đăng ký</p>
+                    <p className="text-slate-800 font-medium text-sm">{user.enrolledCoursesCount ?? 0} khóa</p>
                   </div>
                   <div>
-                    <p className="text-xs text-ink-muted">Điểm trung bình</p>
-                    <p className="text-ink">{user.averageScore ?? '—'}</p>
+                    <p className="text-xs font-semibold text-slate-500 mb-0.5">Tiến độ bài nộp</p>
+                    <p className="text-slate-800 text-sm">
+                      <span className="font-semibold">{user.submissionCount ?? 0}</span> bài nộp · ĐTB: <span className="font-bold text-brand-600">{user.averageScore ?? '—'}</span>
+                    </p>
                   </div>
                 </div>
               )}
