@@ -59,23 +59,40 @@ select:disabled {
   scrollbar-width: none; /* Firefox */
 }
 
-/* Thanh cuộn mảnh, bo tròn mềm mại cho các khung danh sách */
+/* Thanh cuộn mặc định toàn trang mảnh nhẹ, bo tròn hiện đại */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Thanh cuộn siêu mảnh (5px), màu slate/indigo hài hòa cho các khung nội dung như Transcript, Drawer */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f8fafc;
+  border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #6366f1;
 }
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: #cbd5e1 #f8fafc;
 }
 

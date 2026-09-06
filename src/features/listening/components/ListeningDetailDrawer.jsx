@@ -6,6 +6,7 @@ import Drawer from '@/components/ui/Drawer'
 import { Lock, Pencil, Play, Send, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatTime, parseDuration } from '@/lib/ipaHelper'
+import toast from 'react-hot-toast'
 
 export default function ListeningDetailDrawer({
   lesson,
@@ -26,7 +27,15 @@ export default function ListeningDetailDrawer({
   const remainingTime = Math.max(0, totalDuration - safeCurrentTime)
   const progressPercent = totalDuration > 0 ? Math.min(100, (safeCurrentTime / totalDuration) * 100) : 0
 
+  const hasAudio = Boolean(lesson?.audioUrl && String(lesson.audioUrl).trim())
+
   const handleProgressBarClick = (e) => {
+    if (!hasAudio) {
+      toast('Tua nhanh bằng thanh tiến độ chỉ khả dụng khi bài nghe có file .mp3 thực tế', {
+        icon: 'ℹ️',
+      })
+      return
+    }
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
     const ratio = Math.max(0, Math.min(1, clickX / rect.width))
@@ -35,6 +44,12 @@ export default function ListeningDetailDrawer({
   }
 
   const handleSkip = (seconds) => {
+    if (!hasAudio) {
+      toast('Tính năng tua nhanh chỉ khả dụng khi bài nghe có file .mp3 thực tế', {
+        icon: 'ℹ️',
+      })
+      return
+    }
     onSeek?.(safeCurrentTime + seconds)
   }
 
@@ -84,7 +99,7 @@ export default function ListeningDetailDrawer({
               <div>
                 <div className="flex items-center gap-2">
                   <h5 className="text-sm font-bold text-slate-900">
-                    {isPlaying ? 'Đang phát âm thanh...' : 'Audio chuẩn Studio'}
+                    {isPlaying ? 'Đang phát âm thanh...' : hasAudio ? 'Audio chuẩn Studio' : 'Giọng đọc bài nghe'}
                   </h5>
                   {isPlaying && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 animate-pulse">
@@ -94,26 +109,39 @@ export default function ListeningDetailDrawer({
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Thời lượng: <strong>{lesson.duration}</strong> · Định dạng MP3 320kbps
+                  Thời lượng: <strong>{lesson.duration}</strong> ·{' '}
+                  {hasAudio ? 'Định dạng MP3' : 'Giọng đọc hỗ trợ'}
                 </p>
               </div>
             </div>
 
-            {/* Quick Skip Buttons */}
+            {/* Quick Skip Buttons - Chỉ bấm được khi có file .mp3 thực tế */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
+                disabled={!hasAudio}
                 onClick={() => handleSkip(-10)}
-                className="rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 shadow-2xs border border-slate-200 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer"
-                title="Tua lùi 10 giây"
+                className={cn(
+                  'rounded-lg px-2 py-1 text-xs font-semibold shadow-2xs border transition-all',
+                  hasAudio
+                    ? 'bg-white/80 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900 cursor-pointer'
+                    : 'bg-slate-100 text-slate-400 border-slate-200/60 opacity-45 cursor-not-allowed',
+                )}
+                title={hasAudio ? 'Tua lùi 10 giây' : 'Chỉ khả dụng khi bài nghe có file âm thanh .mp3 thực tế'}
               >
                 -10s
               </button>
               <button
                 type="button"
+                disabled={!hasAudio}
                 onClick={() => handleSkip(10)}
-                className="rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 shadow-2xs border border-slate-200 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer"
-                title="Tua tới 10 giây"
+                className={cn(
+                  'rounded-lg px-2 py-1 text-xs font-semibold shadow-2xs border transition-all',
+                  hasAudio
+                    ? 'bg-white/80 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900 cursor-pointer'
+                    : 'bg-slate-100 text-slate-400 border-slate-200/60 opacity-45 cursor-not-allowed',
+                )}
+                title={hasAudio ? 'Tua tới 10 giây' : 'Chỉ khả dụng khi bài nghe có file âm thanh .mp3 thực tế'}
               >
                 +10s
               </button>
@@ -125,8 +153,11 @@ export default function ListeningDetailDrawer({
             {/* Interactive Progress Bar */}
             <div
               onClick={handleProgressBarClick}
-              className="group relative h-2.5 w-full cursor-pointer rounded-full bg-slate-200/90 transition-all hover:h-3"
-              title="Nhấp để tua nhanh / chọn vị trí nghe"
+              className={cn(
+                'group relative h-2.5 w-full rounded-full bg-slate-200/90 transition-all',
+                hasAudio ? 'cursor-pointer hover:h-3' : 'cursor-default',
+              )}
+              title={hasAudio ? 'Nhấp để tua nhanh / chọn vị trí nghe' : 'Thanh tiến độ phát âm thanh'}
             >
               {/* Filled Progress Bar */}
               <div
@@ -193,7 +224,7 @@ export default function ListeningDetailDrawer({
               <h4 className="text-sm font-semibold text-navy-700">Bản chép lời hội thoại (Transcript)</h4>
               <span className="text-[11px] text-slate-400 font-medium">Kịch bản thoại</span>
             </div>
-            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs max-h-56 overflow-y-auto">
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs max-h-56 overflow-y-auto pr-2 custom-scrollbar">
               {lesson.transcript.split('\n').filter(Boolean).map((line, idx) => {
                 const match = line.match(/^([A-Za-z0-9\s]+):\s*(.+)$/)
                 if (match) {

@@ -24,7 +24,7 @@ function Drawer({ open, onClose, title, children, className }) {
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
         className={cn(
-          'flex h-full w-full max-w-[420px] flex-col overflow-y-auto bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]',
+          'flex h-full w-full max-w-[420px] flex-col overflow-y-auto bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] custom-scrollbar',
           className,
         )}
       >
@@ -42,7 +42,7 @@ function Drawer({ open, onClose, title, children, className }) {
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">{children}</div>
       </div>
     </div>
   )
