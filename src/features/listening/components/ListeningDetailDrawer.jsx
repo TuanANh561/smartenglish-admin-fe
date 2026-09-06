@@ -1,29 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { formatDate } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Drawer from '@/components/ui/Drawer'
 import { Lock, Pencil, Play, Send, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-function parseDuration(durationStr) {
-  if (!durationStr) return 105
-  const parts = String(durationStr).split(':').map(Number)
-  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-    return parts[0] * 60 + parts[1]
-  }
-  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2]
-  }
-  return 105
-}
-
-function formatTime(seconds) {
-  const safeSec = Math.max(0, Math.floor(seconds))
-  const m = Math.floor(safeSec / 60)
-  const s = safeSec % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
+import { formatTime, parseDuration } from '@/lib/ipaHelper'
 
 export default function ListeningDetailDrawer({
   lesson,
@@ -32,48 +14,28 @@ export default function ListeningDetailDrawer({
   isOwner,
   canManage,
   isPlaying,
+  currentTime = 0,
+  onSeek,
   onPlayToggle,
   onAssignToClass,
   onEditClick,
 }) {
   const totalDuration = useMemo(() => parseDuration(lesson?.duration), [lesson?.duration])
-  const [currentTime, setCurrentTime] = useState(0)
 
-  // Reset timer when lesson changes
-  useEffect(() => {
-    setCurrentTime(0)
-  }, [lesson?.id])
-
-  // Timer running progress when isPlaying is true
-  useEffect(() => {
-    if (!isPlaying) return
-
-    const interval = setInterval(() => {
-      setCurrentTime((prev) => {
-        const next = prev + 1
-        if (next >= totalDuration) {
-          onPlayToggle?.({ stopPropagation: () => {} }, lesson)
-          return 0
-        }
-        return next
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isPlaying, totalDuration, lesson, onPlayToggle])
-
-  const remainingTime = Math.max(0, totalDuration - currentTime)
-  const progressPercent = totalDuration > 0 ? Math.min(100, (currentTime / totalDuration) * 100) : 0
+  const safeCurrentTime = isPlaying ? Math.min(totalDuration, Math.max(0, currentTime)) : 0
+  const remainingTime = Math.max(0, totalDuration - safeCurrentTime)
+  const progressPercent = totalDuration > 0 ? Math.min(100, (safeCurrentTime / totalDuration) * 100) : 0
 
   const handleProgressBarClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
     const ratio = Math.max(0, Math.min(1, clickX / rect.width))
-    setCurrentTime(Math.floor(ratio * totalDuration))
+    const target = Math.floor(ratio * totalDuration)
+    onSeek?.(target)
   }
 
   const handleSkip = (seconds) => {
-    setCurrentTime((prev) => Math.max(0, Math.min(totalDuration, prev + seconds)))
+    onSeek?.(safeCurrentTime + seconds)
   }
 
   if (!lesson) return null
@@ -216,12 +178,47 @@ export default function ListeningDetailDrawer({
           )}
         </div>
 
-        <div>
-          <h4 className="mb-2 text-sm font-semibold text-navy-700">Mô tả bài nghe</h4>
-          <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-ink">
-            {lesson.description}
+        {/* Mô tả ngắn */}
+        <div className="space-y-1.5">
+          <h4 className="text-sm font-semibold text-navy-700">Mô tả bài nghe</h4>
+          <p className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 text-xs leading-relaxed text-slate-700">
+            {lesson.description || 'Chưa có mô tả ngắn'}
           </p>
         </div>
+
+        {/* Bản chép lời hội thoại (Transcript) */}
+        {lesson.transcript && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-navy-700">Bản chép lời hội thoại (Transcript)</h4>
+              <span className="text-[11px] text-slate-400 font-medium">Kịch bản thoại</span>
+            </div>
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs max-h-56 overflow-y-auto">
+              {lesson.transcript.split('\n').filter(Boolean).map((line, idx) => {
+                const match = line.match(/^([A-Za-z0-9\s]+):\s*(.+)$/)
+                if (match) {
+                  const isFirstSpeaker = idx % 2 === 0
+                  return (
+                    <div key={idx} className="flex items-start gap-2 text-xs">
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-md px-2 py-0.5 font-bold text-[11px]',
+                          isFirstSpeaker
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-rose-100 text-rose-800'
+                        )}
+                      >
+                        {match[1]}:
+                      </span>
+                      <span className="text-slate-700 leading-relaxed pt-0.5">{match[2]}</span>
+                    </div>
+                  )
+                }
+                return <p key={idx} className="text-xs text-slate-600 leading-relaxed">{line}</p>
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Bottom Actions trong Drawer */}
         <div className="flex gap-2 border-t border-line pt-4">

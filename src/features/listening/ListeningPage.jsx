@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Crown } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -7,7 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import { listeningLessons } from '@/mocks/data/listening'
 import { buildPublicContent } from '@/features/aiContent/aiContentService'
 import { useAuthStore } from '@/store/authStore'
-import { speakWord, stopAudio } from '@/lib/ipaHelper'
+import { parseDuration, speakDialogue, speakWord, stopAudio } from '@/lib/ipaHelper'
 import ListeningDetailDrawer from './components/ListeningDetailDrawer'
 import ListeningToolbar from './components/ListeningToolbar'
 import ListeningTableRow from './components/ListeningTableRow'
@@ -41,9 +41,34 @@ function ListeningPage() {
   const [accent, setAccent] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [playingId, setPlayingId] = useState(null)
   const [activeLesson, setActiveLesson] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+
+  // Playback state tập trung để không bị lệch tiến trình giữa table và drawer
+  const [playback, setPlayback] = useState({
+    playingId: null,
+    currentTime: 0,
+    duration: 35,
+  })
+
+  // Timer đồng bộ thời gian phát thực tế
+  useEffect(() => {
+    if (!playback.playingId) return
+
+    const timer = setInterval(() => {
+      setPlayback((prev) => {
+        if (!prev.playingId) return prev
+        const nextTime = prev.currentTime + 1
+        if (nextTime >= prev.duration) {
+          stopAudio()
+          return { playingId: null, currentTime: 0, duration: 0 }
+        }
+        return { ...prev, currentTime: nextTime }
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [playback.playingId])
 
   const publicLessons = useMemo(() => buildPublicContent('listening', lessons), [lessons])
 
@@ -110,16 +135,41 @@ function ListeningPage() {
   const pageData = filtered.slice(start, start + PAGE_SIZE)
 
   const handlePlayToggle = (e, item) => {
-    e.stopPropagation()
-    if (playingId === item.id) {
-      setPlayingId(null)
+    e?.stopPropagation?.()
+    if (!item) return
+
+    if (playback.playingId === item.id) {
+      setPlayback({ playingId: null, currentTime: 0, duration: 0 })
       stopAudio()
       toast('Dừng phát âm thanh', { icon: '⏸️' })
     } else {
-      setPlayingId(item.id)
-      speakWord(item.title + '. ' + (item.description || ''), item.audioUrl)
+      const durSec = parseDuration(item.duration)
+      setPlayback({ playingId: item.id, currentTime: 0, duration: durSec })
+
+      if (item.audioUrl) {
+        speakWord(item.title + '. ' + (item.description || ''), item.audioUrl)
+      } else {
+        const introText = item.description ? `${item.title}. ${item.description}` : item.title
+        speakDialogue(
+          item.transcript || item.description || '',
+          {
+            intro: introText,
+          },
+          () => {
+            setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+          }
+        )
+      }
       toast.success(`Đang phát audio: "${item.title}"`)
     }
+  }
+
+  const handleSeek = (newTime) => {
+    setPlayback((prev) => {
+      if (!prev.playingId) return prev
+      const safeTime = Math.max(0, Math.min(prev.duration, newTime))
+      return { ...prev, currentTime: safeTime }
+    })
   }
 
   const handleOpenCreate = () => navigate('/hoc-lieu/bai-nghe/tao-moi')
@@ -226,7 +276,7 @@ function ListeningPage() {
                       item.authorName?.includes('Hệ thống')
                     }
                     cefr={extractCefr(item.level)}
-                    isPlaying={playingId === item.id}
+                    isPlaying={playback.playingId === item.id}
                     canManage={canManage(item)}
                     isTeacher={isTeacher}
                     onPlayToggle={handlePlayToggle}
@@ -259,7 +309,9 @@ function ListeningPage() {
         isTeacher={isTeacher}
         isOwner={checkOwnership(activeLesson)}
         canManage={canManage(activeLesson)}
-        isPlaying={playingId === activeLesson?.id}
+        isPlaying={playback.playingId === activeLesson?.id}
+        currentTime={playback.playingId === activeLesson?.id ? playback.currentTime : 0}
+        onSeek={handleSeek}
         onPlayToggle={handlePlayToggle}
         onAssignToClass={handleAssignToClass}
         onEditClick={handleEditClick}
