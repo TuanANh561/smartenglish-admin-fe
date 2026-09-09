@@ -13,7 +13,7 @@ function ProtectedRoute() {
 
   useEffect(() => {
     if (user && !isRouteAllowed(location.pathname, user.role)) {
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     }
   }, [location.pathname, navigate, user])
 

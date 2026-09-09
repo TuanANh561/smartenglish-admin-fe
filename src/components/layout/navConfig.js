@@ -21,16 +21,16 @@ import {
 export const ROLE_ACCESS = {
   admin: ['*'],
   teacher: [
-    '/',
-    '/lop-hoc',
-    '/cong-dong',
-    '/goi-dich-vu',
-    '/hoc-lieu/khoa-hoc',
-    '/hoc-lieu/bai-kiem-tra',
-    '/noi-dung-ai',
-    '/thong-bao',
-    '/nhat-ky',
-    '/cai-dat',
+    '/app',
+    '/app/lop-hoc',
+    '/app/cong-dong',
+    '/app/goi-dich-vu',
+    '/app/hoc-lieu/khoa-hoc',
+    '/app/hoc-lieu/bai-kiem-tra',
+    '/app/noi-dung-ai',
+    '/app/thong-bao',
+    '/app/nhat-ky',
+    '/app/cai-dat',
   ],
 }
 
@@ -47,11 +47,11 @@ export const NAV_GROUPS = [
   {
     label: 'Menu',
     items: [
-      { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
-      { to: '/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 6, roles: ['admin', 'teacher'] },
-      { to: '/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
-      { to: '/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
-      { to: '/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
+      { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
+      { to: '/app/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 6, roles: ['admin', 'teacher'] },
+      { to: '/app/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
+      { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
+      { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
     ],
   },
   {
@@ -62,40 +62,40 @@ export const NAV_GROUPS = [
         icon: BookOpen,
         roles: ['admin'],
         children: [
-          { to: '/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin'] },
-          { to: '/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin'] },
-          { to: '/hoc-lieu/phat-am', label: 'Phát âm', roles: ['admin'] },
-          { to: '/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin'] },
-          { to: '/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin'] },
+          { to: '/app/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin'] },
+          { to: '/app/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin'] },
+          { to: '/app/hoc-lieu/phat-am', label: 'Phát âm', roles: ['admin'] },
+          { to: '/app/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin'] },
+          { to: '/app/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin'] },
         ],
       },
-      { to: '/hoc-lieu/bai-kiem-tra', label: 'Bài Thi', icon: ClipboardList, roles: ['admin', 'teacher'] },
-      { to: '/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
+      { to: '/app/hoc-lieu/bai-kiem-tra', label: 'Bài Thi', icon: ClipboardList, roles: ['admin', 'teacher'] },
+      { to: '/app/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
     ],
   },
   {
     label: 'Nội dung AI',
     items: [
-      { to: '/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles, roles: ['admin', 'teacher'] },
-      { to: '/voice-ai', label: 'Cấu hình AI', icon: Wand2, roles: ['admin'] },
+      { to: '/app/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles, roles: ['admin', 'teacher'] },
+      { to: '/app/voice-ai', label: 'Cấu hình AI', icon: Wand2, roles: ['admin'] },
     ],
   },
   {
     label: 'Kinh doanh',
     items: [
-      { to: '/doanh-thu', label: 'Doanh thu', icon: Wallet, roles: ['admin'] },
-      { to: '/doi-soat', label: 'Giao dịch & Đối soát', icon: Receipt, roles: ['admin'] },
-      { to: '/goi-premium', label: 'Gói Premium', icon: Crown, roles: ['admin'] },
+      { to: '/app/doanh-thu', label: 'Doanh thu', icon: Wallet, roles: ['admin'] },
+      { to: '/app/doi-soat', label: 'Giao dịch & Đối soát', icon: Receipt, roles: ['admin'] },
+      { to: '/app/goi-premium', label: 'Gói Premium', icon: Crown, roles: ['admin'] },
     ],
   },
   {
     label: 'Cài đặt hệ thống',
     items: [
-      { to: '/phan-quyen', label: 'Phân quyền', icon: ShieldCheck, roles: ['admin'] },
-      { to: '/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin', 'teacher'] },
-      { to: '/bao-cao', label: 'Báo cáo vi phạm', icon: Flag, roles: ['admin'] },
-      { to: '/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin', 'teacher'] },
-      { to: '/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin', 'teacher'] },
+      { to: '/app/phan-quyen', label: 'Phân quyền', icon: ShieldCheck, roles: ['admin'] },
+      { to: '/app/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin', 'teacher'] },
+      { to: '/app/bao-cao', label: 'Báo cáo vi phạm', icon: Flag, roles: ['admin'] },
+      { to: '/app/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin', 'teacher'] },
+      { to: '/app/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin', 'teacher'] },
     ],
   },
 ]
@@ -118,60 +118,61 @@ export function getVisibleNavGroups(role = 'admin') {
 }
 
 export const ROUTE_META = {
-  '/': {
+  '/app': {
     title: 'Dashboard Tổng quan',
     description: 'Chào mừng trở lại, hệ thống đang hoạt động ổn định.',
   },
-  '/cong-dong': {
+  '/app/cong-dong': {
     title: 'Cộng đồng Giáo viên & Học liệu',
     description: 'Không gian chia sẻ kiến thức, tài liệu bài giảng, mẹo luyện thi và thảo luận học thuật.',
   },
-  '/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
-  '/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
-  '/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
-  '/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
-  '/hoc-lieu/ngu-phap': {
+  '/app/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
+  '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
+  '/app/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
+  '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
+  '/app/hoc-lieu/ngu-phap': {
     title: 'Quản lý Bài học Ngữ pháp',
     description: 'Biên soạn và quản lý các bài học cấu trúc ngữ pháp hệ thống.',
   },
-  '/hoc-lieu/ngu-phap/tao-moi': {
+  '/app/hoc-lieu/ngu-phap/tao-moi': {
     title: 'Biên soạn Bài học Ngữ pháp',
     description: 'Thiết lập cấu trúc, quy tắc ngữ pháp và hệ thống bài tập trắc nghiệm.',
   },
-  '/hoc-lieu/phat-am': {
+  '/app/hoc-lieu/phat-am': {
     title: 'Quản lý Bài học Phát âm',
     description: 'Quản lý học liệu luyện phát âm, trọng âm và ngữ điệu AI.',
   },
-  '/hoc-lieu/phat-am/tao-moi': {
+  '/app/hoc-lieu/phat-am/tao-moi': {
     title: 'Biên soạn Bài học Phát âm',
     description: 'Thiết lập ký hiệu IPA, từ mẫu âm thanh và bài tập nhận diện âm.',
   },
-  '/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
-  '/hoc-lieu/khoa-hoc/tao-moi': { title: 'Tạo Khóa học mới', description: 'Thiết lập thông tin cơ bản và cấu trúc chương trình học.' },
-  '/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },
-  '/hoc-lieu/bai-nghe': { title: 'Bài nghe', description: 'Quản lý bài nghe, bản ghi âm và bản chép lời' },
-  '/hoc-lieu/bai-kiem-tra': {
+  '/app/hoc-lieu/khoa-hoc': { title: 'Khoá học & Bài học', description: 'Quản lý khoá học và bài học' },
+  '/app/hoc-lieu/khoa-hoc/tao-moi': { title: 'Tạo Khóa học mới', description: 'Thiết lập thông tin cơ bản và cấu trúc chương trình học.' },
+  '/app/hoc-lieu/bai-doc': { title: 'Bài đọc', description: 'Quản lý bài đọc và câu hỏi đọc hiểu' },
+  '/app/hoc-lieu/bai-nghe': { title: 'Bài nghe', description: 'Quản lý bài nghe, bản ghi âm và bản chép lời' },
+  '/app/hoc-lieu/bai-kiem-tra': {
     title: 'Quản lý Bài Kiểm Tra (Quiz Bank)',
     description: 'Quản lý ngân hàng câu hỏi và duyệt nội dung do AI sinh ra',
   },
-  '/noi-dung-ai': {
+  '/app/noi-dung-ai': {
     title: 'Tạo — Duyệt nội dung AI',
     description: 'Quản lý nội dung do AI sinh ra',
   },
-  '/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
-  '/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
-  '/doi-soat': {
+  '/app/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
+  '/app/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
+  '/app/doi-soat': {
     title: 'Giao dịch & Đối soát',
     description: 'Quản lý dòng tiền, theo dõi thanh toán và xử lý các yêu cầu hoàn tiền từ học viên',
   },
-  '/goi-premium': {
+  '/app/goi-premium': {
     title: 'Premium Package & Pricing Configurator',
     description: 'Quản lý các gói dịch vụ và mã giảm giá cho hệ thống SmartEnglish AI',
   },
-  '/phan-quyen': { title: 'Phân quyền', description: 'Quản lý vai trò và phân quyền' },
-  '/thong-bao': { title: 'Thông báo', description: 'Quản lý thông báo hệ thống' },
-  '/bao-cao': { title: 'Báo cáo vi phạm', description: 'Theo dõi báo cáo vi phạm từ người dùng' },
-  '/nhat-ky': { title: 'Nhật ký hoạt động', description: 'Nhật ký hoạt động của quản trị viên' },
-  '/cai-dat': { title: 'Cài đặt', description: 'Cấu hình chung cho hệ thống' },
+  '/app/phan-quyen': { title: 'Phân quyền', description: 'Quản lý vai trò và phân quyền' },
+  '/app/thong-bao': { title: 'Thông báo', description: 'Quản lý thông báo hệ thống' },
+  '/app/bao-cao': { title: 'Báo cáo vi phạm', description: 'Theo dõi báo cáo vi phạm từ người dùng' },
+  '/app/nhat-ky': { title: 'Nhật ký hoạt động', description: 'Nhật ký hoạt động của quản trị viên' },
+  '/app/cai-dat': { title: 'Cài đặt', description: 'Cấu hình chung cho hệ thống' },
   '/ui': { title: 'Bộ nguyên thuỷ giao diện', description: 'Kitchen sink — chỉ dùng để phát triển' },
 }
+

@@ -35,7 +35,7 @@ function LoginPage() {
   const onSubmit = (values) => {
     login.mutate(values, {
       onSuccess: () => {
-        const redirectTo = location.state?.from?.pathname ?? '/'
+        const redirectTo = location.state?.from?.pathname ?? '/app'
         navigate(redirectTo, { replace: true })
       },
       onError: (error) => {
