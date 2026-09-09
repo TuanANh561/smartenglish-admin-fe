@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
+import LandingPage from '@/pages/landing/LandingPage'
 import AppShellLayout from '@/components/layout/AppShellLayout'
 import PlaceholderPage from '@/components/layout/PlaceholderPage'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
@@ -36,10 +37,11 @@ import NotFound from '@/pages/NotFound'
 import UiKitchenSink from '@/pages/UiKitchenSink'
 
 export const router = createBrowserRouter([
+  { path: '/', element: <LandingPage /> },
   { path: '/dang-nhap', element: <LoginPage /> },
   { path: '/dang-ky-giao-vien', element: <RegisterTeacherPage /> },
   {
-    path: '/',
+    path: '/app',
     element: <ProtectedRoute />,
     children: [
       {
