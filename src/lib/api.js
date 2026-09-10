@@ -37,7 +37,14 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const res = response.data
+    // Tự động giải nén vỏ ApiResponse { status, message, data } nếu backend trả về
+    if (res && typeof res === 'object' && 'data' in res && ('status' in res || 'code' in res)) {
+      return res.data !== undefined && res.data !== null ? res.data : res
+    }
+    return res
+  },
   (error) => Promise.reject(toApiError(error)),
 )
 
@@ -115,7 +122,10 @@ async function request(method, endpoint, options = {}, isRetry = false) {
   const { path, params, data, ...config } = options
 
   try {
-    if (USE_MOCK) {
+    // Chỉ gọi backend thật cho các endpoint đã triển khai (hiện tại là /admin/words)
+    // Các endpoint khác (auth, stats, revenue...) tiếp tục dùng mock để giao diện hoạt động bình thường
+    const isReadyBackend = endpoint.startsWith('/admin/words')
+    if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
       return await resolveMock(method, endpoint, {
         path,

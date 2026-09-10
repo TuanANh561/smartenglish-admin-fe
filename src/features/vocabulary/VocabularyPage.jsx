@@ -1,14 +1,15 @@
-import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
-import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
-import { vocabularies } from '@/mocks/data/vocabulary'
+import VocabImportModal from '@/features/vocabulary/import/VocabImportModal'
 import { vocabularyColumns } from './columns'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
+import { api } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/endpoints'
 
 const PAGE_SIZE = 10
 
@@ -143,31 +144,50 @@ function ExerciseEditor({ exercises, onChange }) {
 
 function VocabularyPage() {
   const navigate = useNavigate()
-  const [vocabList, setVocabList] = useState(vocabularies)
+  const [vocabList, setVocabList] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
 
-  // Lọc dữ liệu theo tìm kiếm
-  const filtered = useMemo(() => {
-    if (!search.trim()) return vocabList
-    const keyword = search.toLowerCase()
-    return vocabList.filter(
-      (v) =>
-        v.word.toLowerCase().includes(keyword) ||
-        v.vietnameseMeaning.toLowerCase().includes(keyword) ||
-        (v.pronunciation || '').toLowerCase().includes(keyword) ||
-        (v.topic || '').toLowerCase().includes(keyword),
-    )
-  }, [search, vocabList])
+  const fetchWords = useCallback(async (targetPage, targetSearch) => {
+    const p = targetPage !== undefined ? targetPage : page
+    const s = targetSearch !== undefined ? targetSearch : search
 
-  const total = filtered.length
-  const totalPages = Math.ceil(total / PAGE_SIZE) || 1
+    setIsLoading(true)
+    try {
+      const res = await api.get(ENDPOINTS.words.list, {
+        params: { search: (s || '').trim(), page: p, size: PAGE_SIZE },
+      })
+      if (res && res.items) {
+        setVocabList(res.items)
+        setTotal(res.total || 0)
+        setTotalPages(res.totalPages || 1)
+      } else if (Array.isArray(res)) {
+        setVocabList(res)
+        setTotal(res.length)
+        setTotalPages(Math.ceil(res.length / PAGE_SIZE) || 1)
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải từ vựng:', err)
+      toast.error('Không thể kết nối đến máy chủ để lấy từ vựng')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [search, page])
+
+  useEffect(() => {
+    fetchWords()
+  }, [fetchWords])
+
   const start = (page - 1) * PAGE_SIZE
-  const pageData = filtered.slice(start, start + PAGE_SIZE)
+  const pageData = vocabList
 
   const allSelected = pageData.length > 0 && pageData.every((v) => selectedIds.has(v.id))
   const someSelected = pageData.some((v) => selectedIds.has(v.id))
@@ -186,19 +206,31 @@ function VocabularyPage() {
     setSelectedIds(newSelected)
   }
 
-  const handleOpenCreate = () => navigate('/hoc-lieu/tu-vung/tao-moi')
+  const handleOpenCreate = () => navigate('/app/hoc-lieu/tu-vung/tao-moi')
 
   const handleOpenEdit = (e, item) => {
     e?.stopPropagation?.()
-    navigate(`/hoc-lieu/tu-vung/${item.id}/chinh-sua`)
+    navigate(`/app/hoc-lieu/tu-vung/${item.id}/chinh-sua`)
   }
 
-  const handleDelete = () => {
-    if (!deleteTarget) return
-    setVocabList(prev => prev.filter(v => v.id !== deleteTarget.id))
-    setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n })
-    toast.success(`Đã xóa từ "${deleteTarget.word}"`)
-    setDeleteTarget(null)
+  const handleDelete = async () => {
+    if (!deleteTarget || isDeleting) return
+    setIsDeleting(true)
+    const target = deleteTarget
+
+    try {
+      await api.del(ENDPOINTS.words.remove, { path: { id: target.id } })
+      // Xóa thành công: Cập nhật trực tiếp danh sách và đóng popup
+      setVocabList((prev) => prev.filter((v) => v.id !== target.id))
+      setTotal((prev) => Math.max(0, prev - 1))
+      setDeleteTarget(null)
+      toast.success(`Đã xóa từ "${target.word}" thành công!`)
+    } catch (err) {
+      console.error('Lỗi khi xóa từ vựng:', err)
+      toast.error(`Lỗi khi xóa từ "${target.word}". Vui lòng thử lại!`)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleExport = () => {
@@ -272,9 +304,6 @@ function VocabularyPage() {
                   </th>
                 ))}
                 <th className="px-6 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Bài tập
-                </th>
-                <th className="px-6 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
                   Audio
                 </th>
                 <th className="px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -283,7 +312,16 @@ function VocabularyPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pageData.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={vocabularyColumns.length + 4} className="px-6 py-8 text-center text-sm text-slate-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="animate-spin text-brand-500" size={18} />
+                      <span>Đang tải dữ liệu từ máy chủ...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : pageData.length === 0 ? (
                 <tr>
                   <td colSpan={vocabularyColumns.length + 4} className="px-6 py-8 text-center text-sm text-slate-400">
                     Chưa có từ vựng nào khớp với tìm kiếm
@@ -305,16 +343,6 @@ function VocabularyPage() {
                         {col.cell({ getValue: () => vocab[col.accessorKey], row: { original: vocab } })}
                       </td>
                     ))}
-                    {/* Số câu bài tập */}
-                    <td className="px-6 py-4 text-center">
-                      {vocab.exercises?.length > 0 ? (
-                        <span className="inline-flex items-center justify-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-600 border border-brand-100">
-                          {vocab.exercises.length} câu
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
                     {/* Audio */}
                     <td className="px-6 py-4 text-center">
                       <button
@@ -372,33 +400,59 @@ function VocabularyPage() {
         open={Boolean(deleteTarget)}
         title="Xóa từ vựng"
         description={`Bạn có chắc muốn xóa từ "${deleteTarget?.word}"? Thao tác này không thể hoàn tác.`}
-        confirmLabel="Xóa từ"
+        confirmLabel={isDeleting ? 'Đang xóa...' : 'Xóa từ'}
         cancelLabel="Hủy"
         variant="danger"
+        loading={isDeleting}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
+        onCancel={() => !isDeleting && setDeleteTarget(null)}
       />
 
       {/* Modal Import PDF AI */}
-      <DataImportWizardModal
+      <VocabImportModal
         open={isPdfImportOpen}
-        onClose={() => setIsPdfImportOpen(false)}
+        onClose={() => {
+          setIsPdfImportOpen(false)
+          fetchWords(1, '')
+        }}
         defaultType="vocabulary"
-        onImportSuccess={(newItems) => {
-          const formatted = newItems.map((item, idx) => ({
-            id: `imported-${Date.now()}-${idx}`,
+        onImportSuccess={async (newItems) => {
+          const formatted = newItems.map((item) => ({
             word: item.word,
-            pronunciation: item.phonetic || '/.../',
-            vietnameseMeaning: item.vietnameseMeaning,
-            englishMeaning: item.exampleSentence || 'Imported from PDF',
-            partOfSpeech: item.partOfSpeech || 'noun',
+            pronunciation: item.pronunciation || item.phonetic || '/.../',
+            vietnameseMeaning: item.vietnameseMeaning || '',
+            englishMeaning: item.englishMeaning || item.exampleSentence || 'Imported from file',
+            partOfSpeech: item.partOfSpeech || 'Noun',
             cefrLevel: item.cefrLevel || 'B2',
-            topic: item.topic || '',
-            audioUrl: '',
-            exercises: [],
+            topic: item.topic || 'General',
+            exampleEn: item.exampleEn || item.exampleSentence || '',
+            exampleVi: item.exampleVi || '',
+            audioUrl: item.audioUrl || '',
+            exercises: item.exercises || [],
           }))
-          setVocabList((prev) => [...formatted, ...prev])
-          toast.success(`Đã thêm thành công ${formatted.length} từ vựng từ PDF vào danh sách!`)
+          try {
+            const saved = await api.post(ENDPOINTS.words.import, { data: formatted })
+            toast.success(`Đã import thành công ${formatted.length} từ vựng vào cơ sở dữ liệu!`)
+
+            // 1. Cập nhật lạc quan (Optimistic Update) giao diện ngay tức thì
+            const listToInsert = Array.isArray(saved) && saved.length > 0 ? saved : formatted
+            setVocabList((prev) => {
+              const existingIds = new Set(listToInsert.map((w) => w.id))
+              return [...listToInsert, ...prev.filter((w) => !existingIds.has(w.id))]
+            })
+            setTotal((prev) => prev + listToInsert.length)
+
+            // 2. Reset tìm kiếm và trang về 1 để người dùng thấy ngay từ mới ở đầu bảng
+            setSearch('')
+            setPage(1)
+
+            // 3. Đồng bộ lại dữ liệu từ máy chủ
+            await fetchWords(1, '')
+          } catch (err) {
+            console.error('Lỗi import:', err)
+            toast.error('Không thể import từ vựng vào hệ thống')
+            throw err
+          }
         }}
       />
     </div>
