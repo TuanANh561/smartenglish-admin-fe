@@ -60,6 +60,7 @@ export const ENDPOINTS = {
     meanings: '/admin/words/:id/meanings',
     examples: '/admin/words/:id/examples',
     import: '/admin/words/import',
+    topics: '/admin/words/topics',
   },
   phrases: {
     list: '/admin/phrases',

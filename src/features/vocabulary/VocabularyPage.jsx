@@ -1,4 +1,4 @@
-import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2 } from 'lucide-react'
+import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2, ArrowUpDown, Layers, BookOpen, RotateCcw } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -12,6 +12,13 @@ import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 
 const PAGE_SIZE = 10
+
+const SORT_OPTIONS = [
+  { value: 'created_desc', label: 'Mới nhất trước' },
+  { value: 'created_asc', label: 'Cũ nhất trước' },
+  { value: 'word_asc', label: 'Từ A → Z' },
+  { value: 'word_desc', label: 'Từ Z → A' },
+]
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const PARTS_OF_SPEECH = ['Noun', 'Verb', 'Adjective', 'Adverb', 'Pronoun', 'Preposition', 'Conjunction', 'Interjection']
@@ -150,21 +157,49 @@ function VocabularyPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [sortBy, setSortBy] = useState('created_desc')
+  const [partOfSpeech, setPartOfSpeech] = useState('')
+  const [topicId, setTopicId] = useState('')
+  const [topics, setTopics] = useState([])
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
 
-  const fetchWords = useCallback(async (targetPage, targetSearch) => {
+  // Tải danh sách chủ đề từ CSDL khi khởi tạo
+  useEffect(() => {
+    async function loadTopics() {
+      try {
+        const res = await api.get(ENDPOINTS.words.topics)
+        const list = Array.isArray(res) ? res : (res?.data || [])
+        setTopics(list)
+      } catch (err) {
+        console.warn('Lỗi khi tải danh sách chủ đề:', err)
+      }
+    }
+    loadTopics()
+  }, [])
+
+  const fetchWords = useCallback(async (targetPage, targetSearch, targetPos, targetTopic, targetSort) => {
     const p = targetPage !== undefined ? targetPage : page
     const s = targetSearch !== undefined ? targetSearch : search
+    const pos = targetPos !== undefined ? targetPos : partOfSpeech
+    const tid = targetTopic !== undefined ? targetTopic : topicId
+    const sby = targetSort !== undefined ? targetSort : sortBy
 
     setIsLoading(true)
     try {
-      const res = await api.get(ENDPOINTS.words.list, {
-        params: { search: (s || '').trim(), page: p, size: PAGE_SIZE },
-      })
+      const params = {
+        page: p,
+        size: PAGE_SIZE,
+        sortBy: sby,
+      }
+      if (s && s.trim()) params.search = s.trim()
+      if (pos) params.partOfSpeech = pos
+      if (tid) params.topicId = tid
+
+      const res = await api.get(ENDPOINTS.words.list, { params })
       if (res && res.items) {
         setVocabList(res.items)
         setTotal(res.total || 0)
@@ -180,11 +215,22 @@ function VocabularyPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [search, page])
+  }, [search, page, partOfSpeech, topicId, sortBy])
 
   useEffect(() => {
     fetchWords()
   }, [fetchWords])
+
+  const hasActiveFilters = Boolean(search || partOfSpeech || topicId || sortBy !== 'created_desc')
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setPartOfSpeech('')
+    setTopicId('')
+    setSortBy('created_desc')
+    setPage(1)
+    fetchWords(1, '', '', '', 'created_desc')
+  }
 
   const start = (page - 1) * PAGE_SIZE
   const pageData = vocabList
@@ -251,26 +297,104 @@ function VocabularyPage() {
       {/* Table card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
-          <div className="flex-1 min-w-[260px] max-w-md">
-            <div className="relative flex items-center">
-              <Search size={18} className="pointer-events-none absolute left-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm, chủ đề..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
+        <div className="p-4 sm:p-5 border-b border-slate-100 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex-1 min-w-[260px] max-w-md">
+              <div className="relative flex items-center">
+                <Search size={18} className="pointer-events-none absolute left-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm, chủ đề..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+                Import
+              </Button>
+              <Button size="sm" icon={Plus} onClick={handleOpenCreate}>
+                Thêm từ mới
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
-              Import
-            </Button>
-            <Button size="sm" icon={Plus} onClick={handleOpenCreate}>
-              Thêm từ mới
-            </Button>
+
+          {/* Filter & Sort Controls */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
+            {/* Sắp xếp */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+              <ArrowUpDown size={14} className="text-slate-500" />
+              <span className="font-semibold text-slate-600">Sắp xếp:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Từ loại */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+              <Layers size={14} className="text-slate-500" />
+              <span className="font-semibold text-slate-600">Từ loại:</span>
+              <select
+                value={partOfSpeech}
+                onChange={(e) => { setPartOfSpeech(e.target.value); setPage(1) }}
+                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer max-w-[130px]"
+              >
+                <option value="">Tất cả từ loại</option>
+                {PARTS_OF_SPEECH.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {PART_OF_SPEECH_LABEL[pos] || pos} ({pos})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Chủ đề */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+              <BookOpen size={14} className="text-slate-500" />
+              <span className="font-semibold text-slate-600">Chủ đề:</span>
+              <select
+                value={topicId}
+                onChange={(e) => { setTopicId(e.target.value); setPage(1) }}
+                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer max-w-[160px]"
+              >
+                <option value="">Tất cả chủ đề</option>
+                {topics.map((top) => (
+                  <option key={top.id} value={top.id}>
+                    {top.iconEmoji ? `${top.iconEmoji} ` : ''}{top.nameVi || top.nameEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nút Đặt lại bộ lọc */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                title="Xóa tất cả điều kiện lọc và sắp xếp"
+              >
+                <RotateCcw size={13} />
+                <span>Đặt lại</span>
+              </button>
+            )}
+
+            {/* Số lượng kết quả */}
+            {(partOfSpeech || topicId || (search && search.trim()) || sortBy !== 'created_desc') && (
+              <span className="ml-auto text-slate-500 font-normal">
+                Khớp: <strong className="text-brand-600 font-bold">{total}</strong> từ
+              </span>
+            )}
           </div>
         </div>
 
