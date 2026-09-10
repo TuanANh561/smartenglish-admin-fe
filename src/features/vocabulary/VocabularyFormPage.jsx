@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   GripVertical,
+  Loader2,
   Plus,
   Save,
   Trash2,
@@ -18,8 +19,9 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
-import { vocabularies } from '@/mocks/data/vocabulary'
 import { useAuthStore } from '@/store/authStore'
+import { api } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/endpoints'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const PARTS_OF_SPEECH = [
@@ -144,29 +146,70 @@ function VocabularyFormPage() {
   const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
 
-  const existingItem = isEditing ? vocabularies.find((v) => v.id === id) || vocabularies[0] : null
-
   const [form, setForm] = useState({
-    word: existingItem?.word || '',
-    pronunciation: existingItem?.pronunciation || '',
-    partOfSpeech: existingItem?.partOfSpeech || 'Noun',
-    cefrLevel: existingItem?.cefrLevel || 'B1',
-    vietnameseMeaning: existingItem?.vietnameseMeaning || '',
-    englishMeaning: existingItem?.englishMeaning || '',
-    topic: existingItem?.topic || '',
-    exampleEn: existingItem?.exampleEn || '',
-    exampleVi: existingItem?.exampleVi || '',
-    synonyms: Array.isArray(existingItem?.synonyms) ? existingItem.synonyms.join(', ') : (existingItem?.synonyms || ''),
-    antonyms: Array.isArray(existingItem?.antonyms) ? existingItem.antonyms.join(', ') : (existingItem?.antonyms || ''),
+    word: '',
+    pronunciation: '',
+    partOfSpeech: 'Noun',
+    cefrLevel: 'B1',
+    vietnameseMeaning: '',
+    englishMeaning: '',
+    topic: '',
+    exampleEn: '',
+    exampleVi: '',
+    synonyms: '',
+    antonyms: '',
   })
 
-  const [questions, setQuestions] = useState(
-    existingItem?.exercises?.length > 0
-      ? existingItem.exercises
-      : []
-  )
+  const [questions, setQuestions] = useState([])
   const [openQuestionIdx, setOpenQuestionIdx] = useState(null)
+  const [dbTopics, setDbTopics] = useState([])
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(isEditing)
+
+  useEffect(() => {
+    // Tải danh sách chủ đề thực tế từ Backend CSDL
+    api.get('/admin/words/topics')
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setDbTopics(data)
+        }
+      })
+      .catch((err) => console.warn('Không thể tải topics từ backend:', err))
+  }, [])
+
+  useEffect(() => {
+    if (isEditing) {
+      setIsLoading(true)
+      api.get(ENDPOINTS.words.detail, { path: { id } })
+        .then((data) => {
+          if (data) {
+            setForm({
+              word: data.word || '',
+              pronunciation: data.pronunciation || '',
+              partOfSpeech: data.partOfSpeech || 'Noun',
+              cefrLevel: data.cefrLevel || 'B1',
+              vietnameseMeaning: data.vietnameseMeaning || '',
+              englishMeaning: data.englishMeaning || '',
+              topic: data.topic || '',
+              exampleEn: data.exampleEn || '',
+              exampleVi: data.exampleVi || '',
+              synonyms: data.synonyms || '',
+              antonyms: data.antonyms || '',
+            })
+            if (data.exercises && Array.isArray(data.exercises)) {
+              setQuestions(data.exercises)
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(err)
+          toast.error('Không thể tải thông tin từ vựng')
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }
+  }, [id, isEditing])
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
@@ -177,19 +220,33 @@ function VocabularyFormPage() {
     setOpenQuestionIdx(newIdx)
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
     if (!form.word.trim()) { toast.error('Vui lòng nhập từ vựng'); return }
     if (!form.vietnameseMeaning.trim()) { toast.error('Vui lòng nhập nghĩa tiếng Việt'); return }
 
     setIsSaving(true)
     const validQuestions = questions.filter((q) => q.question.trim())
+    const payload = {
+      ...form,
+      exercises: validQuestions,
+    }
 
-    setTimeout(() => {
-      toast.success(isEditing ? `Đã cập nhật từ "${form.word}"` : `Đã thêm từ mới "${form.word}"`)
+    try {
+      if (isEditing) {
+        await api.put(ENDPOINTS.words.update, { path: { id }, data: payload })
+        toast.success(`Đã cập nhật từ "${form.word}"`)
+      } else {
+        await api.post(ENDPOINTS.words.create, { data: payload })
+        toast.success(`Đã thêm từ mới "${form.word}"`)
+      }
+      navigate('/app/hoc-lieu/tu-vung')
+    } catch (err) {
+      console.error(err)
+      toast.error(err?.message || 'Lỗi khi lưu từ vựng')
+    } finally {
       setIsSaving(false)
-      navigate('/hoc-lieu/tu-vung')
-    }, 600)
+    }
   }
 
   return (
@@ -198,7 +255,7 @@ function VocabularyFormPage() {
       <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-xs">
         <div className="mx-auto max-w-6xl flex items-center gap-4 px-6 py-3.5">
           <Link
-            to="/hoc-lieu/tu-vung"
+            to="/app/hoc-lieu/tu-vung"
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft size={16} />
@@ -207,13 +264,13 @@ function VocabularyFormPage() {
           <div className="h-5 w-px bg-slate-200" />
           <div className="flex-1">
             <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa từ: "${existingItem?.word}"` : 'Thêm từ vựng mới'}
+              {isEditing ? `Chỉnh sửa từ: "${form.word || 'Đang tải...'}"` : 'Thêm từ vựng mới'}
             </h1>
             <p className="text-xs text-slate-500">Kho từ vựng / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
-              to="/hoc-lieu/tu-vung"
+              to="/app/hoc-lieu/tu-vung"
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Hủy bỏ
@@ -232,8 +289,14 @@ function VocabularyFormPage() {
       </div>
 
       {/* ── Body ── */}
-      <form id="vocab-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32 gap-3">
+          <Loader2 className="h-8 w-8 text-brand-600 animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Đang tải thông tin từ vựng...</p>
+        </div>
+      ) : (
+        <form id="vocab-form" onSubmit={handleSave}>
+          <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
 
           {/* ── TOP: Card 1 & Card 2 side-by-side ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -279,8 +342,24 @@ function VocabularyFormPage() {
                   <Textarea rows={2} autoResize value={form.englishMeaning} onChange={set('englishMeaning')} placeholder="VD: the occurrence of events by chance in a happy way" />
                 </div>
                 <div className="col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Chủ đề</label>
-                  <Input value={form.topic} onChange={set('topic')} placeholder="VD: Emotions, Travel, Business..." />
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Chủ đề (Topic)</label>
+                  <Input value={form.topic} onChange={set('topic')} placeholder="VD: Công nghệ & AI, Kinh doanh & Tài chính..." />
+                  <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                    <span className="text-[11px] text-slate-400">Gợi ý từ CSDL:</span>
+                    {(dbTopics.length > 0 
+                      ? dbTopics.map((t) => t.nameVi || t.nameEn) 
+                      : ['Công nghệ & AI', 'Kinh doanh & Tài chính', 'Giao tiếp hàng ngày', 'Du lịch & Khám phá', 'Học tập & Giáo dục', 'Môi trường & Tự nhiên', 'Sức khỏe & Y tế']
+                    ).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, topic: t }))}
+                        className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${form.topic === t ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -381,6 +460,7 @@ function VocabularyFormPage() {
 
         </div>
       </form>
+      )}
     </div>
   )
 }

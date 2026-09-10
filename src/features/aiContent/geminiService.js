@@ -15,10 +15,11 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 // ─── Danh sách các Model ưu tiên theo thứ tự (Auto Fallback) ──────────────────
 // Khi Model trước bị đụng rate limit (429) hoặc hết quota, code sẽ tự nhảy sang Model tiếp theo
 const GEMINI_MODELS_FALLBACK = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemini-2.5-flash',
   'gemini-3.5-flash',
   'gemini-3.1-flash',
 ]
@@ -163,11 +164,6 @@ export function parseGeminiJsonPayload(rawText) {
   // Bước 1: Xóa markdown code fence (```json ... ```)
   cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
 
-  // Bước 2: Tìm đoạn JSON đầu tiên trong text (từ { đến })
-  const firstBrace = cleaned.indexOf('{')
-  const lastBrace = cleaned.lastIndexOf('}')
-  const candidate = firstBrace >= 0 && lastBrace > firstBrace ? cleaned.slice(firstBrace, lastBrace + 1) : cleaned
-
   const tryParse = (value) => {
     try {
       return JSON.parse(value)
@@ -176,9 +172,36 @@ export function parseGeminiJsonPayload(rawText) {
     }
   }
 
-  // Bước 3: Parse trực tiếp
-  const direct = tryParse(candidate)
-  if (direct) return direct
+  // Thử parse trực tiếp toàn bộ chuỗi đã dọn
+  const directFull = tryParse(cleaned)
+  if (directFull) return directFull
+
+  // Bước 2: Tìm đoạn JSON đầu tiên trong text (xác định cấu trúc Array [...] hay Object {...})
+  const firstBrace = cleaned.indexOf('{')
+  const firstBracket = cleaned.indexOf('[')
+
+  let candidate = cleaned
+  let isArray = false
+
+  if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+    // Array [...] xuất hiện trước
+    const lastBracket = cleaned.lastIndexOf(']')
+    if (lastBracket > firstBracket) {
+      candidate = cleaned.slice(firstBracket, lastBracket + 1)
+      isArray = true
+    }
+  } else if (firstBrace !== -1) {
+    // Object {...} xuất hiện trước
+    const lastBrace = cleaned.lastIndexOf('}')
+    if (lastBrace > firstBrace) {
+      candidate = cleaned.slice(firstBrace, lastBrace + 1)
+      isArray = false
+    }
+  }
+
+  // Bước 3: Parse trực tiếp candidate
+  const directCandidate = tryParse(candidate)
+  if (directCandidate) return directCandidate
 
   // Bước 4: Xóa trailing comma rồi thử lại (lỗi phổ biến của Gemini)
   const normalized = candidate.replace(/,\s*([}\]])/g, '$1')
@@ -198,39 +221,40 @@ export function parseGeminiJsonPayload(rawText) {
   if (recovered) return recovered
 
   // Bước 5: Duyệt từng ký tự để tìm đoạn JSON cân bằng ngoặc
-  let start = cleaned.indexOf('{')
-  if (start === -1) {
-    throw new GeminiServiceError('Không thể phân tích phản hồi Gemini', 'PARSE_ERROR')
-  }
+  const startChar = isArray ? '[' : '{'
+  const endChar = isArray ? ']' : '}'
+  const start = cleaned.indexOf(startChar)
 
-  let depth = 0
-  let inString = false
-  let escaped = false
+  if (start !== -1) {
+    let depth = 0
+    let inString = false
+    let escaped = false
 
-  for (let i = start; i < cleaned.length; i += 1) {
-    const ch = cleaned[i]
+    for (let i = start; i < cleaned.length; i += 1) {
+      const ch = cleaned[i]
 
-    if (inString) {
-      if (escaped) {
-        escaped = false
-      } else if (ch === '\\') {
-        escaped = true
-      } else if (ch === '"') {
-        inString = false
+      if (inString) {
+        if (escaped) {
+          escaped = false
+        } else if (ch === '\\') {
+          escaped = true
+        } else if (ch === '"') {
+          inString = false
+        }
+        continue
       }
-      continue
-    }
 
-    if (ch === '"') {
-      inString = true
-    } else if (ch === '{') {
-      depth += 1
-    } else if (ch === '}') {
-      depth -= 1
-      if (depth === 0) {
-        const balanced = cleaned.slice(start, i + 1)
-        const parsedBalanced = tryParse(balanced)
-        if (parsedBalanced) return parsedBalanced
+      if (ch === '"') {
+        inString = true
+      } else if (ch === startChar) {
+        depth += 1
+      } else if (ch === endChar) {
+        depth -= 1
+        if (depth === 0) {
+          const balanced = cleaned.slice(start, i + 1)
+          const parsedBalanced = tryParse(balanced)
+          if (parsedBalanced) return parsedBalanced
+        }
       }
     }
   }
@@ -247,8 +271,8 @@ async function readApiErrorBody(response) {
   }
 }
 
-// ─── Hàm gọi Gemini API (Có Auto-Fallback chuyển Model khi gặp lỗi/Quota) ────
-async function callGeminiApi(prompt, generationConfig = {}) {
+// ─── Hàm gọi Gemini API linh hoạt (Hỗ trợ Multimodal text + inlineData PDF) ──
+export async function callGeminiWithParts(parts, generationConfig = {}) {
   // Kiểm tra API key trước khi gọi
   if (!GEMINI_API_KEY) {
     throw new GeminiServiceError('VITE_GEMINI_API_KEY không được cấu hình', 'NO_API_KEY')
@@ -266,9 +290,9 @@ async function callGeminiApi(prompt, generationConfig = {}) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ parts }],
           generationConfig: {
-            temperature: 0.4,
+            temperature: 0.3,
             topK: 20,
             topP: 0.8,
             responseMimeType: 'application/json',
@@ -312,6 +336,11 @@ async function callGeminiApi(prompt, generationConfig = {}) {
     'ALL_MODELS_EXHAUSTED',
     { lastError },
   )
+}
+
+// ─── Hàm gọi Gemini API cho text prompt ───────────────────────────────────────
+async function callGeminiApi(prompt, generationConfig = {}) {
+  return callGeminiWithParts([{ text: prompt }], generationConfig)
 }
 
 // ─── Xử lý candidate từ Gemini và parse JSON ─────────────────────────────────
@@ -645,3 +674,6 @@ Output ONLY valid JSON:
     throw new GeminiServiceError(`Lỗi gọi Gemini API: ${error.message}`, 'NETWORK_ERROR')
   }
 }
+// Lưu ý: Tính năng bóc tách từ vựng từ PDF bằng Gemini AI đã được chuyển hoàn toàn về
+// Backend (content-service endpoint POST /admin/words/extract-pdf) để đảm bảo bảo mật API Key
+// và tự động đối soát CSDL trực tiếp tại server.

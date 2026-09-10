@@ -1,227 +1,187 @@
-# SmartEnglish Admin — Trang quản trị
+# SmartEnglish AI — Admin Dashboard
 
-Repository này chứa **Admin Frontend** của đồ án *Hệ thống học tập tiếng Anh thông minh tích hợp trí tuệ nhân tạo*. Bắt đầu 08/2026.
+Repository chứa **Admin Frontend** của đồ án tốt nghiệp *Hệ thống học tập tiếng Anh thông minh tích hợp trí tuệ nhân tạo (SmartEnglish AI)*.
 
-Hệ thống được chia thành nhiều repository độc lập; đây là một trong số đó.
+Ứng dụng web quản trị nội bộ dành cho Quản trị viên (Admin), cung cấp giao diện trực quan để vận hành hệ thống, quản lý người dùng, duyệt nội dung AI, quản lý kho học liệu (từ vựng, bài đọc, bài nghe, bài kiểm tra), quản lý gói cước & đối soát thanh toán.
 
-## 1. Giới thiệu
+---
 
-Trang quản trị nội bộ dành cho quản trị viên của hệ thống. Ứng dụng cung cấp giao diện vận hành người dùng, học liệu, nội dung do AI sinh ra, gói Premium và các số liệu thống kê của toàn hệ thống.
-
-Đây là ứng dụng frontend, không chứa nghiệp vụ phía máy chủ. Toàn bộ dữ liệu được lấy qua API của backend (repository riêng).
-
-## 2. Mục tiêu
-
-Mục tiêu của hệ thống tổng thể: xây dựng hệ thống học tiếng Anh hỗ trợ người học thông qua AI, gồm Web/Mobile cho học viên và Web Admin cho quản trị viên, đồng thời hỗ trợ giáo viên quản lý lớp học và quá trình học tập.
-
-Mục tiêu của repository này: cung cấp công cụ quản trị và vận hành cho hệ thống trên.
-
-## 3. Vị trí trong hệ thống
-
-Hệ thống gồm nhiều repository riêng biệt, dùng chung một backend:
+## 1. Kiến trúc & Vị trí trong hệ thống
 
 ```
-┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-│   Learner Web    │  │    Mobile App    │  │  Admin Frontend  │
-│    (Next.js)     │  │  (React Native)  │  │    (React.js)    │
-│   repo riêng     │  │   repo riêng     │  │  ← repo này      │
-└────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘
-         │                     │                     │
-         └─────────────────────┼─────────────────────┘
-                               │ HTTP API
-                      ┌────────┴─────────┐
-                      │     Backend      │
-                      │  (Spring Boot)   │
-                      │    repo riêng    │
-                      └────────┬─────────┘
-                               │
-                      ┌────────┴─────────┐
-                      │    Dịch vụ AI    │
-                      └──────────────────┘
+┌────────────────────────────────┐
+│   SmartEnglish Admin Frontend  │
+│    (React 19 + Vite + Tailwind)│
+│          ← Repo này            │
+└───────────────┬────────────────┘
+                │
+                │ REST API (JSON / FormData)
+                ▼
+┌────────────────────────────────────────────────────────┐
+│             SmartEnglish AI Backend                    │
+│      (Microservices Spring Boot 3 + Java 17)           │
+│                                                        │
+│ • API Gateway       : http://localhost:8080/api        │
+│ • Content Service   : http://localhost:8082            │
+│ • Auth Service      : http://localhost:8081            │
+│ • Learning Service  : http://localhost:8083            │
+│ • AI Service        : http://localhost:8084            │
+│ • Payment Service   : http://localhost:8085            │
+└────────────────────────────────────────────────────────┘
 ```
 
-**Kiến trúc backend:** chưa quyết định. Sẽ bổ sung khi được chốt.
+---
 
-### Các repository liên quan
+## 2. Công nghệ sử dụng
 
-| Repository | Thành phần | Công nghệ | Đường dẫn |
-|---|---|---|---|
-| Admin Frontend | Trang quản trị (repo này) | React.js | Cập nhật sau |
-| Learner Web | Web học tập cho học viên | Next.js | Cập nhật sau |
-| Mobile App | Ứng dụng di động cho học viên | React Native | Cập nhật sau |
-| Backend | API và nghiệp vụ | Spring Boot | Cập nhật sau |
+- **Core Framework**: [React 19](https://react.dev/), [Vite 8](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (sử dụng `@theme` tokens tùy biến, tối ưu bảng màu Light Mode chuẩn mực)
+- **Quản lý trạng thái & Cache**: [Zustand](https://github.com/pmndrs/zustand), [TanStack Query v5 (React Query)](https://tanstack.com/query)
+- **Bảng biểu & Dữ liệu**: [TanStack Table v9](https://tanstack.com/table) (phân trang, sắp xếp đa tiêu chí, mở rộng dòng chi tiết, xuất CSV)
+- **Biểu đồ thống kê**: [Recharts](https://recharts.org/) (KPI Cards, Line/Bar Chart, Donut Breakdown tùy biến cao cấp)
+- **Form & Validation**: [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/)
+- **Biểu tượng & UI**: [Lucide React](https://lucide.dev/), [React Hot Toast](https://react-hot-toast.com/), [Monaco Editor](https://microsoft.github.io/monaco-editor/)
+- **Xử lý tệp & Import**: [PapaParse](https://www.papaparse.com/), React Dropzone
 
-## 4. Công nghệ sử dụng
+---
 
-Của repository này:
+## 3. Các chức năng chính đã triển khai
 
-| Hạng mục | Công nghệ |
-|---|---|
-| Thư viện giao diện | React.js |
-| Công cụ build | Vite |
-| Giao tiếp API | Backend Spring Boot qua HTTP |
+### 3.1. Tổng quan & Thống kê (`/`)
+- **Dashboard KPI**: Tổng người dùng hoạt động, học viên trả phí, tỷ lệ chuyển đổi, doanh thu thực tế.
+- **Biểu đồ xu hướng**: Tăng trưởng người dùng mới, tỷ trọng học viên theo cấp độ CEFR, doanh thu theo tháng.
+- **Bảng hoạt động gần đây**: Lịch sử thao tác, đăng ký và giao dịch thời gian thực.
 
-Thành phần AI sẽ được cập nhật trong quá trình phát triển.
+### 3.2. Quản lý kho học liệu (`/hoc-lieu/*`)
+- **Từ vựng (`/hoc-lieu/tu-vung`)**:
+  - Danh sách từ vựng kèm phát âm IPA, cấp độ CEFR, từ loại, audio phát âm trực tiếp.
+  - Thêm mới / Chỉnh sửa từ vựng kèm bộ câu hỏi bài tập củng cố trắc nghiệm đa năng.
+  - Hỗ trợ **Wizard Import file**: Tải file lên để trích xuất danh sách từ vựng hàng loạt vào hệ thống.
+- **Bài đọc hiểu (`/hoc-lieu/bai-doc`)**: Quản lý các bài đọc theo trình độ A1–C2, ngân hàng câu hỏi đọc hiểu đi kèm.
+- **Bài luyện nghe (`/hoc-lieu/bai-nghe`)**: Quản lý audio nghe, transcript tương tác và bộ câu hỏi trắc nghiệm theo bài nghe.
+- **Ngân hàng đề & bài kiểm tra (`/hoc-lieu/bai-kiem-tra`)**:
+  - Quản lý ngân hàng câu hỏi (trắc nghiệm, điền từ, nối từ, sắp xếp câu).
+  - Quản lý bộ đề thi (TOEIC, IELTS, bài kiểm tra định kỳ) dạng Card Grid trực quan.
 
-## 5. Các đối tượng người dùng
+### 3.3. Kiểm duyệt nội dung AI (`/noi-dung-ai`)
+- Quy trình duyệt nội dung do AI sinh ra (Từ vựng, Ví dụ, Đề thi) với các trạng thái: *Chờ duyệt, Phê duyệt, Từ chối*.
+- Bảng điều khiển cấu hình **System Prompt** và tham số AI (Temperature, Max tokens) với giao diện Dark Console chuyên nghiệp.
+- Công cụ chẩn đoán kết nối API Gemini trực tiếp từ giao diện Admin.
 
-| Đối tượng | Được phục vụ bởi |
-|---|---|
-| Quản trị viên | **Repository này** |
-| Học viên | Learner Web, Mobile App |
-| Giáo viên | Repository khác — chưa xác định |
+### 3.4. Quản lý học viên (`/hoc-vien`)
+- Danh sách học viên, lọc theo vai trò và trạng thái tài khoản.
+- Xem chi tiết lịch sử học tập, số khóa học đã tham gia, tiến độ hoàn thành và điểm kiểm tra.
+- Hỗ trợ xuất dữ liệu ra file CSV chuẩn UTF-8.
 
-## 6. Chức năng chính
+### 3.5. Doanh thu, Gói cước & Đối soát (`/doanh-thu`, `/doi-soat`, `/goi-premium`)
+- **Doanh thu**: Thống kê doanh thu theo gói học, theo chu kỳ và phương thức thanh toán.
+- **Đối soát giao dịch**: Quản lý đơn hàng (VNPay, MoMo, Stripe), chi tiết lý do và phê duyệt / từ chối yêu cầu hoàn tiền.
+- **Gói cước & Coupon**: Cấu hình giá, tính năng các gói Premium và tạo mã khuyến mãi.
 
-### 6.1. Chức năng của repository này — Quản trị viên
+### 3.6. Quản lý cộng đồng (`/cong-dong`)
+- Giám sát diễn đàn học tập, bài viết, bình luận của học viên.
+- Tích hợp cửa sổ chat hỗ trợ trực tuyến đa tác vụ nổi (Floating Chat Messenger).
 
-**Tài khoản và phân quyền**
-- Đăng nhập
-- Quản lý thông tin cá nhân
-- Quản lý người dùng
-- Khóa/mở khóa tài khoản
-- Phân quyền
-- Quản lý vai trò
+---
 
-**Quản lý học liệu**
-- Quản lý từ vựng
-- Quản lý khóa học
-- Quản lý bài học
-- Quản lý bài đọc
-- Quản lý bài nghe
-- Quản lý nội dung kiểm tra
-
-**Quản lý nội dung AI**
-- Xem nội dung AI tạo
-- Phê duyệt/chỉnh sửa/từ chối nội dung
-- Cấu hình System Prompt
-- Quản lý giới hạn sử dụng AI
-
-**Premium và thanh toán**
-- Quản lý gói Premium
-- Cấu hình giá
-- Quản lý mã giảm giá
-- Xem giao dịch
-- Đối soát giao dịch
-- Báo cáo doanh thu
-
-**Thống kê**
-- Thống kê người dùng
-- DAU/MAU
-- Tỷ lệ Free → Premium
-- Churn
-- Thống kê tính năng
-- Thống kê sử dụng AI
-
-**Quản lý hệ thống**
-- Quản lý thông báo
-- Quản lý báo cáo/vi phạm
-- Theo dõi hoạt động hệ thống
-
-### 6.2. Ngoài phạm vi repository này — Giáo viên
-
-Các chức năng dưới đây thuộc hệ thống tổng thể nhưng **không** được cài đặt trong repository này. Repository phụ trách chưa được xác định.
-
-- **Tài khoản:** đăng ký, đăng nhập, quản lý thông tin cá nhân, thiết lập thông tin giảng dạy
-- **Quản lý lớp học:** tạo và quản lý lớp, cấp mã tham gia, xem danh sách học viên, xóa học viên khỏi lớp
-- **Quản lý bài tập:** tạo bài tập, giao bài cho lớp, thiết lập thời hạn, thiết lập điểm yêu cầu, theo dõi tình trạng nộp bài
-- **Theo dõi học tập:** xem bảng điểm, tiến độ học viên, kết quả kiểm tra, thống kê lớp
-- **Học liệu:** tra cứu từ vựng, tạo/chỉnh sửa học liệu, tạo bài học, tạo bài kiểm tra, đề xuất nội dung cho học viên
-- **Tương tác:** đăng bài, bình luận, thích bài viết
-
-## 7. Cấu trúc repository dự kiến
+## 4. Cấu trúc thư mục dự án
 
 ```
 smartenglish-admin/
-├── public/
+├── public/                 # Tài nguyên tĩnh
 ├── src/
-│   ├── components/
-│   │   ├── ui/          # thành phần giao diện dùng lại
-│   │   ├── layout/      # bố cục chung: sidebar, thanh trên
-│   │   └── charts/      # biểu đồ
-│   ├── features/        # mỗi module một thư mục
-│   ├── lib/             # tiện ích dùng chung, lớp gọi API
-│   ├── store/           # trạng thái toàn cục
-│   ├── routes.jsx
-│   └── main.jsx
-├── index.html
-├── vite.config.js
-└── package.json
+│   ├── components/         # Các thành phần tái sử dụng
+│   │   ├── charts/         # Bộ biểu đồ Recharts tùy biến (Line, Bar, Donut, SparkLine)
+│   │   ├── layout/         # Khung giao diện (Sidebar, Topbar, AppShell, ProtectedRoute)
+│   │   └── ui/             # 19+ UI Primitives chuẩn (Button, Modal, Input, DataTable, Drawer...)
+│   ├── features/           # Phân chia theo từng phân hệ nghiệp vụ
+│   │   ├── aiContent/      # Duyệt nội dung & Cấu hình prompt AI
+│   │   ├── auth/           # Đăng nhập & Xác thực JWT
+│   │   ├── community/      # Quản trị cộng đồng & Chat
+│   │   ├── dashboard/      # Màn hình Dashboard tổng quan
+│   │   ├── listening/      # Quản lý bài nghe
+│   │   ├── premium/        # Quản lý gói cước & Coupon
+│   │   ├── quiz/           # Ngân hàng câu hỏi & Bộ đề thi
+│   │   ├── reading/        # Quản lý bài đọc
+│   │   ├── revenue/        # Thống kê doanh thu
+│   │   ├── students/       # Quản lý học viên
+│   │   ├── transactions/   # Đối soát giao dịch & Hoàn tiền
+│   │   └── vocabulary/     # Quản lý từ vựng & Import file
+│   ├── lib/
+│   │   ├── api.js          # HTTP Client Axios với interceptors JWT & chuyển mạch mock
+│   │   ├── endpoints.js    # Nơi khai báo tập trung tất cả đường dẫn API hệ thống
+│   │   ├── ipaHelper.js    # Tiện ích phát âm và hiển thị ký tự phiên âm IPA
+│   │   └── utils.js        # Tiện ích format tiền tệ, ngày tháng, phần trăm
+│   ├── mocks/              # Bộ dữ liệu mẫu giả lập phục vụ phát triển khi chưa có backend
+│   ├── store/              # Quản lý trạng thái xác thực và người dùng (Zustand)
+│   ├── index.css           # Định nghĩa Design System Tokens Tailwind 4
+│   ├── main.jsx            # Điểm khởi chạy ứng dụng React
+│   └── routes.jsx          # Cấu hình định tuyến toàn bộ ứng dụng
+├── package.json
+└── vite.config.js
 ```
 
-Cấu trúc trên là dự kiến và sẽ được điều chỉnh trong quá trình phát triển.
+---
 
-## 8. Hướng dẫn cài đặt và chạy dự án
+## 5. Hướng dẫn cài đặt & Khởi chạy
 
-### Yêu cầu môi trường
-
-- Node.js và npm
-- Backend đang chạy (repository riêng) để ứng dụng lấy được dữ liệu thật
-
-### Các bước
+### 5.1. Cài đặt phụ thuộc
+Yêu cầu môi trường máy có cài đặt **Node.js 18+** và **npm**:
 
 ```bash
-# 1. Clone repository
-git clone <đường-dẫn-repository>
+# 1. Di chuyển vào thư mục dự án
 cd smartenglish-admin
 
-# 2. Cài đặt phụ thuộc
+# 2. Cài đặt các gói phụ thuộc
 npm install
+```
 
-# 3. Tạo file .env ở thư mục gốc (xem bảng biến môi trường bên dưới)
+### 5.2. Cấu hình file `.env`
+Tạo tệp `.env` tại thư mục gốc của `smartenglish-admin`:
 
-# 4. Chạy môi trường phát triển
+```env
+# URL API Backend
+# - Khi chạy qua API Gateway: http://localhost:8080/api
+# - Khi chạy trực tiếp với Content Service: http://localhost:8082
+VITE_API_URL=http://localhost:8082
+
+# Chế độ dữ liệu giả (Mock Mode):
+# - true : Sử dụng dữ liệu giả lập trong thư mục src/mocks (không cần backend)
+# - false: Kết nối gọi API máy chủ backend thực tế
+VITE_USE_MOCK=true
+
+# Khóa API Google Gemini (dùng cho công cụ AI sinh học liệu & test prompt)
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### 5.3. Khởi chạy môi trường phát triển
+```bash
 npm run dev
 ```
+Truy cập giao diện tại: [http://localhost:5173](http://localhost:5173)
 
-### Biến môi trường
-
-File `.env` không được đẩy lên git. Tạo thủ công với nội dung:
-
+### 5.4. Các lệnh kiểm thử & Đóng gói
+```bash
+npm run lint         # Kiểm tra chuẩn mã nguồn bằng ESLint
+npm run test         # Chạy các bài kiểm thử tự động với Vitest
+npm run build        # Đóng gói bản phát hành sản phẩm (Production Bundle)
+npm run preview      # Xem trước bản đóng gói cục bộ
 ```
-VITE_API_URL=http://localhost:8080/api
-VITE_USE_MOCK=true
-```
 
-| Biến | Ý nghĩa |
-|---|---|
-| `VITE_API_URL` | Địa chỉ gốc của API backend. Chỉ có tác dụng khi `VITE_USE_MOCK=false`. |
-| `VITE_USE_MOCK` | `true` dùng dữ liệu giả trong `src/mocks` (mặc định khi chưa có backend), `false` gọi API thật. |
+---
 
-### Các lệnh
+## 6. Cơ chế chuyển đổi Mock Data và API thật
 
-| Lệnh | Tác dụng |
-|---|---|
-| `npm run dev` | Chạy môi trường phát triển |
-| `npm run build` | Đóng gói bản phát hành |
-| `npm run preview` | Xem thử bản đã đóng gói |
-| `npm run lint` | Kiểm tra chất lượng mã nguồn |
+Hệ thống được thiết kế theo cơ chế **Clean Decoupling**:
+- Toàn bộ các URL API được tập trung duy nhất tại `src/lib/endpoints.js`.
+- Client `src/lib/api.js` tự động kiểm tra cờ `VITE_USE_MOCK`:
+  - Khi `VITE_USE_MOCK=true`: Các yêu cầu được chuyển hướng qua `src/mocks/handlers.js` để trả về dữ liệu mẫu có cấu trúc chuẩn như database backend.
+  - Khi `VITE_USE_MOCK=false`: Client sẽ gửi HTTP request thực tế đến URL `VITE_API_URL` kèm theo token `Bearer` xác thực.
+- Các component trong `src/features/*` không phụ thuộc vào mock, giúp việc chuyển sang backend thật diễn ra trơn tru mà không cần sửa đổi logic giao diện.
 
-Khi backend sẵn sàng: sửa đường dẫn trong `src/lib/endpoints.js` cho khớp API thật và đặt `VITE_USE_MOCK=false`. Mã nguồn trong `src/features` không cần sửa.
+---
 
-## 9. Trạng thái phát triển
+## 7. Thành viên thực hiện
 
-Repository này đang trong giai đoạn khởi động (bắt đầu 08/2026).
-
-| Hạng mục | Trạng thái |
-|---|---|
-| Khởi tạo dự án và cấu hình | Đang thực hiện |
-| Bố cục chung và điều hướng | Chưa bắt đầu |
-| Các màn hình chức năng | Chưa bắt đầu |
-| Kết nối API backend | Chưa bắt đầu — backend chưa sẵn sàng |
-| Kiến trúc backend | Chưa quyết định |
-| Thành phần AI | Chưa xác định |
-
-## 10. Thành viên
-
-| Họ và tên | Vai trò |
-|---|---|
-| Nguyễn Thế Anh | Sinh viên thực hiện |
-| Nguyễn Tuấn Anh | Sinh viên thực hiện |
-
-## 11. Repository và liên hệ
-
-| Mục | Thông tin |
-|---|---|
-| Repository | Cập nhật sau |
-| Email | Cập nhật sau |
+- **Nguyễn Thế Anh** — Sinh viên thực hiện
+- **Nguyễn Tuấn Anh** — Sinh viên thực hiện

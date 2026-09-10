@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import LandingPage from '@/pages/landing/LandingPage'
 import AppShellLayout from '@/components/layout/AppShellLayout'
 import PlaceholderPage from '@/components/layout/PlaceholderPage'
@@ -87,5 +87,9 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/ui', element: <UiKitchenSink /> },
+  // Redirects tiện ích cho đường dẫn học liệu không kèm tiền tố /app
+  { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },
+  { path: '/hoc-lieu/tu-vung/tao-moi', element: <Navigate to="/app/hoc-lieu/tu-vung/tao-moi" replace /> },
+  { path: '/hoc-lieu/tu-vung/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/tu-vung/:id/chinh-sua" replace /> },
   { path: '*', element: <NotFound /> },
 ])
