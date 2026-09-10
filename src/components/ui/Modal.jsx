@@ -2,17 +2,19 @@ import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-function Modal({ open, onClose, title, showCloseButton = true, children, className }) {
+function Modal({ open, isOpen, onClose, title, showCloseButton = true, children, className }) {
+  const isModalOpen = open ?? isOpen
+
   useEffect(() => {
-    if (!open) return
+    if (!isModalOpen) return
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose?.()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
+  }, [isModalOpen, onClose])
 
-  if (!open) return null
+  if (!isModalOpen) return null
 
   const hasHeader = Boolean(title || showCloseButton)
 

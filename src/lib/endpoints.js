@@ -205,4 +205,26 @@ export const ENDPOINTS = {
     activityLog: '/admin/system/activity-log',
     health: '/admin/system/health',
   },
+
+  // ── social-service (MongoDB Atlas) ──────────────────────────────
+  social: {
+    posts: '/api/v1/social/posts',
+    postDetail: '/api/v1/social/posts/:id',
+    postLike: '/api/v1/social/posts/:id/like',
+    postComment: '/api/v1/social/posts/:id/comments',
+    deleteComment: '/api/v1/social/posts/:postId/comments/:commentId',
+    conversations: '/api/v1/social/conversations',
+    directConversation: '/api/v1/social/conversations/direct',
+    groupConversation: '/api/v1/social/conversations/group',
+    messages: '/api/v1/social/conversations/:id/messages',
+    sharePost: '/api/v1/social/conversations/:id/share-post',
+    friends: '/api/v1/social/friends',
+    friendRequests: '/api/v1/social/friends/requests',
+    sentFriendRequests: '/api/v1/social/friends/sent-requests',
+    sendFriendRequest: '/api/v1/social/friends/request',
+    respondFriend: '/api/v1/social/friends/respond',
+    unreadCount: '/api/v1/social/conversations/unread-count',
+    markAsRead: '/api/v1/social/conversations/:id/read',
+    typing: '/api/v1/social/conversations/:id/typing',
+  },
 }

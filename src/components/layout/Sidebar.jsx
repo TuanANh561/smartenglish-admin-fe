@@ -1,12 +1,12 @@
 import { ChevronDown, GraduationCap, LogOut } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
 import { getVisibleNavGroups } from '@/components/layout/navConfig'
-import { getConversationsForUser } from '@/features/community/chatData'
 import { useAuthStore } from '@/store/authStore'
+import { useChatStore } from '@/store/chatStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
 
 function NavItemGroup({ item, role }) {
@@ -64,11 +64,18 @@ function Sidebar() {
   const navigate = useNavigate()
   const role = user?.role ?? 'admin'
   const navGroups = getVisibleNavGroups(role)
+  const myId = Number(user?.id) || 1
 
-  const communityUnread = useMemo(() => {
-    const convs = getConversationsForUser(user)
-    return convs.reduce((acc, c) => acc + (c.unread || 0), 0)
-  }, [user])
+  const communityUnread = useChatStore((s) => s.totalUnreadCount)
+  const fetchUnreadCount = useChatStore((s) => s.fetchUnreadCount)
+
+  useEffect(() => {
+    fetchUnreadCount(myId)
+    const interval = setInterval(() => {
+      fetchUnreadCount(myId)
+    }, 12000)
+    return () => clearInterval(interval)
+  }, [myId, fetchUnreadCount])
 
   const handleLogout = async () => {
     await logout()
@@ -91,7 +98,8 @@ function Sidebar() {
             </p>
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) => {
-                const unread = item.to === '/cong-dong' ? communityUnread : item.unreadCount
+                const isCommunity = Boolean(item.to && item.to.includes('cong-dong'))
+                const unread = isCommunity ? communityUnread : (item.unreadCount || 0)
                 return item.children ? (
                   <NavItemGroup key={item.label} item={item} role={role} />
                 ) : (

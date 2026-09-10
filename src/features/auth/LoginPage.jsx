@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import { useLogin } from '@/features/auth/hooks/useAuth'
+import { useAuthStore, TEST_USERS } from '@/store/authStore'
 
 const schema = z.object({
   email: z.string().min(1, 'Vui lòng nhập email').email('Email không hợp lệ'),
@@ -113,6 +114,39 @@ function LoginPage() {
           <Button type="submit" fullWidth loading={isSubmitting || login.isPending}>
             Đăng nhập
           </Button>
+
+          {/* Quick test login buttons */}
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3 space-y-2">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">
+              Đăng nhập kiểm thử nhanh
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem('se_test_user_id', '1')
+                  useAuthStore.getState().setUser(TEST_USERS[1])
+                  navigate('/app/cong-dong')
+                }}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
+              >
+                <div className="text-xs font-bold text-slate-800">Admin (ID 1)</div>
+                <div className="text-[10px] text-slate-400 truncate">Quản trị viên</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem('se_test_user_id', '2')
+                  useAuthStore.getState().setUser(TEST_USERS[2])
+                  navigate('/app/cong-dong')
+                }}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
+              >
+                <div className="text-xs font-bold text-slate-800">Thầy John (ID 2)</div>
+                <div className="text-[10px] text-slate-400 truncate">Giáo viên</div>
+              </button>
+            </div>
+          </div>
 
           <div className="text-center text-xs pt-1 border-t border-line">
             <span className="text-ink-muted">Bạn là Giáo viên mới? </span>

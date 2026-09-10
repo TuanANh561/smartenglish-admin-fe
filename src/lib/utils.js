@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { format, formatDistanceToNowStrict } from 'date-fns'
+import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
 export function cn(...inputs) {
@@ -30,14 +30,32 @@ export function formatDate(value, pattern = 'dd/MM/yyyy') {
   }
 }
 
-export function formatRelativeTime(value) {
-  if (!value) return 'Chưa đăng nhập'
+export function formatRelativeTime(value, fallback) {
+  if (!value) return fallback !== undefined ? fallback : 'Vừa xong'
+  if (value === 'Vừa xong') return 'Vừa xong'
   try {
     const d = new Date(value)
-    if (isNaN(d.getTime())) return 'Chưa đăng nhập'
-    return `${formatDistanceToNowStrict(d, { locale: vi })} trước`
+    if (isNaN(d.getTime())) return fallback !== undefined ? fallback : String(value)
+    const now = new Date()
+    const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
+
+    if (diffSec < 15 && diffSec >= -5) return 'Vừa xong'
+    if (diffSec < 60 && diffSec >= 0) return `${diffSec} giây trước`
+    const diffMin = Math.floor(diffSec / 60)
+    if (diffMin < 60 && diffMin >= 0) return `${diffMin} phút trước`
+    const diffHour = Math.floor(diffMin / 60)
+    if (diffHour < 24 && diffHour >= 0) return `${diffHour} giờ trước`
+    const diffDay = Math.floor(diffHour / 24)
+    if (diffDay === 1) return 'Hôm qua'
+    if (diffDay < 7 && diffDay >= 0) return `${diffDay} ngày trước`
+    const diffWeek = Math.floor(diffDay / 7)
+    if (diffWeek < 5 && diffWeek >= 0) return `${diffWeek} tuần trước`
+    const diffMonth = Math.floor(diffDay / 30)
+    if (diffMonth < 12 && diffMonth >= 0) return `${diffMonth} tháng trước`
+    const diffYear = Math.floor(diffDay / 365)
+    return `${diffYear} năm trước`
   } catch {
-    return 'Chưa đăng nhập'
+    return fallback !== undefined ? fallback : 'Vừa xong'
   }
 }
 

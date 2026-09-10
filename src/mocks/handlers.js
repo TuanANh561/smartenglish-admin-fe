@@ -24,7 +24,12 @@ const sessionExpired = {
 }
 
 function findOr404(collection, id) {
-  const found = collection.find((item) => item.id === id)
+  const found = collection.find(
+    (item) =>
+      item.id === id ||
+      String(item.id) === String(id) ||
+      String(item.id) === String(id).replace('u-', ''),
+  )
   if (!found) throw notFound
   return structuredClone(found)
 }
@@ -44,10 +49,15 @@ export const handlers = {
   // ── Xác thực ────────────────────────────────────────────────────
   [`POST ${ENDPOINTS.auth.login}`]: ({ data }) => {
     const { email, password } = data ?? {}
-    const user = users.find((item) => item.email === email)
+    const user = users.find(
+      (item) =>
+        item.email.toLowerCase() === email?.toLowerCase() ||
+        (email === 'admin@smartenglish.vn' && item.id === 1) ||
+        (email === 'teacher@smartenglish.vn' && item.id === 2),
+    )
     const validPassword =
-      (user?.role === 'admin' && password === 'admin123') ||
-      (user?.role === 'teacher' && password === 'teacher123')
+      (user?.role === 'admin' && (password === 'admin123' || password === 'admin')) ||
+      (user?.role === 'teacher' && (password === 'teacher123' || password === 'teacher'))
 
     if (!user || !validPassword) {
       throw { status: 401, message: 'Email hoặc mật khẩu không đúng.', details: null }
