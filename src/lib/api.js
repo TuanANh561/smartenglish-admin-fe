@@ -122,9 +122,12 @@ async function request(method, endpoint, options = {}, isRetry = false) {
   const { path, params, data, ...config } = options
 
   try {
-    // Chỉ gọi backend thật cho các endpoint đã triển khai (hiện tại là /admin/words)
-    // Các endpoint khác (auth, stats, revenue...) tiếp tục dùng mock để giao diện hoạt động bình thường
-    const isReadyBackend = endpoint.startsWith('/admin/words')
+    // Chỉ gọi backend thật cho các endpoint đã triển khai
+    // Các endpoint khác tiếp tục dùng mock nếu chưa sẵn sàng
+    const isReadyBackend =
+      endpoint.startsWith('/admin/words') ||
+      endpoint.startsWith('/admin/users') ||
+      endpoint.startsWith('/admin/teacher-registrations')
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
       return await resolveMock(method, endpoint, {

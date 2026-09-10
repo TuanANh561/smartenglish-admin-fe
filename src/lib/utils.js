@@ -20,11 +20,25 @@ export function formatNumber(value) {
 }
 
 export function formatDate(value, pattern = 'dd/MM/yyyy') {
-  return format(new Date(value), pattern, { locale: vi })
+  if (!value) return '—'
+  try {
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return '—'
+    return format(d, pattern, { locale: vi })
+  } catch {
+    return '—'
+  }
 }
 
 export function formatRelativeTime(value) {
-  return `${formatDistanceToNowStrict(new Date(value), { locale: vi })} trước`
+  if (!value) return 'Chưa đăng nhập'
+  try {
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return 'Chưa đăng nhập'
+    return `${formatDistanceToNowStrict(d, { locale: vi })} trước`
+  } catch {
+    return 'Chưa đăng nhập'
+  }
 }
 
 export function formatPercent(value) {
