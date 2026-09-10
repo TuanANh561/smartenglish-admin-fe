@@ -233,10 +233,6 @@ function VocabularyPage() {
     }
   }
 
-  const handleExport = () => {
-    toast.success('Đang xuất danh sách từ vựng... (Demo)')
-  }
-
   const handlePlayAudio = (e, item) => {
     e.stopPropagation()
     if (playingId === item.id) {
@@ -271,9 +267,6 @@ function VocabularyPage() {
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
               Import
-            </Button>
-            <Button size="sm" variant="secondary" icon={Download} onClick={handleExport}>
-              Xuất dữ liệu
             </Button>
             <Button size="sm" icon={Plus} onClick={handleOpenCreate}>
               Thêm từ mới
@@ -416,8 +409,8 @@ function VocabularyPage() {
           fetchWords(1, '')
         }}
         defaultType="vocabulary"
-        onImportSuccess={async (newItems) => {
-          const formatted = newItems.map((item) => ({
+        onImportSuccess={async (chunkItems, _type, meta) => {
+          const formatted = chunkItems.map((item) => ({
             word: item.word,
             pronunciation: item.pronunciation || item.phonetic || '/.../',
             vietnameseMeaning: item.vietnameseMeaning || '',
@@ -431,10 +424,12 @@ function VocabularyPage() {
             exercises: item.exercises || [],
           }))
           try {
-            const saved = await api.post(ENDPOINTS.words.import, { data: formatted })
-            toast.success(`Đã import thành công ${formatted.length} từ vựng vào cơ sở dữ liệu!`)
+            const saved = await api.post(ENDPOINTS.words.import, {
+              data: formatted,
+              timeout: 0,
+            })
 
-            // 1. Cập nhật lạc quan (Optimistic Update) giao diện ngay tức thì
+            // Cập nhật lạc quan (Optimistic Update) giao diện theo từng mẻ
             const listToInsert = Array.isArray(saved) && saved.length > 0 ? saved : formatted
             setVocabList((prev) => {
               const existingIds = new Set(listToInsert.map((w) => w.id))
@@ -442,15 +437,17 @@ function VocabularyPage() {
             })
             setTotal((prev) => prev + listToInsert.length)
 
-            // 2. Reset tìm kiếm và trang về 1 để người dùng thấy ngay từ mới ở đầu bảng
-            setSearch('')
-            setPage(1)
-
-            // 3. Đồng bộ lại dữ liệu từ máy chủ
-            await fetchWords(1, '')
+            // Khi hoàn tất mẻ cuối cùng: Thông báo thành công và đồng bộ dữ liệu
+            if (!meta || meta.isLast) {
+              const totalCount = meta?.totalItems || formatted.length
+              toast.success(`Đã import thành công toàn bộ ${totalCount} từ vựng vào cơ sở dữ liệu!`)
+              setSearch('')
+              setPage(1)
+              await fetchWords(1, '')
+            }
           } catch (err) {
             console.error('Lỗi import:', err)
-            toast.error('Không thể import từ vựng vào hệ thống')
+            toast.error(err?.message || 'Không thể import từ vựng vào hệ thống')
             throw err
           }
         }}

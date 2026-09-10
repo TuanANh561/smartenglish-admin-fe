@@ -36,6 +36,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
   const [filterStatus, setFilterStatus] = useState('all')
   const [editingRow, setEditingRow] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [importElapsed, setImportElapsed] = useState(0)
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0, percent: 0 })
 
   // ── Step 4: success countdown ────────────────────────────────────────
   const [countdown, setCountdown] = useState(2)
@@ -123,7 +125,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
         return
       }
       // JSON file: customParsedData đã được đọc sẵn trong handleFileChange
-      // PDF file: để dataset = null, backend Gemini AI sẽ xử lý
+      // PDF file: để dataset = null, backend sẽ xử lý
       dataset = customParsedData
     } else if (uploadMode === 'json') {
       if (!customJsonText.trim()) {
@@ -155,16 +157,26 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       return
     }
 
+    // Giới hạn an toàn: Tối đa 50 từ vựng cho mỗi lần import
+    const MAX_ITEMS = 50
+    if (!isPdfUpload && dataset && dataset.length > MAX_ITEMS) {
+      toast(`Danh sách có ${dataset.length} từ. Hệ thống tự động lấy ${MAX_ITEMS} từ đầu tiên để tối ưu hiệu năng máy chủ.`, {
+        icon: 'ℹ️',
+        duration: 4000,
+      })
+      dataset = dataset.slice(0, MAX_ITEMS)
+    }
+
     setStep(2)
     setProgress(15)
     setLogs(['🚀 Đang nạp dữ liệu vào bộ nhớ...', '📄 Bắt đầu chuẩn bị tài liệu...'])
 
-    // ── TRƯỜNG HỢP 1: Tệp PDF → Gemini AI ────────────────────────────
+    // ── TRƯỜNG HỢP 1: Tệp PDF → Gửi đến Server ────────────────────────────
     if (isPdfUpload) {
       setLogs((prev) => [
         ...prev,
         `📄 Tệp: ${customFile.name} (${(customFile.size / 1024).toFixed(1)} KB)`,
-        '🧠 Đang gửi tệp PDF lên Backend để Gemini AI xử lý Multimodal và đối soát CSDL...',
+        '🧠 Đang gửi tệp PDF lên Server để xử lý Multimodal và đối soát CSDL...',
       ])
       setProgress(40)
 
@@ -187,10 +199,10 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
         setProgress(0)
         setLogs((prev) => [
           ...prev,
-          `❌ Lỗi khi gửi tệp tới Gemini AI: ${aiErr.message || 'Không thể kết nối Backend'}`,
+          `❌ Lỗi khi gửi tệp tới Server: ${aiErr.message || 'Không thể kết nối Server'}`,
           '💡 Vui lòng kiểm tra lại kết nối server và thử lại.',
         ])
-        toast.error(`Gemini AI không thể bóc tách file: ${aiErr.message || 'Lỗi kết nối'}`, { duration: 5000 })
+        toast.error(`Không thể bóc tách file: ${aiErr.message || 'Lỗi kết nối'}`, { duration: 5000 })
         setStep(1)
         return
       } finally {
@@ -198,12 +210,15 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       }
 
       if (extracted && extracted.length > 0) {
+        if (extracted.length > MAX_ITEMS) {
+          extracted = extracted.slice(0, MAX_ITEMS)
+        }
         dataset = extracted
         setProgress(95)
         const dupCount = extracted.filter((w) => w.isDuplicate).length
         setLogs((prev) => [
           ...prev,
-          `✨ Backend & Gemini AI đã bóc tách thành công ${extracted.length} từ vựng từ tệp PDF!`,
+          `✨ Server đã bóc tách thành công ${extracted.length} từ vựng từ tệp PDF!`,
           dupCount > 0
             ? `⚠️ Phát hiện ${dupCount} từ đã tồn tại trong CSDL (đã gắn cờ cảnh báo).`
             : `✅ Toàn bộ ${extracted.length} từ đều mới, không bị trùng lặp trong CSDL.`,
@@ -212,10 +227,10 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
         setProgress(0)
         setLogs((prev) => [
           ...prev,
-          '❌ Gemini AI không trích xuất được từ vựng nào từ tệp PDF này.',
+          '❌ Không trích xuất được từ vựng nào từ tệp PDF này.',
           '💡 Hãy thử file PDF khác hoặc kiểm tra nội dung file có chứa từ vựng tiếng Anh không.',
         ])
-        toast.error('Gemini AI không trích xuất được từ vựng từ tệp này. Hãy thử file khác!', { duration: 5000 })
+        toast.error('Không trích xuất được từ vựng từ tệp này. Hãy thử file khác!', { duration: 5000 })
         setStep(1)
         return
       }
@@ -313,6 +328,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
   // ── Step 3 → Step 4: Confirm import ──────────────────────────────────
 
+  const CHUNK_SIZE = 15
+
   const handleConfirmImport = async () => {
     const itemsToImport = parsedItems.filter((item) => selectedIds.has(item.id))
     if (itemsToImport.length === 0) {
@@ -322,12 +339,41 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
     if (onImportSuccess) {
       setIsSubmitting(true)
+      setImportElapsed(1)
+      const total = itemsToImport.length
+      setImportProgress({ current: 0, total, percent: 0 })
+
+      const timer = setInterval(() => {
+        setImportElapsed((prev) => prev + 1)
+      }, 1000)
+
       try {
-        await onImportSuccess(itemsToImport, importType)
+        let processed = 0
+        // Chia nhỏ thành các mẻ nhỏ (CHUNK_SIZE = 15) gửi tuần tự
+        for (let i = 0; i < total; i += CHUNK_SIZE) {
+          const chunk = itemsToImport.slice(i, i + CHUNK_SIZE)
+          const isLast = i + CHUNK_SIZE >= total
+          await onImportSuccess(chunk, importType, {
+            chunkIndex: Math.floor(i / CHUNK_SIZE) + 1,
+            isFirst: i === 0,
+            isLast,
+            totalItems: total,
+            chunkSize: chunk.length,
+          })
+          processed += chunk.length
+          setImportProgress({
+            current: Math.min(processed, total),
+            total,
+            percent: Math.round((Math.min(processed, total) / total) * 100),
+          })
+        }
+        clearInterval(timer)
         setStep(4)
-      } catch {
-        // Error notification handled in onImportSuccess
+      } catch (err) {
+        clearInterval(timer)
+        console.error('Import thất bại:', err)
       } finally {
+        clearInterval(timer)
         setIsSubmitting(false)
       }
     } else {
@@ -352,6 +398,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     filterStatus, setFilterStatus,
     editingRow, setEditingRow,
     isSubmitting,
+    importElapsed,
+    importProgress,
     countdown,
     filteredData,
     // Handlers

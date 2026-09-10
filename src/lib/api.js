@@ -26,7 +26,7 @@ const getStoredToken = (key) => storage?.getItem(key) ?? null
 
 export const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 15000,
+  timeout: 0, // 0 = Không giới hạn timeout, không tự ý ngắt kết nối
   headers: { 'Content-Type': 'application/json' },
 })
 
