@@ -4,9 +4,10 @@
  */
 
 import {
-  CheckCircle2, AlertTriangle, XCircle, Info, Trash2,
+  CheckCircle2, AlertTriangle, XCircle, Info, Trash2, Volume2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { speakWord } from '@/lib/ipaHelper'
 
 export default function ImportStepReview({
   parsedItems,
@@ -207,10 +208,27 @@ function TableRow({ item, importType, isSelected, onToggleSelect, onDelete }) {
             <span className="text-[10px] text-slate-400 font-normal">({item.partOfSpeech})</span>
           </td>
           <td className="p-3 font-mono text-slate-600">
-            {item.pronunciation || item.phonetic
-              ? <span>{item.pronunciation || item.phonetic}</span>
-              : <span className="text-red-400 text-[11px]">Thiếu IPA</span>
-            }
+            <div className="flex items-center gap-1.5">
+              {item.pronunciation || item.phonetic
+                ? <span>{item.pronunciation || item.phonetic}</span>
+                : <span className="text-red-400 text-[11px]">Thiếu IPA</span>
+              }
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  speakWord(item.word, item.audioUrl)
+                }}
+                className={`rounded p-1 transition-colors cursor-pointer ${
+                  item.audioUrl
+                    ? 'text-brand-600 hover:bg-brand-50 hover:text-brand-700'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                }`}
+                title={item.audioUrl ? 'Nghe phát âm chuẩn (MP3)' : 'Nghe phát âm (Web Speech API)'}
+              >
+                <Volume2 size={13} />
+              </button>
+            </div>
           </td>
           <td className="p-3 font-medium text-slate-800">{item.vietnameseMeaning}</td>
           <td className="p-3 text-slate-600 line-clamp-1 max-w-xs">{item.exampleSentence || item.exampleEn}</td>

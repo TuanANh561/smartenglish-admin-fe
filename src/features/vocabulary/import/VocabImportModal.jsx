@@ -116,27 +116,6 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
       {/* ── Footer Navigation ────────────────────────────────────────── */}
       {hook.step !== 4 && (
         <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
-          {/* Progress Bar hiển thị trực quan khi đang lưu theo mẻ vào CSDL */}
-          {hook.isSubmitting && (
-            <div className="mb-3 w-full bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-semibold">
-                <span className="flex items-center gap-1.5 text-brand-600">
-                  <span className="inline-block h-2 w-2 rounded-full bg-brand-500 animate-ping" />
-                  Đang lưu vào CSDL (theo từng đợt an toàn)...
-                </span>
-                <span>
-                  {hook.importProgress.current}/{hook.importProgress.total} từ ({hook.importProgress.percent}%) • {hook.importElapsed}s
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
-                <div
-                  className="bg-gradient-to-r from-brand-500 to-emerald-500 h-full transition-all duration-300 rounded-full"
-                  style={{ width: `${hook.importProgress.percent}%` }}
-                />
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center justify-between">
             {hook.step > 1 ? (
               <Button
@@ -178,7 +157,7 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
                 >
                   {hook.isSubmitting
-                    ? `Đang lưu (${hook.importProgress.percent}% • ${hook.importElapsed}s)`
+                    ? 'Đang lưu vào CSDL...'
                     : `Xác nhận Import (${hook.selectedIds.size}) bản ghi`}
                 </Button>
               )}

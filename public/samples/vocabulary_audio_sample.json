@@ -1,0 +1,98 @@
+[
+  {
+    "word": "Algorithm",
+    "pronunciation": "/ˈæl.ɡə.rɪ.ðəm/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B2",
+    "vietnameseMeaning": "Thuật toán",
+    "englishMeaning": "A set of rules or calculations used in problem-solving or computing.",
+    "topic": "Technology & AI",
+    "exampleEn": "The search engine uses an advanced algorithm to rank search results.",
+    "exampleVi": "Công cụ tìm kiếm sử dụng thuật toán tiên tiến để xếp hạng kết quả tìm kiếm.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/algorithm-us.mp3"
+  },
+  {
+    "word": "Biodiversity",
+    "pronunciation": "/ˌbaɪ.əʊ.daɪˈvɜː.sə.ti/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B2",
+    "vietnameseMeaning": "Đa dạng sinh học",
+    "englishMeaning": "The variety of plant and animal life in the world or in a particular habitat.",
+    "topic": "Environment & Nature",
+    "exampleEn": "The national park is renowned for its rich biological diversity.",
+    "exampleVi": "Vườn quốc gia nổi tiếng với sự đa dạng sinh học phong thái phong phú.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/biodiversity-us.mp3"
+  },
+  {
+    "word": "Sustainability",
+    "pronunciation": "/səˌsteɪ.nəˈbɪl.ə.ti/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "C1",
+    "vietnameseMeaning": "Tính bền vững",
+    "englishMeaning": "The ability to maintain or support a process continuously over time.",
+    "topic": "Environment & Economy",
+    "exampleEn": "The company focuses on long-term sustainability rather than quick profits.",
+    "exampleVi": "Công ty tập trung vào tính bền vững lâu dài hơn là lợi nhuận nhanh chóng.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/sustainability-us.mp3"
+  },
+  {
+    "word": "Resilience",
+    "pronunciation": "/rɪˈzɪl.jəns/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "C1",
+    "vietnameseMeaning": "Sự kiên cường, khả năng phục hồi",
+    "englishMeaning": "The capacity to withstand or to recover quickly from difficulties.",
+    "topic": "Psychology & Life",
+    "exampleEn": "Psychological resilience helps individuals cope with stress and trauma.",
+    "exampleVi": "Khả năng kiên cường tâm lý giúp các cá nhân vượt qua căng thẳng và chấn thương.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/resilience-us.mp3"
+  },
+  {
+    "word": "Ecosystem",
+    "pronunciation": "/ˈiː.kəʊˌsɪs.təm/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B1",
+    "vietnameseMeaning": "Hệ sinh thái",
+    "englishMeaning": "A biological community of interacting organisms and their physical environment.",
+    "topic": "Nature & Science",
+    "exampleEn": "Deforestation disrupts the delicate balance of the forest ecosystem.",
+    "exampleVi": "Phá rừng làm đảo lộn sự cân bằng mong manh của hệ sinh thái rừng.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/ecosystem-us.mp3"
+  },
+  {
+    "word": "Innovation",
+    "pronunciation": "/ˌɪn.əˈveɪ.ʃən/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B2",
+    "vietnameseMeaning": "Sự đổi mới, sáng kiến",
+    "englishMeaning": "A new method, idea, or product that brings about significant change.",
+    "topic": "Business & Technology",
+    "exampleEn": "Technological innovation continues to drive economic growth worldwide.",
+    "exampleVi": "Sự đổi mới công nghệ tiếp tục thúc đẩy tăng trưởng kinh tế trên toàn thế giới.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/innovation-us.mp3"
+  },
+  {
+    "word": "Collaboration",
+    "pronunciation": "/kəˌlæb.əˈreɪ.ʃən/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B2",
+    "vietnameseMeaning": "Sự hợp tác",
+    "englishMeaning": "The action of working with someone to produce or create something.",
+    "topic": "Workplace & Society",
+    "exampleEn": "Effective cross-team collaboration is crucial for project success.",
+    "exampleVi": "Sự hợp tác hiệu quả giữa các nhóm là điều then chốt cho thành công của dự án.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/collaboration-us.mp3"
+  },
+  {
+    "word": "Perspective",
+    "pronunciation": "/pəˈspek.tɪv/",
+    "partOfSpeech": "Noun",
+    "cefrLevel": "B2",
+    "vietnameseMeaning": "Góc nhìn, quan điểm",
+    "englishMeaning": "A particular attitude toward or way of regarding something; a point of view.",
+    "topic": "Communication & Thought",
+    "exampleEn": "Traveling broadens your mind and gives you a global perspective.",
+    "exampleVi": "Đi du lịch mở rộng tầm nhìn và mang lại cho bạn góc nhìn toàn cầu.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/perspective-us.mp3"
+  }
+]

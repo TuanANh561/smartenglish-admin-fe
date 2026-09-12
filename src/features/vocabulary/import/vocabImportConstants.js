@@ -37,7 +37,8 @@ export const SAMPLE_AI_JSON = `[
     "englishMeaning": "A process or set of rules to be followed in calculations or problem-solving operations.",
     "topic": "Công nghệ & AI",
     "exampleEn": "The search engine uses a complex algorithm to rank web pages.",
-    "exampleVi": "Công cụ tìm kiếm sử dụng một thuật toán phức tạp để xếp hạng các trang web."
+    "exampleVi": "Công cụ tìm kiếm sử dụng một thuật toán phức tạp để xếp hạng các trang web.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/algorithm-us.mp3"
   },
   {
     "word": "resilience",
@@ -48,6 +49,7 @@ export const SAMPLE_AI_JSON = `[
     "englishMeaning": "The capacity to recover quickly from difficulties; toughness.",
     "topic": "Đời sống & Giao tiếp",
     "exampleEn": "Courage and resilience are essential for overcoming hardship.",
-    "exampleVi": "Sự dũng cảm và kiên cường là điều cần thiết để vượt qua khó khăn."
+    "exampleVi": "Sự dũng cảm và kiên cường là điều cần thiết để vượt qua khó khăn.",
+    "audioUrl": "https://api.dictionaryapi.dev/media/pronunciations/en/resilience-us.mp3"
   }
 ]`

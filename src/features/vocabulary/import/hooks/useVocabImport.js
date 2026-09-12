@@ -62,6 +62,9 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     }
   }, [open, defaultType])
 
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   /** Tự động đóng modal sau khi hoàn thành */
   useEffect(() => {
     if (step === 4) {
@@ -70,7 +73,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
         setCountdown((c) => {
           if (c <= 1) {
             clearInterval(timer)
-            onClose?.()
+            onCloseRef.current?.()
             return 0
           }
           return c - 1
@@ -78,7 +81,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       }, 1000)
       return () => clearInterval(timer)
     }
-  }, [step, onClose])
+  }, [step])
 
   // ── Handlers ─────────────────────────────────────────────────────────
 
@@ -328,8 +331,6 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
   // ── Step 3 → Step 4: Confirm import ──────────────────────────────────
 
-  const CHUNK_SIZE = 15
-
   const handleConfirmImport = async () => {
     const itemsToImport = parsedItems.filter((item) => selectedIds.has(item.id))
     if (itemsToImport.length === 0) {
@@ -339,41 +340,13 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
     if (onImportSuccess) {
       setIsSubmitting(true)
-      setImportElapsed(1)
-      const total = itemsToImport.length
-      setImportProgress({ current: 0, total, percent: 0 })
-
-      const timer = setInterval(() => {
-        setImportElapsed((prev) => prev + 1)
-      }, 1000)
-
       try {
-        let processed = 0
-        // Chia nhỏ thành các mẻ nhỏ (CHUNK_SIZE = 15) gửi tuần tự
-        for (let i = 0; i < total; i += CHUNK_SIZE) {
-          const chunk = itemsToImport.slice(i, i + CHUNK_SIZE)
-          const isLast = i + CHUNK_SIZE >= total
-          await onImportSuccess(chunk, importType, {
-            chunkIndex: Math.floor(i / CHUNK_SIZE) + 1,
-            isFirst: i === 0,
-            isLast,
-            totalItems: total,
-            chunkSize: chunk.length,
-          })
-          processed += chunk.length
-          setImportProgress({
-            current: Math.min(processed, total),
-            total,
-            percent: Math.round((Math.min(processed, total) / total) * 100),
-          })
-        }
-        clearInterval(timer)
+        await onImportSuccess(itemsToImport, importType)
         setStep(4)
       } catch (err) {
-        clearInterval(timer)
         console.error('Import thất bại:', err)
+        toast.error('Có lỗi xảy ra khi lưu từ vựng vào cơ sở dữ liệu!')
       } finally {
-        clearInterval(timer)
         setIsSubmitting(false)
       }
     } else {

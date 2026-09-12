@@ -167,19 +167,20 @@ function VocabularyPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
 
-  // Tải danh sách chủ đề từ CSDL khi khởi tạo
-  useEffect(() => {
-    async function loadTopics() {
-      try {
-        const res = await api.get(ENDPOINTS.words.topics)
-        const list = Array.isArray(res) ? res : (res?.data || [])
-        setTopics(list)
-      } catch (err) {
-        console.warn('Lỗi khi tải danh sách chủ đề:', err)
-      }
+  // Tải danh sách chủ đề từ CSDL
+  const loadTopics = useCallback(async () => {
+    try {
+      const res = await api.get(ENDPOINTS.words.topics)
+      const list = Array.isArray(res) ? res : (res?.data || [])
+      setTopics(list)
+    } catch (err) {
+      console.warn('Lỗi khi tải danh sách chủ đề:', err)
     }
-    loadTopics()
   }, [])
+
+  useEffect(() => {
+    loadTopics()
+  }, [loadTopics])
 
   const fetchWords = useCallback(async (targetPage, targetSearch, targetPos, targetTopic, targetSort) => {
     const p = targetPage !== undefined ? targetPage : page
@@ -270,6 +271,7 @@ function VocabularyPage() {
       setVocabList((prev) => prev.filter((v) => v.id !== target.id))
       setTotal((prev) => Math.max(0, prev - 1))
       setDeleteTarget(null)
+      loadTopics()
       toast.success(`Đã xóa từ "${target.word}" thành công!`)
     } catch (err) {
       console.error('Lỗi khi xóa từ vựng:', err)
@@ -287,8 +289,12 @@ function VocabularyPage() {
       toast('Đã dừng phát âm', { icon: '⏸️' })
     } else {
       setPlayingId(item.id)
-      speakWord(item.word, item.audioUrl)
-      setTimeout(() => setPlayingId(null), 2000)
+      speakWord(item.word, item.audioUrl, () => {
+        setPlayingId((curr) => (curr === item.id ? null : curr))
+      })
+      setTimeout(() => {
+        setPlayingId((curr) => (curr === item.id ? null : curr))
+      }, 3000)
     }
   }
 
@@ -370,7 +376,7 @@ function VocabularyPage() {
                 <option value="">Tất cả chủ đề</option>
                 {topics.map((top) => (
                   <option key={top.id} value={top.id}>
-                    {top.iconEmoji ? `${top.iconEmoji} ` : ''}{top.nameVi || top.nameEn}
+                    {top.iconEmoji ? `${top.iconEmoji} ` : ''}{top.nameVi || top.nameEn} ({top.wordCount ?? 0})
                   </option>
                 ))}
               </select>
@@ -531,10 +537,11 @@ function VocabularyPage() {
         onClose={() => {
           setIsPdfImportOpen(false)
           fetchWords(1, '')
+          loadTopics()
         }}
         defaultType="vocabulary"
-        onImportSuccess={async (chunkItems, _type, meta) => {
-          const formatted = chunkItems.map((item) => ({
+        onImportSuccess={async (items) => {
+          const formatted = items.map((item) => ({
             word: item.word,
             pronunciation: item.pronunciation || item.phonetic || '/.../',
             vietnameseMeaning: item.vietnameseMeaning || '',
@@ -552,23 +559,8 @@ function VocabularyPage() {
               data: formatted,
               timeout: 0,
             })
-
-            // Cập nhật lạc quan (Optimistic Update) giao diện theo từng mẻ
-            const listToInsert = Array.isArray(saved) && saved.length > 0 ? saved : formatted
-            setVocabList((prev) => {
-              const existingIds = new Set(listToInsert.map((w) => w.id))
-              return [...listToInsert, ...prev.filter((w) => !existingIds.has(w.id))]
-            })
-            setTotal((prev) => prev + listToInsert.length)
-
-            // Khi hoàn tất mẻ cuối cùng: Thông báo thành công và đồng bộ dữ liệu
-            if (!meta || meta.isLast) {
-              const totalCount = meta?.totalItems || formatted.length
-              toast.success(`Đã import thành công toàn bộ ${totalCount} từ vựng vào cơ sở dữ liệu!`)
-              setSearch('')
-              setPage(1)
-              await fetchWords(1, '')
-            }
+            const count = Array.isArray(saved) ? saved.length : formatted.length
+            toast.success(`Đã import thành công ${count} từ vựng vào cơ sở dữ liệu!`)
           } catch (err) {
             console.error('Lỗi import:', err)
             toast.error(err?.message || 'Không thể import từ vựng vào hệ thống')

@@ -49,6 +49,7 @@ export function parseJsonItems(arr) {
     exampleVi: it.exampleVi || '',
     topic: it.topic || 'General',
     cefrLevel: it.cefrLevel || 'B2',
+    audioUrl: it.audioUrl || it.audio || it.audio_us_url || it.audioUsUrl || it.sound || it.pronunciationAudio || '',
     status: 'valid',
     statusVal: 'valid',
     statusMessage: 'Hợp lệ',
