@@ -160,10 +160,10 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       return
     }
 
-    // Giới hạn an toàn: Tối đa 50 từ vựng cho mỗi lần import
-    const MAX_ITEMS = 50
+    // Giới hạn an toàn: Tối đa 5,000 từ vựng cho mỗi lần import
+    const MAX_ITEMS = 5000
     if (!isPdfUpload && dataset && dataset.length > MAX_ITEMS) {
-      toast(`Danh sách có ${dataset.length} từ. Hệ thống tự động lấy ${MAX_ITEMS} từ đầu tiên để tối ưu hiệu năng máy chủ.`, {
+      toast(`Danh sách có ${dataset.length} từ. Hệ thống tự động lấy ${MAX_ITEMS} từ đầu tiên để bảo đảm an toàn hiệu năng.`, {
         icon: 'ℹ️',
         duration: 4000,
       })
@@ -283,8 +283,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     setLogs((prev) => [...prev, '✅ Hoàn tất chuẩn bị! Đang chuyển sang bảng kiểm duyệt...'])
     setParsedItems(dataset)
 
-    // Không chọn sẵn các từ trùng hoàn toàn (isDuplicate=true)
-    const nonBlockedItems = dataset.filter((item) => !item.isDuplicate)
+    // Chỉ chọn sẵn các từ mới hợp lệ (không chọn từ trùng isDuplicate=true hoặc lỗi thiếu từ)
+    const nonBlockedItems = dataset.filter((item) => !item.isDuplicate && item.statusVal !== 'error')
     setSelectedIds(new Set(nonBlockedItems.map((item) => item.id)))
 
     await new Promise((r) => setTimeout(r, 400))
@@ -292,9 +292,9 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
     const dupCount = dataset.filter((item) => item.isDuplicate).length
     if (dupCount > 0) {
-      toast(`Phát hiện ${dupCount} từ vựng đã tồn tại trong CSDL (cùng từ loại)!`, {
-        icon: '⚠️',
-        duration: 4000,
+      toast(`Phát hiện ${dupCount} từ vựng đã tồn tại trong CSDL (đã tự động bỏ chọn)!`, {
+        icon: 'ℹ️',
+        duration: 4500,
       })
     }
   }
@@ -308,7 +308,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
   const handleToggleSelectAll = (checked) => {
     if (checked) {
-      setSelectedIds(new Set(filteredData.filter((item) => !item.isDuplicate).map((item) => item.id)))
+      setSelectedIds(new Set(filteredData.filter((item) => !item.isDuplicate && item.statusVal !== 'error').map((item) => item.id)))
     } else {
       setSelectedIds(new Set())
     }

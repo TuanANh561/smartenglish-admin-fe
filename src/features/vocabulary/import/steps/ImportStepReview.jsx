@@ -1,10 +1,6 @@
-/**
- * ImportStepReview.jsx
- * Step 3: Filter toolbar + bảng review & edit từ vựng đã bóc tách.
- */
-
+import { useState, useMemo, useEffect } from 'react'
 import {
-  CheckCircle2, AlertTriangle, XCircle, Info, Trash2, Volume2,
+  CheckCircle2, AlertTriangle, XCircle, Info, Trash2, Volume2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { speakWord } from '@/lib/ipaHelper'
@@ -20,6 +16,20 @@ export default function ImportStepReview({
   onToggleSelectRow,
   onDeleteRow,
 }) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterStatus])
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const pagedData = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize
+    return filteredData.slice(start, start + pageSize)
+  }, [filteredData, safeCurrentPage, pageSize])
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -42,20 +52,20 @@ export default function ImportStepReview({
             onToggleSelectAll={onToggleSelectAll}
           />
           <tbody className="divide-y divide-slate-100 bg-white">
-            {filteredData.length === 0 ? (
+            {pagedData.length === 0 ? (
               <tr>
                 <td colSpan={8} className="p-8 text-center text-slate-400 italic">
                   Không có mục nào trong danh sách lọc này.
                 </td>
               </tr>
             ) : (
-              filteredData.map((item) => (
+              pagedData.map((item) => (
                 <TableRow
                   key={item.id}
                   item={item}
                   importType={importType}
                   isSelected={selectedIds.has(item.id)}
-                  onToggleSelect={() => !item.isDuplicate && onToggleSelectRow(item.id)}
+                  onToggleSelect={() => !item.isDuplicate && item.statusVal !== 'error' && onToggleSelectRow(item.id)}
                   onDelete={() => onDeleteRow(item.id)}
                 />
               ))
@@ -63,6 +73,49 @@ export default function ImportStepReview({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {filteredData.length > pageSize && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+          <div>
+            Hiển thị <strong>{(safeCurrentPage - 1) * pageSize + 1}</strong> - <strong>{Math.min(safeCurrentPage * pageSize, filteredData.length)}</strong> trên tổng số <strong>{filteredData.length}</strong> từ
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-slate-200 font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            >
+              <ChevronLeft size={14} /> Trước
+            </button>
+            <span className="font-semibold text-slate-700 px-1">
+              Trang {safeCurrentPage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-slate-200 font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            >
+              Sau <ChevronRight size={14} />
+            </button>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="ml-2 px-2 py-1 bg-white border border-slate-200 rounded font-medium text-xs text-slate-700 outline-none focus:border-brand-500 cursor-pointer"
+            >
+              <option value={20}>20 từ / trang</option>
+              <option value={50}>50 từ / trang</option>
+              <option value={100}>100 từ / trang</option>
+              <option value={200}>200 từ / trang</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -71,6 +124,7 @@ export default function ImportStepReview({
 
 function FilterToolbar({ parsedItems, filteredData, selectedIds, filterStatus, setFilterStatus, onToggleSelectAll }) {
   const countOf = (st) => parsedItems.filter((i) => i.statusVal === st || i.status === st).length
+  const newValidCount = parsedItems.filter((i) => !i.isDuplicate && i.statusVal !== 'error').length
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
@@ -83,14 +137,37 @@ function FilterToolbar({ parsedItems, filteredData, selectedIds, filterStatus, s
           activeClass="bg-emerald-600 text-white" inactiveClass="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100" />
         <FilterBtn label={`Khác từ loại (${countOf('info')})`} value="info" current={filterStatus} onClick={setFilterStatus}
           activeClass="bg-blue-600 text-white" inactiveClass="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" />
-        <FilterBtn label={`Trùng hoàn toàn (${countOf('warning')})`} value="warning" current={filterStatus} onClick={setFilterStatus}
+        <FilterBtn label={`Trùng trong CSDL (${countOf('warning')})`} value="warning" current={filterStatus} onClick={setFilterStatus}
           activeClass="bg-amber-600 text-white" inactiveClass="bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100" />
-        <FilterBtn label={`Cần sửa lỗi (${countOf('error')})`} value="error" current={filterStatus} onClick={setFilterStatus}
-          activeClass="bg-red-600 text-white" inactiveClass="bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" />
+        {countOf('error') > 0 && (
+          <FilterBtn label={`Cần sửa lỗi (${countOf('error')})`} value="error" current={filterStatus} onClick={setFilterStatus}
+            activeClass="bg-red-600 text-white" inactiveClass="bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" />
+        )}
       </div>
 
-      <div className="text-xs text-slate-500 font-semibold">
-        Đã chọn: <strong className="text-brand-600">{selectedIds.size}</strong>/{parsedItems.length} mục
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onToggleSelectAll(true)}
+            className="px-2.5 py-1 text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-lg cursor-pointer transition-colors"
+            title="Chọn tất cả từ mới không bị trùng lặp"
+          >
+            Chọn tất cả từ mới ({newValidCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggleSelectAll(false)}
+            className="px-2 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+            title="Bỏ chọn toàn bộ"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+
+        <div className="text-xs text-slate-500 font-semibold pl-2 border-l border-slate-200">
+          Đã chọn: <strong className="text-brand-600">{selectedIds.size}</strong>/{parsedItems.length}
+        </div>
       </div>
     </div>
   )
@@ -99,6 +176,7 @@ function FilterToolbar({ parsedItems, filteredData, selectedIds, filterStatus, s
 function FilterBtn({ label, value, current, onClick, activeClass, inactiveClass }) {
   return (
     <button
+      type="button"
       onClick={() => onClick(value)}
       className={cn(
         'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors',
@@ -111,7 +189,7 @@ function FilterBtn({ label, value, current, onClick, activeClass, inactiveClass 
 }
 
 function TableHead({ importType, filteredData, selectedIds, onToggleSelectAll }) {
-  const selectableRows = filteredData.filter((i) => !i.isDuplicate)
+  const selectableRows = filteredData.filter((i) => !i.isDuplicate && i.statusVal !== 'error')
   const allSelected = selectableRows.length > 0 && selectableRows.every((item) => selectedIds.has(item.id))
 
   return (
@@ -173,6 +251,7 @@ function TableHead({ importType, filteredData, selectedIds, onToggleSelectAll })
 
 function TableRow({ item, importType, isSelected, onToggleSelect, onDelete }) {
   const st = item.statusVal || item.status || 'valid'
+  const isBlocked = item.isDuplicate === true || st === 'error'
 
   return (
     <tr
@@ -180,6 +259,8 @@ function TableRow({ item, importType, isSelected, onToggleSelect, onDelete }) {
         'transition-colors',
         item.isDuplicate
           ? 'bg-amber-50/40 opacity-70'
+          : st === 'error'
+          ? 'bg-red-50/30 opacity-70'
           : !isSelected
           ? 'opacity-60 bg-slate-50/40'
           : 'hover:bg-slate-50',
@@ -190,12 +271,18 @@ function TableRow({ item, importType, isSelected, onToggleSelect, onDelete }) {
         <input
           type="checkbox"
           checked={isSelected}
-          disabled={item.isDuplicate === true}
+          disabled={isBlocked}
           onChange={onToggleSelect}
-          title={item.isDuplicate ? 'Từ này đã tồn tại trong CSDL với cùng từ loại — không thể import' : undefined}
+          title={
+            item.isDuplicate
+              ? 'Từ này đã tồn tại trong CSDL — đã tự động bỏ chọn'
+              : st === 'error'
+              ? 'Mục này bị thiếu từ vựng tiếng Anh'
+              : undefined
+          }
           className={cn(
             'rounded border-slate-300 text-brand-600 focus:ring-brand-500',
-            item.isDuplicate ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
+            isBlocked ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
           )}
         />
       </td>
