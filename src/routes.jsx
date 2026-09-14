@@ -25,8 +25,8 @@ import ReadingPage from '@/features/reading/ReadingPage'
 import ReportsPage from '@/features/reports/ReportsPage'
 import RevenueListPage from '@/features/revenue/RevenueListPage'
 import SettingsPage from '@/features/settings/SettingsPage'
-import StudentsPage from '@/features/students/StudentsPage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
+import UsersPage from '@/features/users/UsersPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import VocabularyFormPage from '@/features/vocabulary/VocabularyFormPage'
 import ReadingFormPage from '@/features/reading/ReadingFormPage'
@@ -49,8 +49,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'cong-dong', element: <CommunityPage /> },
-          { path: 'lop-hoc', element: <TeacherClassesPage /> },
-          { path: 'hoc-vien', element: <StudentsPage /> },
+          { path: 'hoc-vien', element: <UsersPage /> },
+          { path: 'nguoi-dung', element: <UsersPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
           { path: 'hoc-lieu/tu-vung/tao-moi', element: <VocabularyFormPage /> },
           { path: 'hoc-lieu/tu-vung/:id/chinh-sua', element: <VocabularyFormPage /> },

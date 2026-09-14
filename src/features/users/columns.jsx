@@ -59,11 +59,17 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
     columnHelper.accessor('lastLoginAt', {
       header: 'Đăng nhập gần nhất',
       enableSorting: true,
-      cell: (info) => (
-        <span className="text-sm text-slate-600">
-          {formatRelativeTime(info.getValue())}
-        </span>
-      ),
+      cell: (info) => {
+        const value = info.getValue()
+        if (!value) {
+          return <span className="text-xs text-slate-400 italic">Chưa đăng nhập</span>
+        }
+        return (
+          <span className="text-sm text-slate-600">
+            {formatRelativeTime(value)}
+          </span>
+        )
+      },
     }),
     columnHelper.accessor('createdAt', {
       header: 'Ngày tạo',

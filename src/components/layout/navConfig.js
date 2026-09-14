@@ -48,7 +48,7 @@ export const NAV_GROUPS = [
     label: 'Menu',
     items: [
       { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
-      { to: '/app/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 6, roles: ['admin', 'teacher'] },
+      { to: '/app/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 0, roles: ['admin', 'teacher'] },
       { to: '/app/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
       { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
       { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
@@ -123,8 +123,8 @@ export const ROUTE_META = {
     description: 'Chào mừng trở lại, hệ thống đang hoạt động ổn định.',
   },
   '/app/cong-dong': {
-    title: 'Cộng đồng Giáo viên & Học liệu',
-    description: 'Không gian chia sẻ kiến thức, tài liệu bài giảng, mẹo luyện thi và thảo luận học thuật.',
+    title: 'Cộng đồng',
+    description: 'Không gian chia sẻ kiến thức, tài liệu',
   },
   '/app/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },

@@ -54,6 +54,14 @@ export default function ImportStepUpload({
         />
       </div>
 
+      {/* Thông báo chính sách giới hạn an toàn */}
+      <div className="flex items-center gap-2.5 px-4 py-2 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-blue-800 max-w-xl mx-auto shadow-2xs">
+        <Info size={15} className="shrink-0 text-blue-600" />
+        <span>
+          <strong>Giới hạn khuyến nghị:</strong> Tối đa <strong>50 từ vựng / lần import</strong> để AI trích xuất chuẩn xác phiên âm IPA và bảo vệ hiệu năng máy chủ.
+        </span>
+      </div>
+
       {/* TAB 1: FILE UPLOAD */}
       {uploadMode === 'file' && (
         <FileUploadTab

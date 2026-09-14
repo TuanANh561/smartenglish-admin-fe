@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:2": "vite --port 5174",
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run",
@@ -14,6 +15,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.9.0",
     "@monaco-editor/react": "^4.7.0",
+    "@stomp/stompjs": "^7.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-table": "^9.1.2",
@@ -31,6 +33,7 @@
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
+    "sockjs-client": "^1.6.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.4.3",

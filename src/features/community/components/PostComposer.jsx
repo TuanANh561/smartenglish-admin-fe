@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { FileText, Image as ImageIcon, Paperclip, Sparkles, X } from 'lucide-react'
+import { FileText, Image as ImageIcon, Loader2, Paperclip, Sparkles, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 export default function PostComposer({
@@ -40,10 +40,11 @@ export default function PostComposer({
           <textarea
             ref={textareaRef}
             rows={3}
+            disabled={isPosting}
             placeholder="Chia sẻ kiến thức, bài giảng hoặc tài liệu với đồng nghiệp..."
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
-            className="w-full resize-none overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none transition-all leading-relaxed"
+            className="w-full resize-none overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none transition-all leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed"
           />
 
           {/* Attached Image Preview */}
@@ -52,8 +53,9 @@ export default function PostComposer({
               <img src={attachedImage} alt="Attachment" className="h-24 w-auto object-cover" />
               <button
                 type="button"
+                disabled={isPosting}
                 onClick={() => setAttachedImage(null)}
-                className="absolute top-1 right-1 rounded-full bg-slate-900/80 p-1 text-white hover:bg-red-600 cursor-pointer"
+                className="absolute top-1 right-1 rounded-full bg-slate-900/80 p-1 text-white hover:bg-red-600 cursor-pointer disabled:opacity-50"
               >
                 <X size={12} />
               </button>
@@ -69,8 +71,9 @@ export default function PostComposer({
               </span>
               <button
                 type="button"
+                disabled={isPosting}
                 onClick={() => setAttachedDoc(null)}
-                className="p-1 text-slate-400 hover:text-red-600 cursor-pointer"
+                className="p-1 text-slate-400 hover:text-red-600 cursor-pointer disabled:opacity-50"
               >
                 <X size={13} />
               </button>
@@ -84,12 +87,13 @@ export default function PostComposer({
         <div className="flex items-center gap-1.5 text-slate-500">
           <button
             type="button"
+            disabled={isPosting}
             onClick={() =>
               setAttachedImage(
                 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
               )
             }
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ImageIcon size={15} className="text-slate-500" />
             <span>Ảnh / Media</span>
@@ -97,10 +101,11 @@ export default function PostComposer({
 
           <button
             type="button"
+            disabled={isPosting}
             onClick={() =>
               setAttachedDoc({ name: 'IELTS_Speaking_Structures.pdf', size: '2.4 MB' })
             }
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-slate-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Paperclip size={15} className="text-slate-500" />
             <span>File PDF</span>
@@ -109,10 +114,14 @@ export default function PostComposer({
           <button
             type="button"
             onClick={handleAiSuggest}
-            disabled={isAiGenerating}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-brand-600 transition-colors cursor-pointer"
+            disabled={isAiGenerating || isPosting}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-brand-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Sparkles size={15} className="text-brand-600" />
+            {isAiGenerating ? (
+              <Loader2 size={15} className="animate-spin text-brand-600" />
+            ) : (
+              <Sparkles size={15} className="text-brand-600" />
+            )}
             <span>{isAiGenerating ? 'Đang tạo...' : 'Gợi ý AI'}</span>
           </button>
         </div>
@@ -122,9 +131,10 @@ export default function PostComposer({
           size="sm"
           onClick={handleCreatePost}
           loading={isPosting}
-          className="bg-navy-800 hover:bg-navy-900 text-white font-semibold px-4"
+          disabled={isPosting || !postContent.trim()}
+          className="bg-navy-800 hover:bg-navy-900 text-white font-semibold px-4 cursor-pointer disabled:cursor-not-allowed"
         >
-          Đăng bài
+          {isPosting ? 'Đang đăng bài...' : 'Đăng bài'}
         </Button>
       </div>
     </div>

@@ -1,4 +1,65 @@
-import { MessageSquare, Search } from 'lucide-react'
+import { Search, UserPlus } from 'lucide-react'
+import Avatar from '@/components/ui/Avatar'
+import { cn } from '@/lib/utils'
+
+export function formatLastMessage(conversation, currentUserId) {
+  const raw = conversation.lastMessage
+  if (!raw || raw === 'Bắt đầu cuộc trò chuyện') {
+    return 'Bắt đầu cuộc trò chuyện'
+  }
+
+  // Determine sender info
+  let senderId = conversation.lastMessageSenderId
+  let senderName = conversation.lastMessageSenderName
+
+  // Fallback to last message in conversation.messages if senderId is missing
+  if (senderId == null && conversation.messages && conversation.messages.length > 0) {
+    const lastMsg = conversation.messages[conversation.messages.length - 1]
+    if (lastMsg) {
+      senderId = lastMsg.senderId ?? (lastMsg.from === 'me' ? currentUserId : null)
+      senderName = lastMsg.senderName || senderName
+    }
+  }
+
+  const isMe =
+    senderId != null &&
+    currentUserId != null &&
+    Number(senderId) === Number(currentUserId)
+
+  const isGroup = conversation.type === 'group'
+
+  // Handle recalled message
+  if (raw === 'Tin nhắn đã được thu hồi' || raw.includes('đã được thu hồi')) {
+    return isMe ? 'Bạn: Tin nhắn đã được thu hồi' : 'Tin nhắn đã được thu hồi'
+  }
+
+  // Determine prefix: "Bạn: " if sent by current user, or "SenderName: " if group chat
+  let prefix = ''
+  if (isMe) {
+    prefix = 'Bạn: '
+  } else if (isGroup && senderName) {
+    prefix = `${senderName}: `
+  }
+
+  // 1. Image preview
+  if (raw.startsWith('[Hình ảnh]')) {
+    return `${prefix}[Hình ảnh]`
+  }
+
+  // 2. Shared post preview
+  if (raw.startsWith('[Chia sẻ bài viết]') || raw.includes('chia sẻ một bài viết')) {
+    return `${prefix}[Đã chia sẻ một bài viết]`
+  }
+
+  // 3. File attachment preview
+  if (raw.startsWith('[Tệp đính kèm]') || raw.startsWith('[Tệp]')) {
+    const fileName = raw.replace(/^\[Tệp( đính kèm)?\]\s*/, '').trim()
+    return fileName ? `${prefix}[Tệp đính kèm] ${fileName}` : `${prefix}[Tệp đính kèm]`
+  }
+
+  // 4. Regular text message
+  return `${prefix}${raw}`
+}
 
 export default function ChatConversationSidebar({
   conversations,
@@ -9,19 +70,36 @@ export default function ChatConversationSidebar({
   getConversationAvatar,
   onOpenConversation,
   onOpenCreateGroup,
+  onOpenFindFriends,
+  pendingRequestsCount = 0,
+  myId,
 }) {
   const totalUnread = conversations.reduce((total, conversation) => total + conversation.unread, 0)
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex-1">
-          <h2 className="text-sm font-bold text-slate-800">Cuộc trò chuyện</h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-bold text-slate-800 truncate">Cuộc trò chuyện</h2>
           <p className="mt-0.5 text-[11px] text-slate-400">
             {totalUnread} tin chưa đọc
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={onOpenFindFriends}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-1 relative"
+            title="Tìm người dùng & Lời mời kết bạn"
+          >
+            <UserPlus size={13} className="text-brand-600" />
+            <span>Tìm bạn</span>
+            {pendingRequestsCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                {pendingRequestsCount}
+              </span>
+            )}
+          </button>
           <button
             type="button"
             onClick={onOpenCreateGroup}
@@ -29,7 +107,6 @@ export default function ChatConversationSidebar({
           >
             Tạo nhóm
           </button>
-          <MessageSquare size={17} className="text-brand-500" />
         </div>
       </div>
 
@@ -48,20 +125,23 @@ export default function ChatConversationSidebar({
         {filteredConversations.map((conversation) => {
           const contact = contacts.find((c) => c.id === conversation.participantId)
           const roleLabel = conversation.participantRole || contact?.roleLabel
-          const isStudent = conversation.participantRole?.includes('Học viên') || contact?.role === 'student'
+          const isTeacher = roleLabel?.includes('Giáo viên')
+          const isStudent = roleLabel?.includes('Học viên')
+          const isAdminRole = roleLabel?.includes('Quản trị')
           const isGroup = conversation.type === 'group' || contact?.isGroup
-          const isAdminRole = conversation.participantRole?.includes('Quản trị viên') || contact?.role === 'admin'
 
           const roleBadgeClass =
-            isStudent
+            isAdminRole
+              ? 'bg-rose-50 text-rose-700'
+              : isTeacher
+              ? 'bg-amber-50 text-amber-700'
+              : isStudent
               ? 'bg-emerald-50 text-emerald-700'
-              : isGroup && roleLabel?.toLowerCase().includes('học viên')
-              ? 'bg-blue-50 text-blue-700'
               : isGroup
               ? 'bg-purple-50 text-purple-700'
-              : isAdminRole
-              ? 'bg-rose-50 text-rose-700'
-              : 'bg-amber-50 text-amber-700'
+              : 'bg-slate-100 text-slate-700'
+
+          const displayLastMessage = formatLastMessage(conversation, myId)
 
           return (
             <button
@@ -72,10 +152,10 @@ export default function ChatConversationSidebar({
             >
               {/* Avatar */}
               <div className="relative shrink-0">
-                <img
+                <Avatar
                   src={getConversationAvatar(conversation)}
-                  alt={conversation.participantName}
-                  className="h-10 w-10 rounded-full object-cover border border-slate-200"
+                  name={conversation.participantName}
+                  size="md"
                 />
                 {conversation.online && (
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
@@ -93,7 +173,14 @@ export default function ChatConversationSidebar({
                       {roleLabel}
                     </span>
                   )}
-                  <p className="truncate text-[11px] text-slate-400">{conversation.lastMessage}</p>
+                  <p
+                    className={cn(
+                      'truncate text-[11px]',
+                      conversation.unread > 0 ? 'font-medium text-slate-700' : 'text-slate-400',
+                    )}
+                  >
+                    {displayLastMessage}
+                  </p>
                 </div>
               </div>
 

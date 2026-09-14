@@ -1,6 +1,6 @@
 import { Bookmark, Download, Heart, MessageSquare, MoreHorizontal, Pencil, Share2, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { cn } from '@/lib/utils'
+import { cn, formatRelativeTime } from '@/lib/utils'
 import PostCommentSection from './PostCommentSection'
 
 export default function PostCard({
@@ -21,9 +21,44 @@ export default function PostCard({
   commentInput,
   onCommentInputChange,
   onAddComment,
+  cardRef,
 }) {
+  const handleDownloadAttachment = () => {
+    if (!post.attachment) return
+    const fileName = post.attachment.name || 'SmartEnglish_Document.pdf'
+    const url = post.attachment.url
+
+    if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:'))) {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      a.target = '_blank'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } else {
+      // Create a client-side document blob for immediate direct download to user's computer
+      const content = `SmartEnglish AI Learning Platform\n\nTài liệu: ${fileName}\nTác giả: ${post.authorName || 'SmartEnglish AI'}\nNgày tải: ${new Date().toLocaleString('vi-VN')}\n\nNội dung tóm tắt bài viết:\n${post.content || ''}\n`
+      const blob = new Blob([content], { type: 'application/octet-stream;charset=utf-8' })
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    }
+
+    toast.success(`Đã tải xuống máy: ${fileName}`)
+  }
+
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3.5">
+    <div
+      ref={cardRef}
+      id={`post-${post.id}`}
+      className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3.5 scroll-mt-24 transition-all duration-700"
+    >
       {/* Post Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -40,7 +75,7 @@ export default function PostCard({
               </span>
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              {post.authorTitle} • {post.createdAt}
+              {post.authorTitle} • {formatRelativeTime(post.createdAt)}
             </p>
           </div>
         </div>
@@ -141,9 +176,7 @@ export default function PostCard({
 
           <button
             type="button"
-            onClick={() =>
-              toast.success(`Đang tải tập tin: ${post.attachment.name}`)
-            }
+            onClick={handleDownloadAttachment}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs transition-colors"
           >
             <Download size={14} /> Tải về

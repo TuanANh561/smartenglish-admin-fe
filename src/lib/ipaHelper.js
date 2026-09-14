@@ -94,21 +94,40 @@ export const IPA_KEYBOARD_GROUPS = [
 ]
 
 let currentAudio = null
+let activePlaySessionId = 0
+
+/**
+ * Kiểm tra xem audioUrl có phải là URL âm thanh hợp lệ hay không
+ */
+export function isValidAudioUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  const trimmed = url.trim()
+  if (!trimmed || trimmed === '""' || trimmed === "''") return false
+  const lower = trimmed.toLowerCase()
+  if (lower === 'null' || lower === 'undefined' || lower === 'none' || lower === 'n/a') return false
+  return /^https?:\/\/.+/i.test(trimmed) || trimmed.startsWith('blob:') || trimmed.startsWith('data:')
+}
 
 /**
  * Dừng mọi âm thanh đang phát (cả file MP3 và SpeechSynthesis)
  */
 export function stopAudio() {
   dialogueStopRequested = true
+  activePlaySessionId++ // Làm mất hiệu lực mọi callback hoặc playPromise của các từ trước đó
+
   if (currentAudio) {
+    const audioToStop = currentAudio
+    currentAudio = null
     try {
-      currentAudio.pause()
-      currentAudio.currentTime = 0
+      audioToStop.pause()
+      audioToStop.currentTime = 0
+      audioToStop.removeAttribute('src') // Cắt kết nối stream tải về
+      audioToStop.load() // Huỷ ngay request mạng dở dang của browser
     } catch (e) {
       // Ignore
     }
-    currentAudio = null
   }
+
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel()
@@ -120,33 +139,64 @@ export function stopAudio() {
 
 /**
  * Phát âm ra loa (Audio Player):
- * - Nếu có URL file mp3 thì phát file thu âm thật
- * - Luôn có Web Speech API (speechSynthesis) đảm bảo phát ra tiếng 100% không tốn token
+ * - Nếu audioUrl null/rỗng/invalid -> dùng ngay Web Speech API của trình duyệt
+ * - Nếu có URL file mp3 -> phát file thu âm thật, nếu lỗi hoặc bị chặn -> fallback sang Web Speech API
+ * - Ngăn chặn hoàn toàn hiện tượng phát nhầm âm của từ trước đó khi click liên tiếp các từ
  */
-export function speakWord(text, audioUrl = null) {
+export function speakWord(text, audioUrl = null, onEnd = null) {
   stopAudio()
-  if (!text && !audioUrl) return
+  const cleanText = String(text || '').replace(/[[\]/]/g, '').trim()
+  if (!cleanText && !audioUrl) {
+    if (onEnd) onEnd()
+    return
+  }
 
-  // 1. Thử phát file audio MP3 trước nếu có
-  if (audioUrl) {
+  const sessionId = activePlaySessionId
+
+  // 1. Kiểm tra audioUrl có hợp lệ không (loại bỏ null, undefined, rỗng, fake text)
+  if (isValidAudioUrl(audioUrl)) {
+    const validUrl = audioUrl.trim()
     try {
-      const audio = new Audio(audioUrl)
+      const audio = new Audio(validUrl)
       currentAudio = audio
+
+      audio.onended = () => {
+        if (currentAudio === audio) {
+          currentAudio = null
+        }
+        if (sessionId === activePlaySessionId && onEnd) {
+          onEnd()
+        }
+      }
+
+      audio.onerror = () => {
+        // Chỉ fallback sang Web Speech API nếu phiên này vẫn là phiên đang chọn phát hiện tại
+        if (sessionId === activePlaySessionId) {
+          speakWithSpeechSynthesis(cleanText, sessionId, onEnd)
+        }
+      }
+
       const playPromise = audio.play()
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Nếu trình duyệt chặn phát audio tự động hoặc link lỗi, fallback sang Web Speech
-          speakWithSpeechSynthesis(text)
+        playPromise.catch((err) => {
+          // Bị huỷ do người dùng bấm từ khác (stopAudio gọi pause) -> Tuyệt đối KHÔNG đọc từ cũ
+          if (err && (err.name === 'AbortError' || err.message?.toLowerCase().includes('interrupted'))) {
+            return
+          }
+          // Lỗi phát link MP3 thật -> Chỉ fallback nếu vẫn đúng session hiện tại
+          if (sessionId === activePlaySessionId) {
+            speakWithSpeechSynthesis(cleanText, sessionId, onEnd)
+          }
         })
         return
       }
     } catch (e) {
-      // Fallback
+      // Fallback xuống Web Speech
     }
   }
 
-  // 2. Dùng Web Speech API của trình duyệt
-  speakWithSpeechSynthesis(text)
+  // 2. Nếu audioUrl là null, rỗng, không hợp lệ -> Dùng ngay Web Speech API của trình duyệt
+  speakWithSpeechSynthesis(cleanText, sessionId, onEnd)
 }
 
 let dialogueStopRequested = false
@@ -237,12 +287,24 @@ export function parseDialogueSpeakers(text, speaker1Name = '', speaker2Name = ''
   return { speakers, turns }
 }
 
-function speakWithSpeechSynthesis(text, onEnd = null) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    if (onEnd) onEnd()
+    return
+  }
+
+  // Nếu session đã bị hủy bởi một thao tác bấm mới -> Tuyệt đối không phát
+  if (expectedSessionId !== null && expectedSessionId !== activePlaySessionId) {
+    return
+  }
+
   try {
     window.speechSynthesis.cancel()
-    const clean = String(text || '').replace(/[\/\[\]]/g, '').trim()
-    if (!clean) return
+    const clean = String(text || '').replace(/[[\]/]/g, '').trim()
+    if (!clean) {
+      if (onEnd) onEnd()
+      return
+    }
 
     const utterance = new SpeechSynthesisUtterance(clean)
     utterance.lang = 'en-US'
@@ -250,16 +312,36 @@ function speakWithSpeechSynthesis(text, onEnd = null) {
 
     const voices = getEnglishVoices()
     const englishVoice =
-      voices.find((v) => v.name.includes('Natural') || v.name.includes('Google')) ||
+      voices.find((v) => v.name.includes('Natural') || v.name.includes('Google US') || v.name.includes('Samantha') || v.name.includes('David')) ||
       voices.find((v) => v.lang.startsWith('en-US')) ||
+      voices.find((v) => v.lang.startsWith('en')) ||
       voices[0]
     if (englishVoice) {
       utterance.voice = englishVoice
     }
 
-    if (onEnd) {
-      utterance.onend = () => onEnd()
-      utterance.onerror = () => onEnd()
+    utterance.onend = () => {
+      if (expectedSessionId === null || expectedSessionId === activePlaySessionId) {
+        if (onEnd) onEnd()
+      }
+    }
+
+    utterance.onerror = (e) => {
+      if (e?.error === 'canceled' || e?.error === 'interrupted') {
+        return
+      }
+      if (expectedSessionId === null || expectedSessionId === activePlaySessionId) {
+        if (onEnd) onEnd()
+      }
+    }
+
+    // Double check session id trước khi speak
+    if (expectedSessionId !== null && expectedSessionId !== activePlaySessionId) {
+      return
+    }
+
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
     }
 
     window.speechSynthesis.speak(utterance)

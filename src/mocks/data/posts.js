@@ -27,7 +27,7 @@ export const INITIAL_POSTS = [
       {
         id: 'cmt-1',
         authorName: 'Vũ Đức Thắng',
-        authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        authorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
         content: 'Cấu trúc số 2 và 3 áp dụng vào bài thi thực tế rất mượt mà cô Mai ơi! Cảm ơn cô đã chia sẻ.',
         createdAt: '1 giờ trước',
         likesCount: 4,
@@ -35,7 +35,7 @@ export const INITIAL_POSTS = [
       {
         id: 'cmt-2',
         authorName: 'Nguyễn Anh Tuấn',
-        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        authorAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
         content: 'Tài liệu quá chi tiết ạ, em vừa tải về làm tài liệu ôn thi tuần sau luôn!',
         createdAt: '45 phút trước',
         likesCount: 2,
@@ -50,7 +50,7 @@ export const INITIAL_POSTS = [
     authorEmail: 'thang.vd@gmail.com',
     authorRole: 'Giáo viên',
     authorTitle: 'IELTS Trainer & Exam Reviewer',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    authorAvatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
     createdAt: '5 giờ trước',
     content:
       'Vừa thử nghiệm tính năng AI chấm điểm Writing Task 2 mới của SmartEnglish AI trên 30 bài làm của lớp Advanced. Kết quả nhận xét chi tiết từng tiêu chí TR, CC, LR, GRA và phát hiện lỗi ngữ pháp rất sát thực tế! Các thầy cô nên thử tích hợp vào quy trình giao bài tập nhé. 🤖📝 #AI_in_Education #WritingTips #SmartEnglish',
@@ -120,7 +120,7 @@ export const TOP_TEACHERS = [
     id: 't-2',
     name: 'Vũ Đức Thắng',
     role: 'IELTS Examiner & Coach',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
     isFollowing: false,
   },
   {

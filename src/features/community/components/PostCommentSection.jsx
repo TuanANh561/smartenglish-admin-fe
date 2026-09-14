@@ -1,4 +1,5 @@
 import { Send } from 'lucide-react'
+import { formatRelativeTime } from '@/lib/utils'
 
 export default function PostCommentSection({
   postId,
@@ -21,7 +22,7 @@ export default function PostCommentSection({
               <div className="flex-1 rounded-xl bg-slate-50 p-2.5 text-xs space-y-0.5 border border-slate-100">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900">{cmt.authorName}</span>
-                  <span className="text-[10px] text-slate-400">{cmt.createdAt}</span>
+                  <span className="text-[10px] text-slate-400">{formatRelativeTime(cmt.createdAt)}</span>
                 </div>
                 <p className="text-slate-700">{cmt.content}</p>
               </div>

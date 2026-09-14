@@ -115,51 +115,53 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
 
       {/* ── Footer Navigation ────────────────────────────────────────── */}
       {hook.step !== 4 && (
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-          {hook.step > 1 ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={ArrowLeft}
-              onClick={() => hook.setStep((prev) => Math.max(1, prev - 1))}
-              disabled={hook.step === 2}
-            >
-              Quay lại
-            </Button>
-          ) : (
-            <div />
-          )}
-
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={onClose}>
-              Hủy bỏ
-            </Button>
-
-            {hook.step === 1 && (
+        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+          <div className="flex items-center justify-between">
+            {hook.step > 1 ? (
               <Button
+                variant="secondary"
                 size="sm"
-                icon={Upload}
-                onClick={hook.startAiParsing}
-                className="bg-brand-600 hover:bg-brand-700 text-white font-semibold"
+                icon={ArrowLeft}
+                onClick={() => hook.setStep((prev) => Math.max(1, prev - 1))}
+                disabled={hook.step === 2 || hook.isSubmitting}
               >
-                Bắt đầu trích xuất
+                Quay lại
               </Button>
+            ) : (
+              <div />
             )}
 
-            {hook.step === 3 && (
-              <Button
-                size="sm"
-                icon={Check}
-                onClick={hook.handleConfirmImport}
-                disabled={hook.selectedIds.size === 0 || hook.isSubmitting}
-                loading={hook.isSubmitting}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
-              >
-                {hook.isSubmitting
-                  ? 'Đang lưu vào cơ sở dữ liệu...'
-                  : `Xác nhận Import (${hook.selectedIds.size}) bản ghi`}
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={onClose} disabled={hook.isSubmitting}>
+                Hủy bỏ
               </Button>
-            )}
+
+              {hook.step === 1 && (
+                <Button
+                  size="sm"
+                  icon={Upload}
+                  onClick={hook.startAiParsing}
+                  className="bg-brand-600 hover:bg-brand-700 text-white font-semibold"
+                >
+                  Bắt đầu trích xuất
+                </Button>
+              )}
+
+              {hook.step === 3 && (
+                <Button
+                  size="sm"
+                  icon={Check}
+                  onClick={hook.handleConfirmImport}
+                  disabled={hook.selectedIds.size === 0 || hook.isSubmitting}
+                  loading={hook.isSubmitting}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
+                >
+                  {hook.isSubmitting
+                    ? 'Đang lưu vào CSDL...'
+                    : `Xác nhận Import (${hook.selectedIds.size}) bản ghi`}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
