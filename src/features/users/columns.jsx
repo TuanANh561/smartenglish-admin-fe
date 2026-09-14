@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { Lock, Unlock } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
-import { cn, formatDate, formatRelativeTime } from '@/lib/utils'
+import { cn, formatDate, formatRelativeTime, maskEmail } from '@/lib/utils'
 
 const ROLE_LABEL = { admin: 'Quản trị viên', teacher: 'Giáo viên', student: 'Học viên' }
 const PLAN_LABEL = {
@@ -33,7 +33,7 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
+              <p className="text-xs text-slate-500 mt-0.5 font-mono">{maskEmail(user.email)}</p>
             </div>
           </div>
         )
@@ -143,7 +143,7 @@ export const userColumns = buildUserColumns({ isAdmin: false })
 /** Cột phẳng dùng khi xuất CSV — không lấy JSX từ userColumns. */
 export const userCsvColumns = [
   { key: 'displayName', label: 'Họ tên' },
-  { key: 'email', label: 'Email' },
+  { key: 'email', label: 'Email', value: (row) => maskEmail(row.email) },
   { key: 'role', label: 'Vai trò', value: (row) => ROLE_LABEL[row.role] ?? row.role },
   { key: 'plan', label: 'Gói', value: (row) => PLAN_LABEL[row.plan] ?? row.plan },
   { key: 'cefrLevel', label: 'Trình độ' },

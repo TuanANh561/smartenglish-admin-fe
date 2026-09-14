@@ -65,10 +65,17 @@ export function formatPercent(value) {
 }
 
 export function maskEmail(email) {
-  if (!email || typeof email !== 'string' || !email.includes('@')) return '••••••••'
-  const [name, domain] = email.split('@')
-  if (name.length <= 2) return `${name.charAt(0)}***@${domain}`
-  return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`
+  if (!email || typeof email !== 'string') return '••••••••'
+  const trimmed = email.trim()
+  if (!trimmed.includes('@')) {
+    if (trimmed.length <= 4) return '••••••••'
+    return `${trimmed.slice(0, 2)}*******${trimmed.slice(-3)}`
+  }
+  const [name, domain] = trimmed.split('@')
+  const prefix = name.length >= 2 ? name.slice(0, 2) : name.padEnd(2, '*')
+  const domainParts = domain ? domain.split('.') : []
+  const ext = domainParts.length > 1 ? domainParts[domainParts.length - 1] : (domain || 'com')
+  return `${prefix}*******${ext}`
 }
 
 export function maskIdentityCard(card) {

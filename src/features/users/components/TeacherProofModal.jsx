@@ -2,6 +2,7 @@ import { FileText, Mail, Phone, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
+import { maskEmail, maskIdentityCard, maskPhone } from '@/lib/utils'
 
 /**
  * Modal hiển thị chi tiết hồ sơ & tệp minh chứng bằng cấp của giáo viên ứng tuyển
@@ -28,16 +29,16 @@ export default function TeacherProofModal({ registration, onClose }) {
           <div className="pt-1.5 border-t border-slate-200/60 space-y-1 text-slate-600">
             <p className="flex items-center gap-1.5">
               <Mail size={12} className="text-slate-400 shrink-0" />
-              <span>Email: {registration.email}</span>
+              <span>Email: {maskEmail(registration.email)}</span>
             </p>
             <p className="flex items-center gap-1.5">
               <ShieldCheck size={12} className="text-slate-400 shrink-0" />
-              <span>Số CCCD: {registration.identityCard}</span>
+              <span>Số CCCD: {maskIdentityCard(registration.identityCard)}</span>
             </p>
             {registration.phone && (
               <p className="flex items-center gap-1.5">
                 <Phone size={12} className="text-slate-400 shrink-0" />
-                <span>SĐT: {registration.phone}</span>
+                <span>SĐT: {maskPhone(registration.phone)}</span>
               </p>
             )}
           </div>

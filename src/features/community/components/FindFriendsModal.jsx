@@ -40,8 +40,7 @@ export default function FindFriendsModal({
       if (Number(u.id) === Number(myId)) return false
       const matchQuery =
         !q ||
-        (u.name || u.fullName || u.displayName || '').toLowerCase().includes(q) ||
-        (u.email || '').toLowerCase().includes(q)
+        (u.name || u.fullName || u.displayName || u.username || '').toLowerCase().includes(q)
       const uRole = (u.role || '').toUpperCase()
       const matchRole =
         roleFilter === 'ALL' ||
@@ -122,7 +121,7 @@ export default function FindFriendsModal({
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Tìm theo tên hoặc email..."
+                  placeholder="Tìm theo tên người dùng..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs text-slate-800 outline-none focus:border-brand-500"
@@ -153,7 +152,7 @@ export default function FindFriendsModal({
                   const isFriend = friendUserIds.has(uId)
                   const isSent = sentRequestUserIds.has(uId)
                   const pendingReq = pendingRequests.find((r) => Number(r.requesterId) === uId)
-                  const name = u.name || u.fullName || u.displayName || u.email
+                  const name = u.name || u.fullName || u.displayName || 'Người dùng'
                   const avatar = u.avatarUrl || u.avatar
 
                   return (
@@ -179,7 +178,6 @@ export default function FindFriendsModal({
                                 : 'Học viên'}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
                         </div>
                       </div>
 
