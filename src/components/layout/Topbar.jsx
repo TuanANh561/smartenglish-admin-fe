@@ -34,7 +34,7 @@ function Topbar({ actions }) {
   }, [isScheduleOpen])
 
   // Điều chỉnh tiêu đề và mô tả phù hợp theo từng vai trò
-  let title = ROUTE_META[pathname]?.title ?? 'Trang quản trị'
+  let title = ROUTE_META[pathname]?.title ?? ''
   let description = ROUTE_META[pathname]?.description ?? ''
 
   if (pathname === '/') {

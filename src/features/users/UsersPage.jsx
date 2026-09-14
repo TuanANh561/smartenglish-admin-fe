@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Tabs from '@/components/ui/Tabs'
 import { useDataTable } from '@/components/ui/DataTable/useDataTable'
+import { maskEmail } from '@/lib/utils'
 import {
   getUsers,
   lockUser,
@@ -189,8 +190,8 @@ export default function UsersPage() {
         title={lockTarget?.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
         description={
           lockTarget?.isActive
-            ? `Bạn có chắc chắn muốn khóa tài khoản "${lockTarget?.displayName}" (${lockTarget?.email})?`
-            : `Xác nhận mở khóa tài khoản "${lockTarget?.displayName}" (${lockTarget?.email})?`
+            ? `Bạn có chắc chắn muốn khóa tài khoản "${lockTarget?.displayName}" (${maskEmail(lockTarget?.email)})?`
+            : `Xác nhận mở khóa tài khoản "${lockTarget?.displayName}" (${maskEmail(lockTarget?.email)})?`
         }
         confirmText={isProcessing ? 'Đang xử lý...' : lockTarget?.isActive ? 'Khóa tài khoản' : 'Mở khóa'}
         cancelText="Hủy"

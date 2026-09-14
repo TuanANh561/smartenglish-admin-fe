@@ -71,6 +71,7 @@ export const ENDPOINTS = {
   },
   courses: {
     list: '/admin/courses',
+    tree: '/admin/courses/tree',
     detail: '/admin/courses/:id',
     create: '/admin/courses',
     update: '/admin/courses/:id',
@@ -79,12 +80,13 @@ export const ENDPOINTS = {
   },
   lessons: {
     list: '/admin/lessons',
-    byCourse: '/admin/courses/:courseId/lessons',
+    byCourse: '/admin/lessons',
     detail: '/admin/lessons/:id',
     create: '/admin/lessons',
     update: '/admin/lessons/:id',
     remove: '/admin/lessons/:id',
-    reorder: '/admin/courses/:courseId/lessons/reorder',
+    reorder: '/admin/lessons/reorder',
+    generateAi: '/admin/lessons/generate-ai',
   },
   readings: {
     list: '/admin/readings',

@@ -406,16 +406,8 @@ function QuizBankPage() {
       {/* TAB 1: Ngân hàng câu hỏi (Chỉ câu hỏi đơn lẻ) */}
       {activeTab === 'questions' && (
         <Card>
-          <DataTableToolbar
-            searchValue={search}
-            onSearchChange={(value) => {
-              setSearch(value)
-              setPage(1)
-            }}
-            searchPlaceholder="Tìm theo câu hỏi hoặc từ vựng..."
-          />
 
-          <div className="mt-4">
+          <div>
             <DataTable
               columns={columns}
               data={pageData}
