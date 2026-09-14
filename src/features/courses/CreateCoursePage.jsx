@@ -342,9 +342,6 @@ export default function CreateCoursePage() {
                 </span>
               )}
             </h1>
-            <p className="text-xs text-ink-muted">
-              Đồng bộ dữ liệu bảng `content.courses` & cấu trúc bài học hệ thống
-            </p>
           </div>
         </div>
 

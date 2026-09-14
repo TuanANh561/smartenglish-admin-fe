@@ -104,7 +104,6 @@ export default function CourseFormGeneral({
             <Info size={16} className="text-brand-600" />
             Thông Tin Chương Trình & Tiêu Đề
           </h3>
-          <span className="text-[11px] text-ink-muted">Khớp dữ liệu bảng `content.courses`</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
