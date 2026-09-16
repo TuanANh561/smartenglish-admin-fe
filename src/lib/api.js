@@ -131,7 +131,9 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/courses') ||
       endpoint.startsWith('/admin/lessons') ||
       endpoint.startsWith('/admin/upload') ||
-      endpoint.startsWith('/content/courses')
+      endpoint.startsWith('/content/courses') ||
+      endpoint.startsWith('/api/v1/teacher') ||
+      endpoint.startsWith('/teacher')
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
       return await resolveMock(method, endpoint, {
