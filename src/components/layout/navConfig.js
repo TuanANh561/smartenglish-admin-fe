@@ -50,7 +50,7 @@ export const NAV_GROUPS = [
       { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
       { to: '/app/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 0, roles: ['admin', 'teacher'] },
       { to: '/app/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
-      { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher'] },
+      { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher', 'admin'] },
       { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
     ],
   },

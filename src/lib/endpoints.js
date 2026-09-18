@@ -229,4 +229,13 @@ export const ENDPOINTS = {
     markAsRead: '/api/v1/social/conversations/:id/read',
     typing: '/api/v1/social/conversations/:id/typing',
   },
+
+  // ── teacher-service ─────────────────────────────────────────────
+  teacher: {
+    classes: '/api/v1/teacher/classes',
+    classDetail: '/api/v1/teacher/classes/:id',
+    classMembers: '/api/v1/teacher/classes/:id/members',
+    removeMember: '/api/v1/teacher/classes/:id/members/:userId',
+    assignments: '/api/v1/teacher/classes/:id/assignments',
+  },
 }

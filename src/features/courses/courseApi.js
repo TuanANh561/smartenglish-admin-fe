@@ -973,5 +973,56 @@ export async function uploadCourseImage(file, folder = 'courses/thumbnails') {
   }
 }
 
+/**
+ * Tải video bài giảng lên Cloudflare R2 qua Content Service API (0đ phí băng thông)
+ * @param {File} file tệp video mp4/webm
+ * @param {string} folder thư mục lưu trữ, vd: courses/1/lessons/2/videos
+ * @param {string} title tiêu đề bài học để sinh tên file chuẩn đẹp
+ * @param {function} onProgress callback nhận % tiến trình upload (0 - 100)
+ * @returns {Promise<{ url: string, fileName: string, size: number, isR2: boolean, message: string }>}
+ */
+export async function uploadCourseVideo(file, folder = 'courses/videos', title = '', onProgress = null) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('folder', folder)
+  if (title) {
+    formData.append('title', title)
+  }
 
+  const { http } = await import('@/lib/api')
 
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        onProgress(percentCompleted)
+      }
+    },
+  }
+
+  try {
+    const res = await http.post('/admin/courses/upload/video', formData, config)
+    return res?.data || res
+  } catch (e) {
+    const res = await http.post('/admin/upload/video', formData, config)
+    return res?.data || res
+  }
+}
+
+/**
+ * Xóa video bài giảng trên Cloudflare R2
+ * @param {string} videoUrl đường dẫn URL video cần xóa
+ */
+export async function deleteCourseVideo(videoUrl) {
+  if (!videoUrl) return null
+  const { http } = await import('@/lib/api')
+  try {
+    return await http.delete('/admin/upload/video', { params: { videoUrl } })
+  } catch (err) {
+    console.warn('Lỗi khi xóa video trên Cloudflare R2:', err)
+    return null
+  }
+}

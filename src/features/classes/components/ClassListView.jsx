@@ -1,30 +1,106 @@
-import { useMemo, useState } from 'react'
-import { Eye, Pencil, Plus, Search, SlidersHorizontal, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import Pagination from '@/components/ui/Pagination'
-import { CLASSES, CLASS_STATUS, LEVEL_COLOR } from '@/mocks/data/classes'
+import { CLASS_STATUS, LEVEL_COLOR } from '@/mocks/data/classes'
 import { useAuthStore } from '@/store/authStore'
+import { createClass, deleteClass, getTeacherClasses, updateClass } from '../classApi'
+import ClassFormModal from './ClassFormModal'
+
+const STATUS_FILTERS = [
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'ACTIVE', label: 'Đang diễn ra' },
+  { value: 'UPCOMING', label: 'Sắp diễn ra' },
+  { value: 'ENDED', label: 'Đã kết thúc' },
+]
 
 export default function ClassListView({ onViewClass }) {
   const user = useAuthStore((s) => s.user)
+  const [classes, setClasses] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
-  const PAGE_SIZE = 4
+  const PAGE_SIZE = 5
 
-  const teacherClasses = useMemo(() => {
-    if (!user || user.role === 'admin') return CLASSES
-    return CLASSES.filter(
-      (c) =>
-        c.teacherEmail === user.email ||
-        c.teacherName === user.displayName ||
-        c.teacherName === 'Hoàng Thị Mai',
-    )
-  }, [user])
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingClass, setEditingClass] = useState(null)
 
-  const filtered = teacherClasses.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.code.toLowerCase().includes(search.toLowerCase()),
-  )
+  const loadClasses = async () => {
+    setLoading(true)
+    try {
+      // Nếu là giáo viên, truyền teacherId. Admin thì lấy tất cả.
+      const teacherId = user?.role === 'teacher' ? (user.id || 2) : undefined
+      const data = await getTeacherClasses({
+        teacherId,
+        status: statusFilter || undefined,
+        search: search.trim() || undefined,
+      })
+      setClasses(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.warn('Lỗi khi tải danh sách lớp học từ API:', err)
+      setClasses([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadClasses()
+  }, [user, statusFilter])
+
+  // Debounced or direct search on Enter / button
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      setPage(1)
+      loadClasses()
+    }
+  }
+
+  const handleOpenCreate = () => {
+    setEditingClass(null)
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEdit = (cls, e) => {
+    e.stopPropagation()
+    setEditingClass(cls)
+    setIsModalOpen(true)
+  }
+
+  const handleDeleteClass = async (cls, e) => {
+    e.stopPropagation()
+    if (window.confirm(`Bạn có chắc chắn muốn xóa lớp học "${cls.name}" không?`)) {
+      try {
+        await deleteClass(cls.id)
+        await loadClasses()
+      } catch (err) {
+        alert(err?.message || 'Không thể xóa lớp học này')
+      }
+    }
+  }
+
+  const handleFormSubmit = async (payload) => {
+    if (editingClass) {
+      await updateClass(editingClass.id, payload)
+    } else {
+      const teacherId = user?.id || 2
+      await createClass({
+        ...payload,
+        teacherId,
+      })
+    }
+    await loadClasses()
+  }
+
+  // Client-side pagination
+  const filtered = classes.filter((c) => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    const name = (c.name || '').toLowerCase()
+    const code = (c.code || c.joinCode || '').toLowerCase()
+    return name.includes(q) || code.includes(q)
+  })
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -39,24 +115,32 @@ export default function ClassListView({ onViewClass }) {
             <Search size={18} className="shrink-0 text-slate-400" />
             <input
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Tìm kiếm tên lớp, mã lớp..."
-              className="w-full max-w-md text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Tìm kiếm tên lớp, mã lớp (nhấn Enter)..."
+              className="w-full max-w-sm text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
             />
           </div>
+
           <div className="flex shrink-0 items-center gap-2.5">
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setPage(1)
+              }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer focus:outline-none"
             >
-              <SlidersHorizontal size={14} className="text-slate-500" />
-              <span>Bộ lọc</span>
-            </button>
+              {STATUS_FILTERS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+
             <button
               type="button"
+              onClick={handleOpenCreate}
               className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
             >
               <Plus size={15} />
@@ -71,7 +155,7 @@ export default function ClassListView({ onViewClass }) {
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-3.5">TÊN LỚP</th>
-                <th className="px-6 py-3.5">MÃ LỚP</th>
+                <th className="px-6 py-3.5">MÃ THAM GIA</th>
                 <th className="px-6 py-3.5 text-center">SỐ HỌC VIÊN</th>
                 <th className="px-6 py-3.5 text-center">SỐ BÀI TẬP</th>
                 <th className="px-6 py-3.5">TRẠNG THÁI</th>
@@ -79,16 +163,25 @@ export default function ClassListView({ onViewClass }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paged.length === 0 ? (
+              {loading ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-sm text-slate-400">
-                    Không tìm thấy lớp nào phù hợp
+                    Đang tải danh sách lớp học...
+                  </td>
+                </tr>
+              ) : paged.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                    Không tìm thấy lớp học nào phù hợp
                   </td>
                 </tr>
               ) : (
                 paged.map((cls) => {
-                  const statusMeta = CLASS_STATUS[cls.status]
-                  const levelStyle = LEVEL_COLOR[cls.level] ?? LEVEL_COLOR.B1
+                  const statusKey = (cls.status || 'ACTIVE').toLowerCase()
+                  const statusMeta = CLASS_STATUS[statusKey] || CLASS_STATUS.active
+                  const levelKey = cls.cefrTarget || cls.level || 'B1'
+                  const levelStyle = LEVEL_COLOR[levelKey] ?? LEVEL_COLOR.B1
+
                   return (
                     <tr
                       key={cls.id}
@@ -102,40 +195,56 @@ export default function ClassListView({ onViewClass }) {
                             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold shadow-2xs"
                             style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
                           >
-                            {cls.level}
+                            {levelKey}
                           </span>
-                          <span className="font-bold text-slate-900 text-sm tracking-tight">
-                            {cls.name}
-                          </span>
+                          <div>
+                            <span className="font-bold text-slate-900 text-sm tracking-tight block">
+                              {cls.name}
+                            </span>
+                            {cls.description && (
+                              <span className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                                {cls.description}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
+
                       {/* Mã lớp */}
-                      <td className="px-6 py-4.5 font-mono text-xs font-medium text-slate-500">
-                        {cls.code}
+                      <td className="px-6 py-4.5 font-mono text-xs font-semibold text-brand-600">
+                        {cls.joinCode || cls.code || 'CHƯA CÓ'}
                       </td>
+
                       {/* Số học viên */}
                       <td className="px-6 py-4.5 text-center font-bold text-slate-800 text-sm">
-                        {cls.studentCount}
+                        {cls.studentCount ?? 0}
+                        {cls.maxStudents && (
+                          <span className="text-slate-400 text-xs font-normal">
+                            {' '}/ {cls.maxStudents}
+                          </span>
+                        )}
                       </td>
+
                       {/* Số bài tập */}
                       <td className="px-6 py-4.5 text-center text-sm font-medium text-slate-600">
-                        {cls.assignmentCount}
+                        {cls.assignmentCount ?? 0}
                       </td>
+
                       {/* Trạng thái */}
                       <td className="px-6 py-4.5">
                         <span
                           className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
                           style={{
                             backgroundColor:
-                              cls.status === 'active'
+                              statusKey === 'active'
                                 ? '#ecfdf5'
-                                : cls.status === 'upcoming'
+                                : statusKey === 'upcoming'
                                   ? '#fef3c7'
                                   : '#f1f5f9',
                             color:
-                              cls.status === 'active'
+                              statusKey === 'active'
                                 ? '#059669'
-                                : cls.status === 'upcoming'
+                                : statusKey === 'upcoming'
                                   ? '#d97706'
                                   : '#475569',
                           }}
@@ -147,6 +256,7 @@ export default function ClassListView({ onViewClass }) {
                           <span>{statusMeta.label}</span>
                         </span>
                       </td>
+
                       {/* Thao tác */}
                       <td className="px-6 py-4.5">
                         <div className="flex items-center justify-end gap-1 text-slate-400">
@@ -163,7 +273,7 @@ export default function ClassListView({ onViewClass }) {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => handleOpenEdit(cls, e)}
                             className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors"
                             title="Chỉnh sửa"
                           >
@@ -171,7 +281,7 @@ export default function ClassListView({ onViewClass }) {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => handleDeleteClass(cls, e)}
                             className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors"
                             title="Xóa"
                           >
@@ -188,18 +298,28 @@ export default function ClassListView({ onViewClass }) {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-          <p className="text-xs text-slate-500">
-            Hiển thị{' '}
-            <strong>
-              {filtered.length === 0 ? 0 : Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}
-            </strong>
-            -<strong>{Math.min(page * PAGE_SIZE, filtered.length)}</strong> trong tổng số{' '}
-            <strong>{filtered.length}</strong> lớp học
-          </p>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </div>
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+            <p className="text-xs text-slate-500">
+              Hiển thị{' '}
+              <strong>
+                {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}
+              </strong>
+              -<strong>{Math.min(page * PAGE_SIZE, filtered.length)}</strong> trong tổng số{' '}
+              <strong>{filtered.length}</strong> lớp học
+            </p>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </div>
+        )}
       </div>
+
+      {/* Create / Edit Modal */}
+      <ClassFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={editingClass}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   )
 }

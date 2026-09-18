@@ -14,7 +14,7 @@ import {
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
-import { generateLessonBlocksWithAi, uploadCourseImage } from '../courseApi'
+import { generateLessonBlocksWithAi, uploadCourseImage, uploadCourseVideo } from '../courseApi'
 
 // Sub-components đã được tách module
 import LessonVocabTab from './lesson/LessonVocabTab'
@@ -74,8 +74,12 @@ export default function QuickLessonModal({
   const [jsonError, setJsonError] = useState('')
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false)
   const [uploadAttachmentMsg, setUploadAttachmentMsg] = useState(null)
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false)
+  const [uploadVideoProgress, setUploadVideoProgress] = useState(0)
+  const [uploadVideoMsg, setUploadVideoMsg] = useState(null)
   const chatEndRef = useRef(null)
   const attachmentInputRef = useRef(null)
+  const videoInputRef = useRef(null)
 
   useEffect(() => {
     if (isAiChatOpen) {
@@ -273,6 +277,83 @@ export default function QuickLessonModal({
       fileSize: '',
     })
     setUploadAttachmentMsg(null)
+  }
+
+  // --- Handlers cho Video Bài Giảng (Cloudflare R2) ---
+  const handleVideoFileSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const sizeInMb = file.size / (1024 * 1024)
+    const formattedSize =
+      sizeInMb >= 1 ? `${sizeInMb.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`
+
+    const fileName = file.name
+    const videoTitle = videoBlock.title || fileName.replace(/\.[^/.]+$/, '')
+
+    // Trích xuất thời lượng từ file video thực tế
+    try {
+      const tempVideo = document.createElement('video')
+      tempVideo.preload = 'metadata'
+      tempVideo.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(tempVideo.src)
+        const durationSec = Math.round(tempVideo.duration) || 300
+        updateBlock('video', { durationSeconds: durationSec })
+      }
+      tempVideo.src = URL.createObjectURL(file)
+    } catch {
+      // Bỏ qua nếu browser chặn tạo blob video metadata
+    }
+
+    setIsUploadingVideo(true)
+    setUploadVideoProgress(0)
+    setUploadVideoMsg({ type: 'info', text: `Đang tải tệp video "${fileName}" lên Cloudflare R2...` })
+
+    try {
+      const courseId = lessonModal.courseId || 'general'
+      const folder = `courses/${courseId}/videos`
+      const res = await uploadCourseVideo(file, folder, videoTitle, (percent) => {
+        setUploadVideoProgress(percent)
+      })
+
+      const publicUrl = res.url || res.data?.url || (typeof res === 'string' ? res : '')
+
+      updateBlock('video', {
+        title: videoTitle,
+        fileName: res.fileName || fileName,
+        fileSize: formattedSize,
+        videoUrl: publicUrl,
+        isR2: res.isR2 ?? true,
+      })
+
+      setUploadVideoMsg({
+        type: 'success',
+        text: `Tải video "${fileName}" lên Cloudflare R2 thành công (0đ phí băng thông)!`,
+      })
+    } catch (err) {
+      console.error('Lỗi khi tải video lên Cloudflare R2:', err)
+      setUploadVideoMsg({
+        type: 'warning',
+        text: `Không thể tải video lên Cloudflare R2: ${err.message || 'Lỗi kết nối'}. Vui lòng thử lại.`,
+      })
+    } finally {
+      setIsUploadingVideo(false)
+      if (videoInputRef.current) {
+        videoInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveVideo = () => {
+    updateBlock('video', {
+      videoUrl: '',
+      fileName: '',
+      fileSize: '',
+    })
+    setUploadVideoMsg({
+      type: 'info',
+      text: 'Đã gỡ bỏ video. Khi bạn lưu bài học, hệ thống sẽ tự động dọn rác video cũ trên Cloudflare R2.',
+    })
   }
 
   // --- JSON View & Edit ---
@@ -559,6 +640,12 @@ export default function QuickLessonModal({
                   videoBlock={videoBlock}
                   updateBlock={updateBlock}
                   ytEmbedUrl={ytEmbedUrl}
+                  videoInputRef={videoInputRef}
+                  handleVideoFileSelect={handleVideoFileSelect}
+                  handleRemoveVideo={handleRemoveVideo}
+                  isUploadingVideo={isUploadingVideo}
+                  uploadVideoProgress={uploadVideoProgress}
+                  uploadVideoMsg={uploadVideoMsg}
                 />
               )}
 

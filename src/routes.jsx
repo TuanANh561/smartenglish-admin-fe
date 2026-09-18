@@ -48,6 +48,7 @@ export const router = createBrowserRouter([
         element: <AppShellLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
+          { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'cong-dong', element: <CommunityPage /> },
           { path: 'hoc-vien', element: <UsersPage /> },
           { path: 'nguoi-dung', element: <UsersPage /> },
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
   },
   { path: '/ui', element: <UiKitchenSink /> },
   // Redirects tiện ích cho đường dẫn học liệu không kèm tiền tố /app
+  { path: '/lop-hoc', element: <Navigate to="/app/lop-hoc" replace /> },
   { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },
   { path: '/hoc-lieu/tu-vung/tao-moi', element: <Navigate to="/app/hoc-lieu/tu-vung/tao-moi" replace /> },
   { path: '/hoc-lieu/tu-vung/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/tu-vung/:id/chinh-sua" replace /> },

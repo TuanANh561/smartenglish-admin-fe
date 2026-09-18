@@ -1,4 +1,5 @@
 import { ArrowLeft, ClipboardList } from 'lucide-react'
+import { maskEmail } from '@/lib/utils'
 
 export default function StudentDetailView({ student, cls, onBack }) {
   const scoreColor =
@@ -38,7 +39,7 @@ export default function StudentDetailView({ student, cls, onBack }) {
           </span>
           <div className="flex-1">
             <h2 className="text-xl font-bold text-navy-700">{student.name}</h2>
-            <p className="text-sm text-ink-muted">{student.email}</p>
+            <p className="text-sm text-ink-muted font-mono">{maskEmail(student.email)}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-600">
                 Lớp: {cls.name}
