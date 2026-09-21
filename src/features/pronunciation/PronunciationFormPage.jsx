@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   Headphones,
   HelpCircle,
   Lightbulb,
+  Loader2,
   Plus,
   Save,
   Trash2,
@@ -19,15 +20,17 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
-import {
-  PRONUNCIATION_CATEGORIES,
-  pronunciationLessons,
-} from '@/mocks/data/pronunciation'
+import { PRONUNCIATION_CATEGORIES } from '@/mocks/data/pronunciation'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 import PronunciationQuestionCard from './components/PronunciationQuestionCard'
 import SampleWordsSection from './components/SampleWordsSection'
+import {
+  getPronunciationLessonById,
+  createPronunciationLesson,
+  updatePronunciationLesson,
+} from './pronunciationLessonApi'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const CATEGORY_LIST = PRONUNCIATION_CATEGORIES.filter((c) => c !== 'Tất cả phân loại')
@@ -46,26 +49,49 @@ function PronunciationFormPage() {
   const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
 
-  const existingItem = isEditing
-    ? pronunciationLessons.find((p) => p.id === id) || pronunciationLessons[0]
-    : null
+  const [isLoading, setIsLoading] = useState(isEditing)
+  const [editTitle, setEditTitle] = useState('')
 
   const [form, setForm] = useState({
-    title: existingItem?.title || '',
-    ipaSymbol: existingItem?.ipaSymbol || '',
-    category: existingItem?.category || 'Vowels',
-    level: existingItem?.level || 'B1',
-    status: existingItem?.status || 'published',
-    aiMinScoreThreshold: existingItem?.aiMinScoreThreshold || 85,
-    description: existingItem?.description || '',
-    mouthShapeGuide: existingItem?.mouthShapeGuide || '',
-    sampleWords: existingItem?.sampleWords || [
-      { word: '', ipa: '', meaning: '' },
-    ],
-    sampleSentences: existingItem?.sampleSentences || [
-      { text: '', ipa: '' },
-    ],
+    title: '',
+    ipaSymbol: '',
+    category: 'Vowels',
+    level: 'B1',
+    status: 'draft',
+    aiMinScoreThreshold: 85,
+    description: '',
+    mouthShapeGuide: '',
+    sampleWords: [{ word: '', ipa: '', meaning: '' }],
+    sampleSentences: [{ text: '', ipa: '' }],
   })
+
+  // Load dữ liệu khi ở chế độ chỉnh sửa
+  useEffect(() => {
+    if (!isEditing) return
+    setIsLoading(true)
+    getPronunciationLessonById(id)
+      .then((res) => {
+        const item = res?.data || res
+        if (!item) return
+        setEditTitle(item.title || '')
+        setForm({
+          title:               item.title || '',
+          ipaSymbol:           item.ipaSymbol || '',
+          category:            item.category || 'Vowels',
+          level:               item.cefrLevel || 'B1',
+          status:              item.status || 'draft',
+          aiMinScoreThreshold: item.aiMinScoreThreshold ?? 85,
+          description:         item.description || '',
+          mouthShapeGuide:     item.mouthShapeGuide || '',
+          sampleWords:         item.sampleWords?.length ? item.sampleWords : [{ word: '', ipa: '', meaning: '' }],
+          sampleSentences:     item.sampleSentences?.length ? item.sampleSentences : [{ text: '', ipa: '' }],
+        })
+      })
+      .catch((err) => {
+        toast.error('Không tải được dữ liệu bài phát âm: ' + err.message)
+      })
+      .finally(() => setIsLoading(false))
+  }, [id, isEditing])
 
   const [questions, setQuestions] = useState([
     {
@@ -149,7 +175,7 @@ function PronunciationFormPage() {
     setOpenQuestionIdx(newIdx)
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) {
       toast.error('Vui lòng nhập tên bài học phát âm')
@@ -157,15 +183,47 @@ function PronunciationFormPage() {
     }
 
     setIsSaving(true)
-    setTimeout(() => {
-      toast.success(
-        isEditing
-          ? `Đã cập nhật bài học phát âm "${form.title}"`
-          : `Đã thêm bài phát âm mới "${form.title}"`
-      )
-      setIsSaving(false)
+    try {
+      const payload = {
+        title:               form.title,
+        ipaSymbol:           form.ipaSymbol,
+        category:            form.category,
+        cefrLevel:           form.level,
+        status:              form.status,
+        aiMinScoreThreshold: Number(form.aiMinScoreThreshold) || 85,
+        description:         form.description,
+        mouthShapeGuide:     form.mouthShapeGuide,
+        sampleWords:         form.sampleWords,
+        sampleSentences:     form.sampleSentences,
+        authorName:          user?.fullName || user?.email || '',
+        authorEmail:         user?.email || '',
+      }
+
+      if (isEditing) {
+        await updatePronunciationLesson(id, payload)
+        toast.success(`Đã cập nhật bài học phát âm "${form.title}"`)
+      } else {
+        await createPronunciationLesson(payload)
+        toast.success(`Đã thêm bài phát âm mới "${form.title}"`)
+      }
       navigate('/hoc-lieu/phat-am')
-    }, 600)
+    } catch (err) {
+      toast.error('Lỗi khi lưu bài phát âm: ' + err.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Nếu đang tải dữ liệu chỉnh sửa, hiện loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-slate-500">
+          <Loader2 size={32} className="animate-spin text-indigo-600" />
+          <p className="text-sm">Đang tải dữ liệu bài phát âm...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -183,7 +241,7 @@ function PronunciationFormPage() {
           <div className="h-5 w-px bg-slate-200" />
           <div className="flex-1">
             <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa: "${existingItem?.title}"` : 'Thêm bài phát âm mới'}
+              {isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài phát âm mới'}
             </h1>
             <p className="text-xs text-slate-500">
               Quản lý học liệu / Phát âm / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}

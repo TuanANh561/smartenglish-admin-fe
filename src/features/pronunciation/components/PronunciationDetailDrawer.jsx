@@ -43,37 +43,6 @@ export default function PronunciationDetailDrawer({
           </Badge>
         </div>
 
-        {/* Audio Waveform simulation player */}
-        <div className="rounded-2xl bg-navy-900 p-4 text-white space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-brand-200 uppercase tracking-wider">
-              Mẫu phát âm giọng bản xứ AI
-            </span>
-            <span className="text-xs text-slate-400">0:04 / 0:04</span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={(e) => onPlayAudio(e, activeLesson)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white hover:bg-brand-400 cursor-pointer shadow-md"
-            >
-              <Play size={18} fill="currentColor" />
-            </button>
-            <div className="flex-1 space-y-1">
-              <div className="h-2 w-full rounded-full bg-slate-700 overflow-hidden">
-                <div className="h-full bg-brand-400 rounded-full w-2/3" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-700/60">
-            <span>
-              Ngưỡng chuẩn: <strong>{activeLesson.aiMinScoreThreshold || 85}%</strong>
-            </span>
-            <span>{activeLesson.audioSampleCount || 24} mẫu giọng khác nhau</span>
-          </div>
-        </div>
 
         {/* Khẩu hình miệng */}
         {activeLesson.mouthShapeGuide && (
