@@ -131,6 +131,9 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/courses') ||
       endpoint.startsWith('/admin/lessons') ||
       endpoint.startsWith('/admin/upload') ||
+      endpoint.startsWith('/admin/speaking') ||
+      endpoint.startsWith('/admin/pronunciation-lessons') ||
+      endpoint.startsWith('/ai-practice') ||
       endpoint.startsWith('/content/courses') ||
       endpoint.startsWith('/api/v1/teacher') ||
       endpoint.startsWith('/teacher')

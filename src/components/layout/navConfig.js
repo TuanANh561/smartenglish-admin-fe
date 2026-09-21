@@ -64,7 +64,7 @@ export const NAV_GROUPS = [
         children: [
           { to: '/app/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin'] },
           { to: '/app/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin'] },
-          { to: '/app/hoc-lieu/phat-am', label: 'Phát âm', roles: ['admin'] },
+          { to: '/app/hoc-lieu/phat-am', label: 'Luyện nói & Phát âm', roles: ['admin'] },
           { to: '/app/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin'] },
           { to: '/app/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin'] },
         ],
@@ -139,8 +139,8 @@ export const ROUTE_META = {
     description: 'Thiết lập cấu trúc, quy tắc ngữ pháp và hệ thống bài tập trắc nghiệm.',
   },
   '/app/hoc-lieu/phat-am': {
-    title: 'Quản lý Bài học Phát âm',
-    description: 'Quản lý học liệu luyện phát âm, trọng âm và ngữ điệu AI.',
+    title: 'Quản lý Luyện nói & Phát âm',
+    description: 'Quản lý học liệu phát âm IPA, kịch bản đàm thoại và luyện nói AI.',
   },
   '/app/hoc-lieu/phat-am/tao-moi': {
     title: 'Biên soạn Bài học Phát âm',

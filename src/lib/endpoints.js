@@ -103,6 +103,14 @@ export const ENDPOINTS = {
     remove: '/admin/listenings/:id',
     uploadAudio: '/admin/listenings/:id/audio',
   },
+  pronunciationLessons: {
+    list: '/admin/pronunciation-lessons',
+    detail: '/admin/pronunciation-lessons/:id',
+    create: '/admin/pronunciation-lessons',
+    update: '/admin/pronunciation-lessons/:id',
+    remove: '/admin/pronunciation-lessons/:id',
+    publish: '/admin/pronunciation-lessons/:id/publish',
+  },
 
   // ── learning-service (nội dung kiểm tra) ────────────────────────
   quizzes: {

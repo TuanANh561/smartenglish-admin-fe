@@ -44,7 +44,13 @@ const Select = forwardRef(function Select(
           className={selectCls}
           {...props}
         >
-          {children}
+          {props.options
+            ? props.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))
+            : children}
         </select>
         <ChevronDown
           size={15}
