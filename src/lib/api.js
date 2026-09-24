@@ -94,7 +94,13 @@ function clearTokens() {
 
 // Endpoint xác thực tự thân — không được thử refresh khi chính chúng báo 401,
 // nếu không sẽ lặp vô hạn.
-const NO_RETRY_ENDPOINTS = new Set([ENDPOINTS.auth.login, ENDPOINTS.auth.refresh])
+const NO_RETRY_ENDPOINTS = new Set([
+  ENDPOINTS.auth.login,
+  ENDPOINTS.auth.refresh,
+  '/auth/login',
+  '/auth/admin/login',
+  '/auth/refresh',
+])
 
 let refreshPromise = null
 
@@ -125,6 +131,8 @@ async function request(method, endpoint, options = {}, isRetry = false) {
     // Chỉ gọi backend thật cho các endpoint đã triển khai
     // Các endpoint khác tiếp tục dùng mock nếu chưa sẵn sàng
     const isReadyBackend =
+      endpoint.startsWith('/auth') ||
+      endpoint.startsWith('/api/v1/auth') ||
       endpoint.startsWith('/admin/words') ||
       endpoint.startsWith('/admin/users') ||
       endpoint.startsWith('/admin/teacher-registrations') ||
@@ -137,6 +145,7 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/content/courses') ||
       endpoint.startsWith('/api/v1/teacher') ||
       endpoint.startsWith('/teacher')
+
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
       return await resolveMock(method, endpoint, {

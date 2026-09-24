@@ -33,7 +33,7 @@ export const TEST_USERS = {
 }
 
 export const getInitialUser = () => {
-  if (typeof window === 'undefined') return TEST_USERS[1]
+  if (typeof window === 'undefined') return null
   try {
     const params = new URLSearchParams(window.location.search)
     const queryUser = params.get('asUser') || params.get('userId') || params.get('as')
@@ -46,7 +46,7 @@ export const getInitialUser = () => {
           ? 3
           : 1)
       sessionStorage.setItem('se_test_user_id', String(id))
-      return TEST_USERS[id] || TEST_USERS[1]
+      return TEST_USERS[id] || null
     }
     const savedId = sessionStorage.getItem('se_test_user_id')
     if (savedId && TEST_USERS[savedId]) {
@@ -55,14 +55,14 @@ export const getInitialUser = () => {
   } catch {
     // ignore storage errors
   }
-  return TEST_USERS[1]
+  return null
 }
 
 export const DEFAULT_ADMIN_USER = TEST_USERS[1]
 
 export const useAuthStore = create((set) => ({
-  user: getInitialUser(),
-  initialized: true,
+  user: null,
+  initialized: false,
 
   setSession: ({ user, accessToken, refreshToken }) => {
     setTokens({ accessToken, refreshToken })
@@ -72,6 +72,9 @@ export const useAuthStore = create((set) => ({
   setInitialized: (initialized) => set({ initialized }),
   clearSession: () => {
     clearTokens()
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('se_test_user_id')
+    }
     set({ user: null, initialized: true })
   },
 }))

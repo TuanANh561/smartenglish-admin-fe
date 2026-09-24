@@ -13,10 +13,11 @@
 export const ENDPOINTS = {
   // ── auth-service ────────────────────────────────────────────────
   auth: {
-    login: '/auth/login',
+    login: '/auth/admin/login',
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     me: '/auth/me',
+
     updateProfile: '/auth/me',
     changePassword: '/auth/me/password',
   },

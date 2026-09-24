@@ -26,7 +26,9 @@ function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
@@ -34,15 +36,22 @@ function LoginPage() {
   })
 
   const onSubmit = (values) => {
+    clearErrors('root')
     login.mutate(values, {
       onSuccess: () => {
         const redirectTo = location.state?.from?.pathname ?? '/app'
         navigate(redirectTo, { replace: true })
       },
       onError: (error) => {
-        setError('root', { message: error.message })
+        setError('root', { message: error.message || 'Đăng nhập không thành công. Vui lòng thử lại.' })
       },
     })
+  }
+
+  const handleFillCredentials = (email, password) => {
+    setValue('email', email, { shouldValidate: true })
+    setValue('password', password, { shouldValidate: true })
+    clearErrors('root')
   }
 
   return (
@@ -54,14 +63,14 @@ function LoginPage() {
             <span className="text-base font-bold text-navy-700">SmartEnglish AI</span>
           </div>
           <p className="text-lg font-semibold text-navy-700">Đăng nhập trang quản trị</p>
-          <p className="text-sm text-ink-muted">Chào mừng trở lại, Quản trị viên.</p>
+          <p className="text-sm text-ink-muted">Chỉ dành cho Quản trị viên & Giáo viên</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-6">
           <Input
             label="Địa chỉ email"
             type="email"
-            placeholder="admin@smartenglish.vn"
+            placeholder="admin@smartenglish.com"
             leadingIcon={Mail}
             error={errors.email?.message}
             {...register('email')}
@@ -100,7 +109,7 @@ function LoginPage() {
             </label>
             <button
               type="button"
-              onClick={() => toast('Tính năng đang được xây dựng.')}
+              onClick={() => toast('Vui lòng liên hệ Quản trị viên hệ thống để khôi phục mật khẩu.')}
               className="text-sm font-medium text-brand-500 hover:text-brand-600"
             >
               Quên mật khẩu?
@@ -108,44 +117,50 @@ function LoginPage() {
           </div>
 
           {errors.root?.message && (
-            <p className="text-sm text-[#B91C1C]">{errors.root.message}</p>
+            <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-left">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-600" />
+              <div className="text-xs text-red-700 leading-relaxed font-medium">
+                {errors.root.message}
+              </div>
+            </div>
           )}
 
           <Button type="submit" fullWidth loading={isSubmitting || login.isPending}>
             Đăng nhập
           </Button>
 
-          {/* Quick test login buttons */}
+          {/* Quick test credentials */}
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3 space-y-2">
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">
-              Đăng nhập kiểm thử nhanh
+              Tài khoản mẫu (Nhấp để điền)
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  sessionStorage.setItem('se_test_user_id', '1')
-                  useAuthStore.getState().setUser(TEST_USERS[1])
-                  navigate('/app/cong-dong')
-                }}
+                onClick={() => handleFillCredentials('admin@smartenglish.com', 'Password123@')}
                 className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
               >
-                <div className="text-xs font-bold text-slate-800">Admin (ID 1)</div>
-                <div className="text-[10px] text-slate-400 truncate">Quản trị viên</div>
+                <div className="text-xs font-bold text-slate-800">Quản trị viên</div>
+                <div className="text-[10px] text-slate-400 truncate">admin@smartenglish.com</div>
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  sessionStorage.setItem('se_test_user_id', '2')
-                  useAuthStore.getState().setUser(TEST_USERS[2])
-                  navigate('/app/cong-dong')
-                }}
+                onClick={() => handleFillCredentials('teacher.john@smartenglish.com', 'Password123@')}
                 className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
               >
-                <div className="text-xs font-bold text-slate-800">Thầy John (ID 2)</div>
-                <div className="text-[10px] text-slate-400 truncate">Giáo viên</div>
+                <div className="text-xs font-bold text-slate-800">Giáo viên</div>
+                <div className="text-[10px] text-slate-400 truncate">teacher.john@smart...</div>
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('student.theanh@gmail.com', 'Password123@')}
+              className="w-full rounded-lg border border-amber-200 bg-amber-50/60 p-1.5 text-center hover:bg-amber-100/60 transition-all cursor-pointer"
+            >
+              <span className="text-[11px] font-medium text-amber-800">
+                Thử đăng nhập tài khoản Học viên (Kiểm tra chặn 403)
+              </span>
+            </button>
           </div>
 
           <div className="text-center text-xs pt-1 border-t border-line">
@@ -154,10 +169,6 @@ function LoginPage() {
               Đăng ký tài khoản Giảng dạy →
             </Link>
           </div>
-
-          <p className="text-center text-xs text-ink-muted">
-            Tài khoản demo: admin@smartenglish.vn / admin123 · mai.ht@gmail.com / teacher123
-          </p>
         </form>
 
         <div className="flex items-start gap-2 rounded-b-xl bg-canvas px-6 py-4">

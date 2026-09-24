@@ -36,11 +36,13 @@ export const ROLE_ACCESS = {
 
 export function isRouteAllowed(pathname, role = 'admin') {
   if (role === 'admin') return true
-  if (!pathname) return false
-
-  return ROLE_ACCESS.teacher.some((allowed) =>
-    pathname === allowed || pathname.startsWith(`${allowed}/`),
-  )
+  if (role === 'teacher') {
+    if (!pathname) return false
+    return ROLE_ACCESS.teacher.some((allowed) =>
+      pathname === allowed || pathname.startsWith(`${allowed}/`),
+    )
+  }
+  return false
 }
 
 export const NAV_GROUPS = [

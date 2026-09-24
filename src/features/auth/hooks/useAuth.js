@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore, TEST_USERS } from '@/store/authStore'
 import { TOKEN_KEY } from '@/lib/api'
 import * as authApi from '../api'
 
@@ -44,7 +44,14 @@ export function useInitAuth() {
   useEffect(() => {
     if (initialized) return
 
-    if (!localStorage.getItem(TOKEN_KEY)) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
+    if (!token) {
+      if (typeof window !== 'undefined') {
+        const testId = sessionStorage.getItem('se_test_user_id')
+        if (testId && TEST_USERS[testId]) {
+          setUser(TEST_USERS[testId])
+        }
+      }
       setInitialized(true)
       return
     }
@@ -52,8 +59,13 @@ export function useInitAuth() {
     authApi
       .getMe()
       .then((user) => {
-        setUser(user)
-        setInitialized(true)
+        if (!user || user.role === 'student') {
+          toast.error('Tài khoản học viên không thể truy cập trang quản trị.')
+          clearSession()
+        } else {
+          setUser(user)
+          setInitialized(true)
+        }
       })
       .catch(() => clearSession())
   }, [initialized, setUser, setInitialized, clearSession])
