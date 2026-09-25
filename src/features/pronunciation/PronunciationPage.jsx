@@ -464,7 +464,7 @@ export default function PronunciationPage() {
 
           {/* IPA Pagination */}
           {ipaTotalPages > 1 && (
-            <div className="p-4 border-t border-slate-100 flex justify-center">
+            <div className="p-4 border-t border-slate-100 flex justify-end">
               <Pagination
                 currentPage={ipaPage}
                 totalPages={ipaTotalPages}
