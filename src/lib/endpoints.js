@@ -112,6 +112,16 @@ export const ENDPOINTS = {
     remove: '/admin/pronunciation-lessons/:id',
     publish: '/admin/pronunciation-lessons/:id/publish',
   },
+  grammarLessons: {
+    list: '/admin/grammar-lessons',
+    topics: '/admin/grammar-lessons/topics',
+    detail: '/admin/grammar-lessons/:id',
+    create: '/admin/grammar-lessons',
+    update: '/admin/grammar-lessons/:id',
+    remove: '/admin/grammar-lessons/:id',
+    publish: '/admin/grammar-lessons/:id/publish',
+    duplicate: '/admin/grammar-lessons/:id/duplicate',
+  },
 
   // ── learning-service (nội dung kiểm tra) ────────────────────────
   quizzes: {

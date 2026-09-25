@@ -93,5 +93,11 @@ export const router = createBrowserRouter([
   { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },
   { path: '/hoc-lieu/tu-vung/tao-moi', element: <Navigate to="/app/hoc-lieu/tu-vung/tao-moi" replace /> },
   { path: '/hoc-lieu/tu-vung/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/tu-vung/:id/chinh-sua" replace /> },
+  { path: '/hoc-lieu/ngu-phap', element: <Navigate to="/app/hoc-lieu/ngu-phap" replace /> },
+  { path: '/hoc-lieu/ngu-phap/tao-moi', element: <Navigate to="/app/hoc-lieu/ngu-phap/tao-moi" replace /> },
+  { path: '/hoc-lieu/ngu-phap/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/ngu-phap/:id/chinh-sua" replace /> },
+  { path: '/hoc-lieu/phat-am', element: <Navigate to="/app/hoc-lieu/phat-am" replace /> },
+  { path: '/hoc-lieu/phat-am/tao-moi', element: <Navigate to="/app/hoc-lieu/phat-am/tao-moi" replace /> },
+  { path: '/hoc-lieu/phat-am/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/phat-am/:id/chinh-sua" replace /> },
   { path: '*', element: <NotFound /> },
 ])

@@ -20,6 +20,10 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
+      '/admin/grammar-lessons': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
     },
   },
 })
