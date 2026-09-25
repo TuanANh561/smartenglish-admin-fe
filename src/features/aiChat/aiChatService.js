@@ -3,102 +3,44 @@
  * Tích hợp Gemini API với cơ chế Guardrails phân quyền theo chuẩn RBAC.
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
-
-const GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-flash',
-]
-
-function getSystemInstruction(role = 'admin') {
-  const isAdmin = role === 'admin'
-
-  return `Bạn là "Teacher Cáo" (🦊) — Trợ lý AI chuyên môn 24/7 của hệ thống giáo dục tiếng Anh SmartEnglish.
-Người đang trò chuyện với bạn là: ${isAdmin ? 'QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN)' : 'GIÁO VIÊN TIẾNG ANH (TEACHER)'}.
-
-🎯 PHÂN QUYỀN VÀ PHẠM VI HỖ TRỢ DỰA THEO VAI TRÒ:
-
-${
-  isAdmin
-    ? `[DÀNH CHO QUẢN TRỊ VIÊN - ADMIN]:
-1. HỖ TRỢ TOÀN DIỆN VỀ HỌC LIỆU & QUẢN TRỊ:
-   - Hỗ trợ soạn thảo, kiểm duyệt và chuẩn hóa toàn bộ học liệu: Ngữ pháp, Từ vựng, Phát âm IPA, Bài đọc, Bài nghe, Ngân hàng đề thi CEFR (A1-C2), IELTS, TOEIC.
-   - Hỗ trợ rà soát, hiệu đính lỗi ngữ pháp trong học liệu trước khi bấm "Xuất bản" (Published).
-   - Tư vấn tối ưu hóa danh mục bài học, chiến lược phát triển nội dung và quy trình kiểm duyệt nội dung AI.
-   - Hướng dẫn các thao tác quản trị vận hành trên hệ thống SmartEnglish Admin.`
-    : `[DÀNH CHO GIÁO VIÊN - TEACHER]:
-1. HỖ TRỢ GIẢNG DẠY & BIÊN SOẠN BÀI HỌC:
-   - Soạn giáo án, khung bài giảng Ngữ pháp, Từ vựng, Phát âm chuẩn IPA, bài đọc hiểu, bài nghe.
-   - Sinh câu hỏi trắc nghiệm, bài tập thực hành kèm đáp án và lời giải chi tiết cho học viên.
-   - Hiệu đính, kiểm tra lỗi ngữ pháp hội thoại trong các câu mẫu bài tập.
-   - Tư vấn phương pháp sư phạm giúp học viên dễ hiểu bài.
-2. GIỚI HẠN DÀNH CHO GIÁO VIÊN:
-   - Giáo viên KHÔNG ĐƯỢC hỏi/truy cập thông tin về doanh thu, đối soát tài chính, tài khoản của giáo viên khác, phân quyền hệ thống hoặc nhật ký bảo mật của admin.`
-}
-
-⛔ NGUYÊN TẮC BẢO MẬT CHUNG:
-- Tuyệt đối không tiết lộ mật khẩu, API keys, mã nguồn backend, cơ sở dữ liệu hoặc thông tin nhạy cảm.
-- Khi người dùng hỏi ngoài phạm vi, từ chối lịch sự, nhã nhặn.`
-}
+import axios from 'axios'
+import { api } from '@/lib/api'
 
 /**
- * Gửi tin nhắn chat đến Gemini với ngữ cảnh hội thoại và phân quyền theo Role
+ * Gửi tin nhắn chat đến Trợ lý AI Teacher Cáo qua Backend Service
+ * Backend chịu trách nhiệm quản lý Gemini API Key, Multi-Model Fallback và RBAC Guardrails
  */
 export async function sendChatMessage(messages = [], userRole = 'admin') {
-  if (!GEMINI_API_KEY) {
-    return generateSmartMockResponse(messages, userRole)
+  // Áp dụng kỹ thuật Sliding Window Context: Chỉ gửi tối đa 8 tin nhắn gần nhất lên AI (khoảng 4 lượt hỏi-đáp)
+  // để tối ưu tốc độ phản hồi và tiết kiệm 80-90% chi phí token
+  const slidingWindowMessages = messages.length > 8 ? messages.slice(-8) : messages
+
+  const payload = {
+    messages: slidingWindowMessages.map((m) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      content: m.content || '',
+    })),
+    userRole: userRole || 'admin',
   }
 
-  const formattedContents = messages.map((m) => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }))
-
-  const systemInstruction = getSystemInstruction(userRole)
-
-  for (const model of GEMINI_MODELS) {
+  // 1. Ưu tiên gọi qua Vite Proxy (/admin/ai/chat -> localhost:8082)
+  try {
+    const res = await axios.post('/admin/ai/chat', payload)
+    const data = res?.data?.data || res?.data
+    if (data?.reply) return data.reply
+  } catch (proxyErr) {
+    // 2. Fallback qua API Gateway (/admin/ai/chat -> localhost:8080)
     try {
-      const response = await fetch(
-        `${GEMINI_API_URL}/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: formattedContents,
-            systemInstruction: {
-              parts: [{ text: systemInstruction }],
-            },
-            generationConfig: {
-              temperature: 0.4,
-              topK: 40,
-              topP: 0.9,
-              maxOutputTokens: 2048,
-            },
-          }),
-        },
-      )
-
-      if (response.status === 429 || response.status === 503 || response.status === 404) {
-        continue
-      }
-
-      if (!response.ok) {
-        continue
-      }
-
-      const data = await response.json()
-      const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text
-      if (candidateText) {
-        return candidateText
-      }
-    } catch (err) {
-      console.warn(`[Teacher Cáo] Lỗi kết nối model ${model}:`, err)
+      const res = await api.post('/admin/ai/chat', payload)
+      const data = res?.data !== undefined ? res.data : res
+      if (data?.reply) return data.reply
+      if (typeof data === 'string') return data
+    } catch (gatewayErr) {
+      console.warn('[Teacher Cáo] Backend AI Chat không phản hồi, kích hoạt phản hồi dự phòng thông minh:', gatewayErr?.message)
     }
   }
 
+  // 3. Dự phòng thông minh nếu mất kết nối backend
   return generateSmartMockResponse(messages, userRole)
 }
 

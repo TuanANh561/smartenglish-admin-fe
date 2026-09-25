@@ -302,7 +302,14 @@ export async function deleteLessonApi(id) {
  * =====================================================================
  */
 export async function generateCourseCurriculumWithAi({ topic, level = 'B1', courseType = 'STRUCTURED' }) {
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+  try {
+    const res = await api.post('/admin/ai/generate-curriculum', { topic, level, courseType })
+    const data = res?.data !== undefined ? res.data : res
+    if (data && (data.titleVi || data.units)) return data
+  } catch (err) {
+    console.warn('[AI Course Gen] Backend /admin/ai/generate-curriculum không phản hồi:', err?.message)
+  }
+  const GEMINI_API_KEY = null
   const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
   const prompt = `Bạn là chuyên gia sư phạm tiếng Anh hàng đầu cho hệ thống SmartEnglish AI.
@@ -573,7 +580,7 @@ export async function generateLessonBlocksWithAi({ prompt, titleVi, titleEn, les
   }
 
   // 3. Gọi Google Gemini API trực tiếp bằng VITE_GEMINI_API_KEY
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+  const GEMINI_API_KEY = null
   const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
   if (GEMINI_API_KEY) {

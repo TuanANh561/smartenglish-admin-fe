@@ -24,6 +24,10 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
+      '/admin/ai': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
     },
   },
 })

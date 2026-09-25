@@ -5,6 +5,7 @@ import {
   GripHorizontal,
   Maximize2,
   Minimize2,
+  Plus,
   RotateCcw,
   Send,
   Sparkles,
@@ -353,6 +354,28 @@ function AiChatWidget() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  const handleNewChat = () => {
+    if (messages.length > 1) {
+      try {
+        const sessionKey = `smartenglish_teacher_cao_sessions_${userId}`
+        const existing = JSON.parse(localStorage.getItem(sessionKey) || '[]')
+        const firstUserMsg = messages.find((m) => m.role === 'user')?.content || 'Cuộc trò chuyện'
+        const snippet = firstUserMsg.slice(0, 35) + (firstUserMsg.length > 35 ? '...' : '')
+        const newSession = {
+          id: `session-${Date.now()}`,
+          title: snippet,
+          messages,
+          savedAt: new Date().toISOString(),
+        }
+        localStorage.setItem(sessionKey, JSON.stringify([newSession, ...existing.slice(0, 9)]))
+      } catch (e) {
+        console.warn('Lỗi lưu session cũ:', e)
+      }
+    }
+    setMessages(INITIAL_MESSAGES)
+    toast.success('Đã mở cuộc trò chuyện mới. Ngữ cảnh đã sẵn sàng!')
+  }
+
   const handleClearHistory = () => {
     setMessages(INITIAL_MESSAGES)
     try {
@@ -405,21 +428,21 @@ function AiChatWidget() {
           />
 
           {/* Header với các nút điều khiển ở góc trên bên phải */}
-          <div className="bg-slate-100/95 border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 pl-7">
+          <div className="bg-white border-b border-slate-200/90 px-4 py-3 flex items-center justify-between shrink-0 pl-7 shadow-xs">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-xl shadow-2xs border border-orange-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-xl shadow-xs text-white">
                 <span>🦊</span>
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="font-bold text-[15px] text-slate-800 leading-none">Teacher Cáo</h3>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    AI 24/7
+                    AI 24/7 (BE)
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Trợ Giảng AI
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Trợ lý Sư phạm & Học liệu · {currentUser?.role === 'teacher' ? 'Dành cho Thầy/Cô' : 'Dành cho Quản trị viên'}
                 </p>
               </div>
             </div>
@@ -428,9 +451,19 @@ function AiChatWidget() {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
+                onClick={handleNewChat}
+                className="flex items-center gap-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/90 px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer mr-0.5 shadow-2xs"
+                title="Bắt đầu cuộc trò chuyện mới (lưu trữ phiên cũ và làm mới ngữ cảnh)"
+              >
+                <Plus size={13} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Đoạn chat mới</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleClearHistory}
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer"
-                title="Làm mới đoạn hội thoại"
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                title="Xóa lịch sử đoạn chat này"
               >
                 <RotateCcw size={15} />
               </button>
@@ -438,7 +471,7 @@ function AiChatWidget() {
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="hidden sm:block rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer"
+                className="hidden sm:block rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                 title={isExpanded ? 'Thu nhỏ cửa sổ' : 'Mở rộng tối đa'}
               >
                 {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -448,7 +481,7 @@ function AiChatWidget() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200/90 hover:bg-slate-300 text-slate-700 transition-colors cursor-pointer ml-0.5 shadow-2xs"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer ml-0.5 shadow-2xs"
                 title="Đóng khung chat"
               >
                 <X size={16} strokeWidth={2.2} />
@@ -458,10 +491,10 @@ function AiChatWidget() {
 
           {/* Gợi ý câu hỏi nhanh khi mới mở */}
           {messages.length === 1 && (
-            <div className="p-3 bg-white border-b border-slate-200/80 shrink-0">
-              <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
-                <Sparkles size={13} className="text-orange-500" />
-                Gợi ý câu hỏi học tập:
+            <div className="p-3 bg-slate-50/90 border-b border-slate-200/80 shrink-0">
+              <p className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1.5">
+                <Sparkles size={13} className="text-amber-500" />
+                Gợi ý nhanh cho {currentUser?.role === 'teacher' ? 'Thầy/Cô' : 'Quản trị viên'}:
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {SUGGESTED_PROMPTS.map((prompt, idx) => (
@@ -469,7 +502,7 @@ function AiChatWidget() {
                     key={idx}
                     type="button"
                     onClick={() => handleSend(prompt)}
-                    className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-xs text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 transition-all text-left cursor-pointer shadow-2xs"
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 hover:border-amber-400 hover:bg-amber-50/50 hover:text-amber-900 transition-all text-left cursor-pointer shadow-2xs"
                   >
                     {prompt}
                   </button>
@@ -480,6 +513,13 @@ function AiChatWidget() {
 
           {/* Danh sách tin nhắn */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#f8fafc] select-text">
+            {messages.length > 8 && (
+              <div className="flex justify-center mb-1">
+                <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 bg-slate-200/60 border border-slate-200 px-2.5 py-0.5 rounded-full font-medium">
+                  ⚡ Sliding Window: Đang gửi 8 tin nhắn gần nhất lên AI (tối ưu token & tốc độ)
+                </span>
+              </div>
+            )}
             {messages.map((msg) => {
               const isUser = msg.role === 'user'
               const isCopied = copiedId === msg.id
@@ -494,10 +534,10 @@ function AiChatWidget() {
                 >
                   <div
                     className={cn(
-                      'p-3.5 text-[13.5px] shadow-2xs select-text cursor-text',
+                      'p-3.5 text-[13.5px] shadow-2xs select-text cursor-text leading-relaxed',
                       isUser
-                        ? 'bg-slate-700 text-white rounded-2xl rounded-tr-xs font-medium'
-                        : 'bg-white border border-slate-200 text-slate-900 rounded-2xl rounded-tl-xs',
+                        ? 'bg-navy-800 text-white rounded-2xl rounded-tr-xs font-normal'
+                        : 'bg-white border border-slate-200/90 text-slate-900 rounded-2xl rounded-tl-xs',
                     )}
                   >
                     {isUser ? (
