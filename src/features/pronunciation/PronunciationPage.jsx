@@ -22,6 +22,7 @@ import {
 import toast from 'react-hot-toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -289,6 +290,13 @@ export default function PronunciationPage() {
     }
   }
 
+  // Dọn dẹp âm thanh khi component unmount
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
+
   const handlePlayAudio = (e, item) => {
     e.stopPropagation()
     if (playingAudioId === item.id) {
@@ -409,10 +417,7 @@ export default function PronunciationPage() {
           />
 
           {isLoadingIpa ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
-              <p className="text-xs text-slate-500">Đang tải dữ liệu bài học từ máy chủ...</p>
-            </div>
+            <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
           ) : lessons.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
@@ -463,15 +468,14 @@ export default function PronunciationPage() {
           )}
 
           {/* IPA Pagination */}
-          {ipaTotalPages > 1 && (
-            <div className="p-4 border-t border-slate-100 flex justify-end">
-              <Pagination
-                currentPage={ipaPage}
-                totalPages={ipaTotalPages}
-                onPageChange={setIpaPage}
-              />
-            </div>
-          )}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+            <p className="text-xs text-slate-500">
+              Hiển thị <strong>{ipaTotalCount === 0 ? 0 : (ipaPage - 1) * PAGE_SIZE + 1}</strong>-
+              <strong>{Math.min(ipaPage * PAGE_SIZE, ipaTotalCount)}</strong> trong tổng số{' '}
+              <strong>{ipaTotalCount}</strong> bài học phát âm
+            </p>
+            <Pagination page={ipaPage} totalPages={ipaTotalPages} onChange={setIpaPage} />
+          </div>
         </div>
       )}
 
@@ -589,10 +593,7 @@ export default function PronunciationPage() {
 
           {/* Scenarios Content (Hiển thị dạng Card hoặc Bảng tùy chọn) */}
           {isLoadingScenarios ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-indigo-600 mb-2" />
-              <p className="text-xs text-slate-500">Đang tải danh sách kịch bản từ máy chủ...</p>
-            </div>
+            <LoadingSpinner text="Đang tải danh sách kịch bản từ máy chủ..." className="py-20" />
           ) : scenarios.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
@@ -722,15 +723,13 @@ export default function PronunciationPage() {
           )}
 
           {/* Footer count & pagination */}
-          <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 text-xs text-slate-500 bg-white">
-            <span>Tổng cộng {scenarios.length} kịch bản luyện nói</span>
-            {scenarioTotalPages > 1 && (
-              <Pagination
-                currentPage={scenarioPage}
-                totalPages={scenarioTotalPages}
-                onPageChange={setScenarioPage}
-              />
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+            <p className="text-xs text-slate-500">
+              Hiển thị <strong>{scenarioTotalCount === 0 ? 0 : (scenarioPage - 1) * 8 + 1}</strong>-
+              <strong>{Math.min(scenarioPage * 8, scenarioTotalCount)}</strong> trong tổng số{' '}
+              <strong>{scenarioTotalCount}</strong> kịch bản luyện nói
+            </p>
+            <Pagination page={scenarioPage} totalPages={scenarioTotalPages} onChange={setScenarioPage} />
           </div>
         </div>
       )}
@@ -751,7 +750,10 @@ export default function PronunciationPage() {
       {/* Speaking Simulator Modal (Live AI Voice Test) */}
       <SpeakingSimulatorModal
         isOpen={Boolean(simulatingScenario)}
-        onClose={() => setSimulatingScenario(null)}
+        onClose={() => {
+          stopAudio()
+          setSimulatingScenario(null)
+        }}
         scenario={simulatingScenario}
       />
 
@@ -771,7 +773,10 @@ export default function PronunciationPage() {
         activeLesson={activeLesson}
         lesson={activeLesson}
         isOpen={Boolean(activeLesson)}
-        onClose={() => setActiveLesson(null)}
+        onClose={() => {
+          stopAudio()
+          setActiveLesson(null)
+        }}
         onPlayAudio={handlePlayAudio}
         onEdit={(e, lesson) => {
           const target = lesson?.id ? lesson : (e?.id ? e : activeLesson)

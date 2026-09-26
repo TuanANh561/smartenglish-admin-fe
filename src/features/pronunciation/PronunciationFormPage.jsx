@@ -20,6 +20,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { PRONUNCIATION_CATEGORIES } from '@/mocks/data/pronunciation'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
@@ -92,6 +93,13 @@ function PronunciationFormPage() {
       })
       .finally(() => setIsLoading(false))
   }, [id, isEditing])
+
+  // Ngắt toàn bộ âm thanh khi người dùng rời trang
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
 
   const [questions, setQuestions] = useState([
     {
@@ -218,10 +226,7 @@ function PronunciationFormPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <Loader2 size={32} className="animate-spin text-indigo-600" />
-          <p className="text-sm">Đang tải dữ liệu bài phát âm...</p>
-        </div>
+        <LoadingSpinner text="Đang tải dữ liệu bài phát âm..." />
       </div>
     )
   }

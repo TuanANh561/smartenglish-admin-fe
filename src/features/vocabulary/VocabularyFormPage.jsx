@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
@@ -290,10 +291,7 @@ function VocabularyFormPage() {
 
       {/* ── Body ── */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-3">
-          <Loader2 className="h-8 w-8 text-brand-600 animate-spin" />
-          <p className="text-sm font-medium text-slate-500">Đang tải thông tin từ vựng...</p>
-        </div>
+        <LoadingSpinner text="Đang tải thông tin từ vựng..." className="py-32" />
       ) : (
         <form id="vocab-form" onSubmit={handleSave}>
           <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
