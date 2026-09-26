@@ -1,13 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   BookOpen,
-  Check,
-  ChevronDown,
-  ChevronUp,
   HelpCircle,
   Lightbulb,
+  Loader2,
   Plus,
   Save,
   Trash2,
@@ -17,8 +15,15 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
-import { GRAMMAR_TOPICS, grammarLessons } from '@/mocks/data/grammar'
+import { GRAMMAR_TOPICS } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
+import GrammarQuestionCard from './components/GrammarQuestionCard'
+import {
+  getGrammarLessonById,
+  createGrammarLesson,
+  updateGrammarLesson,
+  getGrammarTopics,
+} from './grammarLessonApi'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const TOPIC_LIST = GRAMMAR_TOPICS.filter((t) => t !== 'Tất cả chủ điểm')
@@ -30,134 +35,6 @@ const EMPTY_QUESTION = {
   explanation: '',
 }
 
-// ── Accordion Question Card ─────────────────────────────────────────────────
-function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove }) {
-  const hasContent = question.question.trim()
-
-  return (
-    <div
-      className={`rounded-2xl border transition-all ${
-        isOpen
-          ? 'border-brand-300 bg-white shadow-md'
-          : 'border-slate-200 bg-slate-50/60 hover:border-slate-300'
-      }`}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-        onClick={onToggle}
-      >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 text-xs font-bold">
-          {index + 1}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-sm truncate ${
-              hasContent ? 'text-slate-800 font-medium' : 'text-slate-400 italic'
-            }`}
-          >
-            {hasContent ? question.question : `Câu hỏi ${index + 1} — chưa nhập nội dung`}
-          </p>
-          {!isOpen && question.options[question.correctIndex] && (
-            <p className="text-xs text-emerald-600 mt-0.5">
-              ✓ Đáp án: {question.options[question.correctIndex]}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onRemove()
-            }}
-            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-            title="Xóa câu hỏi"
-          >
-            <Trash2 size={14} />
-          </button>
-          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
-      </div>
-
-      {/* Body */}
-      {isOpen && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Nội dung câu hỏi ngữ pháp
-            </label>
-            <Textarea
-              rows={2}
-              autoResize
-              value={question.question}
-              onChange={(e) => onChange({ ...question, question: e.target.value })}
-              placeholder="VD: She ___ (already / finish) her homework before I called."
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Các phương án <span className="text-emerald-600 font-normal">(click ô vuông = đáp án đúng)</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {question.options.map((opt, optIdx) => (
-                <div
-                  key={optIdx}
-                  className={`flex items-center gap-2 rounded-xl p-2.5 border transition-colors ${
-                    question.correctIndex === optIdx
-                      ? 'border-emerald-200 bg-emerald-50/60'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => onChange({ ...question, correctIndex: optIdx })}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all cursor-pointer ${
-                      question.correctIndex === optIdx
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-slate-300 bg-white hover:border-emerald-400'
-                    }`}
-                  >
-                    {question.correctIndex === optIdx && <Check size={11} strokeWidth={3} />}
-                  </button>
-                  <span className="text-xs font-bold text-slate-500 shrink-0">
-                    {String.fromCharCode(65 + optIdx)}.
-                  </span>
-                  <input
-                    type="text"
-                    value={opt}
-                    onChange={(e) => {
-                      const options = [...question.options]
-                      options[optIdx] = e.target.value
-                      onChange({ ...question, options })
-                    }}
-                    placeholder={`Đáp án ${String.fromCharCode(65 + optIdx)}...`}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Giải thích ngữ pháp <span className="text-slate-400 font-normal">(không bắt buộc)</span>
-            </label>
-            <Textarea
-              rows={2}
-              autoResize
-              value={question.explanation}
-              onChange={(e) => onChange({ ...question, explanation: e.target.value })}
-              placeholder="VD: Dùng thì Quá khứ hoàn thành (had finished) vì hành động xảy ra trước..."
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main Form Page ──────────────────────────────────────────────────────────
 function GrammarFormPage() {
   const { id } = useParams()
@@ -165,47 +42,83 @@ function GrammarFormPage() {
   const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
 
-  const existingItem = isEditing
-    ? grammarLessons.find((g) => g.id === id) || grammarLessons[0]
-    : null
+  const [isLoading, setIsLoading] = useState(isEditing)
+  const [topicList, setTopicList] = useState(TOPIC_LIST)
+  const [editTitle, setEditTitle] = useState('')
 
   const [form, setForm] = useState({
-    title: existingItem?.title || '',
-    topic: existingItem?.topic || 'Tenses',
-    level: existingItem?.level || 'B1',
-    status: existingItem?.status || 'published',
-    formula: existingItem?.formula || '',
-    description: existingItem?.description || '',
-    keyRules: Array.isArray(existingItem?.keyRules)
-      ? existingItem.keyRules.join('\n')
-      : (existingItem?.keyRules || ''),
-    examples: existingItem?.examples || [
-      { en: '', vi: '' },
-    ],
+    title: '',
+    topic: 'Tenses',
+    level: 'B1',
+    status: 'published',
+    formula: '',
+    description: '',
+    keyRules: '',
+    examples: [{ en: '', vi: '' }],
   })
 
-  // Mock converting sampleExercises to standard question format
-  const initialQuestions = existingItem?.sampleExercises?.length > 0
-    ? existingItem.sampleExercises.map((ex) => ({
-        question: ex.question || '',
-        options: ex.options?.length === 4
-          ? ex.options
-          : [ex.answer || 'Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'],
-        correctIndex: 0,
-        explanation: ex.explanation || '',
-      }))
-    : [
-        {
-          question: 'I haven\'t seen him ___ last Monday.',
-          options: ['for', 'since', 'in', 'ago'],
-          correctIndex: 1,
-          explanation: 'Dùng "since" với mốc thời gian xác định trong quá khứ.',
-        },
-      ]
-
-  const [questions, setQuestions] = useState(initialQuestions)
+  const [questions, setQuestions] = useState([
+    {
+      question: "I haven't seen him ___ last Monday.",
+      options: ['for', 'since', 'in', 'ago'],
+      correctIndex: 1,
+      explanation: 'Dùng "since" với mốc thời gian xác định trong quá khứ.',
+    },
+  ])
   const [openQuestionIdx, setOpenQuestionIdx] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Load danh sách chủ điểm
+  useEffect(() => {
+    getGrammarTopics()
+      .then((res) => {
+        if (Array.isArray(res) && res.length > 0) {
+          setTopicList(res.filter((t) => t !== 'Tất cả chủ điểm'))
+        }
+      })
+      .catch((err) => console.warn('Không tải được topics:', err))
+  }, [])
+
+  // Load chi tiết bài học khi chỉnh sửa
+  useEffect(() => {
+    if (!isEditing) return
+    setIsLoading(true)
+    getGrammarLessonById(id)
+      .then((item) => {
+        if (!item) return
+        setEditTitle(item.title || '')
+        setForm({
+          title: item.title || '',
+          topic: item.topic || 'Tenses',
+          level: item.cefrLevel || item.level || 'B1',
+          status: item.status || 'published',
+          formula: item.formula || '',
+          description: item.description || '',
+          keyRules: Array.isArray(item.keyRules)
+            ? item.keyRules.join('\n')
+            : (item.keyRules || ''),
+          examples: item.examples?.length
+            ? item.examples
+            : [{ en: '', vi: '' }],
+        })
+        if (item.sampleExercises && item.sampleExercises.length > 0) {
+          setQuestions(
+            item.sampleExercises.map((ex) => ({
+              question: ex.question || '',
+              options: ex.options?.length === 4
+                ? ex.options
+                : [ex.answer || 'Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'],
+              correctIndex: ex.correctIndex ?? 0,
+              explanation: ex.explanation || '',
+            }))
+          )
+        }
+      })
+      .catch((err) => {
+        toast.error('Không tìm thấy bài học ngữ pháp: ' + (err.message || ''))
+      })
+      .finally(() => setIsLoading(false))
+  }, [id, isEditing])
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
@@ -241,7 +154,7 @@ function GrammarFormPage() {
     setOpenQuestionIdx(newIdx)
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) {
       toast.error('Vui lòng nhập tên bài học ngữ pháp')
@@ -249,15 +162,55 @@ function GrammarFormPage() {
     }
 
     setIsSaving(true)
-    setTimeout(() => {
-      toast.success(
-        isEditing
-          ? `Đã cập nhật bài học "${form.title}"`
-          : `Đã thêm bài học mới "${form.title}"`
-      )
+    try {
+      const payload = {
+        title: form.title.trim(),
+        topic: form.topic,
+        cefrLevel: form.level,
+        status: form.status,
+        formula: form.formula.trim(),
+        description: form.description.trim(),
+        keyRules: form.keyRules.split('\n').map((s) => s.trim()).filter(Boolean),
+        examples: form.examples.filter((ex) => ex.en.trim() || ex.vi.trim()),
+        sampleExercises: questions
+          .filter((q) => q.question.trim())
+          .map((q) => ({
+            question: q.question.trim(),
+            options: q.options,
+            correctIndex: q.correctIndex,
+            answer: q.options[q.correctIndex] || '',
+            explanation: q.explanation?.trim() || '',
+            type: 'multiple-choice',
+          })),
+        authorName: user?.displayName || 'Admin',
+        authorEmail: user?.email || 'admin@smartenglish.vn',
+      }
+
+      if (isEditing) {
+        await updateGrammarLesson(id, payload)
+        toast.success(`Đã cập nhật bài học "${payload.title}"`)
+      } else {
+        await createGrammarLesson(payload)
+        toast.success(`Đã tạo bài học mới "${payload.title}"`)
+      }
+      navigate('/app/hoc-lieu/ngu-phap')
+    } catch (err) {
+      console.error('Lỗi khi lưu bài học:', err)
+      toast.error('Không thể lưu bài học ngữ pháp: ' + (err?.message || ''))
+    } finally {
       setIsSaving(false)
-      navigate('/hoc-lieu/ngu-phap')
-    }, 600)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-slate-400">
+          <Loader2 className="animate-spin text-brand-600" size={28} />
+          <span className="text-sm">Đang tải dữ liệu bài học ngữ pháp...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -266,7 +219,7 @@ function GrammarFormPage() {
       <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-xs">
         <div className="mx-auto max-w-6xl flex items-center gap-4 px-6 py-3.5">
           <Link
-            to="/hoc-lieu/ngu-phap"
+            to="/app/hoc-lieu/ngu-phap"
             className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft size={16} />
@@ -275,7 +228,7 @@ function GrammarFormPage() {
           <div className="h-5 w-px bg-slate-200" />
           <div className="flex-1">
             <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa: "${existingItem?.title}"` : 'Thêm bài học ngữ pháp mới'}
+              {isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài học ngữ pháp mới'}
             </h1>
             <p className="text-xs text-slate-500">
               Quản lý học liệu / Ngữ pháp / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}
@@ -283,7 +236,7 @@ function GrammarFormPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              to="/hoc-lieu/ngu-phap"
+              to="/app/hoc-lieu/ngu-phap"
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Hủy bỏ
@@ -497,7 +450,7 @@ function GrammarFormPage() {
               {/* Accordion List */}
               <div className="space-y-3">
                 {questions.map((q, idx) => (
-                  <QuestionCard
+                  <GrammarQuestionCard
                     key={idx}
                     question={q}
                     index={idx}

@@ -13,10 +13,11 @@
 export const ENDPOINTS = {
   // ── auth-service ────────────────────────────────────────────────
   auth: {
-    login: '/auth/login',
+    login: '/auth/admin/login',
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     me: '/auth/me',
+
     updateProfile: '/auth/me',
     changePassword: '/auth/me/password',
   },
@@ -102,6 +103,24 @@ export const ENDPOINTS = {
     update: '/admin/listenings/:id',
     remove: '/admin/listenings/:id',
     uploadAudio: '/admin/listenings/:id/audio',
+  },
+  pronunciationLessons: {
+    list: '/admin/pronunciation-lessons',
+    detail: '/admin/pronunciation-lessons/:id',
+    create: '/admin/pronunciation-lessons',
+    update: '/admin/pronunciation-lessons/:id',
+    remove: '/admin/pronunciation-lessons/:id',
+    publish: '/admin/pronunciation-lessons/:id/publish',
+  },
+  grammarLessons: {
+    list: '/admin/grammar-lessons',
+    topics: '/admin/grammar-lessons/topics',
+    detail: '/admin/grammar-lessons/:id',
+    create: '/admin/grammar-lessons',
+    update: '/admin/grammar-lessons/:id',
+    remove: '/admin/grammar-lessons/:id',
+    publish: '/admin/grammar-lessons/:id/publish',
+    duplicate: '/admin/grammar-lessons/:id/duplicate',
   },
 
   // ── learning-service (nội dung kiểm tra) ────────────────────────

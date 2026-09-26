@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Loader2 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
 import {
   approveAIContent,
+  bulkApproveAIContents,
+  fetchAIContentRecords,
   getAIContentRecords,
   rejectAIContent,
   restoreAIContent,
@@ -33,6 +35,7 @@ function AiContentPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState(() => getAIContentRecords())
+  const [isLoading, setIsLoading] = useState(false)
   const [view, setView] = useState('list') // 'list' | 'detail' | 'edit'
   const [selectedItem, setSelectedItem] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -46,6 +49,28 @@ function AiContentPage() {
     level: 'B2',
     questionCount: 3,
   })
+
+  // Tải dữ liệu thật từ Backend PostgreSQL khi vào trang
+  useEffect(() => {
+    let isMounted = true
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        const records = await fetchAIContentRecords()
+        if (isMounted && records) {
+          setItems(records)
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu AI:', err)
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+    loadData()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const normalizeOwner = (value) => String(value ?? '').trim().toLowerCase()
   const isOwnedByCurrentUser = useMemo(() => {
@@ -69,12 +94,22 @@ function AiContentPage() {
         const isDeleted = item.status === 'DELETED'
 
         if (showTrash) {
-          return isDeleted && (activeTab === 'all' || activeTab === 'others' || item.type === activeTab)
+          const matchesTrashType =
+            activeTab === 'all' ||
+            activeTab === 'others' ||
+            (activeTab === 'toeic'
+              ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
+              : item.type === activeTab)
+          return isDeleted && matchesTrashType
         }
 
         if (isDeleted) return false
 
-        const matchesType = activeTab === 'all' || item.type === activeTab
+        const matchesType =
+          activeTab === 'all' ||
+          (activeTab === 'toeic'
+            ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
+            : item.type === activeTab)
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
         const matchesOwner = activeTab === 'others'
           ? !isOwnedByCurrentUser(item)
@@ -90,35 +125,45 @@ function AiContentPage() {
     [items, activeTab, statusFilter, searchTerm, isOwnedByCurrentUser, showTrash],
   )
 
-  const refresh = () => {
-    const updated = getAIContentRecords()
-    setItems(updated)
-    if (selectedItem) {
-      const fresh = updated.find((i) => i.id === selectedItem.id)
-      if (fresh) setSelectedItem(fresh)
+  const refresh = async () => {
+    try {
+      const updated = await fetchAIContentRecords()
+      setItems(updated)
+      if (selectedItem) {
+        const fresh = updated.find((i) => i.id === selectedItem.id)
+        if (fresh) setSelectedItem(fresh)
+      }
+    } catch {
+      const localUpdated = getAIContentRecords()
+      setItems(localUpdated)
+      if (selectedItem) {
+        const fresh = localUpdated.find((i) => i.id === selectedItem.id)
+        if (fresh) setSelectedItem(fresh)
+      }
     }
   }
 
   const updateStatus = async (id, status, reason = '') => {
     try {
-      if (status === 'APPROVED') approveAIContent(id, user)
-      else if (status === 'REJECTED') rejectAIContent(id, reason, user)
-      refresh()
+      if (status === 'APPROVED') await approveAIContent(id, user)
+      else if (status === 'REJECTED') await rejectAIContent(id, reason, user)
+      await refresh()
       toast.success(status === 'APPROVED' ? 'Đã duyệt nội dung' : 'Đã từ chối nội dung')
     } catch (error) {
       toast.error(error.message || 'Không thể cập nhật nội dung')
     }
   }
 
-  const handleBulkApprove = () => {
+  const handleBulkApprove = async () => {
     const manageableItems = visibleItems.filter((item) => isOwnedByCurrentUser(item))
-    for (const item of manageableItems) approveAIContent(item.id, user)
-    refresh()
-    toast.success(
-      manageableItems.length > 0
-        ? 'Đã duyệt tất cả nội dung thuộc quyền quản lý của bạn trong tab này'
-        : 'Không có nội dung nào thuộc quyền quản lý của bạn để duyệt',
-    )
+    if (manageableItems.length === 0) {
+      toast.error('Không có nội dung nào thuộc quyền quản lý của bạn để duyệt')
+      return
+    }
+    const ids = manageableItems.map((item) => item.id)
+    await bulkApproveAIContents(ids, user)
+    await refresh()
+    toast.success(`Đã duyệt ${ids.length} bài học liệu AI`)
   }
 
   const handleCardClick = (item) => {
@@ -130,8 +175,8 @@ function AiContentPage() {
 
   const handleSaveEdit = async ({ content, questions }) => {
     try {
-      updateAIContent(selectedItem.id, { content, definition: content, questions })
-      refresh()
+      await updateAIContent(selectedItem.id, { content, definition: content, questions })
+      await refresh()
       toast.success('Đã lưu thay đổi')
       setView('detail')
     } catch (error) {
@@ -148,20 +193,20 @@ function AiContentPage() {
     }
   }
 
-  const handleRevoke = () => {
+  const handleRevoke = async () => {
     try {
-      revokeAIContent(selectedItem.id, '', user)
-      refresh()
+      await revokeAIContent(selectedItem.id, '', user)
+      await refresh()
       toast.success('↩ Đã thu hồi — nội dung chuyển về chờ duyệt')
     } catch (error) {
       toast.error(error.message || 'Không thể thu hồi nội dung')
     }
   }
 
-  const handleSoftDelete = (id) => {
+  const handleSoftDelete = async (id) => {
     try {
-      softDeleteAIContent(id, user)
-      refresh()
+      await softDeleteAIContent(id, user)
+      await refresh()
       setSelectedItem(null)
       setView('list')
       toast.success('Đã chuyển nội dung vào thùng rác')
@@ -170,10 +215,10 @@ function AiContentPage() {
     }
   }
 
-  const handleRestore = (id) => {
+  const handleRestore = async (id) => {
     try {
-      restoreAIContent(id)
-      refresh()
+      await restoreAIContent(id)
+      await refresh()
       setSelectedItem(null)
       setView('list')
       toast.success('Đã khôi phục nội dung từ thùng rác')
@@ -183,7 +228,7 @@ function AiContentPage() {
   }
 
   const formatGeminiError = (error) => {
-    if (error.code === 'NO_API_KEY') return '❌ Chưa cấu hình VITE_GEMINI_API_KEY trong .env'
+    if (error.code === 'NO_API_KEY') return '❌ Backend chưa cấu hình GEMINI_API_KEY trong hệ thống'
     if (error.code === 'RATE_LIMIT') return '❌ Gemini đang vượt giới hạn sử dụng. Vui lòng thử lại sau.'
     if (error.code === 'TRUNCATED_RESPONSE') return '❌ Phản hồi bị cắt do giới hạn token — thử chủ đề ngắn hơn'
     if (error.code === 'PARSE_ERROR') return '❌ Gemini trả về JSON không hợp lệ — mở F12 → Console để xem chi tiết'
@@ -216,23 +261,23 @@ function AiContentPage() {
         })
       }
 
-      setGeneratingStatus('Đang lưu nội dung...')
+      setGeneratingStatus('Đang lưu nội dung vào CSDL...')
       const finalTitle = `${draft.topic.trim()} - ${TYPE_LABELS[draft.type] || 'Nội dung AI'}`
-      const saved = saveGeminiContent({
+      const saved = await saveGeminiContent({
         type: draft.type,
         title: finalTitle,
         content: result.text || draft.topic,
         level: draft.level,
         questions: result.questions || [],
         geminiPrompt: draft.prompt || draft.topic,
-        createdBy: user?.displayName || 'Admin',
+        createdBy: user?.displayName || user?.email || 'Admin',
       })
 
-      refresh()
+      await refresh()
       setIsGenerating(false)
       setGeneratingStatus('')
       setDraft({ type: 'reading', topic: '', prompt: '', level: 'B2', questionCount: 3 })
-      toast.success(`✅ Đã tạo ${saved.title} · ${saved.questions?.length || 0} câu hỏi · đang chờ duyệt`)
+      toast.success(`✅ Đã tạo ${saved.title} · ${saved.questions?.length || 0} câu hỏi · đã lưu vào CSDL`)
     } catch (error) {
       setIsGenerating(false)
       setGeneratingStatus('')
@@ -254,6 +299,7 @@ function AiContentPage() {
           onRevoke={handleRevoke}
           onDelete={() => handleSoftDelete(selectedItem.id)}
           onRestore={() => handleRestore(selectedItem.id)}
+          isTrash={showTrash || selectedItem.status === 'DELETED'}
           canManage={isOwnedByCurrentUser(selectedItem)}
         />
       </div>
@@ -275,77 +321,87 @@ function AiContentPage() {
 
   /* ── LIST VIEW ── */
   return (
-    <div className="space-y-4">
-      <div className="space-y-5">
-        <AiContentToolbar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          onOpenCreationModal={() => setShowCreationForm(true)}
-          onBulkApprove={handleBulkApprove}
-          showTrash={showTrash}
-          setShowTrash={setShowTrash}
-          trashCount={trashCount}
-        />
-
-        {/* Grid */}
-        {visibleItems.length === 0 && !isGenerating ? (
-          <EmptyState
-            title={showTrash ? 'Thùng rác trống' : 'Không có nội dung'}
-            description={
-              showTrash
-                ? 'Các nội dung đã xóa mềm sẽ hiển thị ở đây.'
-                : 'Mọi mục trong tab này đã được xử lý hoặc chưa có dữ liệu.'
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Generating placeholder */}
-            {isGenerating && (
-              <Card className="border-2 border-brand-500/50 bg-brand-500/5">
-                <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-                  <div>
-                    <h3 className="text-base font-semibold text-navy-700">Đang tạo nội dung...</h3>
-                    <p className="mt-1 text-sm text-ink-muted">{generatingStatus}</p>
-                  </div>
-                  <div className="w-full rounded-lg bg-white p-3 text-center text-xs text-ink-muted">
-                    💡 Quá trình này có thể mất từ 10-30 giây
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {visibleItems.map((item) => (
-              <AiContentCard
-                key={item.id}
-                item={item}
-                canManage={isOwnedByCurrentUser(item)}
-                showTrash={showTrash}
-                onClick={() => handleCardClick(item)}
-                onApprove={(id) => updateStatus(id, 'APPROVED')}
-                onReject={(id) => updateStatus(id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.')}
-                onSoftDelete={handleSoftDelete}
-                onRestore={handleRestore}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
+    <div className="space-y-6">
       {/* Creation Modal */}
       <AiCreationModal
         isOpen={showCreationForm}
         onClose={() => setShowCreationForm(false)}
-        isGenerating={isGenerating}
-        generatingStatus={generatingStatus}
         draft={draft}
         setDraft={setDraft}
-        onCreate={handleCreate}
+        onSubmit={handleCreate}
       />
+
+      {/* Generating Banner */}
+      {isGenerating && (
+        <Card className="border-primary/20 bg-primary/5 p-4 shadow-sm animate-pulse">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                AI đang xử lý yêu cầu...
+              </p>
+              <p className="text-xs text-muted-foreground">{generatingStatus}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Toolbar gom gọn 1 hàng duy nhất */}
+      <AiContentToolbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        showTrash={showTrash}
+        setShowTrash={setShowTrash}
+        trashCount={trashCount}
+        onOpenCreateModal={() => setShowCreationForm(true)}
+        onBulkApprove={handleBulkApprove}
+        isGenerating={isGenerating}
+      />
+
+      {/* Grid Danh sách Card */}
+      {isLoading ? (
+        <Card className="flex flex-col items-center justify-center p-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+          <p className="text-sm text-muted-foreground">Đang tải học liệu từ CSDL...</p>
+        </Card>
+      ) : visibleItems.length === 0 ? (
+        <Card className="p-8">
+          <EmptyState
+            title={
+              showTrash
+                ? 'Thùng rác trống'
+                : searchTerm
+                  ? `Không tìm thấy nội dung với từ khóa "${searchTerm}"`
+                  : 'Chưa có nội dung AI nào'
+            }
+            description={
+              showTrash
+                ? 'Các nội dung bị xóa mềm sẽ xuất hiện tại đây và có thể khôi phục.'
+                : 'Nhấn "Tạo nội dung AI" ở trên để bắt đầu sinh học liệu tự động.'
+            }
+          />
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleItems.map((item) => (
+            <AiContentCard
+              key={item.id}
+              item={item}
+              onClick={() => handleCardClick(item)}
+              onApprove={() => updateStatus(item.id, 'APPROVED')}
+              onReject={() => updateStatus(item.id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.')}
+              onRestore={() => handleRestore(item.id)}
+              onDelete={() => handleSoftDelete(item.id)}
+              isTrash={showTrash || item.status === 'DELETED'}
+              canManage={isOwnedByCurrentUser(item)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

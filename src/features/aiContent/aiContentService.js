@@ -1,6 +1,7 @@
 import { aiContentItems } from '@/mocks/data/aiContent'
+import { http } from '@/lib/api'
 
-// Key lưu trữ trong localStorage — thay đổi key này nếu muốn reset toàn bộ dữ liệu
+// Key lưu trữ dự phòng trong localStorage khi offline hoặc chưa kịp sync
 const STORAGE_KEY = 'smartenglish_ai_content_v1'
 const MEMORY_STORE = []
 
@@ -62,21 +63,21 @@ function getStorage() {
   if (typeof window !== 'undefined' && window.localStorage) {
     return window.localStorage
   }
-
   if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
     return globalThis.localStorage
   }
-
   return null
 }
 
 // Chuẩn hóa một record để đảm bảo luôn có đầy đủ các field cần thiết
-function normalizeRecord(item) {
+export function normalizeRecord(item) {
+  if (!item) return null
   const createdAt = item.createdAt ?? new Date().toISOString()
 
   return {
     id: item.id || `AIC-${Date.now()}`,
     type: normalizeType(item.type),
+    rawType: item.type || 'reading',
     title: item.title || 'Nội dung AI',
     status: normalizeStatus(item.status),
     source: item.source || 'AI',
@@ -94,14 +95,13 @@ function normalizeRecord(item) {
     icon: item.icon || 'vocab',
     context: item.context || '',
     chartData: item.chartData ?? null,
-    questions: item.questions ?? [],
+    questions: Array.isArray(item.questions) ? item.questions : [],
     geminiPrompt: item.geminiPrompt ?? '',
     deletedAt: item.deletedAt ?? null,
     deletedBy: item.deletedBy ?? null,
   }
 }
 
-// Khởi tạo dữ liệu mẫu từ file mock khi storage chưa có gì
 function seedRecords() {
   const base = (aiContentItems || []).map((item) => normalizeRecord(item))
   const storage = getStorage()
@@ -118,7 +118,21 @@ function seedRecords() {
   return [...MEMORY_STORE]
 }
 
-// Đọc tất cả records từ storage, nếu chưa có thì seed dữ liệu mẫu
+export function persistRecords(records) {
+  const storage = getStorage()
+  const normalized = (records || []).map((item) => normalizeRecord(item))
+
+  if (storage) {
+    storage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+    return normalized
+  }
+
+  MEMORY_STORE.length = 0
+  MEMORY_STORE.push(...normalized)
+  return normalized
+}
+
+// Đọc đồng bộ từ local cache
 export function getAIContentRecords() {
   const storage = getStorage()
 
@@ -141,18 +155,46 @@ export function getAIContentRecords() {
   return seedRecords()
 }
 
-function persistRecords(records) {
-  const storage = getStorage()
-  const normalized = (records || []).map((item) => normalizeRecord(item))
+// =========================================================================
+// BACKEND REST API CALLS (PostgreSQL via content-service /admin/ai/contents)
+// =========================================================================
 
-  if (storage) {
-    storage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+export async function fetchAIContentRecords(params = {}) {
+  try {
+    const res = await http.get('/admin/ai/contents', {
+      params: {
+        page: params.page || 1,
+        size: params.size || 50,
+        type: params.type || undefined,
+        status: params.status || undefined,
+        search: params.search || undefined,
+        createdBy: params.createdBy || undefined,
+        trash: params.trash ?? false,
+      },
+    })
+
+    const items = res?.items || (Array.isArray(res) ? res : [])
+    const normalized = items.map(normalizeRecord)
+
+    // Cập nhật lại cache cục bộ để các module khác (Reading/Quiz/Listening) đọc đồng bộ
+    if (normalized.length > 0) {
+      persistRecords(normalized)
+    }
+
     return normalized
+  } catch (error) {
+    console.warn('⚠️ [AiContent] Không thể kết nối backend, sử dụng cache cục bộ:', error?.message)
+    return getAIContentRecords()
   }
+}
 
-  MEMORY_STORE.length = 0
-  MEMORY_STORE.push(...normalized)
-  return normalized
+export async function fetchAIContentStats() {
+  try {
+    const res = await http.get('/admin/ai/contents/statistics')
+    return res || getAIContentStats()
+  } catch {
+    return getAIContentStats()
+  }
 }
 
 export function getPendingAIContent(type) {
@@ -194,138 +236,189 @@ export function getAIContentStats() {
   }
 }
 
-export async function generateAIContent({ type = 'vocabulary', title, content, level = 'B2', createdBy = 'AI System' }) {
-  const records = getAIContentRecords()
-  const now = new Date().toISOString()
-  const generated = normalizeRecord({
-    id: `AIC-${Date.now()}`,
+// ─── Lưu nội dung được sinh bởi Gemini vào CSDL PostgreSQL (content-service) ───
+export async function saveGeminiContent({ type, title, content, level, questions = [], geminiPrompt = '', createdBy = 'Admin' }) {
+  const payload = {
     type,
     title: title || 'Nội dung AI mới',
-    status: 'GENERATING',
-    source: 'AI',
-    level,
     content: content || '',
-    createdBy,
-    createdAt: now,
-    updatedAt: now,
     definition: content || '',
-  })
+    level: level || 'B2',
+    questions: (questions || []).map((q) => ({
+      id: q.id || Math.random().toString(36).substr(2, 9),
+      questionText: q.questionText || q.question || '',
+      options: q.options || [],
+      correctAnswer: q.correctAnswer || 'A',
+      explanationVi: q.explanationVi || '',
+    })),
+    geminiPrompt,
+    confidenceScore: 95,
+    createdBy: createdBy || 'Admin',
+  }
 
-  const nextRecords = [generated, ...records]
-  persistRecords(nextRecords)
+  let record
+  try {
+    const res = await http.post('/admin/ai/contents', payload, {
+      params: { currentUser: createdBy },
+    })
+    record = normalizeRecord(res)
+  } catch (err) {
+    console.warn('⚠️ Lỗi khi lưu lên backend CSDL, fallback lưu local:', err?.message)
+    record = normalizeRecord({
+      id: `AIC-${Date.now()}`,
+      ...payload,
+      status: 'PENDING_REVIEW',
+      source: 'Gemini',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+  }
 
-  await new Promise((resolve) => setTimeout(resolve, 900))
-
-  const final = normalizeRecord({
-    ...generated,
-    status: 'PENDING_REVIEW',
-    updatedAt: new Date().toISOString(),
-  })
-
-  const finalRecords = nextRecords.map((item) => (item.id === generated.id ? final : item))
-  persistRecords(finalRecords)
-
-  return final
+  const records = getAIContentRecords()
+  const updated = [record, ...records.filter((i) => i.id !== record.id)]
+  persistRecords(updated)
+  return record
 }
 
-export function updateAIContent(id, payload = {}) {
+export async function updateAIContent(id, payload = {}) {
   const records = getAIContentRecords()
   const target = records.find((item) => item.id === id)
 
-  if (!target) return null
-  if (target.status === 'APPROVED') {
+  if (target?.status === 'APPROVED') {
     throw new Error('Không thể chỉnh sửa nội dung đã được duyệt.')
   }
-  if (target.status === 'DELETED') {
+  if (target?.status === 'DELETED') {
     throw new Error('Không thể chỉnh sửa nội dung trong thùng rác.')
   }
 
-  const updated = normalizeRecord({
-    ...target,
-    ...payload,
-    title: payload.title ?? target.title,
-    content: payload.content ?? target.content,
-    definition: payload.definition ?? payload.content ?? target.definition,
-    updatedAt: new Date().toISOString(),
-    status: 'PENDING_REVIEW',
-  })
+  let updatedRecord
+  try {
+    const res = await http.put(`/admin/ai/contents/${id}`, {
+      title: payload.title ?? target?.title,
+      content: payload.content ?? target?.content,
+      definition: payload.definition ?? payload.content ?? target?.definition,
+      level: payload.level ?? target?.level,
+      questions: payload.questions ?? target?.questions ?? [],
+    })
+    updatedRecord = normalizeRecord(res)
+  } catch {
+    updatedRecord = normalizeRecord({
+      ...target,
+      ...payload,
+      title: payload.title ?? target?.title,
+      content: payload.content ?? target?.content,
+      definition: payload.definition ?? payload.content ?? target?.definition,
+      updatedAt: new Date().toISOString(),
+      status: 'PENDING_REVIEW',
+    })
+  }
 
-  const nextRecords = records.map((item) => (item.id === id ? updated : item))
+  const nextRecords = records.map((item) => (item.id === id ? updatedRecord : item))
   persistRecords(nextRecords)
-  return updated
+  return updatedRecord
 }
 
-export function approveAIContent(id, currentUser = null) {
+export async function approveAIContent(id, currentUser = null) {
+  const reviewer = currentUser?.displayName || currentUser?.email || 'Admin'
+  let approvedRecord
+
+  try {
+    const res = await http.put(`/admin/ai/contents/${id}/approve`, null, {
+      params: { reviewer },
+    })
+    approvedRecord = normalizeRecord(res)
+  } catch {
+    const records = getAIContentRecords()
+    const target = records.find((item) => item.id === id)
+    if (!target) return null
+    approvedRecord = normalizeRecord({
+      ...target,
+      status: 'APPROVED',
+      approvedBy: reviewer,
+      approvedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      rejectionReason: '',
+    })
+  }
+
   const records = getAIContentRecords()
-  const target = records.find((item) => item.id === id)
-
-  if (!target) return null
-
-  const approved = normalizeRecord({
-    ...target,
-    status: 'APPROVED',
-    approvedBy: currentUser?.displayName || currentUser?.email || 'Admin',
-    approvedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    rejectionReason: '',
-  })
-
-  persistRecords(records.map((item) => (item.id === id ? approved : item)))
-  return approved
+  persistRecords(records.map((item) => (item.id === id ? approvedRecord : item)))
+  return approvedRecord
 }
 
-export function rejectAIContent(id, reason = '', currentUser = null) {
+export async function rejectAIContent(id, reason = '', currentUser = null) {
+  const reviewer = currentUser?.displayName || currentUser?.email || 'Admin'
+  let rejectedRecord
+
+  try {
+    const res = await http.put(`/admin/ai/contents/${id}/reject`, null, {
+      params: { reason, reviewer },
+    })
+    rejectedRecord = normalizeRecord(res)
+  } catch {
+    const records = getAIContentRecords()
+    const target = records.find((item) => item.id === id)
+    if (!target) return null
+    rejectedRecord = normalizeRecord({
+      ...target,
+      status: 'REJECTED',
+      rejectionReason: reason || 'Nội dung không đạt tiêu chuẩn duyệt.',
+      approvedBy: reviewer,
+      updatedAt: new Date().toISOString(),
+    })
+  }
+
   const records = getAIContentRecords()
-  const target = records.find((item) => item.id === id)
-
-  if (!target) return null
-
-  const rejected = normalizeRecord({
-    ...target,
-    status: 'REJECTED',
-    rejectionReason: reason || 'Nội dung không đạt tiêu chuẩn duyệt.',
-    approvedBy: currentUser?.displayName || currentUser?.email || null,
-    updatedAt: new Date().toISOString(),
-  })
-
-  persistRecords(records.map((item) => (item.id === id ? rejected : item)))
-  return rejected
+  persistRecords(records.map((item) => (item.id === id ? rejectedRecord : item)))
+  return rejectedRecord
 }
 
-// ─── Thu hồi nội dung đã duyệt (kéo về PENDING_REVIEW) ──────────────────────
-// Dùng khi nội dung đã publish nhưng phát hiện vi phạm — cần xét duyệt lại
-export function revokeAIContent(id, reason = '') {
+export async function revokeAIContent(id, reason = '', currentUser = null) {
+  const reviewer = currentUser?.displayName || currentUser?.email || 'Admin'
+  let revokedRecord
+
+  try {
+    const res = await http.put(`/admin/ai/contents/${id}/revoke`, null, {
+      params: { reviewer },
+    })
+    revokedRecord = normalizeRecord(res)
+  } catch {
+    const records = getAIContentRecords()
+    const target = records.find((item) => item.id === id)
+    if (!target) return null
+    revokedRecord = normalizeRecord({
+      ...target,
+      status: 'PENDING_REVIEW',
+      approvedBy: null,
+      approvedAt: null,
+      rejectionReason: reason || '',
+      updatedAt: new Date().toISOString(),
+    })
+  }
+
   const records = getAIContentRecords()
-  const target = records.find((item) => item.id === id)
-
-  if (!target) return null
-  if (target.status === 'DELETED') return target
-  if (target.status !== 'APPROVED') return target
-
-  const revoked = normalizeRecord({
-    ...target,
-    status: 'PENDING_REVIEW',
-    approvedBy: null,
-    approvedAt: null,
-    rejectionReason: reason || '',
-    updatedAt: new Date().toISOString(),
-  })
-
-  persistRecords(records.map((item) => (item.id === id ? revoked : item)))
-  return revoked
+  persistRecords(records.map((item) => (item.id === id ? revokedRecord : item)))
+  return revokedRecord
 }
 
-export function softDeleteAIContent(id, currentUser = null) {
+export async function softDeleteAIContent(id, currentUser = null) {
+  const user = currentUser?.displayName || currentUser?.email || 'Admin'
+  try {
+    await http.delete(`/admin/ai/contents/${id}`, {
+      params: { currentUser: user },
+    })
+  } catch {
+    // ignore
+  }
+
   const records = getAIContentRecords()
   const target = records.find((item) => item.id === id)
-
   if (!target) return null
-  if (target.status === 'DELETED') return target
 
   const deleted = normalizeRecord({
     ...target,
     status: 'DELETED',
-    deletedBy: currentUser?.displayName || currentUser?.email || 'Admin',
+    deletedBy: user,
     deletedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   })
@@ -334,23 +427,50 @@ export function softDeleteAIContent(id, currentUser = null) {
   return deleted
 }
 
-export function restoreAIContent(id) {
+export async function restoreAIContent(id) {
+  let restoredRecord
+  try {
+    const res = await http.put(`/admin/ai/contents/${id}/restore`)
+    restoredRecord = normalizeRecord(res)
+  } catch {
+    const records = getAIContentRecords()
+    const target = records.find((item) => item.id === id)
+    if (!target) return null
+    restoredRecord = normalizeRecord({
+      ...target,
+      status: 'PENDING_REVIEW',
+      deletedBy: null,
+      deletedAt: null,
+      updatedAt: new Date().toISOString(),
+    })
+  }
+
   const records = getAIContentRecords()
-  const target = records.find((item) => item.id === id)
+  persistRecords(records.map((item) => (item.id === id ? restoredRecord : item)))
+  return restoredRecord
+}
 
-  if (!target) return null
-  if (target.status !== 'DELETED') return target
+export async function bulkApproveAIContents(ids, currentUser = null) {
+  const reviewer = currentUser?.displayName || currentUser?.email || 'Admin'
+  try {
+    await http.post('/admin/ai/contents/bulk-approve', { ids, reviewer })
+  } catch {
+    // fallback
+  }
 
-  const restored = normalizeRecord({
-    ...target,
-    status: 'PENDING_REVIEW',
-    deletedBy: null,
-    deletedAt: null,
-    updatedAt: new Date().toISOString(),
+  const records = getAIContentRecords()
+  const updated = records.map((item) => {
+    if (ids.includes(item.id)) {
+      return normalizeRecord({
+        ...item,
+        status: 'APPROVED',
+        approvedBy: reviewer,
+        approvedAt: new Date().toISOString(),
+      })
+    }
+    return item
   })
-
-  persistRecords(records.map((item) => (item.id === id ? restored : item)))
-  return restored
+  persistRecords(updated)
 }
 
 export function buildPublicContent(type, fallbackItems = []) {
@@ -453,7 +573,6 @@ export function buildPublicContent(type, fallbackItems = []) {
     }
 
     if (group === 'quiz') {
-      // Nếu có mảng sub-questions, bung từng câu thành 1 record câu hỏi đơn lẻ
       if (Array.isArray(item.questions) && item.questions.length > 0) {
         return item.questions.map((q, idx) => ({
           id: `${item.id}-q${idx + 1}`,
@@ -510,60 +629,10 @@ export function buildPublicContent(type, fallbackItems = []) {
     }
   })
 
-  // Flatten quiz questions from Gemini (which returns arrays)
   const flattened = publicItems.flat()
-
   return [...fallbackItems, ...flattened]
 }
 
 export function syncGeneratedContentToPublicModules() {
   return getApprovedAIContent()
 }
-
-/**
- * Save Gemini-generated content with questions
- * @param {string} type - 'reading' or 'quiz'
- * @param {string} title - Content title
- * @param {string} content - Content text
- * @param {string} level - CEFR level
- * @param {Array} questions - Array of question objects from Gemini
- * @param {string} geminiPrompt - Original Gemini prompt
- * @param {object} currentUser - Current user object
- * @returns {object} Saved record
- */
-// ─── Lưu nội dung được sinh bởi Gemini vào localStorage ─────────────────────
-// Được gọi sau khi generateReading() hoặc generateQuiz() thành công
-// Tự động đặt status = PENDING_REVIEW (chờ admin duyệt trước khi publish)
-export function saveGeminiContent({ type, title, content, level, questions = [], geminiPrompt = '', createdBy = 'AI System' }) {
-  const records = getAIContentRecords()
-  const now = new Date().toISOString()
-
-  const record = normalizeRecord({
-    id: `AIC-${Date.now()}`,
-    type,
-    title: title || 'Nội dung AI mới',
-    status: 'PENDING_REVIEW',
-    source: 'Gemini',
-    level: level || 'B2',
-    content: content || '',
-    definition: content || '',
-    createdBy,
-    createdAt: now,
-    updatedAt: now,
-    questions: (questions || []).map((q) => ({
-      id: q.id || Math.random().toString(36).substr(2, 9),
-      questionText: q.questionText || q.question || '',
-      options: q.options || [],
-      correctAnswer: q.correctAnswer || 'A',
-      explanationVi: q.explanationVi || '',
-    })),
-    geminiPrompt,
-    confidenceScore: 95,
-  })
-
-  const updated = [record, ...records]
-  persistRecords(updated)
-
-  return record
-}
-

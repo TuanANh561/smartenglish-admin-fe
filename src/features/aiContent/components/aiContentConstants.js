@@ -2,9 +2,10 @@ import { BookOpen, ClipboardList } from 'lucide-react'
 
 export const TABS = [
   { value: 'all', label: 'Tất cả' },
-  { value: 'reading', label: 'Bài đọc' },
-  { value: 'quiz', label: 'Bài kiểm tra' },
-  { value: 'others', label: 'Khác' },
+  { value: 'reading', label: 'Bài đọc hiểu' },
+  { value: 'quiz', label: 'Bài kiểm tra (Quiz)' },
+  { value: 'toeic', label: 'TOEIC & Điền từ' },
+  { value: 'others', label: 'Tác giả khác' },
 ]
 
 export const CONTENT_TYPE_OPTIONS = [

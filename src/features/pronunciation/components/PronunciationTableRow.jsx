@@ -68,27 +68,6 @@ export default function PronunciationTableRow({
         </span>
       </td>
 
-      {/* Mẫu Audio */}
-      <td className="px-3 py-4 w-28 text-center whitespace-nowrap">
-        <div className="inline-flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => onPlayAudio(e, item)}
-            className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-lg transition-all cursor-pointer shadow-2xs',
-              isPlaying
-                ? 'bg-brand-500 text-white animate-pulse'
-                : 'bg-blue-50 text-brand-600 hover:bg-brand-500 hover:text-white',
-            )}
-            title={isPlaying ? 'Dừng audio' : 'Nghe thử âm mẫu'}
-          >
-            <Volume2 size={14} />
-          </button>
-          <span className="font-bold text-slate-800 text-sm">
-            {item.audioSampleCount || 24} mẫu
-          </span>
-        </div>
-      </td>
 
       {/* Trạng thái */}
       <td className="px-3 py-4 w-32 whitespace-nowrap">
