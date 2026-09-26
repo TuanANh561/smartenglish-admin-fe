@@ -1,13 +1,10 @@
-import { ChevronDown, GraduationCap, LogOut } from 'lucide-react'
+import { ChevronDown, GraduationCap } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import Avatar from '@/components/ui/Avatar'
-import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { getVisibleNavGroups } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
-import { useLogout } from '@/features/auth/hooks/useAuth'
 
 function NavItemGroup({ item, role }) {
   const location = useLocation()
@@ -58,10 +55,7 @@ function NavItemGroup({ item, role }) {
 }
 
 function Sidebar() {
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
-  const logout = useLogout()
-  const navigate = useNavigate()
   const role = user?.role ?? 'admin'
   const navGroups = getVisibleNavGroups(role)
   const myId = Number(user?.id) || 1
@@ -77,20 +71,15 @@ function Sidebar() {
     return () => clearInterval(interval)
   }, [myId, fetchUnreadCount])
 
-  const handleLogout = async () => {
-    await logout()
-    setConfirmOpen(false)
-    navigate('/dang-nhap', { replace: true })
-  }
-
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col bg-gradient-to-b from-navy-800 to-navy-900">
-      <div className="flex shrink-0 items-center gap-2 px-5 py-5">
-        <GraduationCap size={18} strokeWidth={1.75} className="text-white" />
-        <span className="text-base font-semibold text-white">SmartEnglish AI</span>
+      {/* Brand Header */}
+      <div className="flex shrink-0 items-center gap-2.5 px-5 py-5 border-b border-white/10">
+        <GraduationCap size={20} strokeWidth={1.75} className="text-white shrink-0" />
+        <span className="text-base font-bold text-white tracking-wide">SmartEnglish AI</span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto scrollbar-none px-3 pb-4">
+      <nav className="flex-1 overflow-y-auto scrollbar-none px-3 py-3">
         {navGroups.map((group) => (
           <div key={group.label} className="mb-4">
             <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-brand-200/70">
@@ -140,37 +129,6 @@ function Sidebar() {
           </div>
         ))}
       </nav>
-
-      <div className="shrink-0 px-3 pb-4">
-        <div className="flex items-center gap-2.5 rounded-lg bg-white/10 p-2.5">
-          <Avatar name={user?.displayName ?? 'Quản trị viên'} size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-white">
-              {user?.displayName ?? 'Quản trị viên'}
-            </p>
-            <p className="truncate text-xs text-brand-200/70">
-              {user?.role === 'teacher' ? 'Giáo viên' : 'Quản trị hệ thống'}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Đăng xuất"
-            onClick={() => setConfirmOpen(true)}
-            className="shrink-0 rounded-lg p-1.5 text-brand-200/90 hover:bg-white/10 hover:text-white"
-          >
-            <LogOut size={18} strokeWidth={1.75} />
-          </button>
-        </div>
-      </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={handleLogout}
-        title="Đăng xuất khỏi trang quản trị?"
-        description="Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng trang quản trị."
-        confirmText="Đăng xuất"
-      />
     </aside>
   )
 }

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
+import Avatar from '@/components/ui/Avatar'
 
 const DEFAULT_GROUP_AVATAR = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&auto=format&fit=crop&q=80'
 
@@ -256,10 +257,11 @@ export default function CreateGroupModal({
                   key={u.id}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-700 shadow-2xs"
                 >
-                  <img
+                  <Avatar
                     src={u.avatar}
-                    alt={u.name}
-                    className="h-4 w-4 rounded-full object-cover"
+                    name={u.name}
+                    size="xs"
+                    className="h-4 w-4"
                   />
                   <span>{u.name}</span>
                   <button
@@ -306,10 +308,11 @@ export default function CreateGroupModal({
                     {/* Trái: Avatar + Thông tin người dùng */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="relative shrink-0">
-                        <img
+                        <Avatar
                           src={u.avatar}
-                          alt={u.name}
-                          className="h-9 w-9 rounded-full object-cover border border-slate-200"
+                          name={u.name}
+                          size="md"
+                          className="h-9 w-9"
                         />
                         {u.status === 'online' && (
                           <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />

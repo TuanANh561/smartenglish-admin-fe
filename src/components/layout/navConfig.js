@@ -28,7 +28,6 @@ export const ROLE_ACCESS = {
     '/app/hoc-lieu/khoa-hoc',
     '/app/hoc-lieu/bai-kiem-tra',
     '/app/noi-dung-ai',
-    '/app/thong-bao',
     '/app/nhat-ky',
     '/app/cai-dat',
   ],
@@ -94,7 +93,7 @@ export const NAV_GROUPS = [
     label: 'Cài đặt hệ thống',
     items: [
       { to: '/app/phan-quyen', label: 'Phân quyền', icon: ShieldCheck, roles: ['admin'] },
-      { to: '/app/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin', 'teacher'] },
+      { to: '/app/thong-bao', label: 'Thông báo', icon: Bell, roles: ['admin'] },
       { to: '/app/bao-cao', label: 'Báo cáo vi phạm', icon: Flag, roles: ['admin'] },
       { to: '/app/nhat-ky', label: 'Nhật ký hoạt động', icon: History, roles: ['admin', 'teacher'] },
       { to: '/app/cai-dat', label: 'Cài đặt', icon: Settings, roles: ['admin', 'teacher'] },

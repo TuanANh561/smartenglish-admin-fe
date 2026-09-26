@@ -8,9 +8,11 @@ import PostCard from './components/PostCard'
 import ChatConversationSidebar from './components/ChatConversationSidebar'
 import ChatFloatingWindows from './components/ChatFloatingWindows'
 import TrendingTopicsCard from './components/TrendingTopicsCard'
-import FeaturedTeachersCard from './components/FeaturedTeachersCard'
 import SharePostModal from './components/SharePostModal'
 import FindFriendsModal from './components/FindFriendsModal'
+import PostCommentModal from './components/PostCommentModal'
+import PostImageViewerModal from './components/PostImageViewerModal'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { sanitizeAvatarUrl } from '@/components/ui/Avatar'
 import { useAuthStore, TEST_USERS } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
@@ -19,32 +21,7 @@ import { formatRelativeTime, cn } from '@/lib/utils'
 import { subscribeToConversation, connectSocket, subscribeToTyping, sendTyping, subscribeToUserEvents } from './socketService'
 
 
-const DEFAULT_TEACHERS = [
-  {
-    id: 2,
-    name: 'Thầy John Smith',
-    role: 'Senior IELTS Instructor',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    followersCount: 1420,
-    isFollowing: true,
-  },
-  {
-    id: 8,
-    name: 'Vũ Đức Thắng',
-    role: 'TOEIC & Grammar Specialist',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
-    followersCount: 890,
-    isFollowing: false,
-  },
-  {
-    id: 9,
-    name: 'Phạm Thanh Hà',
-    role: 'IELTS Speaking Examiner',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    followersCount: 1150,
-    isFollowing: false,
-  },
-]
+
 
 function CommunityPage() {
   const user = useAuthStore((s) => s.user)
@@ -78,7 +55,7 @@ function CommunityPage() {
         displayName: 'Quản trị viên',
         email: 'admin@smartenglish.com',
         role: 'admin',
-        avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+        avatarUrl: '',
       }
     )
   }, [asUserParam, user, realUsers])
@@ -87,8 +64,7 @@ function CommunityPage() {
   const isAdmin = currentDbUser?.role === 'admin'
   const myName = currentDbUser?.displayName || currentDbUser?.name || 'Quản trị viên Hệ thống'
   const myAvatar =
-    sanitizeAvatarUrl(currentDbUser?.avatarUrl) ||
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80'
+    sanitizeAvatarUrl(currentDbUser?.avatarUrl || currentDbUser?.avatar || user?.avatarUrl || user?.avatar) || ''
 
   useEffect(() => {
     if (asUserParam && currentDbUser && user?.id !== currentDbUser.id) {
@@ -101,7 +77,6 @@ function CommunityPage() {
   const [postPage, setPostPage] = useState(0)
   const [hasMorePosts, setHasMorePosts] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [teachers, setTeachers] = useState(DEFAULT_TEACHERS)
   const [selectedTag, setSelectedTag] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState(new Set())
@@ -111,7 +86,7 @@ function CommunityPage() {
     return realUsers.map((u) => ({
       id: u.id,
       name: u.displayName || u.username,
-      avatar: u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      avatar: sanitizeAvatarUrl(u.avatarUrl || u.avatar) || '',
       roleLabel: u.role === 'teacher' ? 'Giáo viên' : u.role === 'admin' ? 'Quản trị viên' : 'Học viên',
       role: u.role,
     }))
@@ -123,7 +98,7 @@ function CommunityPage() {
       .map((u) => ({
         id: u.id,
         name: u.displayName || u.username,
-        avatar: u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        avatar: sanitizeAvatarUrl(u.avatarUrl || u.avatar) || '',
         roleLabel: u.role === 'teacher' ? 'Giáo viên' : u.role === 'admin' ? 'Quản trị viên' : 'Học viên',
         role: u.role,
         email: u.email,
@@ -152,23 +127,6 @@ function CommunityPage() {
     return 'Học viên'
   }, [])
 
-  // Default diverse, reliable Unsplash avatar links for users without avatar in database
-  const FALLBACK_AVATARS = useMemo(
-    () => [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
-    ],
-    [],
-  )
-
   const realUsersRef = useRef([])
   useEffect(() => {
     realUsersRef.current = realUsers
@@ -181,20 +139,16 @@ function CommunityPage() {
       const userList = res?.data?.items || (Array.isArray(res?.data) ? res?.data : (res?.items || []))
       if (Array.isArray(userList)) {
         setRealUsers(
-          userList.map((u, idx) => {
-            const cleanUrl = sanitizeAvatarUrl(u.avatarUrl)
-            const fallbackAvatar = FALLBACK_AVATARS[idx % FALLBACK_AVATARS.length]
-            return {
-              ...u,
-              avatarUrl: cleanUrl || fallbackAvatar,
-            }
-          }),
+          userList.map((u) => ({
+            ...u,
+            avatarUrl: sanitizeAvatarUrl(u.avatarUrl || u.avatar) || '',
+          })),
         )
       }
     } catch (err) {
       console.warn('Could not fetch real users from auth-service:', err)
     }
-  }, [FALLBACK_AVATARS])
+  }, [])
 
   // Load real posts from MongoDB Atlas with pagination (10 posts per batch)
   const fetchPosts = useCallback(
@@ -554,13 +508,15 @@ function CommunityPage() {
   // New Post Form State
   const [postContent, setPostContent] = useState('')
   const [attachedImage, setAttachedImage] = useState(null)
+  const [imageFile, setImageFile] = useState(null)
   const [attachedDoc, setAttachedDoc] = useState(null)
+  const [docFile, setDocFile] = useState(null)
   const [isPosting, setIsPosting] = useState(false)
   const [isAiGenerating, setIsAiGenerating] = useState(false)
 
   // Interactive States
-  const [activeCommentPostId, setActiveCommentPostId] = useState(null)
-  const [commentInputs, setCommentInputs] = useState({})
+  const [selectedPostForComment, setSelectedPostForComment] = useState(null)
+  const [selectedPostForImage, setSelectedPostForImage] = useState(null)
   const [activeMenuPostId, setActiveMenuPostId] = useState(null)
 
   const checkPostOwnership = useCallback(
@@ -982,19 +938,20 @@ function CommunityPage() {
 
   // Like Post in MongoDB Atlas
   const handleLikePost = async (postId) => {
+    const updatePostLike = (p) => {
+      const nextLiked = !p.isLiked
+      return {
+        ...p,
+        isLiked: nextLiked,
+        likesCount: nextLiked ? (p.likesCount || 0) + 1 : Math.max(0, (p.likesCount || 1) - 1),
+      }
+    }
+
     setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const nextLiked = !p.isLiked
-          return {
-            ...p,
-            isLiked: nextLiked,
-            likesCount: nextLiked ? (p.likesCount || 0) + 1 : Math.max(0, (p.likesCount || 1) - 1),
-          }
-        }
-        return p
-      }),
+      prev.map((p) => (p.id === postId ? updatePostLike(p) : p)),
     )
+    setSelectedPostForComment((prev) => (prev && prev.id === postId ? updatePostLike(prev) : prev))
+    setSelectedPostForImage((prev) => (prev && prev.id === postId ? updatePostLike(prev) : prev))
 
     try {
       await http.post(`/api/v1/social/posts/${postId}/like?userId=${myId}`)
@@ -1155,17 +1112,7 @@ function CommunityPage() {
     }
   }
 
-  const handleToggleFollow = (teacherId) => {
-    setTeachers((prev) =>
-      prev.map((t) => (t.id === teacherId ? { ...t, isFollowing: !t.isFollowing } : t)),
-    )
-    const target = teachers.find((t) => t.id === teacherId)
-    if (target) {
-      toast.success(
-        target.isFollowing ? `Đã hủy theo dõi ${target.name}` : `Đã theo dõi ${target.name}`,
-      )
-    }
-  }
+
 
   const handleAiSuggest = () => {
     setIsAiGenerating(true)
@@ -1177,12 +1124,14 @@ function CommunityPage() {
       setAttachedImage(
         'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=80',
       )
+      setImageFile(null)
       setAttachedDoc({ name: 'IELTS_Collocations_Environment.pdf', size: '3.1 MB' })
+      setDocFile(null)
       toast.success('Đã tạo gợi ý bài viết mẫu')
     }, 500)
   }
 
-  // Create Post in MongoDB Atlas
+  // Create Post in MongoDB Atlas - Chỉ upload và lưu CSDL khi nhấn Đăng bài
   const handleCreatePost = async (e) => {
     e?.preventDefault?.()
     if (!postContent.trim()) {
@@ -1191,7 +1140,68 @@ function CommunityPage() {
     }
 
     setIsPosting(true)
+
+    let finalImageUrl = attachedImage
+    let finalDocAttachment = attachedDoc
+
     try {
+      // 1. Nếu có tệp ảnh từ máy tính -> Bắt đầu tải lên máy chủ lưu trữ
+      if (imageFile) {
+        try {
+          const imgFormData = new FormData()
+          imgFormData.append('file', imageFile)
+          imgFormData.append('folder', 'community/images')
+
+          const imgRes = await http.post('/admin/upload/image', imgFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          const uploadedUrl = imgRes?.data?.url || imgRes?.url
+          if (!uploadedUrl) {
+            throw new Error('Máy chủ không trả về URL ảnh hợp lệ.')
+          }
+          finalImageUrl = uploadedUrl
+        } catch (imgErr) {
+          console.error('Lỗi khi tải ảnh lên máy chủ:', imgErr)
+          const errorMsg =
+            imgErr?.response?.data?.message || imgErr?.message || 'Không thể lưu hình ảnh lên hệ thống.'
+          toast.error(`Lỗi tải ảnh: ${errorMsg}. Đã hủy đăng bài viết!`)
+          // Hủy toàn bộ quy trình lưu, không lưu CSDL, giữ nguyên bài viết và file trên form
+          setIsPosting(false)
+          return
+        }
+      }
+
+      // 2. Nếu có tệp tài liệu PDF từ máy tính -> Bắt đầu tải lên máy chủ lưu trữ
+      if (docFile) {
+        try {
+          const docFormData = new FormData()
+          docFormData.append('file', docFile)
+          docFormData.append('folder', 'community/documents')
+
+          const docRes = await http.post('/admin/upload/image', docFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          const uploadedDocUrl = docRes?.data?.url || docRes?.url
+          if (!uploadedDocUrl) {
+            throw new Error('Máy chủ không trả về URL tài liệu hợp lệ.')
+          }
+          finalDocAttachment = {
+            name: docFile.name,
+            size: attachedDoc?.size || 'PDF',
+            url: uploadedDocUrl,
+          }
+        } catch (docErr) {
+          console.error('Lỗi khi tải tài liệu lên máy chủ:', docErr)
+          const errorMsg =
+            docErr?.response?.data?.message || docErr?.message || 'Không thể lưu tài liệu lên hệ thống.'
+          toast.error(`Lỗi tải tài liệu: ${errorMsg}. Đã hủy đăng bài viết!`)
+          // Hủy toàn bộ quy trình lưu, không lưu CSDL, giữ nguyên bài viết và file trên form
+          setIsPosting(false)
+          return
+        }
+      }
+
+      // 3. Tiến hành lưu bài viết và các liên kết đa phương tiện vào CSDL
       const req = {
         authorId: myId,
         authorName: myName,
@@ -1200,22 +1210,23 @@ function CommunityPage() {
         authorTitle: isAdmin ? 'Quản trị viên' : 'Senior Instructor • SmartEnglish AI',
         authorAvatar: myAvatar,
         content: postContent.trim(),
-        mediaType: attachedImage ? 'image' : null,
-        mediaUrl: attachedImage,
-        mediaCaption: attachedImage ? 'Hình ảnh học liệu đính kèm' : null,
-        attachment: attachedDoc,
+        mediaType: finalImageUrl ? 'image' : null,
+        mediaUrl: finalImageUrl,
+        mediaCaption: finalImageUrl ? 'Hình ảnh học liệu đính kèm' : null,
+        attachment: finalDocAttachment,
         tags: postContent.match(/#[\w_]+/g)?.map((t) => t.replace('#', '')) || ['SmartEnglish'],
       }
 
       const res = await http.post('/api/v1/social/posts', req)
       const savedPost = res?.data || res
 
-      // Cập nhật lại danh sách bài viết từ server để bảo đảm hiển thị đầy đủ dữ liệu thực
+      // 4. Lưu CSDL thành công -> load lại dữ liệu trang như hiện tại
       await fetchPosts().catch(() => {
-        if (savedPost && savedPost.id) {
+        if (savedPost && (savedPost.id || savedPost._id)) {
           setPosts((prev) => [
             {
               ...savedPost,
+              id: savedPost.id || savedPost._id,
               createdAt: 'Vừa xong',
               isLiked: false,
               likesCount: 0,
@@ -1228,22 +1239,26 @@ function CommunityPage() {
         }
       })
 
-      // Đã đưa lên feed thành công -> dọn dẹp form và hiển thị thông báo
+      // Đã đăng bài và load lại trang thành công -> reset form
       setPostContent('')
       setAttachedImage(null)
+      setImageFile(null)
       setAttachedDoc(null)
+      setDocFile(null)
       toast.success('Đã đăng bài viết thành công!')
     } catch (err) {
-      console.error('Error creating post:', err)
-      toast.error('Không thể đăng bài viết. Vui lòng thử lại.')
+      console.error('Lỗi khi lưu bài viết vào CSDL:', err)
+      const errorMsg =
+        err?.response?.data?.message || err?.message || 'Không thể đăng bài viết. Đã hủy lưu.'
+      toast.error(`Lỗi lưu CSDL: ${errorMsg}`)
     } finally {
       setIsPosting(false)
     }
   }
 
   // Add Comment in MongoDB Atlas
-  const handleAddComment = async (postId) => {
-    const text = commentInputs[postId]?.trim()
+  const handleAddComment = async (postId, textArg, parentCommentId = null) => {
+    const text = (typeof textArg === 'string' ? textArg : '')?.trim()
     if (!text) return
 
     try {
@@ -1253,24 +1268,21 @@ function CommunityPage() {
         authorAvatar: myAvatar,
         authorRole: isAdmin ? 'Quản trị viên' : 'Giáo viên',
         content: text,
+        parentCommentId: parentCommentId || null,
       })
 
       const savedComment = res?.data || res
 
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p.id === postId) {
-            return {
-              ...p,
-              commentsCount: (p.commentsCount || 0) + 1,
-              comments: [...(p.comments || []), savedComment],
-            }
-          }
-          return p
-        }),
-      )
+      const appendComment = (p) => ({
+        ...p,
+        commentsCount: (p.commentsCount || (p.comments ? p.comments.length : 0)) + 1,
+        comments: [...(p.comments || []), savedComment],
+      })
 
-      setCommentInputs((prev) => ({ ...prev, [postId]: '' }))
+      setPosts((prev) => prev.map((p) => (p.id === postId ? appendComment(p) : p)))
+      setSelectedPostForComment((prev) => (prev && prev.id === postId ? appendComment(prev) : prev))
+      setSelectedPostForImage((prev) => (prev && prev.id === postId ? appendComment(prev) : prev))
+
       toast.success('Đã gửi bình luận!')
     } catch (err) {
       console.error('Error adding comment:', err)
@@ -1278,25 +1290,59 @@ function CommunityPage() {
     }
   }
 
+  // Delete Comment in MongoDB Atlas
+  const handleDeleteComment = async (postId, commentId) => {
+    try {
+      await http.delete(`/api/v1/social/posts/${postId}/comments/${commentId}?userId=${myId}&isAdmin=${isAdmin}`)
+
+      const removeComment = (p) => {
+        const nextComments = (p.comments || []).filter(
+          (c) => c.id !== commentId && c.parentCommentId !== commentId,
+        )
+        return {
+          ...p,
+          commentsCount: Math.max(0, (p.commentsCount || 1) - 1),
+          comments: nextComments,
+        }
+      }
+
+      setPosts((prev) => prev.map((p) => (p.id === postId ? removeComment(p) : p)))
+      setSelectedPostForComment((prev) => (prev && prev.id === postId ? removeComment(prev) : prev))
+      setSelectedPostForImage((prev) => (prev && prev.id === postId ? removeComment(prev) : prev))
+
+      toast.success('Đã xóa bình luận')
+    } catch (err) {
+      console.error('Error deleting comment:', err)
+      toast.error('Không thể xóa bình luận')
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* ─── MAIN 2-COLUMN LAYOUT ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS) ──────────────────── */}
-        <div className="lg:col-span-8 space-y-4">
-          <PostComposer
-            isAdmin={isAdmin}
-            postContent={postContent}
-            setPostContent={setPostContent}
-            attachedImage={attachedImage}
-            setAttachedImage={setAttachedImage}
-            attachedDoc={attachedDoc}
-            setAttachedDoc={setAttachedDoc}
-            isPosting={isPosting}
-            isAiGenerating={isAiGenerating}
-            handleAiSuggest={handleAiSuggest}
-            handleCreatePost={handleCreatePost}
-          />
+        {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS - THU GỌN VÀ TẠO KHOẢNG TRỐNG 2 BÊN) ──────────────────── */}
+        <div className="lg:col-span-8 flex justify-center px-0 sm:px-4 xl:px-8">
+          <div className="w-full max-w-[600px] space-y-4">
+            <PostComposer
+              isAdmin={isAdmin}
+              myAvatar={myAvatar}
+              myName={myName}
+              postContent={postContent}
+              setPostContent={setPostContent}
+              attachedImage={attachedImage}
+              setAttachedImage={setAttachedImage}
+              imageFile={imageFile}
+              setImageFile={setImageFile}
+              attachedDoc={attachedDoc}
+              setAttachedDoc={setAttachedDoc}
+              docFile={docFile}
+              setDocFile={setDocFile}
+              isPosting={isPosting}
+              isAiGenerating={isAiGenerating}
+              handleAiSuggest={handleAiSuggest}
+              handleCreatePost={handleCreatePost}
+            />
 
           {/* ─── POSTS FEED LIST ────────────────────────────────────────── */}
           <div className="space-y-4">
@@ -1371,7 +1417,6 @@ function CommunityPage() {
                       cardRef={isTrigger ? triggerPostRef : null}
                       isOwner={checkPostOwnership(post)}
                       isBookmarked={bookmarkedPostIds.has(post.id)}
-                      isCommentOpen={activeCommentPostId === post.id}
                       isMenuOpen={activeMenuPostId === post.id}
                       onToggleMenu={() =>
                         setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
@@ -1381,28 +1426,17 @@ function CommunityPage() {
                       onDeletePost={handleDeletePost}
                       onSelectTag={setSelectedTag}
                       onLikePost={handleLikePost}
-                      onToggleComment={() =>
-                        setActiveCommentPostId(
-                          activeCommentPostId === post.id ? null : post.id,
-                        )
-                      }
+                      onOpenCommentModal={(targetPost) => setSelectedPostForComment(targetPost)}
+                      onViewFullImage={(targetPost) => setSelectedPostForImage(targetPost)}
                       onBookmarkPost={handleBookmarkPost}
                       onSharePost={handleSharePost}
-                      commentInput={commentInputs[post.id] || ''}
-                      onCommentInputChange={(id, val) =>
-                        setCommentInputs((prev) => ({ ...prev, [id]: val }))
-                      }
-                      onAddComment={handleAddComment}
                     />
                   )
                 })}
 
                 {/* Loading indicator when fetching next batch */}
                 {isLoadingMore && (
-                  <div className="flex flex-col items-center justify-center py-6 gap-2 text-slate-400">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-                    <span className="text-xs font-medium text-slate-500">Đang tải thêm bài viết...</span>
-                  </div>
+                  <LoadingSpinner text="Đang tải thêm bài viết..." className="py-6" size={24} />
                 )}
 
                 {/* All caught up footer */}
@@ -1413,6 +1447,7 @@ function CommunityPage() {
                 )}
               </>
             )}
+          </div>
           </div>
         </div>
 
@@ -1448,11 +1483,6 @@ function CommunityPage() {
             topics={trendingTopics}
             selectedTag={selectedTag}
             onSelectTag={setSelectedTag}
-          />
-
-          <FeaturedTeachersCard
-            teachers={teachers}
-            onToggleFollow={handleToggleFollow}
           />
         </div>
       </div>
@@ -1509,6 +1539,34 @@ function CommunityPage() {
         post={sharingPost}
         conversations={conversations}
         onShare={handleConfirmShareToConversation}
+      />
+
+      {/* ─── MODAL BÌNH LUẬN (ẢNH 4 - FACEBOOK STYLE) ─── */}
+      <PostCommentModal
+        isOpen={Boolean(selectedPostForComment)}
+        onClose={() => setSelectedPostForComment(null)}
+        post={selectedPostForComment}
+        myUser={currentDbUser}
+        onLikePost={handleLikePost}
+        onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onViewFullImage={(targetPost) => {
+          setSelectedPostForComment(null)
+          setSelectedPostForImage(targetPost)
+        }}
+        onSharePost={handleSharePost}
+      />
+
+      {/* ─── MODAL XEM ẢNH TOÀN MÀN HÌNH (ẢNH 5: BÌNH LUẬN BÊN TRÁI, ẢNH BÊN PHẢI, NÚT X BÊN PHẢI) ─── */}
+      <PostImageViewerModal
+        isOpen={Boolean(selectedPostForImage)}
+        onClose={() => setSelectedPostForImage(null)}
+        post={selectedPostForImage}
+        myUser={currentDbUser}
+        onLikePost={handleLikePost}
+        onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onSharePost={handleSharePost}
       />
     </div>
   )
