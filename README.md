@@ -1,5 +1,14 @@
 # SmartEnglish AI — Admin Dashboard
 
+[![React](https://img.shields.io/badge/React-19.2-61DAFB.svg?style=flat-square&logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF.svg?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4.svg?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Zustand](https://img.shields.io/badge/Zustand-v5-4338CA.svg?style=flat-square)](https://github.com/pmndrs/zustand)
+[![TanStack Query](https://img.shields.io/badge/TanStack%20Query-v5-FF4154.svg?style=flat-square&logo=reactquery&logoColor=white)](https://tanstack.com/query)
+[![TanStack Table](https://img.shields.io/badge/TanStack%20Table-v9-FF4154.svg?style=flat-square&logo=reacttable&logoColor=white)](https://tanstack.com/table)
+[![Recharts](https://img.shields.io/badge/Recharts-v2-22B5BF.svg?style=flat-square)](https://recharts.org)
+[![Axios](https://img.shields.io/badge/Axios-HTTP-5A29E4.svg?style=flat-square&logo=axios&logoColor=white)](https://axios-http.com)
+
 Repository chứa **Admin Frontend** của đồ án tốt nghiệp *Hệ thống học tập tiếng Anh thông minh tích hợp trí tuệ nhân tạo (SmartEnglish AI)*.
 
 Ứng dụng web quản trị nội bộ dành cho Quản trị viên (Admin), cung cấp giao diện trực quan để vận hành hệ thống, quản lý người dùng, duyệt nội dung AI, quản lý kho học liệu (từ vựng, bài đọc, bài nghe, bài kiểm tra), quản lý gói cước & đối soát thanh toán.
@@ -141,17 +150,14 @@ Tạo tệp `.env` tại thư mục gốc của `smartenglish-admin`:
 
 ```env
 # URL API Backend
-# - Khi chạy qua API Gateway: http://localhost:8080/api
+# - Khi chạy qua API Gateway: http://localhost:8080
 # - Khi chạy trực tiếp với Content Service: http://localhost:8082
-VITE_API_URL=http://localhost:8082
+VITE_API_URL=http://localhost:8080
 
 # Chế độ dữ liệu giả (Mock Mode):
 # - true : Sử dụng dữ liệu giả lập trong thư mục src/mocks (không cần backend)
 # - false: Kết nối gọi API máy chủ backend thực tế
-VITE_USE_MOCK=true
-
-# Khóa API Google Gemini (dùng cho công cụ AI sinh học liệu & test prompt)
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+VITE_USE_MOCK=false
 ```
 
 ### 5.3. Khởi chạy môi trường phát triển
@@ -181,7 +187,13 @@ Hệ thống được thiết kế theo cơ chế **Clean Decoupling**:
 
 ---
 
-## 7. Thành viên thực hiện
+## 7. Tài khoản kiểm thử mẫu (Test Accounts)
+
+Liên hệ TheAnhOXY để được cấp tài khoản thử nghiệm
+
+---
+
+## 8. Thành viên thực hiện
 
 - **Nguyễn Thế Anh** — Sinh viên thực hiện
 - **Nguyễn Tuấn Anh** — Sinh viên thực hiện
