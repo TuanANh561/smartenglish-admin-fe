@@ -1,4 +1,5 @@
-import { Plus, Search } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import { Plus, RefreshCw, Search } from 'lucide-react'
 import { PRONUNCIATION_CATEGORIES } from '@/mocks/data/pronunciation'
 
 const CEFR_LEVELS = ['Tất cả', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -18,7 +19,10 @@ export default function PronunciationToolbar({
   selectedStatus,
   onStatusChange,
   onOpenCreate,
+  onReload,
+  onRefresh,
 }) {
+  const handleReload = onReload || onRefresh
   return (
     <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
       <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
@@ -51,7 +55,7 @@ export default function PronunciationToolbar({
         >
           {CEFR_LEVELS.map((lvl) => (
             <option key={lvl} value={lvl}>
-              {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : `Cấp độ ${lvl}`}
+              {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : lvl}
             </option>
           ))}
         </select>
@@ -67,6 +71,16 @@ export default function PronunciationToolbar({
             </option>
           ))}
         </select>
+
+        {handleReload && (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={handleReload}
+            title="Tải lại danh sách"
+          />
+        )}
 
         <button
           type="button"

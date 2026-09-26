@@ -27,26 +27,21 @@ export default function PronunciationTableRow({
       onClick={() => onViewDetails(item)}
       className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
     >
-      {/* Tên bài học */}
-      <td className="px-6 py-4.5">
-        <div className="flex items-center gap-3.5">
+      {/* Tên bài học (Tinh gọn) */}
+      <td className="px-6 py-3.5">
+        <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600 shadow-2xs">
             <Headphones size={18} strokeWidth={1.75} />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900 text-sm tracking-tight group-hover:text-brand-600 transition-colors">
-                {item.title}
-              </span>
-              {item.ipaSymbol && (
-                <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md font-semibold border border-brand-100 shrink-0">
-                  {item.ipaSymbol}
-                </span>
-              )}
-            </div>
-            <span className="line-clamp-1 text-xs text-slate-500 mt-0.5">
-              {item.description || item.mouthShapeGuide || 'Bài học luyện phát âm tiêu chuẩn'}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
+              {item.title}
             </span>
+            {item.ipaSymbol && (
+              <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md font-semibold border border-brand-100 shrink-0">
+                {item.ipaSymbol}
+              </span>
+            )}
           </div>
         </div>
       </td>
