@@ -47,7 +47,7 @@ export default function ClassListView({ onViewClass }) {
 
   useEffect(() => {
     loadClasses()
-  }, [user, statusFilter])
+  }, [user?.id, user?.role, statusFilter])
 
   // Debounced or direct search on Enter / button
   const handleSearchKeyDown = (e) => {

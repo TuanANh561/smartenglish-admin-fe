@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Tabs from '@/components/ui/Tabs'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import {
   createLessonApi,
@@ -288,11 +289,7 @@ function CourseDetailPage() {
   }, [course])
 
   if (isLoading || !course) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-brand-600" size={32} />
-      </div>
-    )
+    return <LoadingSpinner text="Đang tải thông tin khóa học..." className="py-24" />
   }
 
   return (

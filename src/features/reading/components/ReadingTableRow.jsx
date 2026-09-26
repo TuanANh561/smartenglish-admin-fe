@@ -28,27 +28,22 @@ export default function ReadingTableRow({
       onClick={() => onRowClick(item)}
       className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
     >
-      {/* Tiêu đề bài đọc */}
-      <td className="px-6 py-4.5">
+      {/* Tiêu đề bài đọc (Tinh gọn) */}
+      <td className="px-6 py-3.5">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600">
             <BookOpen size={18} strokeWidth={1.75} />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
-                {item.title}
-              </span>
-              {item.isAI && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200">
-                  <Sparkles size={10} />
-                  AI
-                </span>
-              )}
-            </div>
-            <span className="line-clamp-1 text-xs text-slate-500 mt-0.5">
-              {item.description}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
+              {item.title}
             </span>
+            {item.isAI && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200">
+                <Sparkles size={10} />
+                AI
+              </span>
+            )}
           </div>
         </div>
       </td>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Archive,
+  ArrowLeft,
   BookOpen,
   Crown,
   Loader2,
@@ -12,6 +13,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -19,6 +21,7 @@ import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { GRAMMAR_TOPICS } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import GrammarTableRow from './components/GrammarTableRow'
 import GrammarDetailDrawer from './components/GrammarDetailDrawer'
 import {
@@ -235,55 +238,18 @@ function GrammarPage() {
         </div>
       )}
 
-      {/* ─── Tabs Navigation: Active vs Trash ─────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-slate-200">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleTabChange('active')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === 'active'
-                ? 'border-brand-600 text-brand-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <BookOpen size={16} />
-            <span>Đang hoạt động</span>
-            {activeTab === 'active' && (
-              <span className="ml-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700">
-                {total}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange('trash')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === 'trash'
-                ? 'border-red-600 text-red-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Trash2 size={16} />
-            <span>Thùng rác</span>
-            {trashCount > 0 && (
-              <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">
-                {trashCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {activeTab === 'trash' && (
-          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg">
-            Bài học trong thùng rác có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào
-          </span>
-        )}
-      </div>
-
       {/* ─── Table Card (Matching Benchmark Design) ────────────────────── */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Banner thông báo khi ở chế độ thùng rác */}
+        {activeTab === 'trash' && (
+          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Trash2 size={14} className="text-amber-600 shrink-0" />
+              Bạn đang xem các bài học trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+            </span>
+          </div>
+        )}
+
         {/* Toolbar & Search */}
         <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
@@ -358,6 +324,36 @@ function GrammarPage() {
                 </button>
               </>
             )}
+
+            {/* Nút Thùng rác - Ở cuối kế bên nút Thêm */}
+            <button
+              type="button"
+              onClick={() => handleTabChange(activeTab === 'trash' ? 'active' : 'trash')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors shadow-2xs cursor-pointer border',
+                activeTab === 'trash'
+                  ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
+              )}
+              title={activeTab === 'trash' ? 'Quay lại danh sách bài học đang hoạt động' : 'Xem các bài học trong thùng rác'}
+            >
+              {activeTab === 'trash' ? (
+                <>
+                  <ArrowLeft size={14} />
+                  <span>Quay lại</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 size={14} className="text-slate-400 group-hover:text-red-500" />
+                  <span>Thùng rác</span>
+                  {trashCount > 0 && (
+                    <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
+                      {trashCount}
+                    </span>
+                  )}
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -378,11 +374,10 @@ function GrammarPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-sm text-slate-400">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-brand-600" size={24} />
-                      <span>{activeTab === 'trash' ? 'Đang tải thùng rác...' : 'Đang tải danh sách bài học ngữ pháp...'}</span>
-                    </div>
+                  <td colSpan={7} className="py-12 text-center">
+                    <LoadingSpinner
+                      text={activeTab === 'trash' ? 'Đang tải thùng rác...' : 'Đang tải danh sách bài học ngữ pháp...'}
+                    />
                   </td>
                 </tr>
               ) : lessons.length === 0 ? (

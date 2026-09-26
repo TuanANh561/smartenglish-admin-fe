@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   approveAIContent,
   bulkApproveAIContents,
@@ -33,6 +34,7 @@ function AiContentPage() {
   const user = useAuthStore((state) => state.user)
   const [activeTab, setActiveTab] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [authorFilter, setAuthorFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState(() => getAIContentRecords())
   const [isLoading, setIsLoading] = useState(false)
@@ -96,7 +98,6 @@ function AiContentPage() {
         if (showTrash) {
           const matchesTrashType =
             activeTab === 'all' ||
-            activeTab === 'others' ||
             (activeTab === 'toeic'
               ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
               : item.type === activeTab)
@@ -111,9 +112,13 @@ function AiContentPage() {
             ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
             : item.type === activeTab)
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
-        const matchesOwner = activeTab === 'others'
-          ? !isOwnedByCurrentUser(item)
-          : isOwnedByCurrentUser(item)
+        const isMine = isOwnedByCurrentUser(item)
+        const matchesOwner =
+          authorFilter === 'all'
+            ? true
+            : authorFilter === 'mine'
+              ? isMine
+              : !isMine
         const keyword = searchTerm.trim().toLowerCase()
         const matchesSearch =
           !keyword ||
@@ -122,7 +127,12 @@ function AiContentPage() {
 
         return matchesType && matchesStatus && matchesOwner && matchesSearch
       }),
-    [items, activeTab, statusFilter, searchTerm, isOwnedByCurrentUser, showTrash],
+    [items, activeTab, statusFilter, authorFilter, searchTerm, isOwnedByCurrentUser, showTrash],
+  )
+
+  const pendingCount = useMemo(
+    () => visibleItems.filter((i) => i.status === 'PENDING_REVIEW' && isOwnedByCurrentUser(i)).length,
+    [visibleItems, isOwnedByCurrentUser],
   )
 
   const refresh = async () => {
@@ -346,27 +356,40 @@ function AiContentPage() {
         </Card>
       )}
 
-      {/* Toolbar gom gọn 1 hàng duy nhất */}
+      {/* Banner thông báo khi ở chế độ thùng rác */}
+      {showTrash && (
+        <div className="flex items-center justify-between bg-amber-50/90 border border-amber-200 rounded-2xl px-6 py-3 text-xs text-amber-800 shadow-2xs">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Trash2 size={14} className="text-amber-600 shrink-0" />
+            Bạn đang xem các nội dung AI trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+          </span>
+        </div>
+      )}
+
+      {/* Toolbar gom gọn 1 hàng duy nhất chuẩn Benchmark */}
       <AiContentToolbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        authorFilter={authorFilter}
+        setAuthorFilter={setAuthorFilter}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         showTrash={showTrash}
         setShowTrash={setShowTrash}
         trashCount={trashCount}
-        onOpenCreateModal={() => setShowCreationForm(true)}
+        pendingCount={pendingCount}
+        onOpenCreationModal={() => setShowCreationForm(true)}
         onBulkApprove={handleBulkApprove}
+        onReload={refresh}
         isGenerating={isGenerating}
       />
 
       {/* Grid Danh sách Card */}
       {isLoading ? (
-        <Card className="flex flex-col items-center justify-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-          <p className="text-sm text-muted-foreground">Đang tải học liệu từ CSDL...</p>
+        <Card className="flex flex-col items-center justify-center p-8">
+          <LoadingSpinner text="Đang tải học liệu từ CSDL..." className="py-6" />
         </Card>
       ) : visibleItems.length === 0 ? (
         <Card className="p-8">

@@ -180,6 +180,13 @@ function ReadingPage() {
           isTeacher={isTeacher}
           onOpenCreate={handleOpenCreate}
           onOpenPdfImport={() => setIsPdfImportOpen(true)}
+          onReload={() => {
+            setSearch('')
+            setOwnershipFilter('all')
+            setLevelGroup('all')
+            setPage(1)
+            toast.success('Đã làm mới danh sách bài đọc')
+          }}
         />
 
         {/* Table Content */}

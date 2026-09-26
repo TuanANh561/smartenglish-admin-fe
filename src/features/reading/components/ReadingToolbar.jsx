@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button'
 import { LEVEL_GROUPS } from '../levels'
-import { Plus, Search, Upload } from 'lucide-react'
+import { Plus, RefreshCw, Search, Upload } from 'lucide-react'
 
 export default function ReadingToolbar({
   search,
@@ -14,10 +14,11 @@ export default function ReadingToolbar({
   isTeacher,
   onOpenCreate,
   onOpenPdfImport,
+  onReload,
 }) {
   return (
     <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
-      {/* Search */}
+      {/* Ô tìm kiếm không viền (borderless) chuẩn Benchmark */}
       <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
         <Search size={18} className="shrink-0 text-slate-400" />
         <input
@@ -29,32 +30,44 @@ export default function ReadingToolbar({
         />
       </div>
 
-      {/* Filters & Add Button */}
+      {/* Cụm bộ lọc và nút hành động trên cùng 1 hàng */}
       <div className="flex flex-wrap items-center gap-2.5">
-        {/* Học liệu */}
+        {/* Nguồn học liệu (chỉ ghi Nguồn: ở mục Tất cả, các mục sau không lặp lại) */}
         <select
           value={ownershipFilter}
           onChange={(e) => onOwnershipChange(e.target.value)}
           className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
         >
-          <option value="all">Học liệu: Tất cả ({totalCount})</option>
-          <option value="mine">Học liệu: Của tôi ({myReadingsCount})</option>
-          <option value="system">Học liệu: Hệ thống SmartEnglish</option>
-          {isTeacher && <option value="others">Học liệu: Giáo viên khác</option>}
+          <option value="all">Nguồn: Tất cả ({totalCount})</option>
+          <option value="mine">Của tôi ({myReadingsCount})</option>
+          <option value="system">SmartEnglish</option>
+          {isTeacher && <option value="others">Giáo viên khác</option>}
         </select>
 
-        {/* Cấp độ */}
+        {/* Cấp độ (chỉ ghi Cấp độ: ở mục Tất cả, các mục sau không lặp lại) */}
         <select
           value={levelGroup}
           onChange={(e) => onLevelChange(e.target.value)}
           className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
         >
-          {LEVEL_GROUPS.map((group) => (
+          <option value="all">Cấp độ: Tất cả</option>
+          {LEVEL_GROUPS.filter((g) => g.key !== 'all').map((group) => (
             <option key={group.key} value={group.key}>
-              {group.key === 'all' ? 'Cấp độ: Tất cả' : `Cấp độ: ${group.label}`}
+              {group.label}
             </option>
           ))}
         </select>
+
+        {/* Nút Tải lại */}
+        {onReload && (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={onReload}
+            title="Tải lại danh sách"
+          />
+        )}
 
         {/* Nút Import */}
         <Button size="sm" variant="secondary" icon={Upload} onClick={onOpenPdfImport}>

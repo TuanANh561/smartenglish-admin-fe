@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { GRAMMAR_TOPICS } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
 import GrammarQuestionCard from './components/GrammarQuestionCard'
@@ -205,10 +206,7 @@ function GrammarFormPage() {
   if (isLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="flex flex-col items-center gap-2 text-slate-400">
-          <Loader2 className="animate-spin text-brand-600" size={28} />
-          <span className="text-sm">Đang tải dữ liệu bài học ngữ pháp...</span>
-        </div>
+        <LoadingSpinner text="Đang tải dữ liệu bài học ngữ pháp..." />
       </div>
     )
   }
