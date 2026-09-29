@@ -765,6 +765,277 @@ export function speakDialogue(dialogueText, options = {}, onEnd = null) {
 }
 
 /**
+ * Phát bài nghe TOEIC / Hội thoại / Đọc script hoàn chỉnh theo đúng chuẩn đề thi:
+ * - Không đọc tiêu đề bài học TOEIC (tránh dư thừa).
+ * - Bất kể có file audio hay không có file audio, đọc trọn vẹn toàn bộ kịch bản.
+ * - Với đề mô tả tranh / Part 1 / Part 2 / câu hỏi đơn lẻ:
+ *     + Đọc nội dung dẫn chuyện / mô tả của Narrator: "Look at the photograph..."
+ *     + Đọc lần lượt các đáp án: "A. [nội dung]", ngừng ~800ms, "B. [nội dung]", ngừng ~800ms, "C. [nội dung]", "D. [nội dung]".
+ * - Với đề hội thoại / Part 3 / Part 4 / Short Talk / Conversation:
+ *     + Đọc toàn bộ nội dung hội thoại giữa các nhân vật (phân chia giọng nam / nữ tự nhiên).
+ *     + Sau khi kết thúc đoạn thoại, dừng nghỉ ~1.5 giây.
+ *     + Đọc các câu hỏi: "Question number 1: [câu hỏi]", ngừng ~1.5 giây, "Question number 2: [câu hỏi]", ngừng ~1.5 giây...
+ *     + TUYỆT ĐỐI KHÔNG đọc các đáp án trắc nghiệm (A, B, C, D) của phần hội thoại theo đúng quy định đề thi TOEIC.
+ */
+export function playListeningLessonFull(lesson, onEnd = null) {
+  stopAudio()
+  dialogueStopRequested = false
+
+  if (!lesson) {
+    if (onEnd) onEnd()
+    return
+  }
+
+  const sessionId = activePlaySessionId
+
+  // Nếu có link file âm thanh hợp lệ -> Thử phát file MP3 thực tế trước
+  if (isValidAudioUrl(lesson.audioUrl)) {
+    const validUrl = lesson.audioUrl.trim()
+    try {
+      const audio = new Audio(validUrl)
+      currentAudio = audio
+
+      audio.onended = () => {
+        if (currentAudio === audio) {
+          currentAudio = null
+        }
+        if (sessionId === activePlaySessionId && onEnd) {
+          onEnd()
+        }
+      }
+
+      audio.onerror = () => {
+        if (sessionId === activePlaySessionId) {
+          playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
+        }
+      }
+
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          if (err && (err.name === 'AbortError' || err.message?.toLowerCase().includes('interrupted'))) {
+            return
+          }
+          if (sessionId === activePlaySessionId) {
+            playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
+          }
+        })
+        return
+      }
+    } catch (e) {
+      // Fallback xuống Web Speech
+    }
+  }
+
+  playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
+}
+
+export function playListeningScriptWithWebSpeech(lesson, sessionId = null, onEnd = null) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    if (onEnd) onEnd()
+    return
+  }
+
+  const currentSession = sessionId !== null ? sessionId : activePlaySessionId
+  if (currentSession !== activePlaySessionId) return
+
+  const voices = getEnglishVoices()
+  const speaker1Resolved = resolveSpeakerVoice(lesson, false, voices)
+  const speaker2Resolved = resolveSpeakerVoice(lesson, true, voices)
+  const narratorResolved = resolveNarratorVoice(lesson, voices, speaker1Resolved, speaker2Resolved)
+
+  const category = String(lesson.category || '').toUpperCase()
+  const isSingleOrPhoto =
+    category === 'TOEIC_PART_1' ||
+    category === 'TOEIC_PART_2' ||
+    (category !== 'TOEIC_PART_3' &&
+      category !== 'TOEIC_PART_4' &&
+      category !== 'CONVERSATION' &&
+      category !== 'SHORT_TALK' &&
+      Array.isArray(lesson.questions) &&
+      lesson.questions.length === 1)
+
+  const allTurns = []
+
+  if (isSingleOrPhoto) {
+    // ─── PART 1 / PART 2: Đọc dẫn chuyện Narrator + Đọc các đáp án A, B, C, D ───
+    const lines = String(lesson.transcript || '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+
+    const promptLines = []
+    const optionTurns = []
+
+    lines.forEach((line) => {
+      const optMatch = line.match(/^[-*•]?\s*\(?([A-D1-4])\)?[:.\-]?\s*(.*)$/i)
+      if (optMatch) {
+        let letter = optMatch[1].toUpperCase()
+        if (letter === '1') letter = 'A'
+        else if (letter === '2') letter = 'B'
+        else if (letter === '3') letter = 'C'
+        else if (letter === '4') letter = 'D'
+        const text = optMatch[2].trim()
+        optionTurns.push({
+          speaker: 'Narrator',
+          speakerIndex: -1,
+          text: `${letter}. ${text}`,
+          pauseAfter: 800,
+        })
+      } else {
+        const cleanPrompt = line.replace(/^(Narrator|Question|Speaker\s*\d?)\s*[:\-]\s*/i, '').trim()
+        if (cleanPrompt) {
+          promptLines.push(cleanPrompt)
+        }
+      }
+    })
+
+    // Nếu trong transcript chưa có đáp án, bóc tách từ lesson.questions[0].options
+    if (optionTurns.length === 0 && Array.isArray(lesson.questions) && lesson.questions.length > 0) {
+      const q = lesson.questions[0]
+      if (Array.isArray(q.options)) {
+        const letters = ['A', 'B', 'C', 'D']
+        q.options.forEach((opt, idx) => {
+          const letter = letters[idx] || `Option ${idx + 1}`
+          const cleanOpt = String(opt || '').replace(/^[-*•]?\s*\(?([A-D1-4])\)?[:.\-]?\s*/i, '').trim()
+          if (cleanOpt) {
+            optionTurns.push({
+              speaker: 'Narrator',
+              speakerIndex: -1,
+              text: `${letter}. ${cleanOpt}`,
+              pauseAfter: 800,
+            })
+          }
+        })
+      }
+    }
+
+    if (promptLines.length === 0) {
+      if (lesson.questions?.[0]?.question) {
+        promptLines.push(lesson.questions[0].question.trim())
+      } else if (lesson.description) {
+        promptLines.push(lesson.description.trim())
+      }
+    }
+
+    promptLines.forEach((text) => {
+      allTurns.push({
+        speaker: 'Narrator',
+        speakerIndex: -1,
+        text,
+        pauseAfter: 700,
+      })
+    })
+
+    optionTurns.forEach((opt) => {
+      allTurns.push(opt)
+    })
+  } else {
+    // ─── PART 3 / PART 4 / HỘI THOẠI: Đọc hết hội thoại -> Đọc câu hỏi Number 1..., ngừng tý, Number 2... (KHÔNG đọc đáp án) ───
+    if (lesson.transcript && lesson.transcript.trim()) {
+      const { turns } = parseDialogueSpeakers(
+        lesson.transcript,
+        lesson.speaker1Name || 'Alex',
+        lesson.speaker2Name || 'Sarah'
+      )
+      turns.forEach((t) => {
+        allTurns.push({
+          speaker: t.speaker,
+          speakerIndex: t.speakerIndex,
+          text: t.text,
+          pauseAfter: 400,
+        })
+      })
+    } else if (lesson.description && lesson.description.trim()) {
+      allTurns.push({
+        speaker: 'Narrator',
+        speakerIndex: -1,
+        text: lesson.description.trim(),
+        pauseAfter: 600,
+      })
+    }
+
+    // Đọc các câu hỏi luyện tập (chỉ đọc câu hỏi, tuyệt đối không đọc đáp án A, B, C, D)
+    if (Array.isArray(lesson.questions) && lesson.questions.length > 0) {
+      if (allTurns.length > 0) {
+        allTurns[allTurns.length - 1].pauseAfter = 1200
+      }
+      lesson.questions.forEach((q, qIdx) => {
+        const qText = String(q.question || q.text || '').trim()
+        if (qText) {
+          allTurns.push({
+            speaker: 'Narrator',
+            speakerIndex: -1,
+            isQuestion: true,
+            text: `Question number ${qIdx + 1}: ${qText}`,
+            pauseAfter: 1500, // Tạm dừng 1.5 giây trước câu hỏi tiếp theo
+          })
+        }
+      })
+    }
+  }
+
+  if (allTurns.length === 0) {
+    if (onEnd) onEnd()
+    return
+  }
+
+  let turnIndex = 0
+
+  function playNextTurn() {
+    if (dialogueStopRequested || currentSession !== activePlaySessionId || turnIndex >= allTurns.length) {
+      if (currentSession === activePlaySessionId && onEnd) {
+        onEnd()
+      }
+      return
+    }
+
+    const currentTurn = allTurns[turnIndex]
+    const utterance = new SpeechSynthesisUtterance(currentTurn.text)
+
+    let resolvedConfig = speaker1Resolved
+    if (currentTurn.speaker === 'Narrator' || currentTurn.speakerIndex === -1 || currentTurn.isQuestion) {
+      resolvedConfig = narratorResolved
+    } else if (currentTurn.speakerIndex % 2 === 1) {
+      resolvedConfig = speaker2Resolved
+    } else {
+      resolvedConfig = speaker1Resolved
+    }
+
+    utterance.lang = resolvedConfig.lang || 'en-US'
+    utterance.pitch = resolvedConfig.pitch
+    utterance.rate = resolvedConfig.rate
+    if (resolvedConfig.voice) {
+      utterance.voice = resolvedConfig.voice
+    }
+
+    utterance.onend = () => {
+      turnIndex += 1
+      const delay = currentTurn.pauseAfter || 400
+      setTimeout(() => {
+        if (!dialogueStopRequested && currentSession === activePlaySessionId) {
+          playNextTurn()
+        }
+      }, delay)
+    }
+
+    utterance.onerror = (e) => {
+      console.warn('[Listening Speech Error]:', e)
+      turnIndex += 1
+      setTimeout(() => {
+        if (!dialogueStopRequested && currentSession === activePlaySessionId) {
+          playNextTurn()
+        }
+      }, 300)
+    }
+
+    window.speechSynthesis.speak(utterance)
+  }
+
+  playNextTurn()
+}
+
+/**
  * 1. Nguồn trực tuyến: Free Dictionary API (api.dictionaryapi.dev)
  */
 async function fetchFromFreeDictionary(word) {

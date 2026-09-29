@@ -1,5 +1,6 @@
 import { Send } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
+import Avatar from '@/components/ui/Avatar'
 
 export default function PostCommentSection({
   postId,
@@ -14,10 +15,11 @@ export default function PostCommentSection({
         <div className="space-y-2">
           {comments.map((cmt) => (
             <div key={cmt.id} className="flex items-start gap-2.5">
-              <img
+              <Avatar
                 src={cmt.authorAvatar}
-                alt={cmt.authorName}
-                className="h-7 w-7 rounded-full object-cover border border-slate-200 mt-0.5 shrink-0"
+                name={cmt.authorName}
+                size="xs"
+                className="h-7 w-7 shrink-0 mt-0.5"
               />
               <div className="flex-1 rounded-xl bg-slate-50 p-2.5 text-xs space-y-0.5 border border-slate-100">
                 <div className="flex items-center justify-between">

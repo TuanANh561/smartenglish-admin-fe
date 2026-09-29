@@ -1,10 +1,11 @@
-import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2, ArrowUpDown, Layers, BookOpen, RotateCcw, Check, X } from 'lucide-react'
+import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2, ArrowUpDown, Layers, BookOpen, RotateCcw, RefreshCw, Check, X } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import VocabImportModal from '@/features/vocabulary/import/VocabImportModal'
 import { vocabularyColumns } from './columns'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
@@ -161,7 +162,6 @@ function VocabularyPage() {
   const [partOfSpeech, setPartOfSpeech] = useState('')
   const [topicId, setTopicId] = useState('')
   const [topics, setTopics] = useState([])
-  const [selectedIds, setSelectedIds] = useState(new Set())
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -222,6 +222,18 @@ function VocabularyPage() {
     fetchWords()
   }, [fetchWords])
 
+  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
+
+  const loadWords = useCallback(() => {
+    fetchWords()
+    loadTopics()
+  }, [fetchWords, loadTopics])
+
   const hasActiveFilters = Boolean(search || partOfSpeech || topicId || sortBy !== 'created_desc')
 
   const handleResetFilters = () => {
@@ -235,23 +247,6 @@ function VocabularyPage() {
 
   const start = (page - 1) * PAGE_SIZE
   const pageData = vocabList
-
-  const allSelected = pageData.length > 0 && pageData.every((v) => selectedIds.has(v.id))
-  const someSelected = pageData.some((v) => selectedIds.has(v.id))
-
-  const handleSelectAll = (checked) => {
-    const newSelected = new Set(selectedIds)
-    if (checked) pageData.forEach((v) => newSelected.add(v.id))
-    else pageData.forEach((v) => newSelected.delete(v.id))
-    setSelectedIds(newSelected)
-  }
-
-  const handleSelectRow = (id, checked) => {
-    const newSelected = new Set(selectedIds)
-    if (checked) newSelected.add(id)
-    else newSelected.delete(id)
-    setSelectedIds(newSelected)
-  }
 
   const handleOpenCreate = () => navigate('/app/hoc-lieu/tu-vung/tao-moi')
 
@@ -302,105 +297,84 @@ function VocabularyPage() {
     <div className="space-y-4">
       {/* Table card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex-1 min-w-[260px] max-w-md">
-              <div className="relative flex items-center">
-                <Search size={18} className="pointer-events-none absolute left-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm, chủ đề..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
-                Import
-              </Button>
-              <Button size="sm" icon={Plus} onClick={handleOpenCreate}>
-                Thêm từ mới
-              </Button>
-            </div>
+        {/* Toolbar (Đồng bộ chuẩn Benchmark) */}
+        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
+            <Search size={18} className="shrink-0 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm, chủ đề..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+            />
           </div>
 
-          {/* Filter & Sort Controls */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* Sắp xếp */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              <ArrowUpDown size={14} className="text-slate-500" />
-              <span className="font-semibold text-slate-600">Sắp xếp:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
-                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
             {/* Từ loại */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              <Layers size={14} className="text-slate-500" />
-              <span className="font-semibold text-slate-600">Từ loại:</span>
-              <select
-                value={partOfSpeech}
-                onChange={(e) => { setPartOfSpeech(e.target.value); setPage(1) }}
-                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer max-w-[130px]"
-              >
-                <option value="">Tất cả từ loại</option>
-                {PARTS_OF_SPEECH.map((pos) => (
-                  <option key={pos} value={pos}>
-                    {PART_OF_SPEECH_LABEL[pos] || pos} ({pos})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={partOfSpeech}
+              onChange={(e) => { setPartOfSpeech(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+            >
+              <option value="">Từ loại: Tất cả</option>
+              {PARTS_OF_SPEECH.map((pos) => (
+                <option key={pos} value={pos}>
+                  {PART_OF_SPEECH_LABEL[pos] || pos} ({pos})
+                </option>
+              ))}
+            </select>
 
             {/* Chủ đề */}
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              <BookOpen size={14} className="text-slate-500" />
-              <span className="font-semibold text-slate-600">Chủ đề:</span>
-              <select
-                value={topicId}
-                onChange={(e) => { setTopicId(e.target.value); setPage(1) }}
-                className="bg-transparent text-slate-800 font-medium outline-none cursor-pointer max-w-[160px]"
-              >
-                <option value="">Tất cả chủ đề</option>
-                {topics.map((top) => (
-                  <option key={top.id} value={top.id}>
-                    {top.iconEmoji ? `${top.iconEmoji} ` : ''}{top.nameVi || top.nameEn} ({top.wordCount ?? 0})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={topicId}
+              onChange={(e) => { setTopicId(e.target.value); setPage(1) }}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[180px]"
+            >
+              <option value="">Chủ đề: Tất cả</option>
+              {topics.map((top) => (
+                <option key={top.id} value={top.id}>
+                  {top.iconEmoji ? `${top.iconEmoji} ` : ''}{top.nameVi || top.nameEn} ({top.wordCount ?? 0})
+                </option>
+              ))}
+            </select>
 
-            {/* Nút Đặt lại bộ lọc */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                title="Xóa tất cả điều kiện lọc và sắp xếp"
-              >
-                <RotateCcw size={13} />
-                <span>Đặt lại</span>
-              </button>
-            )}
+            {/* Nút Tải lại danh sách */}
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={RefreshCw}
+              onClick={loadWords}
+              title="Tải lại danh sách"
+            />
 
-            {/* Số lượng kết quả */}
-            {(partOfSpeech || topicId || (search && search.trim()) || sortBy !== 'created_desc') && (
-              <span className="ml-auto text-slate-500 font-normal">
-                Khớp: <strong className="text-brand-600 font-bold">{total}</strong> từ
-              </span>
-            )}
+            {/* Nút Import */}
+            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+              Import
+            </Button>
+
+            {/* Nút Thêm mới */}
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>Thêm từ mới</span>
+            </button>
           </div>
         </div>
 
@@ -409,15 +383,6 @@ function VocabularyPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <th className="w-12 px-6 py-3.5">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => { if (el) el.indeterminate = !allSelected && someSelected }}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
-                </th>
                 {vocabularyColumns.map((col) => (
                   <th
                     key={col.accessorKey}
@@ -437,30 +402,19 @@ function VocabularyPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 4} className="px-6 py-8 text-center text-sm text-slate-400">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="animate-spin text-brand-500" size={18} />
-                      <span>Đang tải dữ liệu từ máy chủ...</span>
-                    </div>
+                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-12 text-center">
+                    <LoadingSpinner text="Đang tải danh sách từ vựng từ máy chủ..." />
                   </td>
                 </tr>
               ) : pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 4} className="px-6 py-8 text-center text-sm text-slate-400">
+                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-8 text-center text-sm text-slate-400">
                     Chưa có từ vựng nào khớp với tìm kiếm
                   </td>
                 </tr>
               ) : (
                 pageData.map((vocab) => (
                   <tr key={vocab.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="w-12 px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(vocab.id)}
-                        onChange={(e) => handleSelectRow(vocab.id, e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                      />
-                    </td>
                     {vocabularyColumns.map((col) => (
                       <td key={`${vocab.id}-${col.accessorKey}`} className="px-6 py-4 text-sm">
                         {col.cell({ getValue: () => vocab[col.accessorKey], row: { original: vocab } })}
@@ -561,6 +515,7 @@ function VocabularyPage() {
             })
             const count = Array.isArray(saved) ? saved.length : formatted.length
             toast.success(`Đã import thành công ${count} từ vựng vào cơ sở dữ liệu!`)
+            loadWords()
           } catch (err) {
             console.error('Lỗi import:', err)
             toast.error(err?.message || 'Không thể import từ vựng vào hệ thống')

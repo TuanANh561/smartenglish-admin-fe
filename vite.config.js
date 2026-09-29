@@ -24,7 +24,23 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
+      '/admin/listening-lessons': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/admin/reading-passages': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/admin/exams': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
       '/admin/ai': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/content': {
         target: 'http://localhost:8082',
         changeOrigin: true,
       },

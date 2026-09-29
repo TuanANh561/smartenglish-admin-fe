@@ -1,13 +1,25 @@
-import { BookOpen, Copy, Eye, Lock, Pencil, RotateCcw, Sparkles, Trash2 } from 'lucide-react'
+import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const LEVEL_COLOR = {
-  A1: { bg: '#f0fdf4', text: '#15803d' },
-  A2: { bg: '#dcfce7', text: '#166534' },
-  B1: { bg: '#eff6ff', text: '#1d4ed8' },
-  B2: { bg: '#eef2ff', text: '#4f46e5' },
-  C1: { bg: '#faf5ff', text: '#7c3aed' },
-  C2: { bg: '#fdf4ff', text: '#86198f' },
+  A1:  { bg: '#f0fdf4', text: '#15803d' },
+  A2:  { bg: '#dcfce7', text: '#166534' },
+  B1:  { bg: '#eff6ff', text: '#1d4ed8' },
+  B2:  { bg: '#eef2ff', text: '#4f46e5' },
+  C1:  { bg: '#faf5ff', text: '#7c3aed' },
+  C2:  { bg: '#fdf4ff', text: '#86198f' },
+  ALL: { bg: '#f1f5f9', text: '#475569' },
+}
+
+const CATEGORY_MAP = {
+  TOEIC_FULL: { label: 'TOEIC Full', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  TOEIC_MINI: { label: 'TOEIC Mini', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
+  PLACEMENT:  { label: 'Placement Test', bg: 'bg-purple-50 text-purple-700 border-purple-200' },
+  GRAMMAR:    { label: 'Ngữ pháp', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
+  VOCABULARY: { label: 'Từ vựng', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  READING:    { label: 'Đọc hiểu', bg: 'bg-teal-50 text-teal-700 border-teal-200' },
+  LISTENING:  { label: 'Nghe hiểu', bg: 'bg-sky-50 text-sky-700 border-sky-200' },
+  GENERAL:    { label: 'Tổng hợp', bg: 'bg-slate-50 text-slate-700 border-slate-200' },
 }
 
 const STATUS_BADGE = {
@@ -15,7 +27,7 @@ const STATUS_BADGE = {
   draft:     { label: 'Draft',     bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
 }
 
-export default function ReadingTableRow({
+export default function ExamTableRow({
   item,
   isTrash,
   canManage,
@@ -27,38 +39,43 @@ export default function ReadingTableRow({
   onTogglePublish,
   onDuplicate,
 }) {
-  const levelStyle  = LEVEL_COLOR[item.cefrLevel]  ?? LEVEL_COLOR.B1
-  const statusBadge = STATUS_BADGE[item.status]     ?? STATUS_BADGE.published
+  const levelStyle  = LEVEL_COLOR[item.cefrLevel] || LEVEL_COLOR.B1
+  const categoryCfg = CATEGORY_MAP[item.category] || CATEGORY_MAP.GENERAL
+  const statusBadge = STATUS_BADGE[item.status]    || STATUS_BADGE.published
 
   return (
     <tr
       onClick={() => !isTrash && onRowClick(item)}
       className={`group transition-colors hover:bg-slate-50/60 ${!isTrash ? 'cursor-pointer' : ''}`}
     >
-      {/* Tiêu đề */}
-      <td className="px-5 py-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-brand-600">
-            <BookOpen size={16} strokeWidth={1.75} />
+      {/* Tên đề thi & mô tả */}
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+            <Award size={18} strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
-              {item.titleEn}
+              {item.title}
             </p>
-            <p className="text-xs text-slate-400 truncate mt-0.5">
-              {item.titleVi}
-            </p>
+            {item.description && (
+              <p className="text-xs text-slate-400 truncate mt-0.5 max-w-md">
+                {item.description}
+              </p>
+            )}
           </div>
         </div>
       </td>
 
-      {/* Chủ đề */}
-      <td className="px-3 py-3 text-xs text-slate-600">
-        {item.topic || '—'}
+      {/* Thể loại */}
+      <td className="px-3 py-3.5">
+        <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${categoryCfg.bg}`}>
+          {categoryCfg.label}
+        </span>
       </td>
 
       {/* Cấp độ */}
-      <td className="px-3 py-3 text-center">
+      <td className="px-3 py-3.5 text-center">
         <span
           className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
@@ -68,7 +85,7 @@ export default function ReadingTableRow({
       </td>
 
       {/* Trạng thái */}
-      <td className="px-3 py-3 text-center">
+      <td className="px-3 py-3.5 text-center">
         {!isTrash ? (
           <button
             type="button"
@@ -80,30 +97,29 @@ export default function ReadingTableRow({
             {statusBadge.label}
           </button>
         ) : (
-          <span className="text-xs text-red-400 font-medium">Đã xóa</span>
+          <span className="text-xs text-red-500 font-medium">Đã xóa</span>
         )}
       </td>
 
-      {/* Độ dài */}
-      <td className="px-3 py-3 text-center">
-        <span className="font-semibold text-slate-800 text-xs block">{item.wordCount ?? 0} từ</span>
-        <span className="text-xs text-slate-400 block">~{item.estimatedMin ?? 5} phút</span>
+      {/* Thời lượng */}
+      <td className="px-3 py-3.5 text-center text-xs text-slate-700 font-medium">
+        {item.durationMinutes} phút
       </td>
 
-      {/* Câu hỏi */}
-      <td className="px-3 py-3 text-center font-semibold text-slate-700 text-xs">
-        {item.questionCount ?? item.questions?.length ?? 0} câu
+      {/* Số câu hỏi */}
+      <td className="px-3 py-3.5 text-center font-semibold text-slate-700 text-xs">
+        {item.totalQuestions ?? item.questions?.length ?? 0} câu
       </td>
 
       {/* Ngày tạo */}
-      <td className="px-3 py-3 text-xs text-slate-500">
+      <td className="px-3 py-3.5 text-xs text-slate-500">
         {formatDate(item.createdAt)}
       </td>
 
       {/* Thao tác */}
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <div
-          className="flex items-center justify-end gap-0.5 text-slate-400"
+          className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
           {isTrash ? (
@@ -112,7 +128,7 @@ export default function ReadingTableRow({
                 type="button"
                 onClick={() => onRestoreClick(item)}
                 className="rounded-lg p-1.5 hover:bg-emerald-50 hover:text-emerald-600 transition-colors cursor-pointer"
-                title="Khôi phục bài đọc"
+                title="Khôi phục bài thi"
               >
                 <RotateCcw size={16} />
               </button>
@@ -157,16 +173,11 @@ export default function ReadingTableRow({
                     type="button"
                     onClick={(e) => onDeleteClick(e, item)}
                     className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                    title="Xóa bài đọc"
+                    title="Xóa bài thi"
                   >
                     <Trash2 size={16} />
                   </button>
                 </>
-              )}
-              {!canManage && (
-                <span className="p-1.5 text-slate-300" title="Chỉ xem">
-                  <Lock size={15} />
-                </span>
               )}
             </>
           )}

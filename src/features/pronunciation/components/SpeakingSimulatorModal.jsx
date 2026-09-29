@@ -15,9 +15,12 @@ import {
   CheckCircle2,
   HelpCircle,
   VolumeX,
+  Copy,
+  Check,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
+import { stopAudio } from '@/lib/ipaHelper'
 import { chatRoleplayTurn } from '../speakingScenarioApi'
 
 export default function SpeakingSimulatorModal({
@@ -33,11 +36,44 @@ export default function SpeakingSimulatorModal({
   const [isAiReplying, setIsAiReplying] = useState(false)
   const [sessionId, setSessionId] = useState(null)
   const [translatedMessages, setTranslatedMessages] = useState({})
+  const [translatingId, setTranslatingId] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
   const [showContext, setShowContext] = useState(true)
   const [isSpeakingTts, setIsSpeakingTts] = useState(false)
 
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
+  const isRecordingRef = useRef(false)
+  const finalTranscriptRef = useRef('')
+
+  // Dừng mọi âm thanh và thu âm khi đóng modal
+  const handleClose = () => {
+    if ('speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel() } catch (_) {}
+    }
+    stopAudio()
+    isRecordingRef.current = false
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch (_) {}
+      recognitionRef.current = null
+    }
+    onClose()
+  }
+
+  // Dọn dẹp âm thanh khi component unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel() } catch (_) {}
+      }
+      stopAudio()
+      isRecordingRef.current = false
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch (_) {}
+        recognitionRef.current = null
+      }
+    }
+  }, [])
 
   // Initialize conversation with Opening Line
   useEffect(() => {
@@ -58,7 +94,17 @@ export default function SpeakingSimulatorModal({
       speakText(opening)
     }, 600)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel() } catch (_) {}
+      }
+      stopAudio()
+      isRecordingRef.current = false
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch (_) {}
+      }
+    }
   }, [scenario])
 
   // Scroll to bottom when new messages arrive
@@ -67,19 +113,24 @@ export default function SpeakingSimulatorModal({
   }, [messages, isAiReplying])
 
   // Web Speech API for TTS
-  const speakText = (text) => {
+  const speakText = (text, rateMultiplier = 1.0) => {
     if (!('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
+    // Lọc bỏ phần góp ý tiếng Việt nếu có khi đọc phát âm tiếng Anh
+    const cleanEn = String(text || '').split(/💡/)[0].trim()
+    const utterance = new SpeechSynthesisUtterance(cleanEn || text)
     utterance.lang = 'en-US'
-    utterance.rate = scenario.defaultSpeed === 'slow' ? 0.8 : scenario.defaultSpeed === 'fast' ? 1.2 : 1.0
+    const baseSpeed = scenario.defaultSpeed === 'slow' ? 0.8 : scenario.defaultSpeed === 'fast' ? 1.2 : 1.0
+    utterance.rate = baseSpeed * rateMultiplier
     utterance.onstart = () => setIsSpeakingTts(true)
     utterance.onend = () => setIsSpeakingTts(false)
     utterance.onerror = () => setIsSpeakingTts(false)
     window.speechSynthesis.speak(utterance)
   }
 
-  // Web Speech API for STT (Voice to Text)
+  // Web Speech API for STT:
+  // Cho phép người dùng bấm vào để nói, bấm lại lần nữa để kết thúc
+  // Không tự động tắt micro khi người dùng tạm ngừng nói để suy nghĩ
   const toggleRecording = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
@@ -89,45 +140,83 @@ export default function SpeakingSimulatorModal({
       return
     }
 
-    if (isRecording) {
-      recognitionRef.current?.stop()
+    if (isRecordingRef.current) {
+      // Người dùng bấm lần nữa để kết thúc nói
+      isRecordingRef.current = false
       setIsRecording(false)
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch (_) {}
+        recognitionRef.current = null
+      }
+      toast('Đã dừng thu âm. Bấm Gửi để gửi câu thoại!', { icon: '⏹️' })
       return
     }
 
     try {
+      isRecordingRef.current = true
+      setIsRecording(true)
+      finalTranscriptRef.current = inputText ? inputText.trim() + ' ' : ''
+
       const recognition = new SpeechRecognition()
       recognition.lang = 'en-US'
-      recognition.continuous = false
-      recognition.interimResults = false
+      recognition.continuous = true
+      recognition.interimResults = true
 
       recognition.onstart = () => {
         setIsRecording(true)
       }
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript
-        if (transcript) {
-          setInputText((prev) => (prev ? `${prev} ${transcript}` : transcript))
+        let interim = ''
+        let newFinal = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i]
+          if (res.isFinal) {
+            newFinal += res[0].transcript + ' '
+          } else {
+            interim += res[0].transcript
+          }
         }
+        if (newFinal) {
+          finalTranscriptRef.current += newFinal
+        }
+        const combined = (finalTranscriptRef.current + interim).trim()
+        setInputText(combined)
       }
 
       recognition.onerror = (event) => {
-        console.warn('Speech recognition error:', event.error)
-        setIsRecording(false)
-        if (event.error === 'not-allowed') {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          isRecordingRef.current = false
+          setIsRecording(false)
           toast.error('Vui lòng cấp quyền truy cập Microphone cho trình duyệt!')
+        } else if (event.error === 'no-speech') {
+          // Người dùng tạm nghỉ, TUYỆT ĐỐI KHÔNG tắt micro!
+        } else {
+          console.warn('Speech recognition warning:', event.error)
         }
       }
 
       recognition.onend = () => {
-        setIsRecording(false)
+        // Chỉ dừng hẳn khi người dùng chủ động bấm lại nút Micro
+        if (isRecordingRef.current) {
+          try {
+            recognition.start()
+          } catch (e) {
+            // Đang bận
+          }
+        } else {
+          setIsRecording(false)
+        }
       }
 
       recognitionRef.current = recognition
       recognition.start()
+      toast('🎙️ Micro đang mở! Hãy nói thoải mái và bấm lại nút Micro khi nói xong.')
     } catch (err) {
       console.error(err)
+      isRecordingRef.current = false
       setIsRecording(false)
     }
   }
@@ -137,10 +226,14 @@ export default function SpeakingSimulatorModal({
     const text = (textToSend || inputText).trim()
     if (!text || isAiReplying) return
 
-    // Stop speaking/recording
+    // Stop speaking & recording
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
-    if (isRecording) {
-      recognitionRef.current?.stop()
+    if (isRecordingRef.current) {
+      isRecordingRef.current = false
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch (_) {}
+        recognitionRef.current = null
+      }
       setIsRecording(false)
     }
 
@@ -179,7 +272,7 @@ export default function SpeakingSimulatorModal({
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'ai',
-        text: 'I understood your point! Could you elaborate a bit more on that?',
+        text: 'I understood your point! Could you elaborate a bit more on that?\n\n💡 Góp ý tiếng Việt: Bạn hãy thử nối câu bằng "Because..." hoặc "In my opinion..." để câu đàm thoại đầy đủ ý hơn nhé!',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages((prev) => [...prev, errorMsg])
@@ -196,20 +289,48 @@ export default function SpeakingSimulatorModal({
     })
   }
 
-  // Toggle quick translation for AI message
-  const toggleTranslate = (msgId, text) => {
+  // Dịch nghĩa tiếng Việt thật qua Google Translate endpoint
+  const translateToVietnamese = async (msgId, text) => {
     if (translatedMessages[msgId]) {
       setTranslatedMessages((prev) => {
         const next = { ...prev }
         delete next[msgId]
         return next
       })
-    } else {
-      // Simple translation hint
+      return
+    }
+
+    setTranslatingId(msgId)
+    try {
+      // Tách phần tiếng Anh để dịch, không dịch đè phần tiếng Việt
+      const cleanEn = String(text || '').split(/💡/)[0].trim()
+      const res = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanEn || text)}`
+      )
+      const data = await res.json()
+      const transText = data[0]?.map((item) => item[0]).join('') || 'Đã dịch nội dung thành công.'
       setTranslatedMessages((prev) => ({
         ...prev,
-        [msgId]: '(Bản dịch tiếng Việt đang được hỗ trợ qua mô hình dịch tự động)',
+        [msgId]: transText,
       }))
+    } catch (e) {
+      setTranslatedMessages((prev) => ({
+        ...prev,
+        [msgId]: 'Bản dịch: ' + text,
+      }))
+    } finally {
+      setTranslatingId(null)
+    }
+  }
+
+  const handleCopyMessage = (msgId, text) => {
+    try {
+      navigator.clipboard.writeText(text)
+      setCopiedId(msgId)
+      toast.success('Đã sao chép câu thoại!')
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch (e) {
+      toast.error('Không thể sao chép văn bản')
     }
   }
 
@@ -253,7 +374,7 @@ export default function SpeakingSimulatorModal({
             {/* End session button */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex items-center gap-1 rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors border border-slate-200 cursor-pointer"
             >
               <span>Kết thúc</span>
@@ -313,51 +434,117 @@ export default function SpeakingSimulatorModal({
               </div>
 
               {/* Message Bubble */}
-              <div className="space-y-1">
+              <div className="space-y-1 max-w-full">
                 {msg.sender === 'ai' && (
                   <p className="text-[11px] font-semibold text-slate-500 pl-1">
-                    {scenario.partnerName || 'Patricia'}
+                    {scenario.partnerName || 'AI Partner'}
                   </p>
                 )}
 
-                <div
-                  className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.sender === 'user'
-                      ? 'bg-indigo-600 text-white rounded-tr-xs shadow-sm'
-                      : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs shadow-2xs'
-                  }`}
-                >
-                  <p>{msg.text}</p>
-                  {translatedMessages[msg.id] && (
-                    <p className="mt-2 pt-2 border-t border-slate-100 text-xs text-indigo-600 italic bg-indigo-50/60 p-2 rounded-lg">
-                      {translatedMessages[msg.id]}
-                    </p>
-                  )}
-                </div>
+                {(() => {
+                  const parts = String(msg.text || '').split(/(?:^|\n+)💡\s*/);
+                  const mainText = parts[0]?.trim();
+                  const feedbackText = parts.length > 1 ? parts.slice(1).join('\n').trim() : null;
 
-                {/* Sub utility buttons for AI messages */}
-                {msg.sender === 'ai' && (
-                  <div className="flex items-center gap-3 pl-1 pt-0.5 text-[11px] text-slate-400">
-                    <button
-                      type="button"
-                      onClick={() => speakText(msg.text)}
-                      className="flex items-center gap-1 hover:text-indigo-600 transition-colors cursor-pointer"
-                      title="Phát lại âm thanh"
-                    >
-                      <Volume2 size={12} />
-                      <span>Nghe lại</span>
-                    </button>
-                    <span>•</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleTranslate(msg.id, msg.text)}
-                      className="flex items-center gap-1 hover:text-indigo-600 transition-colors cursor-pointer"
-                    >
-                      <Languages size={12} />
-                      <span>Dịch</span>
-                    </button>
-                  </div>
-                )}
+                  return (
+                    <>
+                      <div
+                        className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                          msg.sender === 'user'
+                            ? 'bg-indigo-600 text-white rounded-tr-xs shadow-sm'
+                            : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs shadow-2xs'
+                        }`}
+                      >
+                        <p className="whitespace-pre-line">{mainText || msg.text}</p>
+
+                        {/* Vietnamese Feedback Card if provided by AI */}
+                        {feedbackText && (
+                          <div className="mt-2.5 rounded-xl border border-amber-200/90 bg-amber-50/90 p-2.5 text-xs text-amber-950 shadow-2xs">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-800 mb-1">
+                              <Lightbulb size={13} className="text-amber-600 fill-amber-500" />
+                              <span>Góp ý tiếng Việt:</span>
+                            </div>
+                            <p className="leading-relaxed font-normal whitespace-pre-line text-amber-900">
+                              {feedbackText}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Real-time Vietnamese Translation */}
+                        {translatedMessages[msg.id] && (
+                          <div className="mt-2 pt-2 border-t border-slate-100 text-xs text-indigo-700 bg-indigo-50/70 p-2.5 rounded-xl">
+                            <div className="flex items-center gap-1 font-semibold text-indigo-800 mb-0.5 text-[11px]">
+                              <Languages size={11} />
+                              <span>Bản dịch tiếng Việt:</span>
+                            </div>
+                            <p className="italic leading-relaxed">{translatedMessages[msg.id]}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sub utility buttons for AI messages */}
+                      {msg.sender === 'ai' && (
+                        <div className="flex flex-wrap items-center gap-1.5 pl-1 pt-1 text-[11px] text-slate-500">
+                          <button
+                            type="button"
+                            onClick={() => speakText(mainText || msg.text, 1.0)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200/80 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors shadow-2xs cursor-pointer"
+                            title="Nghe phát âm chuẩn (1.0x)"
+                          >
+                            <Volume2 size={12} className="text-indigo-600" />
+                            <span>Nghe</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => speakText(mainText || msg.text, 0.75)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200/80 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 transition-colors shadow-2xs cursor-pointer"
+                            title="Nghe phát âm chậm (0.75x)"
+                          >
+                            <span>🐢 Chậm</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => translateToVietnamese(msg.id, mainText || msg.text)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border transition-colors shadow-2xs cursor-pointer ${
+                              translatedMessages[msg.id]
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-medium'
+                                : 'bg-white text-slate-600 border-slate-200/80 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'
+                            }`}
+                            title="Dịch câu nói sang tiếng Việt"
+                          >
+                            {translatingId === msg.id ? (
+                              <Loader2 size={12} className="animate-spin text-indigo-600" />
+                            ) : (
+                              <Languages size={12} className="text-slate-500" />
+                            )}
+                            <span>{translatedMessages[msg.id] ? 'Ẩn dịch' : 'Dịch nghĩa'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg.id, mainText || msg.text)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200/80 hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors shadow-2xs cursor-pointer"
+                            title="Sao chép nội dung"
+                          >
+                            {copiedId === msg.id ? (
+                              <>
+                                <Check size={12} className="text-emerald-600" />
+                                <span className="text-emerald-600 font-medium">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={12} />
+                                <span>Chép</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}

@@ -1,587 +1,425 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  Crown,
-  Plus,
-  Upload,
-} from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
+import { Trash2 } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import DataTable from '@/components/ui/DataTable/DataTable'
-import DataTableToolbar from '@/components/ui/DataTable/DataTableToolbar'
-import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
-import SearchInput from '@/components/ui/SearchInput'
-import EmptyState from '@/components/ui/EmptyState'
 import Pagination from '@/components/ui/Pagination'
-import { formatNumber } from '@/lib/utils'
-import { quizQuestions } from '@/mocks/data/quizQuestions'
-import { quizSets } from '@/mocks/data/quizSets'
-import { mockShortTests } from '@/mocks/data/shortTests'
-import { buildPublicContent, getApprovedAIContent } from '@/features/aiContent/aiContentService'
-import { buildQuizColumns, buildShortTestColumns } from './columns'
+import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
-import QuestionDetailDrawer from './components/QuestionDetailDrawer'
-import ShortTestDetailDrawer from './components/ShortTestDetailDrawer'
-import QuizSetCard from './components/QuizSetCard'
-import QuizFilterBar from './components/QuizFilterBar'
+import ExamToolbar from './components/ExamToolbar'
+import ExamTableRow from './components/ExamTableRow'
+import ExamCard from './components/ExamCard'
+import ExamDetailDrawer from './components/ExamDetailDrawer'
+import {
+  getExams,
+  getExamCategories,
+  getExamTrashCount,
+  deleteExam,
+  restoreExam,
+  permanentDeleteExam,
+  togglePublishExam,
+  duplicateExam,
+} from './examApi'
 
-const PAGE_SIZE = 10
-const SHORT_TESTS_PAGE_SIZE = 10
-const SETS_PAGE_SIZE = 6
+const PAGE_SIZE = 8
 
-function QuizBankPage() {
+export default function QuizBankPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const isTeacher = user?.role === 'teacher'
-  const isAdmin = user?.role === 'admin'
 
-  // Dynamic state cho danh sách câu hỏi & bài test ngắn
-  const [questionsData, setQuestionsData] = useState(quizQuestions)
-  const [shortTestsData, setShortTestsData] = useState(mockShortTests)
-  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
+  // ── Data State ─────────────────────────────────────────────────────────────
+  const [exams, setExams] = useState([])
+  const [categories, setCategories] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [trashCount, setTrashCount] = useState(0)
 
-  // Mặc định giáo viên chỉ xem đề/câu hỏi của mình
-  const [ownershipFilter, setOwnershipFilter] = useState(isTeacher ? 'mine' : 'all')
-  const [activeTab, setActiveTab] = useState('questions')
+  // ── Filter State ───────────────────────────────────────────────────────────
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [selectedLevel, setSelectedLevel] = useState('ALL')
+  const [selectedStatus, setSelectedStatus] = useState('all')
   const [page, setPage] = useState(1)
-  const [shortTestsPage, setShortTestsPage] = useState(1)
-  const [shortTestTypeFilter, setShortTestTypeFilter] = useState('all')
-  const [activeQuestion, setActiveQuestion] = useState(null)
-  const [activeShortTest, setActiveShortTest] = useState(null)
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const [deleteShortTestTarget, setDeleteShortTestTarget] = useState(null)
-  const [collectionFilter, setCollectionFilter] = useState('all')
-  const [setsPage, setSetsPage] = useState(1)
+  const [trashView, setTrashView] = useState(false)
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('quiz_view_mode') || 'list')
 
-  const checkOwnership = useCallback(
-    (item) => {
-      if (!user || !item) return false
-      if (isTeacher) {
-        return (
-          item.authorEmail === user.email ||
-          item.authorName === user.displayName ||
-          item.authorName === 'Hoàng Thị Mai'
-        )
-      }
-      return (
-        item.authorEmail === user.email ||
-        item.authorEmail === 'system@smartenglish.vn' ||
-        item.authorName?.includes('Hệ thống') ||
-        item.authorName?.includes('Quản trị')
-      )
-    },
-    [isTeacher, user],
-  )
-
-  const canManage = (item) => {
-    if (!user || !item) return false
-    if (isAdmin) return true
-    return checkOwnership(item)
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode)
+    localStorage.setItem('quiz_view_mode', mode)
   }
 
-  const publicQuizQuestions = useMemo(
-    () => buildPublicContent('quiz', questionsData),
-    [questionsData],
-  )
+  // ── Modal / Drawer State ───────────────────────────────────────────────────
+  const [activeExam, setActiveExam] = useState(null)
+  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [permanentTarget, setPermanentTarget] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const publicShortTests = useMemo(
-    () => buildPublicContent('short_test', shortTestsData),
-    [shortTestsData],
-  )
-
-  const myQuestionsCount = useMemo(() => {
-    return publicQuizQuestions.filter((q) => checkOwnership(q)).length
-  }, [publicQuizQuestions, checkOwnership])
-
-  const myShortTestsCount = useMemo(() => {
-    return publicShortTests.filter((st) => checkOwnership(st)).length
-  }, [publicShortTests, checkOwnership])
-
-  const mySetsCount = useMemo(() => {
-    return quizSets.filter((s) => checkOwnership(s)).length
-  }, [checkOwnership])
-
-  // Combine mock quizSets with AI-generated quiz content
-  const combinedQuizSets = useMemo(() => {
-    const approved = getApprovedAIContent('quiz')
-    const aiSets = approved.map((item) => ({
-      id: item.id,
-      title: item.title,
-      subtitle: item.content || '',
-      examTrack: 'toeic2',
-      collection: 'AI',
-      authorName: item.createdBy || 'AI System',
-      authorEmail: 'ai@smartenglish.vn',
-      verificationStatus: 'verified',
-      durationMinutes: 45,
-      questionCount: Array.isArray(item.questions) ? item.questions.length : 10,
-      attempts: 0,
-      attemptsType: 'practice',
-      createdAt: new Date(item.createdAt),
-      isAI: true,
-    }))
-    return [...quizSets, ...aiSets]
+  // ── Refresh trash count ────────────────────────────────────────────────────
+  const refreshTrashCount = useCallback(async () => {
+    try {
+      const count = await getExamTrashCount()
+      setTrashCount(count)
+    } catch { /* silent */ }
   }, [])
 
-  // Get unique collections for filter chips
-  const allCollections = useMemo(() => {
-    const unique = new Set(combinedQuizSets.map((s) => s.collection))
-    return Array.from(unique).sort()
-  }, [combinedQuizSets])
+  // ── Load categories ────────────────────────────────────────────────────────
+  useEffect(() => {
+    getExamCategories().then((c) => setCategories(c)).catch(() => {})
+    refreshTrashCount()
+  }, [refreshTrashCount])
 
-  // Lọc câu hỏi theo ownership + search + filter
-  const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return publicQuizQuestions.filter((q) => {
-      const isOwned = checkOwnership(q)
-      const isSystem =
-        q.authorEmail === 'system@smartenglish.vn' || q.authorName?.includes('Hệ thống')
+  // ── Load exams (paginated) ─────────────────────────────────────────────────
+  const loadExams = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const res = await getExams({
+        search: search.trim() || undefined,
+        category: selectedCategory !== 'ALL' ? selectedCategory : undefined,
+        cefrLevel: selectedLevel !== 'ALL' ? selectedLevel : undefined,
+        status: !trashView && selectedStatus !== 'all' ? selectedStatus : undefined,
+        trash: trashView,
+        page,
+        size: PAGE_SIZE,
+        sortBy: 'created_desc',
+      })
+      setExams(res.items || [])
+      setTotal(res.total || 0)
+      setTotalPages(res.totalPages || 1)
+    } catch (err) {
+      toast.error('Không thể tải danh sách bài thi')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [search, selectedCategory, selectedLevel, selectedStatus, page, trashView])
 
-      let matchOwner = true
-      if (ownershipFilter === 'mine') {
-        matchOwner = isOwned
-      } else if (ownershipFilter === 'system') {
-        matchOwner = isSystem
-      } else if (ownershipFilter === 'others') {
-        matchOwner = !isOwned && !isSystem
-      } else if (ownershipFilter !== 'all') {
-        matchOwner = q.authorName === ownershipFilter || q.authorEmail === ownershipFilter
-      }
+  useEffect(() => { loadExams() }, [loadExams])
 
-      const matchSearch =
-        !keyword ||
-        (q.title || '').toLowerCase().includes(keyword) ||
-        (q.questionText || '').toLowerCase().includes(keyword) ||
-        (q.relatedWord || '').toLowerCase().includes(keyword)
+  // Filter handlers
+  const handleSearch = (v) => { setSearch(v); setPage(1) }
+  const handleCategoryChange = (v) => { setSelectedCategory(v); setPage(1) }
+  const handleLevelChange = (v) => { setSelectedLevel(v); setPage(1) }
+  const handleStatusChange = (v) => { setSelectedStatus(v); setPage(1) }
 
-      return matchOwner && matchSearch
-    })
-  }, [search, publicQuizQuestions, ownershipFilter, checkOwnership])
+  const handleToggleTrash = (nextTrashView) => {
+    setTrashView(nextTrashView)
+    setPage(1)
+    setSearch('')
+  }
 
-  const total = filtered.length
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const start = (page - 1) * PAGE_SIZE
-  const pageData = filtered.slice(start, start + PAGE_SIZE)
+  const handleReload = () => {
+    setSearch('')
+    setSelectedCategory('ALL')
+    setSelectedLevel('ALL')
+    setSelectedStatus('all')
+    setPage(1)
+    refreshTrashCount()
+    loadExams()
+    toast.success('Đã làm mới danh sách bài thi')
+  }
 
-  // Lọc bộ đề thi theo ownership + collection + search
-  const filteredSets = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return combinedQuizSets.filter((set) => {
-      const isOwned = set.isAI ? false : checkOwnership(set)
-      const isSystem =
-        set.isAI ||
-        set.authorEmail === 'system@smartenglish.vn' ||
-        set.authorName?.includes('Hệ thống') ||
-        set.authorEmail === 'ai@smartenglish.vn'
+  const canManage = (item) => {
+    if (!item) return false
+    if (!user || user?.role !== 'student') return true
+    return item.authorEmail === user.email || !item.authorEmail
+  }
 
-      let matchOwner = true
-      if (ownershipFilter === 'mine') {
-        matchOwner = isOwned
-      } else if (ownershipFilter === 'system') {
-        matchOwner = isSystem
-      } else if (ownershipFilter === 'others') {
-        matchOwner = !isOwned && !isSystem
-      } else if (ownershipFilter !== 'all') {
-        matchOwner = set.authorName === ownershipFilter || set.authorEmail === ownershipFilter
-      }
+  // ── Actions ────────────────────────────────────────────────────────────────
+  const handleTogglePublish = async (item) => {
+    try {
+      await togglePublishExam(item.id)
+      toast.success(`Đã đổi trạng thái bài thi "${item.title}"`)
+      loadExams()
+    } catch {
+      toast.error('Không thể đổi trạng thái bài thi')
+    }
+  }
 
-      const matchCollection =
-        collectionFilter === 'all' || set.collection === collectionFilter
-      const matchSearch =
-        !keyword ||
-        (set.title || '').toLowerCase().includes(keyword) ||
-        (set.subtitle || '').toLowerCase().includes(keyword)
+  const handleDuplicate = async (item) => {
+    try {
+      await duplicateExam(item.id, {
+        authorName: user?.displayName || 'Admin',
+        authorEmail: user?.email || 'admin@smartenglish.vn',
+      })
+      toast.success(`Đã nhân bản bài thi "${item.title}"`)
+      loadExams()
+      refreshTrashCount()
+    } catch {
+      toast.error('Không thể nhân bản bài thi')
+    }
+  }
 
-      return matchOwner && matchCollection && matchSearch
-    })
-  }, [search, collectionFilter, ownershipFilter, checkOwnership, combinedQuizSets])
-
-  const setsTotal = filteredSets.length
-  const setsTotalPages = Math.max(1, Math.ceil(setsTotal / SETS_PAGE_SIZE))
-  const setsStart = (setsPage - 1) * SETS_PAGE_SIZE
-  const setsPageData = filteredSets.slice(setsStart, setsStart + SETS_PAGE_SIZE)
-
-  const columns = useMemo(
-    () =>
-      buildQuizColumns({
-        onView: setActiveQuestion,
-        onEdit: (q) => {
-          if (!checkOwnership(q) && !isAdmin) {
-            toast.error(`Bạn không thể sửa câu hỏi của "${q.authorName || 'tác giả khác'}".`)
-            return
-          }
-          setActiveQuestion(q)
-        },
-        onDelete: (q) => {
-          if (!checkOwnership(q) && !isAdmin) {
-            toast.error('Chỉ tác giả mới có quyền xoá câu hỏi này!')
-            return
-          }
-          setDeleteTarget(q)
-        },
-        currentUser: user,
-      }),
-    [checkOwnership, user, isAdmin],
-  )
-
-  // Lọc bài test ngắn theo ownership + search + dạng bài
-  const filteredShortTests = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return publicShortTests.filter((st) => {
-      const isOwned = checkOwnership(st)
-      const isSystem =
-        st.authorEmail === 'system@smartenglish.vn' || st.authorName?.includes('Hệ thống')
-
-      let matchOwner = true
-      if (ownershipFilter === 'mine') {
-        matchOwner = isOwned
-      } else if (ownershipFilter === 'system') {
-        matchOwner = isSystem
-      } else if (ownershipFilter === 'others') {
-        matchOwner = !isOwned && !isSystem
-      } else if (ownershipFilter !== 'all') {
-        matchOwner = st.authorName === ownershipFilter || st.authorEmail === ownershipFilter
-      }
-
-      const matchType =
-        shortTestTypeFilter === 'all' || st.testType === shortTestTypeFilter
-
-      const matchSearch =
-        !keyword ||
-        (st.title || '').toLowerCase().includes(keyword) ||
-        (st.passage || '').toLowerCase().includes(keyword) ||
-        (st.testTypeLabel || '').toLowerCase().includes(keyword)
-
-      return matchOwner && matchType && matchSearch
-    })
-  }, [search, publicShortTests, ownershipFilter, shortTestTypeFilter, checkOwnership])
-
-  const shortTestsTotal = filteredShortTests.length
-  const shortTestsTotalPages = Math.max(1, Math.ceil(shortTestsTotal / SHORT_TESTS_PAGE_SIZE))
-  const shortTestsStart = (shortTestsPage - 1) * SHORT_TESTS_PAGE_SIZE
-  const shortTestsPageData = filteredShortTests.slice(
-    shortTestsStart,
-    shortTestsStart + SHORT_TESTS_PAGE_SIZE,
-  )
-
-  const shortTestColumns = useMemo(
-    () =>
-      buildShortTestColumns({
-        onView: setActiveShortTest,
-        onEdit: (st) => {
-          if (!checkOwnership(st) && !isAdmin) {
-            toast.error(`Bạn không thể sửa bài test của "${st.authorName || 'tác giả khác'}".`)
-            return
-          }
-          setActiveShortTest(st)
-        },
-        onDelete: (st) => {
-          if (!checkOwnership(st) && !isAdmin) {
-            toast.error('Chỉ tác giả mới có quyền xoá bài test này!')
-            return
-          }
-          setDeleteShortTestTarget(st)
-        },
-        onAssign: (st) => {
-          toast.success(`Đã mở giao bài test "${st.title}" cho lớp học`)
-        },
-        currentUser: user,
-      }),
-    [checkOwnership, user, isAdmin],
-  )
-
-  const handleEditSet = (set) => {
-    if (!checkOwnership(set) && !isAdmin) {
-      toast.error(`Bạn không thể sửa đề thi của "${set.authorName || 'người khác'}".`)
+  // Xóa mềm vào thùng rác
+  const handleDeleteClick = (e, item) => {
+    e?.stopPropagation?.()
+    if (!canManage(item)) {
+      toast.error('Bạn không có quyền xóa bài thi này!')
       return
     }
-    toast.success(`Mở trình chỉnh sửa đề thi: "${set.title}"`)
+    setDeleteTarget(item)
   }
 
-  const handleAssignSet = (set) => {
-    toast.success(`Đã mở popup giao đề thi "${set.title}" cho lớp học`)
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    try {
+      await deleteExam(deleteTarget.id)
+      toast.success(`Đã chuyển bài thi "${deleteTarget.title}" vào thùng rác`)
+      setDeleteTarget(null)
+      loadExams()
+      refreshTrashCount()
+    } catch {
+      toast.error('Xóa bài thi thất bại')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
-  const handleResetPages = () => {
-    setPage(1)
-    setShortTestsPage(1)
-    setSetsPage(1)
+  // Khôi phục từ thùng rác
+  const handleTrashRestore = async (item) => {
+    try {
+      await restoreExam(item.id)
+      toast.success(`Đã khôi phục bài thi "${item.title}"`)
+      loadExams()
+      refreshTrashCount()
+    } catch {
+      toast.error('Khôi phục thất bại')
+    }
   }
+
+  // Xóa vĩnh viễn
+  const handleConfirmPermanentDelete = async () => {
+    if (!permanentTarget) return
+    setIsDeleting(true)
+    try {
+      await permanentDeleteExam(permanentTarget.id)
+      toast.success(`Đã xóa vĩnh viễn bài thi "${permanentTarget.title}"`)
+      setPermanentTarget(null)
+      loadExams()
+      refreshTrashCount()
+    } catch {
+      toast.error('Xóa vĩnh viễn thất bại')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleEditClick = (e, item) => {
+    if (e?.stopPropagation) e.stopPropagation()
+    const target = item?.id ? item : (e?.id ? e : null)
+    const id = target?.id
+    if (!id) return
+    navigate(`/app/hoc-lieu/bai-kiem-tra/${id}/chinh-sua`)
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  const start = (page - 1) * PAGE_SIZE
 
   return (
     <div className="space-y-4">
-      {/* Header & Quota */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {isTeacher ? (
-          <div className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50/70 px-4 py-2 text-xs">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white">
-              <Crown size={13} />
+      {/* Table Card */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Banner thông báo khi ở chế độ thùng rác */}
+        {trashView && (
+          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Trash2 size={14} className="text-amber-600 shrink-0" />
+              Bạn đang xem các bài thi trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
             </span>
-            <div>
-              <span className="font-semibold text-navy-700">Gói Teacher Pro:</span>{' '}
-              <span className="text-ink-muted">
-                Đã tạo <strong className="text-brand-600 font-bold">{myQuestionsCount}</strong> câu hỏi ·{' '}
-                <strong className="text-brand-600 font-bold">{myShortTestsCount}</strong> bài test ngắn ·{' '}
-                <strong className="text-brand-600 font-bold">{mySetsCount}</strong> đề thi · Hạn mức{' '}
-                <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
-              </span>
-            </div>
-            <Link to="/goi-dich-vu" className="ml-2 font-semibold text-brand-600 hover:underline">
-              Chi tiết gói →
-            </Link>
           </div>
-        ) : (
-          <div />
         )}
 
-        <div className="flex flex-1 items-center gap-3 self-end sm:self-auto">
-          <SearchInput
-            placeholder={
-              activeTab === 'short_tests'
-                ? 'Tìm bài test ngắn, TOEIC Part 6/7...'
-                : activeTab === 'sets'
-                  ? 'Tìm bộ đề thi...'
-                  : 'Tìm câu hỏi, từ vựng...'
+        {/* Toolbar */}
+        <ExamToolbar
+          search={search}
+          onSearchChange={handleSearch}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+          categories={categories}
+          selectedLevel={selectedLevel}
+          onLevelChange={handleLevelChange}
+          selectedStatus={selectedStatus}
+          onStatusChange={handleStatusChange}
+          totalCount={total}
+          trashView={trashView}
+          onToggleTrash={handleToggleTrash}
+          trashCount={trashCount}
+          onOpenCreate={() => navigate('/app/hoc-lieu/bai-kiem-tra/tao-moi')}
+          onOpenImport={() => setIsPdfImportOpen(true)}
+          onReload={handleReload}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+        />
+
+        {/* Chế độ hiển thị: Dạng Bảng (List) hoặc Dạng Thẻ (Grid) */}
+        {viewMode === 'list' ? (
+          /* Table — co dãn 100% width, không cuộn ngang */
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3 w-[38%]">Bài thi / Đề kiểm tra</th>
+                <th className="px-3 py-3 w-[12%]">Thể loại</th>
+                <th className="px-3 py-3 text-center w-[8%]">Cấp độ</th>
+                <th className="px-3 py-3 text-center w-[11%]">Trạng thái</th>
+                <th className="px-3 py-3 text-center w-[9%]">Thời lượng</th>
+                <th className="px-3 py-3 text-center w-[8%]">Số câu</th>
+                <th className="px-3 py-3 text-center w-[6%]">Ngày tạo</th>
+                <th className="px-4 py-3 text-right w-[8%]">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center">
+                    <LoadingSpinner text="Đang tải danh sách bài thi & kiểm tra..." />
+                  </td>
+                </tr>
+              ) : exams.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-14 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                        {trashView ? (
+                          <Trash2 size={24} className="text-slate-400" />
+                        ) : (
+                          <span className="text-2xl">📝</span>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-slate-600">
+                        {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài thi nào'}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {trashView ? 'Chưa có bài thi nào bị xóa' : 'Thử thay đổi bộ lọc hoặc tạo đề thi mới'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                exams.map((item) => (
+                  <ExamTableRow
+                    key={item.id}
+                    item={item}
+                    isTrash={trashView}
+                    canManage={canManage(item)}
+                    onRowClick={setActiveExam}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                    onRestoreClick={handleTrashRestore}
+                    onPermanentDeleteClick={(it) => setPermanentTarget(it)}
+                    onTogglePublish={handleTogglePublish}
+                    onDuplicate={handleDuplicate}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        ) : (
+          /* Card Grid — hiển thị dạng lưới thẻ bài thi hiện đại */
+          <div className="p-5">
+            {isLoading ? (
+              <div className="py-14 text-center">
+                <LoadingSpinner text="Đang tải danh sách bài thi & kiểm tra..." />
+              </div>
+            ) : exams.length === 0 ? (
+              <div className="py-14 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                    {trashView ? (
+                      <Trash2 size={24} className="text-slate-400" />
+                    ) : (
+                      <span className="text-2xl">📝</span>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-slate-600">
+                    {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài thi nào'}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {trashView ? 'Chưa có bài thi nào bị xóa' : 'Thử thay đổi bộ lọc hoặc tạo đề thi mới'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {exams.map((item) => (
+                  <ExamCard
+                    key={item.id}
+                    item={item}
+                    isTrash={trashView}
+                    canManage={canManage(item)}
+                    onCardClick={setActiveExam}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                    onRestoreClick={handleTrashRestore}
+                    onPermanentDeleteClick={(it) => setPermanentTarget(it)}
+                    onTogglePublish={handleTogglePublish}
+                    onDuplicate={handleDuplicate}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pagination */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">
+          <p className="text-xs text-slate-500">
+            {total === 0
+              ? 'Không có kết quả'
+              : <>Hiển thị <strong>{start + 1}</strong>–<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong <strong>{total}</strong> bài thi</>
             }
-            value={search}
-            onChange={(value) => {
-              setSearch(value)
-              handleResetPages()
-            }}
-            className="flex-1 min-w-[200px]"
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={Upload}
-            onClick={() => setIsPdfImportOpen(true)}
-          >
-            Import
-          </Button>
-          <Button
-            icon={Plus}
-            onClick={() =>
-              toast.success(
-                activeTab === 'short_tests'
-                  ? 'Mở form tạo Bài test ngắn mới'
-                  : activeTab === 'sets'
-                    ? 'Mở form tạo Bộ đề thi mới'
-                    : 'Mở form tạo Câu hỏi mới',
-              )
-            }
-          >
-            {activeTab === 'short_tests'
-              ? 'Tạo Test Ngắn'
-              : activeTab === 'sets'
-                ? 'Tạo Đề Thi'
-                : 'Tạo Câu Hỏi'}
-          </Button>
+          </p>
+          {totalPages > 1 && (
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          )}
         </div>
       </div>
 
-      {/* Merged Tabs + Filter Row */}
-      <QuizFilterBar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        ownershipFilter={ownershipFilter}
-        setOwnershipFilter={setOwnershipFilter}
-        collectionFilter={collectionFilter}
-        setCollectionFilter={setCollectionFilter}
-        allCollections={allCollections}
-        combinedQuizSets={combinedQuizSets}
-        myQuestionsCount={myQuestionsCount}
-        myShortTestsCount={myShortTestsCount}
-        mySetsCount={mySetsCount}
-        publicQuizQuestionsCount={publicQuizQuestions.length}
-        publicShortTestsCount={publicShortTests.length}
-        quizSetsCount={quizSets.length}
-        shortTestTypeFilter={shortTestTypeFilter}
-        setShortTestTypeFilter={setShortTestTypeFilter}
-        isTeacher={isTeacher}
-        onResetPage={handleResetPages}
+      {/* Detail Drawer */}
+      <ExamDetailDrawer
+        exam={activeExam}
+        onClose={() => setActiveExam(null)}
+        canManage={canManage(activeExam)}
+        onEditClick={handleEditClick}
       />
 
-      {/* TAB 1: Ngân hàng câu hỏi (Chỉ câu hỏi đơn lẻ) */}
-      {activeTab === 'questions' && (
-        <Card>
-
-          <div>
-            <DataTable
-              columns={columns}
-              data={pageData}
-              pagination={{ page, size: PAGE_SIZE, total, totalPages }}
-              onPageChange={setPage}
-              onRowClick={setActiveQuestion}
-              emptyMessage={
-                ownershipFilter === 'mine'
-                  ? 'Bạn chưa tạo câu hỏi nào khớp bộ lọc. Bấm "Tất cả" hoặc tạo câu hỏi mới.'
-                  : 'Chưa có câu hỏi nào khớp bộ lọc'
-              }
-              enableSelection
-            />
-          </div>
-        </Card>
-      )}
-
-      {/* TAB 2: Bài test ngắn (Đoạn văn & cụm câu hỏi: TOEIC Part 6/7, Đọc hiểu) */}
-      {activeTab === 'short_tests' && (
-        <Card>
-          <DataTableToolbar
-            searchValue={search}
-            onSearchChange={(value) => {
-              setSearch(value)
-              setShortTestsPage(1)
-            }}
-            searchPlaceholder="Tìm bài test ngắn, đoạn văn, TOEIC Part 6/7..."
-          />
-
-          <div className="mt-4">
-            <DataTable
-              columns={shortTestColumns}
-              data={shortTestsPageData}
-              pagination={{
-                page: shortTestsPage,
-                size: SHORT_TESTS_PAGE_SIZE,
-                total: shortTestsTotal,
-                totalPages: shortTestsTotalPages,
-              }}
-              onPageChange={setShortTestsPage}
-              onRowClick={setActiveShortTest}
-              emptyMessage={
-                ownershipFilter === 'mine'
-                  ? 'Bạn chưa tạo bài test ngắn nào khớp bộ lọc. Bấm "Tất cả" hoặc tạo bài test mới.'
-                  : 'Chưa có bài test ngắn nào khớp bộ lọc'
-              }
-              enableSelection
-            />
-          </div>
-        </Card>
-      )}
-
-      {/* TAB 3: Bộ đề thi (TOEIC · Placement) */}
-      {activeTab === 'sets' && (
-        <div className="space-y-4">
-          {setsPageData.length === 0 ? (
-            <EmptyState
-              title="Chưa có đề thi nào phù hợp"
-              description={
-                ownershipFilter === 'mine'
-                  ? 'Bạn chưa tạo bộ đề nào trong danh mục này. Hãy tạo đề thi mới hoặc chọn "Tất cả đề thi".'
-                  : 'Thử đổi bộ lọc hoặc tạo đề thi mới.'
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {setsPageData.map((set) => (
-                <QuizSetCard
-                  key={set.id}
-                  set={set}
-                  isTeacher={isTeacher}
-                  isOwned={set.isAI ? false : checkOwnership(set)}
-                  canManage={canManage(set)}
-                  onEditSet={() => handleEditSet(set)}
-                  onAssignSet={() => handleAssignSet(set)}
-                  onStartPlacement={() => toast.success(`Bắt đầu thi Placement: "${set.title}"`)}
-                  onViewDetails={() => toast.success(`Xem chi tiết đề: "${set.title}"`)}
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line">
-            <p className="text-xs text-ink-muted">
-              Hiển thị <strong>{setsTotal === 0 ? 0 : (setsPage - 1) * SETS_PAGE_SIZE + 1}</strong>-
-              <strong>{Math.min(setsPage * SETS_PAGE_SIZE, setsTotal)}</strong> trong tổng số{' '}
-              <strong>{formatNumber(setsTotal)}</strong> đề thi
-            </p>
-            <Pagination page={setsPage} totalPages={setsTotalPages} onChange={setSetsPage} />
-          </div>
-        </div>
-      )}
-
-      {/* Drawer xem chi tiết câu hỏi đơn lẻ */}
-      <QuestionDetailDrawer
-        question={activeQuestion}
-        onClose={() => setActiveQuestion(null)}
-        isOwner={checkOwnership(activeQuestion)}
-        isAdmin={isAdmin}
-        onDeleteRequest={() => {
-          const q = activeQuestion
-          setActiveQuestion(null)
-          setDeleteTarget(q)
-        }}
-        onEditRequest={() => toast.success(`Mở trình sửa câu hỏi ${activeQuestion?.id}`)}
-      />
-
-      {/* Drawer xem chi tiết bài test ngắn (Đoạn văn + Các câu hỏi con) */}
-      <ShortTestDetailDrawer
-        test={activeShortTest}
-        onClose={() => setActiveShortTest(null)}
-        isOwner={checkOwnership(activeShortTest)}
-        isAdmin={isAdmin}
-        onDeleteRequest={() => {
-          const target = activeShortTest
-          setActiveShortTest(null)
-          setDeleteShortTestTarget(target)
-        }}
-        onEditRequest={() => toast.success(`Mở trình sửa bài test "${activeShortTest?.title}"`)}
-        onAssignRequest={(t) => toast.success(`Mở giao bài test "${t.title}" cho lớp học`)}
-      />
-
+      {/* Confirm Xóa mềm */}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => {
-          setQuestionsData((prev) => prev.filter((q) => q.id !== deleteTarget?.id))
-          toast.success(`Đã xoá câu hỏi ${deleteTarget?.id}`)
-          setDeleteTarget(null)
-        }}
-        title="Xoá câu hỏi này?"
-        description={`Câu hỏi "${deleteTarget?.id}" sẽ bị xoá khỏi ngân hàng câu hỏi. Hành động này không thể hoàn tác.`}
-        confirmText="Xoá câu hỏi"
+        title="Chuyển bài thi vào thùng rác"
+        description={`Bài thi "${deleteTarget?.title}" sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
+        confirmLabel={isDeleting ? 'Đang xóa...' : 'Chuyển vào thùng rác'}
+        cancelLabel="Hủy"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
 
+      {/* Confirm Xóa vĩnh viễn */}
       <ConfirmDialog
-        open={Boolean(deleteShortTestTarget)}
-        onClose={() => setDeleteShortTestTarget(null)}
-        onConfirm={() => {
-          setShortTestsData((prev) => prev.filter((it) => it.id !== deleteShortTestTarget?.id))
-          toast.success(`Đã xoá bài test "${deleteShortTestTarget?.title}"`)
-          setDeleteShortTestTarget(null)
-        }}
-        title="Xoá bài test ngắn này?"
-        description={`Bài test "${deleteShortTestTarget?.title}" sẽ bị xoá khỏi hệ thống. Hành động này không thể hoàn tác.`}
-        confirmText="Xoá bài test"
+        open={Boolean(permanentTarget)}
+        title="Xóa vĩnh viễn bài thi"
+        description={`Bài thi "${permanentTarget?.title}" sẽ bị xóa vĩnh viễn và không thể khôi phục.`}
+        confirmLabel={isDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+        cancelLabel="Hủy"
+        variant="danger"
+        onConfirm={handleConfirmPermanentDelete}
+        onCancel={() => setPermanentTarget(null)}
       />
 
-      {/* Modal Import PDF AI */}
+      {/* Modal Import PDF */}
       <DataImportWizardModal
         open={isPdfImportOpen}
         onClose={() => setIsPdfImportOpen(false)}
         defaultType="quiz"
-        onImportSuccess={(newItems) => {
-          const formatted = newItems.map((item, idx) => ({
-            id: `Q-PDF-${Date.now()}-${idx}`,
-            question: item.question,
-            options: item.options || [],
-            correctAnswer: item.correctAnswer || 'A',
-            explanation: item.explanation || '',
-            topic: item.topic || 'TOEIC Part 5',
-            difficulty: item.difficulty || 'Medium',
-            skill: item.skill || 'Grammar',
-            authorName: user?.displayName || 'Admin AI OCR',
-            authorEmail: user?.email || 'admin@smartenglish.vn',
-            type: 'multiple_choice',
-            createdAt: new Date().toISOString(),
-          }))
-          setQuestionsData((prev) => [...formatted, ...prev])
-          toast.success(`Đã thêm thành công ${formatted.length} câu hỏi bóc tách từ PDF!`)
+        onImportSuccess={() => {
+          toast.success('Đã import bài thi thành công!')
+          loadExams()
+          refreshTrashCount()
         }}
       />
     </div>
   )
 }
-
-export default QuizBankPage
