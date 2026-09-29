@@ -1,155 +1,174 @@
-import { BookOpen, Eye, Lock, Pencil, Send, Sparkles, Trash2 } from 'lucide-react'
+import { BookOpen, Copy, Eye, Lock, Pencil, RotateCcw, Sparkles, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const LEVEL_COLOR = {
   A1: { bg: '#f0fdf4', text: '#15803d' },
-  A2: { bg: '#f0fdf4', text: '#15803d' },
+  A2: { bg: '#dcfce7', text: '#166534' },
   B1: { bg: '#eff6ff', text: '#1d4ed8' },
   B2: { bg: '#eef2ff', text: '#4f46e5' },
   C1: { bg: '#faf5ff', text: '#7c3aed' },
-  C2: { bg: '#faf5ff', text: '#7c3aed' },
+  C2: { bg: '#fdf4ff', text: '#86198f' },
+}
+
+const STATUS_BADGE = {
+  published: { label: 'Published', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  draft:     { label: 'Draft',     bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
 }
 
 export default function ReadingTableRow({
   item,
-  isOwned,
-  isSystem,
+  isTrash,
   canManage,
-  isTeacher,
   onRowClick,
-  onAssignToClass,
   onEditClick,
   onDeleteClick,
+  onRestoreClick,
+  onPermanentDeleteClick,
+  onTogglePublish,
+  onDuplicate,
 }) {
-  const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.B1
+  const levelStyle  = LEVEL_COLOR[item.cefrLevel]  ?? LEVEL_COLOR.B1
+  const statusBadge = STATUS_BADGE[item.status]     ?? STATUS_BADGE.published
 
   return (
     <tr
-      onClick={() => onRowClick(item)}
-      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+      onClick={() => !isTrash && onRowClick(item)}
+      className={`group transition-colors hover:bg-slate-50/60 ${!isTrash ? 'cursor-pointer' : ''}`}
     >
-      {/* Tiêu đề bài đọc (Tinh gọn) */}
-      <td className="px-6 py-3.5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-brand-600">
-            <BookOpen size={18} strokeWidth={1.75} />
+      {/* Tiêu đề */}
+      <td className="px-5 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-brand-600">
+            <BookOpen size={16} strokeWidth={1.75} />
           </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
-              {item.title}
-            </span>
-            {item.isAI && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200">
-                <Sparkles size={10} />
-                AI
-              </span>
-            )}
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
+              {item.titleEn}
+            </p>
+            <p className="text-xs text-slate-400 truncate mt-0.5">
+              {item.titleVi}
+            </p>
           </div>
         </div>
       </td>
 
+      {/* Chủ đề */}
+      <td className="px-3 py-3 text-xs text-slate-600">
+        {item.topic || '—'}
+      </td>
+
       {/* Cấp độ */}
-      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+      <td className="px-3 py-3 text-center">
         <span
-          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
+          className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
         >
-          {item.level}
+          {item.cefrLevel}
         </span>
       </td>
 
-      {/* Độ dài */}
-      <td className="px-4 py-4.5 text-center whitespace-nowrap">
-        <span className="font-bold text-slate-800 text-sm block">
-          {item.wordCount} từ
-        </span>
-        <span className="text-xs text-slate-400 block mt-0.5">
-          ~{item.minutes} phút
-        </span>
-      </td>
-
-      {/* Tác giả / Nguồn */}
-      <td className="px-4 py-4.5 whitespace-nowrap">
-        {isTeacher && isOwned ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Của tôi
-          </span>
-        ) : isSystem ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            Hệ thống
-          </span>
+      {/* Trạng thái */}
+      <td className="px-3 py-3 text-center">
+        {!isTrash ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); canManage && onTogglePublish(item) }}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors ${statusBadge.bg} ${statusBadge.text} ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+            title={canManage ? 'Nhấn để đổi trạng thái' : undefined}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
+            {statusBadge.label}
+          </button>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            {item.authorName}
-          </span>
+          <span className="text-xs text-red-400 font-medium">Đã xóa</span>
         )}
       </td>
 
-      {/* Số câu hỏi */}
-      <td className="px-4 py-4.5 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
-        {item.questions?.length || 5} câu
+      {/* Độ dài */}
+      <td className="px-3 py-3 text-center">
+        <span className="font-semibold text-slate-800 text-xs block">{item.wordCount ?? 0} từ</span>
+        <span className="text-xs text-slate-400 block">~{item.estimatedMin ?? 5} phút</span>
+      </td>
+
+      {/* Câu hỏi */}
+      <td className="px-3 py-3 text-center font-semibold text-slate-700 text-xs">
+        {item.questionCount ?? item.questions?.length ?? 0} câu
       </td>
 
       {/* Ngày tạo */}
-      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+      <td className="px-3 py-3 text-xs text-slate-500">
         {formatDate(item.createdAt)}
       </td>
 
       {/* Thao tác */}
-      <td className="px-6 py-4.5 whitespace-nowrap">
+      <td className="px-4 py-3">
         <div
-          className="flex items-center justify-end gap-1 text-slate-400"
+          className="flex items-center justify-end gap-0.5 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Nút giao bài */}
-          {isTeacher && isOwned && (
-            <button
-              type="button"
-              onClick={(e) => onAssignToClass(e, item)}
-              className="rounded-lg p-1.5 text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
-              title="Giao bài cho lớp học"
-            >
-              <Send size={17} />
-            </button>
-          )}
-
-          {/* Nút xem chi tiết */}
-          <button
-            type="button"
-            onClick={() => onRowClick(item)}
-            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
-            title="Xem chi tiết bài đọc"
-          >
-            <Eye size={17} />
-          </button>
-
-          {/* Sửa / Xóa hoặc Lock */}
-          {canManage ? (
+          {isTrash ? (
             <>
               <button
                 type="button"
-                onClick={(e) => onEditClick(e, item)}
-                className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-                title="Chỉnh sửa bài đọc"
+                onClick={() => onRestoreClick(item)}
+                className="rounded-lg p-1.5 hover:bg-emerald-50 hover:text-emerald-600 transition-colors cursor-pointer"
+                title="Khôi phục bài đọc"
               >
-                <Pencil size={17} />
+                <RotateCcw size={16} />
               </button>
               <button
                 type="button"
-                onClick={(e) => onDeleteClick(e, item)}
+                onClick={() => onPermanentDeleteClick(item)}
                 className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                title="Xóa bài đọc"
+                title="Xóa vĩnh viễn"
               >
-                <Trash2 size={17} />
+                <Trash2 size={16} />
               </button>
             </>
           ) : (
-            <span className="p-1.5 text-slate-300" title="Chỉ xem">
-              <Lock size={15} />
-            </span>
+            <>
+              <button
+                type="button"
+                onClick={() => onRowClick(item)}
+                className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                title="Xem chi tiết"
+              >
+                <Eye size={16} />
+              </button>
+              {canManage && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onDuplicate(item)}
+                    className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                    title="Nhân bản"
+                  >
+                    <Copy size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => onEditClick(e, item)}
+                    className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                    title="Chỉnh sửa"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => onDeleteClick(e, item)}
+                    className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                    title="Xóa bài đọc"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </>
+              )}
+              {!canManage && (
+                <span className="p-1.5 text-slate-300" title="Chỉ xem">
+                  <Lock size={15} />
+                </span>
+              )}
+            </>
           )}
         </div>
       </td>
