@@ -95,12 +95,14 @@ function AiContentPage() {
       items.filter((item) => {
         const isDeleted = item.status === 'DELETED'
 
+        const itemType = (item.rawType || item.type || '').toLowerCase()
+
         if (showTrash) {
           const matchesTrashType =
             activeTab === 'all' ||
             (activeTab === 'toeic'
-              ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
-              : item.type === activeTab)
+              ? itemType.startsWith('toeic') || itemType.startsWith('cloze')
+              : item.type === activeTab || item.rawType === activeTab)
           return isDeleted && matchesTrashType
         }
 
@@ -109,8 +111,8 @@ function AiContentPage() {
         const matchesType =
           activeTab === 'all' ||
           (activeTab === 'toeic'
-            ? (item.type || '').startsWith('toeic') || (item.type || '').startsWith('cloze')
-            : item.type === activeTab)
+            ? itemType.startsWith('toeic') || itemType.startsWith('cloze')
+            : item.type === activeTab || item.rawType === activeTab)
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
         const isMine = isOwnedByCurrentUser(item)
         const matchesOwner =

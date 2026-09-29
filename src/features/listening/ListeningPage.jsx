@@ -190,7 +190,7 @@ function ListeningPage() {
     })
   }
 
-  const handleOpenCreate = () => navigate('/hoc-lieu/bai-nghe/tao-moi')
+  const handleOpenCreate = () => navigate('/app/hoc-lieu/bai-nghe/tao-moi')
 
   const handleEditClick = (e, item) => {
     e?.stopPropagation?.()
@@ -198,7 +198,7 @@ function ListeningPage() {
       toast.error(`Bạn không có quyền sửa bài nghe của "${item.authorName || 'người khác'}".`)
       return
     }
-    navigate(`/hoc-lieu/bai-nghe/${item.id}/chinh-sua`)
+    navigate(`/app/hoc-lieu/bai-nghe/${item.id}/chinh-sua`)
   }
 
   const handleDeleteClick = (e, item) => {

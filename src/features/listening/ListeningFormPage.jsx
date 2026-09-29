@@ -363,7 +363,7 @@ function ListeningFormPage() {
         toast.success(`Đã tạo bài nghe mới "${form.title}" thành công`)
       }
 
-      navigate('/hoc-lieu/bai-nghe')
+      navigate('/app/hoc-lieu/bai-nghe')
     } catch (err) {
       console.error('Lỗi khi lưu bài nghe:', err)
       toast.error(err.message || 'Không thể lưu bài nghe')
@@ -387,7 +387,7 @@ function ListeningFormPage() {
         <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-3 px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link
-              to="/hoc-lieu/bai-nghe"
+              to="/app/hoc-lieu/bai-nghe"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
             >
               <ArrowLeft size={15} /> Bài nghe
@@ -411,7 +411,7 @@ function ListeningFormPage() {
           {/* Top Actions */}
           <div className="flex items-center gap-2.5">
             <Link
-              to="/hoc-lieu/bai-nghe"
+              to="/app/hoc-lieu/bai-nghe"
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Hủy bỏ

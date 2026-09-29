@@ -8,14 +8,14 @@ import {
   History,
   LayoutDashboard,
   Library,
+  MessagesSquare,
   Receipt,
   Settings,
   ShieldCheck,
   Sparkles,
   Users,
-  UsersRound,
   Wallet,
-  Wand2,
+  Cpu,
 } from 'lucide-react'
 
 export const ROLE_ACCESS = {
@@ -49,8 +49,8 @@ export const NAV_GROUPS = [
     label: 'Menu',
     items: [
       { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true, roles: ['admin', 'teacher'] },
-      { to: '/app/cong-dong', label: 'Cộng đồng', icon: UsersRound, unreadCount: 0, roles: ['admin', 'teacher'] },
-      { to: '/app/hoc-vien', label: 'Quản lý người dùng', icon: Users, roles: ['admin'] },
+      { to: '/app/cong-dong', label: 'Cộng đồng', icon: MessagesSquare, unreadCount: 0, roles: ['admin', 'teacher'] },
+      { to: '/app/hoc-vien', label: 'Người dùng', icon: Users, roles: ['admin'] },
       { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher', 'admin'] },
       { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
     ],
@@ -78,7 +78,7 @@ export const NAV_GROUPS = [
     label: 'Nội dung AI',
     items: [
       { to: '/app/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles, roles: ['admin', 'teacher'] },
-      { to: '/app/voice-ai', label: 'Cấu hình AI', icon: Wand2, roles: ['admin'] },
+      { to: '/app/voice-ai', label: 'Cấu hình AI', icon: Cpu, roles: ['admin'] },
     ],
   },
   {
@@ -127,7 +127,7 @@ export const ROUTE_META = {
     title: 'Cộng đồng',
     description: 'Không gian chia sẻ kiến thức, tài liệu',
   },
-  '/app/hoc-vien': { title: 'Quản lý người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
+  '/app/hoc-vien': { title: 'Người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
   '/app/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
   '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },

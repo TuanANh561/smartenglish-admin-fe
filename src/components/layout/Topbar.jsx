@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Bell, Calendar, ChevronDown, LogOut, User } from 'lucide-react'
+import { Bell, Calendar, ChevronDown, LogOut, PanelLeft, User } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ROUTE_META } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
+import { useSidebarStore } from '@/store/sidebarStore'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
@@ -84,18 +85,33 @@ function Topbar({ actions }) {
     }
   }
 
+  const isCollapsed = useSidebarStore((s) => s.isCollapsed)
+  const toggleSidebar = useSidebarStore((s) => s.toggleSidebar)
+
   return (
     <header className="flex h-[74px] shrink-0 items-center justify-between border-b border-line bg-surface px-6 relative z-30">
-      {/* ── Tiêu đề lớn nhất trang (Thống nhất phân cấp chuẩn) ─────────── */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-navy-700">
-          {title}
-        </h1>
-        {description && (
-          <p className="mt-0.5 text-xs sm:text-sm text-ink-muted leading-tight">
-            {description}
-          </p>
-        )}
+      {/* ── Tiêu đề lớn nhất trang & Nút toggle menu ─────────── */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-navy-900 transition-all shadow-2xs cursor-pointer active:scale-95"
+          title={isCollapsed ? 'Mở rộng thanh menu (Phím tắt: [ )' : 'Thu gọn thanh menu (Phím tắt: [ )'}
+          aria-label={isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+        >
+          <PanelLeft size={18} className={isCollapsed ? 'text-brand-600' : 'text-slate-600'} />
+        </button>
+
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-navy-700">
+            {title}
+          </h1>
+          {description && (
+            <p className="mt-0.5 text-xs sm:text-sm text-ink-muted leading-tight">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Nút điều hướng góc trên bên phải (Chuẩn Facebook: Lịch/Ngày, Chuông thông báo, Avatar có badge v) ──────────────── */}
