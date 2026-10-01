@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Trash2 } from 'lucide-react'
+import { Trash2, GraduationCap, CheckSquare } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
@@ -11,6 +11,7 @@ import ExamToolbar from './components/ExamToolbar'
 import ExamTableRow from './components/ExamTableRow'
 import ExamCard from './components/ExamCard'
 import ExamDetailDrawer from './components/ExamDetailDrawer'
+import PracticeQuizTab from './components/PracticeQuizTab'
 import {
   getExams,
   getExamCategories,
@@ -27,6 +28,9 @@ const PAGE_SIZE = 8
 export default function QuizBankPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+
+  // ── Tab State: 'exams' (content-service) vs 'quizzes' (learning-service) ───
+  const [activeTab, setActiveTab] = useState('exams')
 
   // ── Data State ─────────────────────────────────────────────────────────────
   const [exams, setExams] = useState([])
@@ -220,17 +224,52 @@ export default function QuizBankPage() {
 
   return (
     <div className="space-y-4">
-      {/* Table Card */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Banner thông báo khi ở chế độ thùng rác */}
-        {trashView && (
-          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Trash2 size={14} className="text-amber-600 shrink-0" />
-              Bạn đang xem các bài thi trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
-            </span>
-          </div>
-        )}
+      {/* ─── SEGMENTED NAVIGATION TABS ─── */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
+        <button
+          type="button"
+          onClick={() => setActiveTab('exams')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'exams'
+              ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+          }`}
+        >
+          <GraduationCap size={16} className={activeTab === 'exams' ? 'text-brand-600' : 'text-slate-400'} />
+          <span>Đề thi chuẩn hóa (TOEIC, IELTS)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('quizzes')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'quizzes'
+              ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+          }`}
+        >
+          <CheckSquare size={16} className={activeTab === 'quizzes' ? 'text-brand-600' : 'text-slate-400'} />
+          <span>Bài tập & Quiz luyện tập</span>
+        </button>
+      </div>
+
+      {activeTab === 'quizzes' ? (
+        /* ─── TAB 2: LEARNING-SERVICE QUIZZES ─── */
+        <PracticeQuizTab />
+      ) : (
+        /* ─── TAB 1: CONTENT-SERVICE EXAMS ─── */
+        <>
+          {/* Table Card */}
+          <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+            {/* Banner thông báo khi ở chế độ thùng rác */}
+            {trashView && (
+              <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Trash2 size={14} className="text-amber-600 shrink-0" />
+                  Bạn đang xem các bài thi trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+                </span>
+              </div>
+            )}
 
         {/* Toolbar */}
         <ExamToolbar
@@ -384,6 +423,8 @@ export default function QuizBankPage() {
         canManage={canManage(activeExam)}
         onEditClick={handleEditClick}
       />
+        </>
+      )}
 
       {/* Confirm Xóa mềm */}
       <ConfirmDialog
