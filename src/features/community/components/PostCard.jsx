@@ -2,18 +2,23 @@ import { useState, useMemo } from 'react'
 import {
   Bookmark,
   Download,
+  Flag,
   Globe,
   Heart,
   MessageSquare,
   MoreHorizontal,
   Pencil,
   Share2,
+  ShieldAlert,
   Trash2,
   X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
+import Button from '@/components/ui/Button'
+import Modal from '@/components/ui/Modal'
+import { submitPublicReport } from '@/features/reports/reportApi'
 
 export default function PostCard({
   post,
@@ -34,6 +39,45 @@ export default function PostCard({
 }) {
   const [isHidden, setIsHidden] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [reportReason, setReportReason] = useState('Ngôn từ kích động / Xúc phạm')
+  const [reportNote, setReportNote] = useState('')
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+
+  const handleSubmitReport = async (e) => {
+    e?.preventDefault()
+    setIsSubmittingReport(true)
+    try {
+      let severity = 'WARNING'
+      if (reportReason.includes('kích động') || reportReason.includes('Quấy rối')) {
+        severity = 'CRITICAL'
+      } else if (reportReason.includes('Spam')) {
+        severity = 'NORMAL'
+      }
+
+      await submitPublicReport({
+        targetId: String(post.id),
+        contentType: 'POST',
+        reportedUserId: post.authorId || 101,
+        reportedUserName: post.authorName || 'Người dùng',
+        reportedUserHandle: post.authorHandle || `@${post.authorName ? post.authorName.toLowerCase().replace(/\s+/g, '') : 'user'}`,
+        reason: reportReason,
+        note: reportNote.trim() || undefined,
+        contentPreview: post.content?.slice(0, 300) || '',
+        severity,
+        reporterName: 'Quản trị viên / Người kiểm duyệt',
+      })
+
+      toast.success('Báo cáo vi phạm đã được gửi tới Quản trị viên để kiểm duyệt!')
+      setIsReportModalOpen(false)
+      setReportNote('')
+    } catch (err) {
+      console.error('Lỗi khi gửi báo cáo:', err)
+      toast.error('Gửi báo cáo thất bại, vui lòng thử lại!')
+    } finally {
+      setIsSubmittingReport(false)
+    }
+  }
 
   // Kiểm tra mô tả có dài quá 1 dòng không (có xuống dòng hoặc dài hơn ~90 ký tự)
   const isContentLong = useMemo(() => {
@@ -208,11 +252,11 @@ export default function PostCard({
                     type="button"
                     onClick={() => {
                       onCloseMenu()
-                      toast.success('Đã gửi báo cáo vi phạm')
+                      setIsReportModalOpen(true)
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-amber-700 hover:bg-amber-50 cursor-pointer"
                   >
-                    🚩 Báo cáo bài viết
+                    <Flag size={14} className="text-amber-600" /> Báo cáo bài viết
                   </button>
                 )}
               </div>
@@ -370,6 +414,77 @@ export default function PostCard({
           />
         </button>
       </div>
+
+      {/* Modal Báo Cáo Vi Phạm Bài Viết */}
+      <Modal
+        open={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        title="Báo cáo bài viết vi phạm"
+        className="max-w-md"
+      >
+        <form onSubmit={handleSubmitReport} className="space-y-4">
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 text-xs text-slate-600">
+            <p className="font-semibold text-slate-800 mb-1">
+              Bài viết của: <span className="font-bold text-slate-900">{post.authorName}</span>
+            </p>
+            <p className="line-clamp-2 italic text-slate-500">
+              &ldquo;{post.content || 'Nội dung bài viết'}&rdquo;
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1.5">
+              Lý do báo cáo:
+            </label>
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-500 cursor-pointer"
+            >
+              <option value="Ngôn từ kích động / Xúc phạm">Ngôn từ kích động / Xúc phạm / Thù địch</option>
+              <option value="Spam / Quảng cáo trái phép">Spam / Quảng cáo / Lừa đảo</option>
+              <option value="Nội dung không phù hợp chuẩn mực">Nội dung không phù hợp chuẩn mực giáo dục</option>
+              <option value="Vi phạm bản quyền tài liệu">Vi phạm bản quyền tài liệu / Đề thi</option>
+              <option value="Quấy rối / Đe dọa thành viên khác">Quấy rối / Đe dọa thành viên khác</option>
+              <option value="Lý do khác">Lý do khác</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1.5">
+              Chi tiết bổ sung (tùy chọn):
+            </label>
+            <textarea
+              value={reportNote}
+              onChange={(e) => setReportNote(e.target.value)}
+              placeholder="Mô tả cụ thể hành vi vi phạm..."
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-500"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsReportModalOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={isSubmittingReport}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              icon={ShieldAlert}
+            >
+              {isSubmittingReport ? 'Đang gửi...' : 'Gửi báo cáo'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
