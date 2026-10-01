@@ -135,6 +135,7 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/api/v1/auth') ||
       endpoint.startsWith('/admin/words') ||
       endpoint.startsWith('/admin/users') ||
+      endpoint.startsWith('/admin/audit-logs') ||
       endpoint.startsWith('/admin/teacher-registrations') ||
       endpoint.startsWith('/admin/courses') ||
       endpoint.startsWith('/admin/lessons') ||
