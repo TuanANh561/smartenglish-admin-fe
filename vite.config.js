@@ -40,6 +40,14 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
+      '/admin/audit-logs': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/admin/quizzes': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
       '/content': {
         target: 'http://localhost:8082',
         changeOrigin: true,
