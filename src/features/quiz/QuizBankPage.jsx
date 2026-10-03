@@ -10,8 +10,9 @@ import { useAuthStore } from '@/store/authStore'
 import ExamToolbar from './components/ExamToolbar'
 import ExamTableRow from './components/ExamTableRow'
 import ExamCard from './components/ExamCard'
-import ExamDetailDrawer from './components/ExamDetailDrawer'
+import ExamDetailPanel from './components/ExamDetailPanel'
 import PracticeQuizTab from './components/PracticeQuizTab'
+import ExamImportModal from './components/ExamImportModal'
 import {
   getExams,
   getExamCategories,
@@ -21,6 +22,7 @@ import {
   permanentDeleteExam,
   togglePublishExam,
   duplicateExam,
+  seedToeic200ExamApi,
 } from './examApi'
 
 const PAGE_SIZE = 8
@@ -56,7 +58,7 @@ export default function QuizBankPage() {
 
   // ── Modal / Drawer State ───────────────────────────────────────────────────
   const [activeExam, setActiveExam] = useState(null)
-  const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [permanentTarget, setPermanentTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -131,14 +133,57 @@ export default function QuizBankPage() {
     return item.authorEmail === user.email || !item.authorEmail
   }
 
-  // ── Actions ────────────────────────────────────────────────────────────────
   const handleTogglePublish = async (item) => {
+    const prevStatus = item.status || 'published'
+    const nextStatus = prevStatus === 'published' ? 'draft' : 'published'
+
+    // 1. Cập nhật giao diện ngay lập tức (optimistic update)
+    setExams((prev) =>
+      prev.map((exam) => (exam.id === item.id ? { ...exam, status: nextStatus } : exam))
+    )
+    if (activeExam?.id === item.id) {
+      setActiveExam((prev) => (prev ? { ...prev, status: nextStatus } : prev))
+    }
+
     try {
-      await togglePublishExam(item.id)
-      toast.success(`Đã đổi trạng thái bài thi "${item.title}"`)
-      loadExams()
+      // 2. Gửi request cập nhật lên server
+      const updated = await togglePublishExam(item.id)
+      const finalStatus = updated?.status || nextStatus
+      if (finalStatus !== nextStatus) {
+        setExams((prev) =>
+          prev.map((exam) => (exam.id === item.id ? { ...exam, status: finalStatus } : exam))
+        )
+        if (activeExam?.id === item.id) {
+          setActiveExam((prev) => (prev ? { ...prev, status: finalStatus } : prev))
+        }
+      }
+      toast.success(
+        finalStatus === 'published'
+          ? `Đã công khai bài thi "${item.title}"`
+          : `Đã chuyển bài thi "${item.title}" về bản nháp`
+      )
     } catch {
+      // 3. Khôi phục lại trạng thái cũ nếu server báo lỗi
+      setExams((prev) =>
+        prev.map((exam) => (exam.id === item.id ? { ...exam, status: prevStatus } : exam))
+      )
+      if (activeExam?.id === item.id) {
+        setActiveExam((prev) => (prev ? { ...prev, status: prevStatus } : prev))
+      }
       toast.error('Không thể đổi trạng thái bài thi')
+    }
+  }
+
+  const handleSeedToeic200 = async () => {
+    setIsSeeding(true)
+    try {
+      await seedToeic200ExamApi()
+      toast.success('Đã nạp thành công bộ đề TOEIC 2024 Full 200 câu (đủ 7 Parts) vào ngân hàng đề!')
+      loadExams()
+    } catch (err) {
+      toast.error('Lỗi khi nạp đề TOEIC 200 câu: ' + (err.message || ''))
+    } finally {
+      setIsSeeding(false)
     }
   }
 
@@ -256,12 +301,20 @@ export default function QuizBankPage() {
       {activeTab === 'quizzes' ? (
         /* ─── TAB 2: LEARNING-SERVICE QUIZZES ─── */
         <PracticeQuizTab />
+      ) : activeExam ? (
+        /* ─── CHẾ ĐỘ XEM CHI TIẾT RIÊNG BIỆT (FULL WIDTH) ─── */
+        <div className="w-full rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <ExamDetailPanel
+            exam={activeExam}
+            onClose={() => setActiveExam(null)}
+            canManage={canManage(activeExam)}
+            onEditClick={handleEditClick}
+          />
+        </div>
       ) : (
-        /* ─── TAB 1: CONTENT-SERVICE EXAMS ─── */
-        <>
-          {/* Table Card */}
-          <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            {/* Banner thông báo khi ở chế độ thùng rác */}
+        /* ─── TAB 1: DANH SÁCH BÀI THI (FULL WIDTH) ─── */
+        <div className="w-full rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          {/* Banner thông báo khi ở chế độ thùng rác */}
             {trashView && (
               <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
                 <span className="flex items-center gap-1.5 font-medium">
@@ -287,7 +340,7 @@ export default function QuizBankPage() {
           onToggleTrash={handleToggleTrash}
           trashCount={trashCount}
           onOpenCreate={() => navigate('/app/hoc-lieu/bai-kiem-tra/tao-moi')}
-          onOpenImport={() => setIsPdfImportOpen(true)}
+          onOpenImport={() => setIsImportOpen(true)}
           onReload={handleReload}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
@@ -415,16 +468,7 @@ export default function QuizBankPage() {
           )}
         </div>
       </div>
-
-      {/* Detail Drawer */}
-      <ExamDetailDrawer
-        exam={activeExam}
-        onClose={() => setActiveExam(null)}
-        canManage={canManage(activeExam)}
-        onEditClick={handleEditClick}
-      />
-        </>
-      )}
+    )}
 
       {/* Confirm Xóa mềm */}
       <ConfirmDialog
@@ -450,13 +494,11 @@ export default function QuizBankPage() {
         onCancel={() => setPermanentTarget(null)}
       />
 
-      {/* Modal Import PDF */}
-      <DataImportWizardModal
-        open={isPdfImportOpen}
-        onClose={() => setIsPdfImportOpen(false)}
-        defaultType="quiz"
-        onImportSuccess={() => {
-          toast.success('Đã import bài thi thành công!')
+      {/* Modal Import & Cào Đề TOEIC */}
+      <ExamImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={() => {
           loadExams()
           refreshTrashCount()
         }}

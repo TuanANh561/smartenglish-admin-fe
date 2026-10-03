@@ -1,0 +1,1957 @@
+{
+  "title": "TOEIC Mini Test 01 – Listening & Reading (50 câu)",
+  "description": "Đề thi thử TOEIC rút gọn 50 câu chọn lọc gồm Listening & Reading bóc tách từ nguồn web mở, mô phỏng đầy đủ 7 Parts trong 45 phút.",
+  "category": "TOEIC_MINI",
+  "cefrLevel": "B1",
+  "durationMinutes": 45,
+  "totalQuestions": 50,
+  "passingScore": 250,
+  "xpReward": 60,
+  "status": "published",
+  "authorName": "SmartEnglish AI Crawler",
+  "authorEmail": "crawler@smartenglish.vn",
+  "sections": [
+    {
+      "id": 1,
+      "sectionName": "LISTENING",
+      "partNumber": 1,
+      "title": "Part 1: Photographs",
+      "questionCount": 3
+    },
+    {
+      "id": 2,
+      "sectionName": "LISTENING",
+      "partNumber": 2,
+      "title": "Part 2: Question-Response",
+      "questionCount": 7
+    },
+    {
+      "id": 3,
+      "sectionName": "LISTENING",
+      "partNumber": 3,
+      "title": "Part 3: Conversations",
+      "questionCount": 9
+    },
+    {
+      "id": 4,
+      "sectionName": "LISTENING",
+      "partNumber": 4,
+      "title": "Part 4: Short Talks",
+      "questionCount": 6
+    },
+    {
+      "id": 5,
+      "sectionName": "READING",
+      "partNumber": 5,
+      "title": "Part 5: Incomplete Sentences",
+      "questionCount": 10
+    },
+    {
+      "id": 6,
+      "sectionName": "READING",
+      "partNumber": 6,
+      "title": "Part 6: Text Completion",
+      "questionCount": 4
+    },
+    {
+      "id": 7,
+      "sectionName": "READING",
+      "partNumber": 7,
+      "title": "Part 7: Reading Comprehension",
+      "questionCount": 11
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "part": 1,
+      "partName": "Listening • Part 1",
+      "partTitle": "Phần 1: Mô tả tranh",
+      "questionNumber": 1,
+      "totalQuestions": 50,
+      "imageUrl": "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&auto=format&fit=crop&q=80",
+      "audioUrl": "",
+      "audioDurationSec": 18,
+      "instructionTitle": "Chọn câu mô tả đúng nhất cho bức ảnh trên.",
+      "instructionSub": "Lắng nghe 4 phát biểu (A), (B), (C), (D) trong đoạn băng và chọn phương án chính xác.",
+      "questionText": "Look at photograph #1 and select the statement that best corresponds with the scene.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "She is writing on a notepad."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "They are examining a printed blueprint."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Colleagues are discussing a digital report on a laptop screen."
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "A projector is being repaired."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Trong bức ảnh 1, các đồng nghiệp đang tập trung nhìn và thảo luận về báo cáo trên màn hình máy tính xách tay.",
+      "explanationVi": "Trong bức ảnh 1, các đồng nghiệp đang tập trung nhìn và thảo luận về báo cáo trên màn hình máy tính xách tay.",
+      "point": 5,
+      "audioScript": "Number 1. Look at the picture marked number 1 in your test book. (A) She is writing on a notepad.. (B) They are examining a printed blueprint.. (C) Colleagues are discussing a digital report on a laptop screen.. (D) A projector is being repaired."
+    },
+    {
+      "id": "q2",
+      "part": 1,
+      "partName": "Listening • Part 1",
+      "partTitle": "Phần 1: Mô tả tranh",
+      "questionNumber": 2,
+      "totalQuestions": 50,
+      "imageUrl": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80",
+      "audioUrl": "",
+      "audioDurationSec": 18,
+      "instructionTitle": "Chọn câu mô tả đúng nhất cho bức ảnh trên.",
+      "instructionSub": "Lắng nghe 4 phát biểu (A), (B), (C), (D) trong đoạn băng và chọn phương án chính xác.",
+      "questionText": "Look at photograph #2 and select the statement that best corresponds with the scene.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "An engineer is inspecting equipment on a construction site."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Workers are paving an asphalt roadway."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Bricks are being unloaded from a delivery truck."
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "A crane is lifting a steel beam."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Trong bức ảnh 2, kỹ sư đang đội mũ bảo hộ và kiểm tra thiết bị công trình xây dựng.",
+      "explanationVi": "Trong bức ảnh 2, kỹ sư đang đội mũ bảo hộ và kiểm tra thiết bị công trình xây dựng.",
+      "point": 5,
+      "audioScript": "Number 2. Look at the picture marked number 2 in your test book. (A) An engineer is inspecting equipment on a construction site.. (B) Workers are paving an asphalt roadway.. (C) Bricks are being unloaded from a delivery truck.. (D) A crane is lifting a steel beam."
+    },
+    {
+      "id": "q3",
+      "part": 1,
+      "partName": "Listening • Part 1",
+      "partTitle": "Phần 1: Mô tả tranh",
+      "questionNumber": 3,
+      "totalQuestions": 50,
+      "imageUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80",
+      "audioUrl": "",
+      "audioDurationSec": 18,
+      "instructionTitle": "Chọn câu mô tả đúng nhất cho bức ảnh trên.",
+      "instructionSub": "Lắng nghe 4 phát biểu (A), (B), (C), (D) trong đoạn băng và chọn phương án chính xác.",
+      "questionText": "Look at photograph #3 and select the statement that best corresponds with the scene.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A customer is paying at the cash register."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A barista is pouring steamed milk into a coffee cup."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Tables are being wiped down with a cloth."
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Chairs are stacked in the corner of the cafe."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Trong bức ảnh 3, nhân viên pha chế (barista) đang rót sữa nóng tạo hình vào tách cà phê.",
+      "explanationVi": "Trong bức ảnh 3, nhân viên pha chế (barista) đang rót sữa nóng tạo hình vào tách cà phê.",
+      "point": 5,
+      "audioScript": "Number 3. Look at the picture marked number 3 in your test book. (A) A customer is paying at the cash register.. (B) A barista is pouring steamed milk into a coffee cup.. (C) Tables are being wiped down with a cloth.. (D) Chairs are stacked in the corner of the cafe."
+    },
+    {
+      "id": "q4",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 4,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Where is the nearest post office located?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Right across the street next to the central library."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Yes, I mailed the package yesterday."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "By three o'clock this afternoon."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Câu hỏi 'Where' hỏi về địa điểm -> (A) chỉ vị trí bên kia đường cạnh thư viện.",
+      "explanationVi": "Câu hỏi 'Where' hỏi về địa điểm -> (A) chỉ vị trí bên kia đường cạnh thư viện.",
+      "point": 5,
+      "audioScript": "Number 4. Where is the nearest post office located? (A) Right across the street next to the central library.. (B) Yes, I mailed the package yesterday.. (C) By three o'clock this afternoon."
+    },
+    {
+      "id": "q5",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 5,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "When will the quarterly budget review meeting take place?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Next Thursday morning at nine o'clock."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "In conference room B on the second floor."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "The accountant reviewed the spreadsheet."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Câu hỏi 'When' hỏi thời gian -> (B) chỉ thời điểm sáng thứ Năm tuần tới lúc 9 giờ.",
+      "explanationVi": "Câu hỏi 'When' hỏi thời gian -> (B) chỉ thời điểm sáng thứ Năm tuần tới lúc 9 giờ.",
+      "point": 5,
+      "audioScript": "Number 5. When will the quarterly budget review meeting take place? (A) Next Thursday morning at nine o'clock.. (B) In conference room B on the second floor.. (C) The accountant reviewed the spreadsheet."
+    },
+    {
+      "id": "q6",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 6,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Who is in charge of organizing the annual marketing conference?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "At the convention center downtown."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Yes, it was a very informative seminar."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Ms. Tanaka from the communications department."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Câu hỏi 'Who' hỏi người chịu trách nhiệm -> (A) chỉ cô Tanaka phòng truyền thông.",
+      "explanationVi": "Câu hỏi 'Who' hỏi người chịu trách nhiệm -> (A) chỉ cô Tanaka phòng truyền thông.",
+      "point": 5,
+      "audioScript": "Number 6. Who is in charge of organizing the annual marketing conference? (A) At the convention center downtown.. (B) Yes, it was a very informative seminar.. (C) Ms. Tanaka from the communications department."
+    },
+    {
+      "id": "q7",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 7,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Why hasn't the shipment of spare parts arrived yet?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Severe storms delayed the cargo flight."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Fifty boxes of mechanical components."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "They will be shipped via express airmail."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Câu hỏi 'Why' hỏi lý do -> (A) giải thích do bão lớn làm hoãn chuyến bay chở hàng.",
+      "explanationVi": "Câu hỏi 'Why' hỏi lý do -> (A) giải thích do bão lớn làm hoãn chuyến bay chở hàng.",
+      "point": 5,
+      "audioScript": "Number 7. Why hasn't the shipment of spare parts arrived yet? (A) Severe storms delayed the cargo flight.. (B) Fifty boxes of mechanical components.. (C) They will be shipped via express airmail."
+    },
+    {
+      "id": "q8",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 8,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Would you like coffee, or would you prefer a cup of green tea?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "No, I didn't see the cafeteria menu."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Some green tea would be wonderful, thank you."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Two teaspoons of brown sugar."
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Câu hỏi lựa chọn 'coffee or tea' -> (A) chọn dùng trà xanh.",
+      "explanationVi": "Câu hỏi lựa chọn 'coffee or tea' -> (A) chọn dùng trà xanh.",
+      "point": 5,
+      "audioScript": "Number 8. Would you like coffee, or would you prefer a cup of green tea? (A) No, I didn't see the cafeteria menu.. (B) Some green tea would be wonderful, thank you.. (C) Two teaspoons of brown sugar."
+    },
+    {
+      "id": "q9",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 9,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Has the technician repaired the office photocopier yet?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Yes, the document was printed clearly."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "About five hundred double-sided copies."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "No, he is still waiting for a replacement roller."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Câu hỏi Yes/No với 'Has the technician...' -> (A) thông báo kỹ thuật viên vẫn đang đợi linh kiện thay thế.",
+      "explanationVi": "Câu hỏi Yes/No với 'Has the technician...' -> (A) thông báo kỹ thuật viên vẫn đang đợi linh kiện thay thế.",
+      "point": 5,
+      "audioScript": "Number 9. Has the technician repaired the office photocopier yet? (A) Yes, the document was printed clearly.. (B) About five hundred double-sided copies.. (C) No, he is still waiting for a replacement roller."
+    },
+    {
+      "id": "q10",
+      "part": 2,
+      "partName": "Listening • Part 2",
+      "partTitle": "Phần 2: Hỏi - Đáp",
+      "questionNumber": 10,
+      "totalQuestions": 50,
+      "audioUrl": "",
+      "audioDurationSec": 20,
+      "instructionTitle": "Lắng nghe câu hỏi và chọn câu phản hồi phù hợp nhất.",
+      "questionText": "Can you arrange shuttle transportation for our visiting clients?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Certainly, I'll call the rental service right away."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "They arrived at terminal three at noon."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "The hotel is within walking distance."
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Câu đề nghị giúp đỡ 'Can you arrange...' -> (A) đồng ý sắp xếp ngay lập tức.",
+      "explanationVi": "Câu đề nghị giúp đỡ 'Can you arrange...' -> (A) đồng ý sắp xếp ngay lập tức.",
+      "point": 5,
+      "audioScript": "Number 10. Can you arrange shuttle transportation for our visiting clients? (A) Certainly, I'll call the rental service right away.. (B) They arrived at terminal three at noon.. (C) The hotel is within walking distance."
+    },
+    {
+      "id": "q11",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 11,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 32–34",
+      "groupAudioBadge": "Hội thoại: Logistics delay (Câu 32–34)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What problem are the speakers discussing?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A delayed overseas shipment"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A damaged computer screen"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "An unpaid vendor invoice"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "A lost office access key"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Người nói đang thảo luận về việc lô hàng linh kiện điện tử từ nước ngoài bị trễ chuyến.",
+      "explanationVi": "Người nói đang thảo luận về việc lô hàng linh kiện điện tử từ nước ngoài bị trễ chuyến.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q12",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 12,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 32–34",
+      "groupAudioBadge": "Hội thoại: Logistics delay (Câu 32–34)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "Why was the delivery delayed?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Incorrect shipping address"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Severe port congestion"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Customs fee dispute"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Factory machinery breakdown"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Người phụ nữ giải thích tình trạng tắc nghẽn cảng biển nghiêm trọng gây chậm trễ.",
+      "explanationVi": "Người phụ nữ giải thích tình trạng tắc nghẽn cảng biển nghiêm trọng gây chậm trễ.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q13",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 13,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 32–34",
+      "groupAudioBadge": "Hội thoại: Logistics delay (Câu 32–34)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What will the man do next?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Request a full refund"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Order replacement items locally"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Notify the client immediately"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Cancel the purchase order"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Người đàn ông cho biết sẽ gọi điện thông báo ngay cho khách hàng về sự thay đổi lịch trình.",
+      "explanationVi": "Người đàn ông cho biết sẽ gọi điện thông báo ngay cho khách hàng về sự thay đổi lịch trình.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q14",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 14,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 35–37",
+      "groupAudioBadge": "Hội thoại: Software upgrade (Câu 35–37)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What is the purpose of the man's call?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "To schedule a team training session"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "To report a database login error"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "To renew an antivirus subscription"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "To request a new work laptop"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Người đàn ông gọi tới phòng IT vì gặp lỗi không thể đăng nhập vào cơ sở dữ liệu khách hàng.",
+      "explanationVi": "Người đàn ông gọi tới phòng IT vì gặp lỗi không thể đăng nhập vào cơ sở dữ liệu khách hàng.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q15",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 15,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 35–37",
+      "groupAudioBadge": "Hội thoại: Software upgrade (Câu 35–37)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What does the woman instruct the man to do?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Submit a formal written ticket"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Contact the branch manager"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Clear browser cache and restart"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Reinstall the operating system"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Kỹ thuật viên nữ hướng dẫn xóa bộ nhớ đệm và khởi động lại máy tính.",
+      "explanationVi": "Kỹ thuật viên nữ hướng dẫn xóa bộ nhớ đệm và khởi động lại máy tính.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q16",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 16,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 35–37",
+      "groupAudioBadge": "Hội thoại: Software upgrade (Câu 35–37)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "When will the system maintenance finish?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Tomorrow morning at 8:00 AM"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "By next Monday"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "In thirty minutes"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "By 2:00 PM today"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Hệ thống bảo trì máy chủ dự kiến hoàn tất trước 2 giờ chiều nay.",
+      "explanationVi": "Hệ thống bảo trì máy chủ dự kiến hoàn tất trước 2 giờ chiều nay.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q17",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 17,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 38–40",
+      "groupAudioBadge": "Hội thoại: Banquet catering (Câu 38–40)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "Where does the conversation most likely take place?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "In a supermarket checkout line"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "At an airport lounge"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "In a hotel catering department"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "In a doctor's clinic"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Cuộc trò chuyện bàn về thực đơn tiệc chiêu đãi tại khách sạn.",
+      "explanationVi": "Cuộc trò chuyện bàn về thực đơn tiệc chiêu đãi tại khách sạn.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q18",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 18,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 38–40",
+      "groupAudioBadge": "Hội thoại: Banquet catering (Câu 38–40)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What special request does the woman make?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Live acoustic music performance"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A projector for slide presentation"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Extra outdoor parking permits"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Vegetarian meal options for guests"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Khách hàng nữ yêu cầu thêm các suất ăn chay cho khách tham dự.",
+      "explanationVi": "Khách hàng nữ yêu cầu thêm các suất ăn chay cho khách tham dự.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q19",
+      "part": 3,
+      "partName": "Listening • Part 3",
+      "partTitle": "Phần 3: Đoạn hội thoại",
+      "questionNumber": 19,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 38–40",
+      "groupAudioBadge": "Hội thoại: Banquet catering (Câu 38–40)",
+      "audioUrl": "",
+      "audioDurationSec": 45,
+      "questionText": "What will the man send by email this afternoon?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A revised price quotation"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A contract cancellation form"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Directions to the hotel venue"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Photographs of banquet halls"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Người quản lý tiệc hứa gửi bảng báo giá đã điều chỉnh qua email vào buổi chiều.",
+      "explanationVi": "Người quản lý tiệc hứa gửi bảng báo giá đã điều chỉnh qua email vào buổi chiều.",
+      "point": 5,
+      "audioScript": "Man: Hello Sarah, I am calling from Apex Construction to discuss wholesale pricing for raw steel materials on our upcoming project.\nWoman: Good morning, David. As you know, steel prices have been volatile, but we can offer a twelve percent discount if your company orders a minimum of five hundred metric tons.\nMan: That works for our schedule. I will consult my procurement team and submit an updated formal purchase order by 3:00 PM today.\nWoman: Perfect. Once I receive the purchase order, I will lock in the discounted rate and schedule the initial shipment."
+    },
+    {
+      "id": "q20",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 20,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 71–73",
+      "groupAudioBadge": "Bài nói: Voicemail Message (Câu 71–73)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "Who is the message intended for?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A patient with an upcoming dental appointment"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A pharmacist ordering medical supplies"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "An insurance claim representative"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "A dental hygiene conference attendee"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Nội dung bài nói \"Voicemail Message\" nêu rõ: A patient with an upcoming dental appointment. Do đó phương án A là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Voicemail Message\" nêu rõ: A patient with an upcoming dental appointment. Do đó phương án A là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q21",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 21,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 71–73",
+      "groupAudioBadge": "Bài nói: Voicemail Message (Câu 71–73)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "What is the reason for the call?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "To collect an outstanding copay fee"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "To reschedule a cleaning session due to a doctor emergency"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "To confirm receipt of laboratory dental X-rays"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "To prescribe an antibiotic medication"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Nội dung bài nói \"Voicemail Message\" nêu rõ: To reschedule a cleaning session due to a doctor emergency. Do đó phương án B là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Voicemail Message\" nêu rõ: To reschedule a cleaning session due to a doctor emergency. Do đó phương án B là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q22",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 22,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 71–73",
+      "groupAudioBadge": "Bài nói: Voicemail Message (Câu 71–73)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "What is the listener asked to do?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Arrive twenty minutes early with proof of insurance"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Print and sign a medical consent release"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Call back before 5:00 PM to select a new date"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Visit the clinic's online website portal"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Nội dung bài nói \"Voicemail Message\" nêu rõ: Call back before 5:00 PM to select a new date. Do đó phương án C là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Voicemail Message\" nêu rõ: Call back before 5:00 PM to select a new date. Do đó phương án C là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q23",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 23,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 74–76",
+      "groupAudioBadge": "Bài nói: Airport Announcement (Câu 74–76)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "Where is this announcement being made?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "On board a commercial passenger aircraft"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "At a central intercity railway station"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "At an international airport departure gate"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "In a subway transit ticketing area"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Nội dung bài nói \"Airport Announcement\" nêu rõ: At an international airport departure gate. Do đó phương án C là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Airport Announcement\" nêu rõ: At an international airport departure gate. Do đó phương án C là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q24",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 24,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 74–76",
+      "groupAudioBadge": "Bài nói: Airport Announcement (Câu 74–76)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "What is the cause of the delay?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Mechanical maintenance on the aircraft landing gear"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Air traffic controller staffing shortages"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Missing passenger security screening"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Severe thunderstorms along the flight path"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Nội dung bài nói \"Airport Announcement\" nêu rõ: Severe thunderstorms along the flight path. Do đó phương án D là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Airport Announcement\" nêu rõ: Severe thunderstorms along the flight path. Do đó phương án D là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q25",
+      "part": 4,
+      "partName": "Listening • Part 4",
+      "partTitle": "Phần 4: Bài nói ngắn",
+      "questionNumber": 25,
+      "totalQuestions": 50,
+      "groupRangeText": "Nhóm câu 74–76",
+      "groupAudioBadge": "Bài nói: Airport Announcement (Câu 74–76)",
+      "audioUrl": "",
+      "audioDurationSec": 42,
+      "questionText": "What are passengers invited to collect at the service desk?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Complimentary refreshment and snack vouchers"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Rebooked boarding passes for tomorrow"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Free airport lounge access passes"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Luggage claim verification tags"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Nội dung bài nói \"Airport Announcement\" nêu rõ: Complimentary refreshment and snack vouchers. Do đó phương án A là chính xác.",
+      "explanationVi": "Nội dung bài nói \"Airport Announcement\" nêu rõ: Complimentary refreshment and snack vouchers. Do đó phương án A là chính xác.",
+      "point": 5,
+      "audioScript": "Attention all passengers waiting for flight 402 with service to Chicago O'Hare. This announcement is taking place at an international airport departure terminal gate. Due to severe weather conditions delaying the inbound aircraft, our departure gate has been relocated. Passengers on flight 402 are instructed to proceed immediately to Gate B24 at the end of Concourse B. Boarding will commence in approximately twenty minutes. Please have your boarding passes and photo identification ready."
+    },
+    {
+      "id": "q26",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 26,
+      "totalQuestions": 50,
+      "questionText": "All employees must submit their quarterly expense reports _______ Friday at 5:00 PM.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "before"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "during"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "while"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "between"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Dùng giới từ 'before' chỉ thời hạn trước mốc thời gian cụ thể (Friday at 5:00 PM).",
+      "explanationVi": "Dùng giới từ 'before' chỉ thời hạn trước mốc thời gian cụ thể (Friday at 5:00 PM).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q27",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 27,
+      "totalQuestions": 50,
+      "questionText": "The lead architect presented a _______ design for the municipal library renovation.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "creatively"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "creative"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "creativity"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "create"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Cần một tính từ (creative) đứng trước danh từ 'design' để bổ nghĩa.",
+      "explanationVi": "Cần một tính từ (creative) đứng trước danh từ 'design' để bổ nghĩa.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q28",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 28,
+      "totalQuestions": 50,
+      "questionText": "Ms. Patel _______ works from home on Mondays to coordinate with overseas clients.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "frequent"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "frequency"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "frequently"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "frequented"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Đứng trước động từ 'works' cần một phó từ chỉ tần suất (frequently).",
+      "explanationVi": "Đứng trước động từ 'works' cần một phó từ chỉ tần suất (frequently).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q29",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 29,
+      "totalQuestions": 50,
+      "questionText": "The board of directors expressed confidence in the CEO's _______ to expand into Europe.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "able"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "ably"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "enable"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "ability"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Sau tính từ sở hữu 'CEO's' cần một danh từ (ability to do something).",
+      "explanationVi": "Sau tính từ sở hữu 'CEO's' cần một danh từ (ability to do something).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q30",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 30,
+      "totalQuestions": 50,
+      "questionText": "Although sales declined slightly in June, the overall annual revenue remained _______.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "strong"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "strongly"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "strength"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "strengthen"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Sau liên động từ 'remained' cần một tính từ (strong).",
+      "explanationVi": "Sau liên động từ 'remained' cần một tính từ (strong).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q31",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 31,
+      "totalQuestions": 50,
+      "questionText": "Customers _______ experience technical difficulties can call our 24/7 hotline.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "which"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "who"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "whose"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "whom"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Đại từ quan hệ 'who' thay thế cho danh từ chỉ người 'Customers' làm chủ ngữ cho 'experience'.",
+      "explanationVi": "Đại từ quan hệ 'who' thay thế cho danh từ chỉ người 'Customers' làm chủ ngữ cho 'experience'.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q32",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 32,
+      "totalQuestions": 50,
+      "questionText": "The revised employee handbook includes detailed _______ on cybersecurity protocols.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "guide"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "guiding"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "guidelines"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "guided"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Sau tính từ 'detailed' cần một danh từ số nhiều (guidelines) mang nghĩa các hướng dẫn chi tiết.",
+      "explanationVi": "Sau tính từ 'detailed' cần một danh từ số nhiều (guidelines) mang nghĩa các hướng dẫn chi tiết.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q33",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 33,
+      "totalQuestions": 50,
+      "questionText": "The factory manager requested that the broken conveyor belt be repaired _______.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "immediate"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "immediacy"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "immediateness"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "immediately"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Cần phó từ 'immediately' bổ nghĩa cho động từ 'be repaired'.",
+      "explanationVi": "Cần phó từ 'immediately' bổ nghĩa cho động từ 'be repaired'.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q34",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 34,
+      "totalQuestions": 50,
+      "questionText": "Neither the marketing director _______ the sales manager attended the press release.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "nor"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "or"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "and"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "but"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Cặp liên từ tương quan 'Neither ... nor ...' (không ... cũng không ...).",
+      "explanationVi": "Cặp liên từ tương quan 'Neither ... nor ...' (không ... cũng không ...).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q35",
+      "part": 5,
+      "partName": "Reading • Part 5",
+      "partTitle": "Phần 5: Hoàn thành câu",
+      "questionNumber": 35,
+      "totalQuestions": 50,
+      "questionText": "The accounting department will _______ the audit as soon as all receipts are collected.",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "final"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "finalize"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "finally"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "finality"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Sau trợ động từ 'will' cần một động từ nguyên mẫu (finalize).",
+      "explanationVi": "Sau trợ động từ 'will' cần một động từ nguyên mẫu (finalize).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q36",
+      "part": 6,
+      "partName": "Reading • Part 6",
+      "partTitle": "Phần 6: Điền đoạn văn",
+      "questionNumber": 36,
+      "totalQuestions": 50,
+      "groupRangeText": "Bài đọc: Memo: Parking Lot Resurfacing Schedule",
+      "passageText": "To: All Staff Members\nFrom: Facilities Management\nDate: October 12\nSubject: East Parking Lot Maintenance\n\nPlease be advised that the East Staff Parking Lot will be closed for asphalt repaving from October 18 to October 21. During this period, all employees are requested to park in the North Overflow Lot. [131] _______, the automated security gate will remain open from 6:30 AM to 8:30 PM. We apologize for any [132] _______ this temporary closure may cause. Parking spaces will be reallocated on a first-come, first-served basis. [133] _______. If you require special accessibility accommodations, please contact security [134] _______ prior to Monday.",
+      "questionText": "Select the best answer for blank [131].",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Additionally"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "However"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Otherwise"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Instead"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Dùng trạng từ liên kết 'Additionally' để bổ sung thông tin cổng an ninh sẽ mở cửa.",
+      "explanationVi": "Dùng trạng từ liên kết 'Additionally' để bổ sung thông tin cổng an ninh sẽ mở cửa.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q37",
+      "part": 6,
+      "partName": "Reading • Part 6",
+      "partTitle": "Phần 6: Điền đoạn văn",
+      "questionNumber": 37,
+      "totalQuestions": 50,
+      "groupRangeText": "Bài đọc: Memo: Parking Lot Resurfacing Schedule",
+      "passageText": "To: All Staff Members\nFrom: Facilities Management\nDate: October 12\nSubject: East Parking Lot Maintenance\n\nPlease be advised that the East Staff Parking Lot will be closed for asphalt repaving from October 18 to October 21. During this period, all employees are requested to park in the North Overflow Lot. [131] _______, the automated security gate will remain open from 6:30 AM to 8:30 PM. We apologize for any [132] _______ this temporary closure may cause. Parking spaces will be reallocated on a first-come, first-served basis. [133] _______. If you require special accessibility accommodations, please contact security [134] _______ prior to Monday.",
+      "questionText": "Select the best answer for blank [132].",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "inconvenient"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "inconvenience"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "inconveniently"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "inconveniences"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Sau từ 'any' trong ngữ cảnh xin lỗi vì sự bất tiện cần danh từ 'inconvenience'.",
+      "explanationVi": "Sau từ 'any' trong ngữ cảnh xin lỗi vì sự bất tiện cần danh từ 'inconvenience'.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q38",
+      "part": 6,
+      "partName": "Reading • Part 6",
+      "partTitle": "Phần 6: Điền đoạn văn",
+      "questionNumber": 38,
+      "totalQuestions": 50,
+      "groupRangeText": "Bài đọc: Memo: Parking Lot Resurfacing Schedule",
+      "passageText": "To: All Staff Members\nFrom: Facilities Management\nDate: October 12\nSubject: East Parking Lot Maintenance\n\nPlease be advised that the East Staff Parking Lot will be closed for asphalt repaving from October 18 to October 21. During this period, all employees are requested to park in the North Overflow Lot. [131] _______, the automated security gate will remain open from 6:30 AM to 8:30 PM. We apologize for any [132] _______ this temporary closure may cause. Parking spaces will be reallocated on a first-come, first-served basis. [133] _______. If you require special accessibility accommodations, please contact security [134] _______ prior to Monday.",
+      "questionText": "Select the best answer for blank [133].",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "The cafeteria menu will be updated next Tuesday."
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "All laptops must be returned to the IT desk."
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Car pooling with coworkers is strongly encouraged during this time."
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Visitor passes are available at reception."
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Câu văn điền vào chỗ trống hợp lý khuyên khích đi chung xe (carpooling) trong thời gian bãi xe bị đóng cửa.",
+      "explanationVi": "Câu văn điền vào chỗ trống hợp lý khuyên khích đi chung xe (carpooling) trong thời gian bãi xe bị đóng cửa.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q39",
+      "part": 6,
+      "partName": "Reading • Part 6",
+      "partTitle": "Phần 6: Điền đoạn văn",
+      "questionNumber": 39,
+      "totalQuestions": 50,
+      "groupRangeText": "Bài đọc: Memo: Parking Lot Resurfacing Schedule",
+      "passageText": "To: All Staff Members\nFrom: Facilities Management\nDate: October 12\nSubject: East Parking Lot Maintenance\n\nPlease be advised that the East Staff Parking Lot will be closed for asphalt repaving from October 18 to October 21. During this period, all employees are requested to park in the North Overflow Lot. [131] _______, the automated security gate will remain open from 6:30 AM to 8:30 PM. We apologize for any [132] _______ this temporary closure may cause. Parking spaces will be reallocated on a first-come, first-served basis. [133] _______. If you require special accessibility accommodations, please contact security [134] _______ prior to Monday.",
+      "questionText": "Select the best answer for blank [134].",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "prompt"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "promptness"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "prompted"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "promptly"
+        }
+      ],
+      "correctAnswer": "D",
+      "explanation": "Cần phó từ 'promptly' bổ nghĩa cho động từ 'contact security'.",
+      "explanationVi": "Cần phó từ 'promptly' bổ nghĩa cho động từ 'contact security'.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q40",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 40,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 147-148",
+      "passageText": "INVOICE #92041\nTechStore Direct\nDate: November 3\nBill To: Jason Miller, 452 Elm Street, Denver, CO\nItems:\n- 1x Wireless Noise-Cancelling Headphones ($149.99)\n- 2x USB-C Fast Charging Cables ($24.00)\n- Standard Shipping ($5.00)\nTotal Paid: $178.99\nPayment Method: Visa ending in 4102\nEstimated Delivery: November 7–9 via FedEx Ground",
+      "questionText": "What item did Mr. Miller purchase two of?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "USB-C Fast Charging Cables"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Wireless Headphones"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Laptop Sleeves"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Bluetooth Adapters"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Hóa đơn ghi rõ số lượng 2x của USB-C Fast Charging Cables.",
+      "explanationVi": "Hóa đơn ghi rõ số lượng 2x của USB-C Fast Charging Cables.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q41",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 41,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 147-148",
+      "passageText": "INVOICE #92041\nTechStore Direct\nDate: November 3\nBill To: Jason Miller, 452 Elm Street, Denver, CO\nItems:\n- 1x Wireless Noise-Cancelling Headphones ($149.99)\n- 2x USB-C Fast Charging Cables ($24.00)\n- Standard Shipping ($5.00)\nTotal Paid: $178.99\nPayment Method: Visa ending in 4102\nEstimated Delivery: November 7–9 via FedEx Ground",
+      "questionText": "When is the package expected to arrive?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "On November 3"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Between November 7 and 9"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "In two weeks"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "By the end of December"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Thời gian giao hàng dự kiến là từ ngày 7 đến 9 tháng 11.",
+      "explanationVi": "Thời gian giao hàng dự kiến là từ ngày 7 đến 9 tháng 11.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q42",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 42,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 149-150",
+      "passageText": "WANTED: Senior Financial Analyst\nCrestview Capital Partners — Boston, MA\n\nWe are seeking an experienced Financial Analyst with a minimum of four years in corporate asset valuation. The ideal candidate will possess advanced Excel modeling skills and a CPA certification. Responsibilities include preparing monthly forecasting presentations for the executive committee. Applications must include a curriculum vitae and three professional references sent to careers@crestviewcap.com before December 15.",
+      "questionText": "What minimum experience is required for the position?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Four years in corporate asset valuation"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Two years in retail banking"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Seven years in international accounting"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "One year of tax auditing"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Thông báo tuyển dụng yêu cầu tối thiểu 4 năm kinh nghiệm trong định giá tài sản doanh nghiệp.",
+      "explanationVi": "Thông báo tuyển dụng yêu cầu tối thiểu 4 năm kinh nghiệm trong định giá tài sản doanh nghiệp.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q43",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 43,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 149-150",
+      "passageText": "WANTED: Senior Financial Analyst\nCrestview Capital Partners — Boston, MA\n\nWe are seeking an experienced Financial Analyst with a minimum of four years in corporate asset valuation. The ideal candidate will possess advanced Excel modeling skills and a CPA certification. Responsibilities include preparing monthly forecasting presentations for the executive committee. Applications must include a curriculum vitae and three professional references sent to careers@crestviewcap.com before December 15.",
+      "questionText": "What must applicants submit with their curriculum vitae?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A college diploma copy"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Three professional references"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "A writing sample portfolio"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "A criminal background clearance"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Ứng viên bắt buộc phải nộp CV kèm theo 3 người tham chiếu chuyên môn.",
+      "explanationVi": "Ứng viên bắt buộc phải nộp CV kèm theo 3 người tham chiếu chuyên môn.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q44",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 44,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 151-153",
+      "passageText": "MEMORANDUM\nTo: All Department Heads\nFrom: Rachel Adams, VP of Human Resources\nDate: January 15\nSubject: Implementation of Core Collaboration Hours\n\nBeginning February 1, our company will transition to a flexible hybrid work schedule. All full-time employees are required to be online and available for synchronous team meetings during our designated 'Core Hours' of 10:00 AM to 3:00 PM Eastern Time. Outside of these hours, staff may arrange their work schedules as they see fit, provided the mandatory 40-hour weekly total is fulfilled. Department supervisors must approve all individual telecommuting agreements by January 25.",
+      "questionText": "What is the primary purpose of the memorandum?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "To establish mandatory core collaboration hours"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "To announce annual employee performance bonuses"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "To explain parking permit fee adjustments"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "To introduce a new health insurance provider"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Mục đích chính của thông báo là thiết lập khung giờ làm việc cốt lõi bắt buộc (10:00 AM - 3:00 PM).",
+      "explanationVi": "Mục đích chính của thông báo là thiết lập khung giờ làm việc cốt lõi bắt buộc (10:00 AM - 3:00 PM).",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q45",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 45,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 151-153",
+      "passageText": "MEMORANDUM\nTo: All Department Heads\nFrom: Rachel Adams, VP of Human Resources\nDate: January 15\nSubject: Implementation of Core Collaboration Hours\n\nBeginning February 1, our company will transition to a flexible hybrid work schedule. All full-time employees are required to be online and available for synchronous team meetings during our designated 'Core Hours' of 10:00 AM to 3:00 PM Eastern Time. Outside of these hours, staff may arrange their work schedules as they see fit, provided the mandatory 40-hour weekly total is fulfilled. Department supervisors must approve all individual telecommuting agreements by January 25.",
+      "questionText": "During what hours must employees be available for team meetings?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "From 8:00 AM to 5:00 PM"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "From 10:00 AM to 3:00 PM Eastern Time"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "From 9:00 AM to 12:00 PM"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Only on Friday afternoons"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Văn bản nêu rõ nhân viên phải trực tuyến và sẵn sàng họp từ 10:00 AM đến 3:00 PM giờ miền Đông.",
+      "explanationVi": "Văn bản nêu rõ nhân viên phải trực tuyến và sẵn sàng họp từ 10:00 AM đến 3:00 PM giờ miền Đông.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q46",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 46,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 151-153",
+      "passageText": "MEMORANDUM\nTo: All Department Heads\nFrom: Rachel Adams, VP of Human Resources\nDate: January 15\nSubject: Implementation of Core Collaboration Hours\n\nBeginning February 1, our company will transition to a flexible hybrid work schedule. All full-time employees are required to be online and available for synchronous team meetings during our designated 'Core Hours' of 10:00 AM to 3:00 PM Eastern Time. Outside of these hours, staff may arrange their work schedules as they see fit, provided the mandatory 40-hour weekly total is fulfilled. Department supervisors must approve all individual telecommuting agreements by January 25.",
+      "questionText": "What deadline are supervisors required to meet?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "February 1 for hiring new staff"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "January 15 for submitting budget plans"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "January 25 for approving telecommuting agreements"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "March 1 for quarterly evaluations"
+        }
+      ],
+      "correctAnswer": "C",
+      "explanation": "Quản lý phải phê duyệt các thỏa thuận làm việc từ xa của nhân viên trước ngày 25 tháng 1.",
+      "explanationVi": "Quản lý phải phê duyệt các thỏa thuận làm việc từ xa của nhân viên trước ngày 25 tháng 1.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q47",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 47,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 154-155",
+      "passageText": "Text Messages — May 4\n\n[10:14 AM] Mark Davis: Hi Lisa, did the printed presentation booklets for the 11:30 client pitch arrive from the print shop?\n[10:16 AM] Lisa Wong: No, I called them twenty minutes ago. The courier was stuck in traffic near the highway bridge. They promised delivery by 10:45.\n[10:18 AM] Mark Davis: That's cutting it close. I'll load the digital slides onto the conference room tablet just in case.\n[10:19 AM] Lisa Wong: Good idea. I'll wait at reception and bring the booklets straight to Room 402 the moment they arrive.",
+      "questionText": "Why is Mark concerned about the delivery?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "He needs the booklets for an 11:30 AM client meeting"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "The print shop sent the wrong invoice"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "The client canceled the presentation"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "The digital slides were corrupted"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Mark lo lắng vì cần tập tài liệu in ấn cho buổi thuyết trình khách hàng lúc 11:30 sáng.",
+      "explanationVi": "Mark lo lắng vì cần tập tài liệu in ấn cho buổi thuyết trình khách hàng lúc 11:30 sáng.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q48",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 48,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 154-155",
+      "passageText": "Text Messages — May 4\n\n[10:14 AM] Mark Davis: Hi Lisa, did the printed presentation booklets for the 11:30 client pitch arrive from the print shop?\n[10:16 AM] Lisa Wong: No, I called them twenty minutes ago. The courier was stuck in traffic near the highway bridge. They promised delivery by 10:45.\n[10:18 AM] Mark Davis: That's cutting it close. I'll load the digital slides onto the conference room tablet just in case.\n[10:19 AM] Lisa Wong: Good idea. I'll wait at reception and bring the booklets straight to Room 402 the moment they arrive.",
+      "questionText": "What backup measure will Mark take?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Reschedule the client pitch to tomorrow"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Load the presentation slides onto a tablet"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Print black-and-white copies in the office"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Call the delivery courier directly"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "Mark chủ động nạp sẵn các trang trình chiếu lên máy tính bảng đề phòng tài liệu đến trễ.",
+      "explanationVi": "Mark chủ động nạp sẵn các trang trình chiếu lên máy tính bảng đề phòng tài liệu đến trễ.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q49",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 49,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 156-158",
+      "passageText": "Business Weekly — August 22\nRetail Giants Embrace Micro-Warehouses to Accelerate Deliveries\n\nUrban logistics is undergoing a massive transformation as major e-commerce retailers establish micro-fulfillment hubs inside metropolitan city centers. By converting underutilized downtown retail spaces into automated storage facilities, companies can fulfill customer grocery and household orders in as little as 30 minutes. Last quarter, retail leader MetroMart opened twelve micro-centers across Atlanta and recorded a 45% increase in repeat customer orders. Industry analysts predict urban micro-warehousing will capture over 25% of national grocery logistics within five years.",
+      "questionText": "What trend is described in the article?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "Establishing automated micro-warehouses in city centers"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "Closing physical supermarkets to cut labor costs"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Replacing delivery vans with electric bicycles"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Outsourcing food delivery to third-party apps"
+        }
+      ],
+      "correctAnswer": "A",
+      "explanation": "Bài báo mô tả xu hướng thiết lập các kho hàng mini tự động hóa bên trong trung tâm các thành phố lớn.",
+      "explanationVi": "Bài báo mô tả xu hướng thiết lập các kho hàng mini tự động hóa bên trong trung tâm các thành phố lớn.",
+      "point": 5,
+      "audioUrl": ""
+    },
+    {
+      "id": "q50",
+      "part": 7,
+      "partName": "Reading • Part 7",
+      "partTitle": "Phần 7: Đọc hiểu văn bản",
+      "questionNumber": 50,
+      "totalQuestions": 50,
+      "groupRangeText": "Đoạn văn câu 156-158",
+      "passageText": "Business Weekly — August 22\nRetail Giants Embrace Micro-Warehouses to Accelerate Deliveries\n\nUrban logistics is undergoing a massive transformation as major e-commerce retailers establish micro-fulfillment hubs inside metropolitan city centers. By converting underutilized downtown retail spaces into automated storage facilities, companies can fulfill customer grocery and household orders in as little as 30 minutes. Last quarter, retail leader MetroMart opened twelve micro-centers across Atlanta and recorded a 45% increase in repeat customer orders. Industry analysts predict urban micro-warehousing will capture over 25% of national grocery logistics within five years.",
+      "questionText": "What benefit did MetroMart experience after opening its micro-centers?",
+      "options": [
+        {
+          "key": "A",
+          "label": "A",
+          "text": "A reduction in retail space rental costs"
+        },
+        {
+          "key": "B",
+          "label": "B",
+          "text": "A 45% increase in repeat customer orders"
+        },
+        {
+          "key": "C",
+          "label": "C",
+          "text": "Expansion into fifteen international markets"
+        },
+        {
+          "key": "D",
+          "label": "D",
+          "text": "Zero product return requests"
+        }
+      ],
+      "correctAnswer": "B",
+      "explanation": "MetroMart ghi nhận số đơn đặt hàng lặp lại từ khách hàng tăng tới 45%.",
+      "explanationVi": "MetroMart ghi nhận số đơn đặt hàng lặp lại từ khách hàng tăng tới 45%.",
+      "point": 5,
+      "audioUrl": ""
+    }
+  ]
+}

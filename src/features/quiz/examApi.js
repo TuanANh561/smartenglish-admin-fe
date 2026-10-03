@@ -115,6 +115,25 @@ let localExams = [
 
 let mockIdCounter = 500
 
+function buildPayload(data) {
+  if (!data) return {}
+  return {
+    title: data.title?.trim() || '',
+    description: data.description || '',
+    category: data.category || 'TOEIC_FULL',
+    cefrLevel: data.cefrLevel || 'B2',
+    durationMinutes: Number(data.durationMinutes) || 120,
+    totalQuestions: Number(data.totalQuestions) || (Array.isArray(data.questions) ? data.questions.length : 0),
+    passingScore: Number(data.passingScore) || 500,
+    xpReward: Number(data.xpReward) || 100,
+    sections: Array.isArray(data.sections) ? data.sections : [],
+    questions: Array.isArray(data.questions) ? data.questions : [],
+    status: data.status || 'published',
+    authorName: data.authorName || 'Quản trị viên Hệ thống',
+    authorEmail: data.authorEmail || 'admin@smartenglish.vn',
+  }
+}
+
 function normalizeExam(item) {
   if (!item) return item
   return {
@@ -273,6 +292,7 @@ export async function createExam(data) {
   }
 }
 
+
 // ─── Update ───────────────────────────────────────────────────────────────────
 
 export async function updateExam(id, data) {
@@ -394,23 +414,31 @@ export async function permanentDeleteExam(id) {
   }
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// ─── Seed / Crawl Full TOEIC 200 Questions ───────────────────────────────────
 
-function buildPayload(data) {
-  return {
-    title:           data.title || '',
-    description:     data.description || '',
-    category:        data.category || 'GENERAL',
-    cefrLevel:       data.cefrLevel || 'B1',
-    durationMinutes: data.durationMinutes ? Number(data.durationMinutes) : 45,
-    totalQuestions:  data.totalQuestions ? Number(data.totalQuestions) : (data.questions?.length || 0),
-    passingScore:    data.passingScore ? Number(data.passingScore) : 0,
-    xpReward:        data.xpReward ? Number(data.xpReward) : 50,
-    sections:        Array.isArray(data.sections) ? data.sections : [],
-    questions:       Array.isArray(data.questions) ? data.questions : [],
-    status:          data.status || 'published',
-    authorName:      data.authorName || 'Quản trị viên Hệ thống',
-    authorEmail:     data.authorEmail || 'admin@smartenglish.vn',
+export async function seedToeic200ExamApi() {
+  try {
+    const res = await callApi('post', `${BASE}/seed-toeic-200`)
+    return res?.data !== undefined ? res.data : res
+  } catch (err) {
+    console.warn('[examApi] Failed to seed TOEIC 200 from backend, using fallback', err)
+    const seeded = {
+      id: 9999,
+      title: 'ETS TOEIC 2024 Practice Test 01 (Full 200 câu)',
+      description: 'Mô phỏng 100% định dạng đề thi thật ETS với giải thích chi tiết cả 7 phần: Listening (Part 1 - 4) và Reading (Part 5 - 7).',
+      category: 'TOEIC_FULL',
+      cefrLevel: 'B2',
+      durationMinutes: 120,
+      totalQuestions: 200,
+      passingScore: 550,
+      xpReward: 150,
+      status: 'published',
+      authorName: 'Quản trị viên Hệ thống',
+      authorEmail: 'admin@smartenglish.vn',
+      createdAt: new Date().toISOString(),
+    }
+    localExams.unshift(seeded)
+    return seeded
   }
 }
 
