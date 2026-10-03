@@ -256,12 +256,20 @@ export default function PronunciationPage() {
 
   // ─── IPA: TOGGLE PUBLISH ────────────────────────────────────────
   const handleTogglePublish = async (item) => {
+    const prevStatus = item.status || 'published'
+    const newStatus = prevStatus === 'published' ? 'draft' : 'published'
+
+    setIpaLessons((prev) =>
+      prev.map((l) => (l.id === item.id ? { ...l, status: newStatus } : l))
+    )
+
     try {
       await togglePublishPronunciationLesson(item.id)
-      const newStatus = item.status === 'published' ? 'draft' : 'published'
       toast.success(newStatus === 'published' ? `Đã xuất bản "${item.title}"` : `Đã chuyển về nháp "${item.title}"`)
-      loadIpaLessons()
     } catch (err) {
+      setIpaLessons((prev) =>
+        prev.map((l) => (l.id === item.id ? { ...l, status: prevStatus } : l))
+      )
       toast.error('Lỗi khi đổi trạng thái: ' + err.message)
     }
   }

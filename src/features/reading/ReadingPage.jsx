@@ -123,11 +123,33 @@ function ReadingPage() {
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleTogglePublish = async (item) => {
+    const prevStatus = item.status || 'published'
+    const nextStatus = prevStatus === 'published' ? 'draft' : 'published'
+
+    setPassages((prev) =>
+      prev.map((p) => (p.id === item.id ? { ...p, status: nextStatus } : p))
+    )
+    if (activePassage?.id === item.id) {
+      setActivePassage((prev) => (prev ? { ...prev, status: nextStatus } : prev))
+    }
+
     try {
-      await togglePublishReadingPassage(item.id)
-      toast.success(`Đã đổi trạng thái bài đọc "${item.titleEn}"`)
-      loadPassages()
+      const updated = await togglePublishReadingPassage(item.id)
+      const finalStatus = updated?.status || nextStatus
+      if (finalStatus !== nextStatus) {
+        setPassages((prev) =>
+          prev.map((p) => (p.id === item.id ? { ...p, status: finalStatus } : p))
+        )
+      }
+      toast.success(
+        finalStatus === 'published'
+          ? `Đã công khai bài đọc "${item.titleEn}"`
+          : `Đã chuyển bài đọc "${item.titleEn}" về bản nháp`
+      )
     } catch {
+      setPassages((prev) =>
+        prev.map((p) => (p.id === item.id ? { ...p, status: prevStatus } : p))
+      )
       toast.error('Không thể đổi trạng thái bài đọc')
     }
   }
