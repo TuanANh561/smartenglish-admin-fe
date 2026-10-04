@@ -1,4 +1,4 @@
-import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react'
+import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, Trash2, Upload, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { CEFR_LEVELS, EXAM_CATEGORIES } from '../examApi'
 
@@ -24,6 +24,8 @@ export default function ExamToolbar({
   trashCount,
   onOpenCreate,
   onOpenImport,
+  onSeedToeic200,
+  isSeeding = false,
   onReload,
   viewMode = 'list',
   onViewModeChange,
@@ -121,7 +123,7 @@ export default function ExamToolbar({
           <>
             {onOpenImport && (
               <Button size="sm" variant="secondary" icon={Upload} onClick={onOpenImport}>
-                Import
+                Nhập đề thi
               </Button>
             )}
 

@@ -39,6 +39,12 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => {
     const res = response.data
+    // Nếu backend trả về ErrorResponse dạng { status: 4xx/5xx, error: "...", message: "..." }
+    if (res && typeof res === 'object' && typeof res.status === 'number' && res.status >= 400) {
+      const err = new Error(res.message || res.error || 'Lỗi xử lý từ máy chủ')
+      err.response = { status: res.status, data: res }
+      return Promise.reject(err)
+    }
     // Tự động giải nén vỏ ApiResponse { status, message, data } nếu backend trả về
     if (res && typeof res === 'object' && 'data' in res && ('status' in res || 'code' in res)) {
       return res.data !== undefined && res.data !== null ? res.data : res
@@ -135,6 +141,8 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/api/v1/auth') ||
       endpoint.startsWith('/admin/words') ||
       endpoint.startsWith('/admin/users') ||
+      endpoint.startsWith('/admin/audit-logs') ||
+      endpoint.startsWith('/admin/reports') ||
       endpoint.startsWith('/admin/teacher-registrations') ||
       endpoint.startsWith('/admin/courses') ||
       endpoint.startsWith('/admin/lessons') ||
