@@ -8,7 +8,7 @@ const ASSIGNMENT_TYPES = [
   { value: 'SPEAKING', label: 'Bài luyện nói (Speaking)' },
 ]
 
-export default function CreateAssignmentModal({ isOpen, onClose, onCreateAssignment }) {
+export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAssignment }) {
   const [formData, setFormData] = useState({
     title: '',
     assignmentType: 'HOMEWORK',
@@ -72,6 +72,13 @@ export default function CreateAssignmentModal({ isOpen, onClose, onCreateAssignm
             <X size={18} />
           </button>
         </div>
+
+        {cls?.courseTitle && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-brand-50/70 border border-brand-100 p-3 text-xs text-brand-700">
+            <BookOpen size={15} className="shrink-0 text-brand-600" />
+            <span>Áp dụng theo giáo trình: <strong>{cls.courseTitle}</strong></span>
+          </div>
+        )}
 
         {errors.submit && (
           <div className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-medium text-red-600 border border-red-200">

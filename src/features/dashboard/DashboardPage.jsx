@@ -175,7 +175,7 @@ function DashboardPage() {
   const user = useAuthStore((s) => s.user)
 
   // Giáo viên → Teacher Dashboard
-  if (user?.role === 'teacher') {
+  if (user?.role?.toLowerCase() === 'teacher') {
     return <TeacherDashboardPage />
   }
 

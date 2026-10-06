@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Eye, Pencil, Plus, Search, Trash2, BookOpen, Crown, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
 import Pagination from '@/components/ui/Pagination'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { CLASS_STATUS, LEVEL_COLOR } from '@/mocks/data/classes'
 import { useAuthStore } from '@/store/authStore'
-import { createClass, deleteClass, getTeacherClasses, updateClass } from '../classApi'
+import { createClass, deleteClass, getTeacherClasses, updateClass, getTeacherQuotaStatus } from '../classApi'
 import ClassFormModal from './ClassFormModal'
 
 const STATUS_FILTERS = [
@@ -14,6 +16,7 @@ const STATUS_FILTERS = [
 ]
 
 export default function ClassListView({ onViewClass }) {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -22,9 +25,25 @@ export default function ClassListView({ onViewClass }) {
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 5
 
+  // Quota states
+  const [quota, setQuota] = useState(null)
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' })
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClass, setEditingClass] = useState(null)
+
+  const loadQuota = async () => {
+    const teacherId = user?.role === 'teacher' ? (user?.id || 2) : 2
+    try {
+      const res = await getTeacherQuotaStatus(teacherId)
+      if (res) {
+        setQuota(res)
+      }
+    } catch (err) {
+      console.warn('Lỗi tải quota giáo viên:', err)
+    }
+  }
 
   const loadClasses = async () => {
     setLoading(true)
@@ -47,6 +66,7 @@ export default function ClassListView({ onViewClass }) {
 
   useEffect(() => {
     loadClasses()
+    loadQuota()
   }, [user?.id, user?.role, statusFilter])
 
   // Debounced or direct search on Enter / button
@@ -58,6 +78,13 @@ export default function ClassListView({ onViewClass }) {
   }
 
   const handleOpenCreate = () => {
+    if (quota && !quota.canCreateMoreClasses) {
+      setUpgradeModal({
+        open: true,
+        message: `Bạn đã sử dụng tối đa ${quota.activeClasses}/${quota.maxClasses} lớp học của ${quota.planName}. Vui lòng nâng cấp gói Giáo viên để mở thêm lớp mới!`
+      })
+      return
+    }
     setEditingClass(null)
     setIsModalOpen(true)
   }
@@ -74,6 +101,7 @@ export default function ClassListView({ onViewClass }) {
       try {
         await deleteClass(cls.id)
         await loadClasses()
+        await loadQuota()
       } catch (err) {
         alert(err?.message || 'Không thể xóa lớp học này')
       }
@@ -81,16 +109,27 @@ export default function ClassListView({ onViewClass }) {
   }
 
   const handleFormSubmit = async (payload) => {
-    if (editingClass) {
-      await updateClass(editingClass.id, payload)
-    } else {
-      const teacherId = user?.id || 2
-      await createClass({
-        ...payload,
-        teacherId,
-      })
+    try {
+      if (editingClass) {
+        await updateClass(editingClass.id, payload)
+      } else {
+        const teacherId = user?.id || 2
+        await createClass({
+          ...payload,
+          teacherId,
+        })
+      }
+      setIsModalOpen(false)
+      await loadClasses()
+      await loadQuota()
+    } catch (err) {
+      const errMsg = err?.message || err?.error || 'Đã có lỗi xảy ra khi lưu lớp học'
+      if (errMsg.includes('gói') || errMsg.includes('hạn mức') || errMsg.includes('PREMIUM_LIMIT_EXCEEDED') || err?.status === 402 || err?.status === 403) {
+        setUpgradeModal({ open: true, message: errMsg })
+      } else {
+        alert(errMsg)
+      }
     }
-    await loadClasses()
   }
 
   // Client-side pagination
@@ -107,6 +146,98 @@ export default function ClassListView({ onViewClass }) {
 
   return (
     <div className="space-y-4">
+      {/* Teacher Quota & Premium Banner */}
+      {quota && (
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30 p-5 shadow-xs transition-all">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600/10 text-indigo-600 shadow-inner">
+                <Crown size={24} className="text-indigo-600" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                    {quota.planName || 'Gói Khởi Đầu (Starter)'}
+                  </span>
+                  {quota.isPremium ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
+                      <Sparkles size={11} /> Premium
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-medium text-slate-500">Gói Tiêu Chuẩn</span>
+                  )}
+                </div>
+                <h3 className="mt-1 text-base font-bold text-slate-900">
+                  Hạn mức quản lý lớp học của bạn
+                </h3>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Classes progress */}
+              <div className="min-w-[150px]">
+                <div className="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                  <span>Lớp học đã mở</span>
+                  <span className="font-bold text-slate-900">
+                    {quota.activeClasses} / {quota.maxClasses}
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      quota.activeClasses >= quota.maxClasses
+                        ? 'bg-rose-500'
+                        : quota.activeClasses >= quota.maxClasses * 0.7
+                        ? 'bg-amber-500'
+                        : 'bg-indigo-600'
+                    }`}
+                    style={{
+                      width: `${Math.min(100, Math.round((quota.activeClasses / (quota.maxClasses || 1)) * 100))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Sĩ số tối đa */}
+              <div className="border-l border-slate-200/80 pl-4">
+                <div className="text-[11px] font-medium text-slate-500">Sĩ số tối đa / lớp</div>
+                <div className="text-sm font-bold text-slate-900">
+                  {quota.maxStudentsPerClass} học viên
+                </div>
+              </div>
+
+              {/* AI Quota */}
+              <div className="border-l border-slate-200/80 pl-4">
+                <div className="text-[11px] font-medium text-slate-500">AI Quota / tháng</div>
+                <div className="text-sm font-bold text-slate-900">
+                  {quota.aiQuotaMonthly} lượt
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/app/goi-dich-vu')}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:shadow-md cursor-pointer shrink-0"
+              >
+                <Sparkles size={14} />
+                <span>Nâng cấp gói</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {!quota.canCreateMoreClasses && (
+            <div className="mt-3.5 flex items-center gap-2 rounded-xl bg-amber-50 px-3.5 py-2 text-xs font-medium text-amber-800 border border-amber-200/60">
+              <ShieldAlert size={15} className="shrink-0 text-amber-600" />
+              <span>
+                Bạn đã sử dụng hết hạn mức <strong>{quota.maxClasses} lớp</strong> của gói hiện tại. Vui lòng nâng cấp gói Pro hoặc Advanced để mở thêm lớp mới.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Toolbar & Search */}
@@ -138,6 +269,17 @@ export default function ClassListView({ onViewClass }) {
               ))}
             </select>
 
+            {quota && !quota.canCreateMoreClasses && (
+              <button
+                type="button"
+                onClick={() => navigate('/app/goi-dich-vu')}
+                className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Sparkles size={14} className="text-amber-600" />
+                <span>Nâng cấp thêm lớp</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleOpenCreate}
@@ -155,6 +297,7 @@ export default function ClassListView({ onViewClass }) {
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-3.5">TÊN LỚP</th>
+                <th className="px-6 py-3.5">GIÁO TRÌNH</th>
                 <th className="px-6 py-3.5">MÃ THAM GIA</th>
                 <th className="px-6 py-3.5 text-center">SỐ HỌC VIÊN</th>
                 <th className="px-6 py-3.5 text-center">SỐ BÀI TẬP</th>
@@ -165,13 +308,13 @@ export default function ClassListView({ onViewClass }) {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-sm text-slate-400">
-                    Đang tải danh sách lớp học...
+                  <td colSpan={7} className="py-8 text-center">
+                    <LoadingSpinner text="Đang tải danh sách lớp học..." />
                   </td>
                 </tr>
               ) : paged.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
                     Không tìm thấy lớp học nào phù hợp
                   </td>
                 </tr>
@@ -208,6 +351,20 @@ export default function ClassListView({ onViewClass }) {
                             )}
                           </div>
                         </div>
+                      </td>
+
+                      {/* Giáo trình khóa học */}
+                      <td className="px-6 py-4.5">
+                        {cls.courseTitle || cls.courseId ? (
+                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700 max-w-[200px]">
+                            <BookOpen size={12} className="shrink-0 text-brand-600" />
+                            <span className="truncate" title={cls.courseTitle}>
+                              {cls.courseTitle || `Khóa #${cls.courseId}`}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Lớp tự do</span>
+                        )}
                       </td>
 
                       {/* Mã lớp */}
@@ -319,7 +476,43 @@ export default function ClassListView({ onViewClass }) {
         onClose={() => setIsModalOpen(false)}
         initialData={editingClass}
         onSubmit={handleFormSubmit}
+        quota={quota}
       />
+
+      {/* Upgrade Prompt Modal */}
+      {upgradeModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 mb-4">
+              <Crown size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Yêu cầu nâng cấp gói Giáo Viên</h3>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              {upgradeModal.message}
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setUpgradeModal({ open: false, message: '' })}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Để sau
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUpgradeModal({ open: false, message: '' })
+                  navigate('/app/goi-dich-vu')
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
+              >
+                <Sparkles size={14} />
+                <span>Xem các gói Premium</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
