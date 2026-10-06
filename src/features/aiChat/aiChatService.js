@@ -3,46 +3,28 @@
  * Tích hợp Gemini API với cơ chế Guardrails phân quyền theo chuẩn RBAC.
  */
 
-import axios from 'axios'
 import { api } from '@/lib/api'
 
 /**
  * Gửi tin nhắn chat đến Trợ lý AI Teacher Cáo qua Backend Service
  * Backend chịu trách nhiệm quản lý Gemini API Key, Multi-Model Fallback và RBAC Guardrails
  */
-export async function sendChatMessage(messages = [], userRole = 'admin') {
-  // Áp dụng kỹ thuật Sliding Window Context: Chỉ gửi tối đa 8 tin nhắn gần nhất lên AI (khoảng 4 lượt hỏi-đáp)
-  // để tối ưu tốc độ phản hồi và tiết kiệm 80-90% chi phí token
-  const slidingWindowMessages = messages.length > 8 ? messages.slice(-8) : messages
+export const fetchChatConversations = ({ page = 0, size = 20 } = {}) =>
+  api.get('/admin/ai/conversations', { params: { page, size } })
 
-  const payload = {
-    messages: slidingWindowMessages.map((m) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      content: m.content || '',
-    })),
-    userRole: userRole || 'admin',
-  }
+export const createChatConversation = () =>
+  api.post('/admin/ai/conversations', {})
 
-  // 1. Ưu tiên gọi qua Vite Proxy (/admin/ai/chat -> localhost:8082)
-  try {
-    const res = await axios.post('/admin/ai/chat', payload)
-    const data = res?.data?.data || res?.data
-    if (data?.reply) return data.reply
-  } catch (proxyErr) {
-    // 2. Fallback qua API Gateway (/admin/ai/chat -> localhost:8080)
-    try {
-      const res = await api.post('/admin/ai/chat', payload)
-      const data = res?.data !== undefined ? res.data : res
-      if (data?.reply) return data.reply
-      if (typeof data === 'string') return data
-    } catch (gatewayErr) {
-      console.warn('[Teacher Cáo] Backend AI Chat không phản hồi, kích hoạt phản hồi dự phòng thông minh:', gatewayErr?.message)
-    }
-  }
+export const fetchChatMessages = (conversationId, { page = 0, size = 30 } = {}) =>
+  api.get(`/admin/ai/conversations/${conversationId}/messages`, { params: { page, size } })
 
-  // 3. Dự phòng thông minh nếu mất kết nối backend
-  return generateSmartMockResponse(messages, userRole)
-}
+export const sendChatMessage = (conversationId, content) =>
+  api.post(`/admin/ai/conversations/${conversationId}/messages`, { data: { content } })
+
+export const archiveChatConversation = (conversationId) =>
+  api.del(`/admin/ai/conversations/${conversationId}`)
+
+export const fetchChatQuota = () => api.get('/admin/ai/quota')
 
 /**
  * Phản hồi giả lập thông minh theo đúng phân quyền vai trò
