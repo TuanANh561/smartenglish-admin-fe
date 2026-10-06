@@ -1,12 +1,9 @@
 import { Link } from 'react-router-dom'
 import { LayoutGrid, List, Loader2, Plus, RefreshCw, Search, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 
 /**
- * Bộ lọc tìm kiếm và phân loại khóa học
+ * Thanh công cụ tìm kiếm và bộ lọc khóa học (1 hàng duy nhất gọn gàng, đồng bộ)
  */
 export default function CourseFilters({
   search,
@@ -24,16 +21,16 @@ export default function CourseFilters({
   isLoading,
   onRefresh,
   isTeacher,
-  myCount,
-  totalCount,
+  myCount = 0,
+  systemCount = 0,
+  totalCount = 0,
 }) {
   const hasActiveFilters =
     search ||
     categoryFilter !== 'all' ||
     cefrFilter !== 'all' ||
     statusFilter !== 'all' ||
-    (isTeacher && authorFilter !== 'mine') ||
-    (!isTeacher && authorFilter !== 'all')
+    authorFilter !== 'all'
 
   const handleResetFilters = () => {
     setSearch('')
@@ -44,166 +41,146 @@ export default function CourseFilters({
   }
 
   return (
-    <Card className="p-4 space-y-3.5 border border-line">
-      {/* Top row: Title and utility buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-            Bộ Lọc & Tìm Kiếm
-          </span>
-          {hasActiveFilters && (
-            <button
-              onClick={handleResetFilters}
-              className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium px-2 py-0.5 rounded bg-brand-50 hover:bg-brand-100 transition-colors"
-            >
-              <X size={12} /> Đặt lại bộ lọc
-            </button>
-          )}
+    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs px-5 py-3.5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        {/* Ô tìm kiếm không viền gọn gàng */}
+        <div className="flex items-center gap-2.5 flex-1 min-w-[200px] max-w-xs xl:max-w-sm">
+          <Search size={17} className="shrink-0 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm tên khóa học, mã môn, tác giả..."
+            className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+          />
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Switch View Mode */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-line">
+        {/* Cụm bộ lọc và nút hành động trên 1 hàng */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-nowrap">
+          {/* Nguồn tác giả Dropdown (Gom từ tab vào dropdown) */}
+          <select
+            value={authorFilter}
+            onChange={(e) => setAuthorFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          >
+            {isTeacher ? (
+              <>
+                <option value="mine">Nguồn: Của tôi ({myCount})</option>
+                <option value="system">Nguồn: Hệ thống ({systemCount})</option>
+                <option value="all">Nguồn: Tất cả ({totalCount})</option>
+              </>
+            ) : (
+              <>
+                <option value="all">Nguồn: Tất cả ({totalCount})</option>
+                <option value="system">Nguồn: Hệ thống ({systemCount})</option>
+                <option value="mine">Nguồn: Của tôi ({myCount})</option>
+              </>
+            )}
+          </select>
+
+          {/* Thể loại */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[140px]"
+          >
+            <option value="all">Thể loại: Tất cả</option>
+            <option value="Giao tiếp">Giao tiếp</option>
+            <option value="Công sở">Công sở</option>
+            <option value="Luyện thi">Luyện thi</option>
+            <option value="Du lịch">Du lịch</option>
+            <option value="Học thuật">Học thuật</option>
+          </select>
+
+          {/* Cấp độ CEFR */}
+          <select
+            value={cefrFilter}
+            onChange={(e) => setCefrFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          >
+            <option value="all">Cấp độ: Tất cả</option>
+            <option value="A1">Cấp độ A1</option>
+            <option value="A2">Cấp độ A2</option>
+            <option value="B1">Cấp độ B1</option>
+            <option value="B2">Cấp độ B2</option>
+            <option value="C1">Cấp độ C1</option>
+            <option value="C2">Cấp độ C2</option>
+          </select>
+
+          {/* Trạng thái xuất bản */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="draft">Bản nháp</option>
+          </select>
+
+          {/* Chuyển đổi hiển thị: List (Bảng) / Grid (Thẻ) */}
+          <div className="flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200/80 shadow-2xs shrink-0">
             <button
+              type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-navy-800 shadow-xs'
-                  : 'text-ink-muted hover:text-navy-800'
+                  ? 'bg-white text-navy-800 shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-700'
               }`}
               title="Dạng bảng chi tiết"
             >
-              <List size={16} />
+              <List size={15} />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white text-navy-800 shadow-xs'
-                  : 'text-ink-muted hover:text-navy-800'
+                  ? 'bg-white text-navy-800 shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-700'
               }`}
               title="Dạng thẻ lưới"
             >
-              <LayoutGrid size={16} />
+              <LayoutGrid size={15} />
             </button>
           </div>
 
-          {/* Refresh button */}
+          {/* Nút tải lại */}
           <Button
             size="sm"
             variant="secondary"
             icon={isLoading ? Loader2 : RefreshCw}
             onClick={onRefresh}
             disabled={isLoading}
-            className="text-xs"
-          >
-            Làm mới
-          </Button>
+            title="Tải lại danh sách"
+          />
 
-          {/* Create Course button */}
-          <Link to="/app/hoc-lieu/khoa-hoc/tao-moi">
-            <Button
-              size="sm"
-              variant="primary"
-              icon={Plus}
-              className="text-xs shadow-xs"
+          {/* Nút đặt lại bộ lọc */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              title="Đặt lại bộ lọc"
             >
-              Tạo khóa học mới
-            </Button>
+              <X size={13} />
+              <span className="hidden xl:inline">Đặt lại</span>
+            </button>
+          )}
+
+          {/* Nút Tạo khóa học mới */}
+          <Link to="/app/hoc-lieu/khoa-hoc/tao-moi">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer shrink-0"
+            >
+              <Plus size={14} />
+              <span>Tạo khóa học</span>
+            </button>
           </Link>
         </div>
       </div>
-
-      {/* Main Filter Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Search */}
-        <div className="sm:col-span-2 md:col-span-1">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm tên chương, mã môn..."
-            icon={Search}
-            className="w-full text-xs"
-          />
-        </div>
-
-        {/* Course Type / Category */}
-        <Select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="text-xs"
-        >
-          <option value="all">Tất cả thể loại</option>
-          <option value="Giao tiếp">Giao tiếp & Đời sống</option>
-          <option value="Công sở">Công sở & Thương mại</option>
-          <option value="Luyện thi">Luyện thi chứng chỉ</option>
-          <option value="Du lịch">Du lịch & Khám phá</option>
-          <option value="Học thuật">Học thuật & Tranh luận</option>
-        </Select>
-
-        {/* CEFR Level */}
-        <Select
-          value={cefrFilter}
-          onChange={(e) => setCefrFilter(e.target.value)}
-          className="text-xs"
-        >
-          <option value="all">Cấp độ CEFR (Tất cả)</option>
-          <option value="A1">A1 - Sơ cấp</option>
-          <option value="A2">A2 - Tiền trung cấp</option>
-          <option value="B1">B1 - Trung cấp</option>
-          <option value="B2">B2 - Trung cao cấp</option>
-          <option value="C1">C1 - Cao cấp</option>
-          <option value="C2">C2 - Thành thạo</option>
-        </Select>
-
-        {/* Publish Status */}
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-xs"
-        >
-          <option value="all">Trạng thái (Tất cả)</option>
-          <option value="published">Đã xuất bản</option>
-          <option value="draft">Bản nháp</option>
-        </Select>
-      </div>
-
-      {/* Author Filter Tabs */}
-      <div className="flex items-center gap-2 pt-1 border-t border-line/60">
-        <span className="text-xs text-ink-muted mr-1">Phân loại tác giả:</span>
-        <button
-          onClick={() => setAuthorFilter('all')}
-          className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
-            authorFilter === 'all'
-              ? 'bg-navy-700 text-white shadow-xs'
-              : 'bg-slate-100 text-ink-muted hover:bg-slate-200'
-          }`}
-        >
-          Tất cả ({totalCount})
-        </button>
-        <button
-          onClick={() => setAuthorFilter('system')}
-          className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
-            authorFilter === 'system'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-          }`}
-        >
-          Hệ thống
-        </button>
-        {isTeacher && (
-          <button
-            onClick={() => setAuthorFilter('mine')}
-            className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
-              authorFilter === 'mine'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            Của tôi ({myCount})
-          </button>
-        )}
-      </div>
-    </Card>
+    </div>
   )
 }

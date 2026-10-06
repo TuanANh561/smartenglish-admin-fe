@@ -18,6 +18,7 @@ import CourseDetailBanner from './components/detail/CourseDetailBanner'
 import CourseOverviewTab from './components/detail/CourseOverviewTab'
 import CourseCurriculumTab from './components/detail/CourseCurriculumTab'
 import MediaPreviewModal from './components/detail/MediaPreviewModal'
+import LessonStudentViewModal from './components/detail/LessonStudentViewModal'
 
 const TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -42,6 +43,12 @@ function CourseDetailPage() {
     type: 'video',
     data: null,
     lessonTitle: '',
+  })
+
+  // Modal xem bài học ở góc độ người học (Read-only cho giáo viên xem khóa học người khác)
+  const [studentLessonView, setStudentLessonView] = useState({
+    isOpen: false,
+    lesson: null,
   })
 
   // Modal thêm / sửa nhanh bài học (Unit)
@@ -110,11 +117,11 @@ function CourseDetailPage() {
   const isOwned = useMemo(() => {
     if (!user || !course) return false
     if (isTeacher) {
-      return (
-        course.authorEmail === user.email ||
-        course.authorName === user.displayName ||
-        course.authorName === 'Hoàng Thị Mai'
-      )
+      // Giáo viên chỉ sở hữu khóa học nếu ID, email hoặc tên tác giả khớp chính xác
+      const isCreatorId = course.createdBy != null && user.id != null && Number(course.createdBy) === Number(user.id)
+      const isCreatorEmail = course.authorEmail && user.email && course.authorEmail.toLowerCase() === user.email.toLowerCase()
+      const isCreatorName = course.authorName && user.displayName && course.authorName.toLowerCase() === user.displayName.toLowerCase()
+      return Boolean(isCreatorId || isCreatorEmail || isCreatorName)
     }
     return (
       course.authorEmail === user.email ||
@@ -185,6 +192,15 @@ function CourseDetailPage() {
   }
 
   const handleOpenEditLesson = (lesson) => {
+    // Nếu không có quyền quản lý (giáo viên xem khóa học người khác), mở ở góc độ người học
+    if (!canManage) {
+      setStudentLessonView({
+        isOpen: true,
+        lesson,
+      })
+      return
+    }
+
     let theory = ''
     if (Array.isArray(lesson.contentBlocks)) {
       const th = lesson.contentBlocks.find((b) => b.type === 'theory')
@@ -347,6 +363,14 @@ function CourseDetailPage() {
       <MediaPreviewModal
         mediaPreview={mediaPreview}
         setMediaPreview={setMediaPreview}
+      />
+
+      {/* Modal Xem Bài Học Cho Người Học / Giáo Viên Xem Khóa Học Người Khác (Read-Only) */}
+      <LessonStudentViewModal
+        isOpen={studentLessonView.isOpen}
+        onClose={() => setStudentLessonView({ isOpen: false, lesson: null })}
+        lesson={studentLessonView.lesson}
+        courseTitle={course?.titleVi || course?.title}
       />
     </div>
   )

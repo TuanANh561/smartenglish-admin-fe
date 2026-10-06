@@ -53,8 +53,39 @@ export const getClassAssignments = (classId) =>
     path: { id: classId },
   })
 
-export const createAssignment = (classId, data) =>
+export const createAssignment = (classId, data, { teacherId } = {}) =>
   api.post(ENDPOINTS.teacher.assignments, {
     path: { id: classId },
+    params: teacherId ? { teacherId } : undefined,
     data,
+  })
+
+export const submitAssignment = (assignmentId, data) =>
+  api.post('/api/v1/teacher/classes/assignments/{assignmentId}/submit', {
+    path: { assignmentId },
+    data,
+  })
+
+export const getAssignmentSubmissions = (assignmentId, teacherId) =>
+  api.get('/api/v1/teacher/classes/assignments/{assignmentId}/submissions', {
+    path: { assignmentId },
+    params: teacherId ? { teacherId } : undefined,
+  })
+
+export const getMySubmission = (assignmentId, studentId) =>
+  api.get('/api/v1/teacher/classes/assignments/{assignmentId}/my-submission', {
+    path: { assignmentId },
+    params: { studentId },
+  })
+
+export const gradeSubmission = (submissionId, data, teacherId) =>
+  api.put('/api/v1/teacher/classes/assignments/submissions/{submissionId}/grade', {
+    path: { submissionId },
+    params: teacherId ? { teacherId } : undefined,
+    data,
+  })
+
+export const getTeacherQuotaStatus = (teacherId) =>
+  api.get(ENDPOINTS.teacher.quota, {
+    params: { teacherId },
   })

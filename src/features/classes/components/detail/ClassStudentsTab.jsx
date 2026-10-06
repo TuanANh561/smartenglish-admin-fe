@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Eye, Plus, Search, Trash2, UserPlus } from 'lucide-react'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { maskEmail } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 import { ProgressBar, ScoreBadge, StudentAvatar } from '../ClassSharedComponents'
@@ -67,8 +68,8 @@ export default function ClassStudentsTab({
           <tbody className="divide-y divide-slate-100">
             {loading ? (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-sm text-slate-400">
-                  Đang tải danh sách học viên...
+                <td colSpan={5} className="py-8 text-center">
+                  <LoadingSpinner text="Đang tải danh sách học viên..." />
                 </td>
               </tr>
             ) : paged.length === 0 ? (

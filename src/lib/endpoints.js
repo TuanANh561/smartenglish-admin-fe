@@ -158,11 +158,13 @@ export const ENDPOINTS = {
 
   // ── payment-service ─────────────────────────────────────────────
   plans: {
-    list: '/admin/plans',
-    detail: '/admin/plans/:id',
-    create: '/admin/plans',
-    update: '/admin/plans/:id',
-    remove: '/admin/plans/:id',
+    list: '/payment/plans',
+    adminList: '/payment/admin/plans',
+    detail: '/payment/admin/plans/:id',
+    create: '/payment/admin/plans',
+    update: '/payment/admin/plans/:id',
+    batchSave: '/payment/admin/plans/batch',
+    remove: '/payment/admin/plans/:id',
   },
   coupons: {
     list: '/admin/coupons',
@@ -256,5 +258,6 @@ export const ENDPOINTS = {
     classMembers: '/api/v1/teacher/classes/:id/members',
     removeMember: '/api/v1/teacher/classes/:id/members/:userId',
     assignments: '/api/v1/teacher/classes/:id/assignments',
+    quota: '/api/v1/teacher/classes/quota',
   },
 }

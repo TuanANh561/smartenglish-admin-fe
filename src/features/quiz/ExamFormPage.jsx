@@ -726,6 +726,16 @@ export default function ExamFormPage() {
     getExamById(id)
       .then((data) => {
         if (!isMounted || !data) return
+        if (
+          user &&
+          user.role !== 'admin' &&
+          ((data.authorEmail && data.authorEmail !== user.email) ||
+           (data.createdBy && String(data.createdBy) !== String(user.id)))
+        ) {
+          toast.error('Bạn không có quyền chỉnh sửa bài thi của người khác!')
+          navigate('/app/hoc-lieu/bai-kiem-tra')
+          return
+        }
         setForm({
           title: data.title || '',
           description: data.description || '',
@@ -982,8 +992,9 @@ export default function ExamFormPage() {
         xpReward: form.xpReward ? Number(form.xpReward) : 150,
         questions: formattedQuestions,
         status: form.status || 'published',
-        authorName: user?.displayName || 'Quản trị viên Hệ thống',
-        authorEmail: user?.email || 'admin@smartenglish.vn',
+        authorName: user?.displayName || user?.username || (user?.role === 'teacher' ? 'Giáo viên' : 'Quản trị viên Hệ thống'),
+        authorEmail: user?.email || '',
+        createdBy: user?.id,
       }
 
       if (isEditing) {

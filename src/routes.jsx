@@ -94,6 +94,7 @@ export const router = createBrowserRouter([
   { path: '/ui', element: <UiKitchenSink /> },
   // Redirects tiện ích cho đường dẫn học liệu không kèm tiền tố /app
   { path: '/lop-hoc', element: <Navigate to="/app/lop-hoc" replace /> },
+  { path: '/goi-dich-vu', element: <Navigate to="/app/goi-dich-vu" replace /> },
   { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },
   { path: '/hoc-lieu/tu-vung/tao-moi', element: <Navigate to="/app/hoc-lieu/tu-vung/tao-moi" replace /> },
   { path: '/hoc-lieu/tu-vung/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/tu-vung/:id/chinh-sua" replace /> },

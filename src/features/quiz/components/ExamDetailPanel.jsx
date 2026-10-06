@@ -3,7 +3,7 @@ import {
   Award, BookOpen, CheckCircle2, Clock, FileText,
   Headphones, Image as ImageIcon, Pencil, Search,
   Sparkles, User, Volume2, VolumeX, X, ChevronRight,
-  ArrowLeft,
+  ArrowLeft, Send,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
@@ -145,7 +145,7 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
   )
 }
 
-export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick }) {
+export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick, isTeacher, onAssignToClass }) {
   const audioEngine = useTwoLayerAudio()
   const [selectedPart, setSelectedPart] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -294,6 +294,17 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick 
         </button>
 
         <div className="flex items-center gap-2">
+          {isTeacher && exam.status === 'published' && onAssignToClass && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Send}
+              onClick={() => { audioEngine.stop(); onAssignToClass(exam) }}
+              className="text-brand-700 border-brand-300 hover:bg-brand-50"
+            >
+              Giao cho lớp học
+            </Button>
+          )}
           {canManage && (
             <Button variant="primary" size="sm" icon={Pencil}
               onClick={() => { audioEngine.stop(); onEditClick(exam) }}>

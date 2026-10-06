@@ -1,7 +1,9 @@
-import { BookOpen, Calendar, CheckCircle2, Copy, Shield, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { BookOpen, Calendar, CheckCircle2, Copy, ExternalLink, GraduationCap, Shield, Users } from 'lucide-react'
 import { LEVEL_COLOR } from '@/mocks/data/classes'
 
 export default function ClassOverviewTab({ cls, members = [], assignments = [], copied, onCopyCode }) {
+  const navigate = useNavigate()
   const levelStyle = LEVEL_COLOR[cls.cefrTarget || cls.level] ?? LEVEL_COLOR.B1
   const studentCount = members.length > 0 ? members.length : cls.studentCount || 0
   const assignmentCount = assignments.length > 0 ? assignments.length : cls.assignmentCount || 0
@@ -101,7 +103,7 @@ export default function ClassOverviewTab({ cls, members = [], assignments = [], 
           Thông tin chi tiết lớp học
         </h4>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div>
             <span className="text-xs font-medium text-slate-400 block mb-1">Giáo viên phụ trách</span>
             <div className="flex items-center gap-2 text-slate-800 font-semibold">
@@ -118,6 +120,35 @@ export default function ClassOverviewTab({ cls, members = [], assignments = [], 
                 {formatDate(cls.startDate)} &rarr; {formatDate(cls.endDate)}
               </span>
             </div>
+          </div>
+
+          <div>
+            <span className="text-xs font-medium text-slate-400 block mb-1">Khóa học giáo trình áp dụng</span>
+            {cls.courseId || cls.courseTitle ? (
+              <div className="flex items-center justify-between rounded-xl bg-brand-50/60 border border-brand-100 px-3 py-1.5">
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                  <GraduationCap size={16} className="text-brand-600 shrink-0" />
+                  <span className="font-semibold text-slate-800 text-xs truncate" title={cls.courseTitle}>
+                    {cls.courseTitle || `Khóa học #${cls.courseId}`}
+                  </span>
+                </div>
+                {cls.courseId && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/courses/${cls.courseId}`)}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-600 hover:text-brand-700 hover:underline shrink-0 cursor-pointer"
+                  >
+                    <span>Xem</span>
+                    <ExternalLink size={10} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-slate-400 text-xs py-1">
+                <BookOpen size={14} />
+                <span>Chưa gán khóa học (Lớp tự do)</span>
+              </div>
+            )}
           </div>
         </div>
 

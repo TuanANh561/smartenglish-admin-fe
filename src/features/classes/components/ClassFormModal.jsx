@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, BookOpen } from 'lucide-react'
+import { fetchCoursesApi } from '@/features/courses/courseApi'
+import { useAuthStore } from '@/store/authStore'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
-export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit }) {
+export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit, quota }) {
   const isEditing = Boolean(initialData?.id)
+  const user = useAuthStore((s) => s.user)
+
+  const [courses, setCourses] = useState([])
+  const [loadingCourses, setLoadingCourses] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    courseId: null,
+    courseTitle: '',
     cefrTarget: 'B1',
     maxStudents: 30,
     status: 'ACTIVE',
@@ -19,11 +27,49 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
 
+  // Tải danh sách khóa học của giảng viên / hệ thống để liên kết
+  useEffect(() => {
+    if (!isOpen) return
+    let isMounted = true
+    const loadCourses = async () => {
+      setLoadingCourses(true)
+      try {
+        const data = await fetchCoursesApi()
+        if (isMounted) {
+          setCourses(Array.isArray(data) ? data : [])
+        }
+      } catch (err) {
+        console.warn('Lỗi tải khóa học cho modal lớp học:', err)
+      } finally {
+        if (isMounted) setLoadingCourses(false)
+      }
+    }
+    loadCourses()
+    return () => {
+      isMounted = false
+    }
+  }, [isOpen])
+
+  // Lọc khóa học: ưu tiên khóa học do giảng viên tạo
+  const myCourses = courses.filter((c) => {
+    if (!user) return true
+    return (
+      c.createdBy === user.id ||
+      c.authorEmail === user.email ||
+      c.authorName === user.displayName ||
+      c.authorName === 'Hoàng Thị Mai' ||
+      c.authorName === 'Thầy John Smith'
+    )
+  })
+  const otherCourses = courses.filter((c) => !myCourses.some((mc) => mc.id === c.id))
+
   useEffect(() => {
     if (initialData) {
       setFormData({
         name: initialData.name || '',
         description: initialData.description || '',
+        courseId: initialData.courseId ? Number(initialData.courseId) : null,
+        courseTitle: initialData.courseTitle || '',
         cefrTarget: initialData.cefrTarget || initialData.level || 'B1',
         maxStudents: initialData.maxStudents || 30,
         status: (initialData.status || 'ACTIVE').toUpperCase(),
@@ -35,6 +81,8 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
       setFormData({
         name: '',
         description: '',
+        courseId: null,
+        courseTitle: '',
         cefrTarget: 'B1',
         maxStudents: 30,
         status: 'ACTIVE',
@@ -56,8 +104,14 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
       errs.name = 'Tên lớp không được vượt quá 100 ký tự'
     }
 
-    if (!formData.maxStudents || formData.maxStudents < 1 || formData.maxStudents > 200) {
-      errs.maxStudents = 'Sĩ số tối đa từ 1 đến 200 học viên'
+    const studentNum = Number(formData.maxStudents)
+    const limit = quota?.maxStudentsPerClass || 500
+    if (!formData.maxStudents || isNaN(studentNum) || studentNum < 1) {
+      errs.maxStudents = 'Sĩ số tối thiểu là 1 học viên'
+    } else if (studentNum > limit) {
+      errs.maxStudents = quota?.maxStudentsPerClass
+        ? `Vượt quá giới hạn (${quota.maxStudentsPerClass} học viên) của gói ${quota.planName || 'hiện tại'}. Vui lòng nâng cấp gói để tăng sĩ số.`
+        : 'Sĩ số tối đa là 500 học viên'
     }
 
     if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
@@ -77,6 +131,8 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
       const payload = {
         name: formData.name.trim(),
         description: formData.description?.trim() || null,
+        courseId: formData.courseId ? Number(formData.courseId) : null,
+        courseTitle: formData.courseTitle || null,
         cefrTarget: formData.cefrTarget,
         maxStudents: Number(formData.maxStudents),
         status: formData.status,
@@ -141,6 +197,66 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
           </div>
 
+          {/* Chọn Khóa học giáo trình của giảng viên */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">
+                Khóa học giáo trình áp dụng (Khóa học của giảng viên)
+              </label>
+              {loadingCourses && (
+                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                  <Loader2 size={10} className="animate-spin" /> Đang tải...
+                </span>
+              )}
+            </div>
+            <div className="relative">
+              <select
+                value={formData.courseId || ''}
+                onChange={(e) => {
+                  const selectedId = e.target.value ? Number(e.target.value) : null
+                  const selectedCourse = courses.find((c) => Number(c.id) === selectedId)
+                  setFormData((prev) => ({
+                    ...prev,
+                    courseId: selectedId,
+                    courseTitle: selectedCourse ? (selectedCourse.title || selectedCourse.titleVi || '') : '',
+                    cefrTarget: selectedCourse?.cefrLevelMin || prev.cefrTarget,
+                  }))
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none"
+              >
+                <option value="">-- Không liên kết (Lớp học tự do / không theo khung giáo trình) --</option>
+                {myCourses.length > 0 && (
+                  <optgroup label="Khóa học của bạn (Giáo viên phụ trách)">
+                    {myCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title || c.titleVi} ({c.level || c.cefrLevelMin || 'All'} - {c.lessonCount || 0} bài học)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {otherCourses.length > 0 && (
+                  <optgroup label="Khóa học khác / Hệ thống">
+                    {otherCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title || c.titleVi} ({c.level || c.cefrLevelMin || 'All'})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
+            {formData.courseTitle ? (
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-brand-600 font-medium">
+                <BookOpen size={12} />
+                <span>Giáo trình lớp: <strong>{formData.courseTitle}</strong></span>
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-slate-400">
+                Gán khóa học giúp học viên xem được bài giảng và giáo viên dễ dàng giao bài tập theo giáo trình.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -160,13 +276,20 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Sĩ số tối đa <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Sĩ số tối đa <span className="text-red-500">*</span>
+                </label>
+                {quota?.maxStudentsPerClass && (
+                  <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    Gói hiện tại: tối đa {quota.maxStudentsPerClass} HV
+                  </span>
+                )}
+              </div>
               <input
                 type="number"
                 min="1"
-                max="200"
+                max={quota?.maxStudentsPerClass || 500}
                 value={formData.maxStudents}
                 onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value })}
                 className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none ${
@@ -175,9 +298,35 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit 
                     : 'border-slate-200 focus:border-brand-500'
                 }`}
               />
-              {errors.maxStudents && (
-                <p className="mt-1 text-xs text-red-500">{errors.maxStudents}</p>
-              )}
+              {errors.maxStudents ? (
+                <div className="mt-1 flex items-start justify-between gap-2">
+                  <p className="text-xs text-red-500">{errors.maxStudents}</p>
+                  <a
+                    href="/app/goi-dich-vu"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 underline inline-flex items-center gap-0.5"
+                  >
+                    Nâng cấp gói Pro ↗
+                  </a>
+                </div>
+              ) : quota?.maxStudentsPerClass ? (
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-[11px] text-slate-400">
+                    Hạn mức gói {quota.planName || 'hiện tại'}: tối đa {quota.maxStudentsPerClass} học viên/lớp.
+                  </p>
+                  {!quota?.isPremium && (
+                    <a
+                      href="/app/goi-dich-vu"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                    >
+                      Mở rộng sĩ số ↗
+                    </a>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
 

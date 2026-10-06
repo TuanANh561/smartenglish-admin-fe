@@ -1,4 +1,5 @@
 import { BookOpen, Calendar, CheckCircle, Clock, FileText, Plus } from 'lucide-react'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const TYPE_CONFIG = {
   HOMEWORK: { label: 'Bài tập', bg: '#eff6ff', text: '#2563eb' },
@@ -51,9 +52,7 @@ export default function ClassAssignmentsTab({
       {/* List */}
       <div className="p-6 pt-2">
         {loading ? (
-          <div className="py-12 text-center text-sm text-slate-400">
-            Đang tải danh sách bài tập...
-          </div>
+          <LoadingSpinner text="Đang tải danh sách bài tập..." />
         ) : assignments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">

@@ -1,4 +1,4 @@
-import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, Trash2, Upload, Zap } from 'lucide-react'
+import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, ShieldCheck, Sparkles, Trash2, Upload, User, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { CEFR_LEVELS, EXAM_CATEGORIES } from '../examApi'
 
@@ -29,9 +29,39 @@ export default function ExamToolbar({
   onReload,
   viewMode = 'list',
   onViewModeChange,
+  authorFilter = 'all',
+  onAuthorFilterChange,
+  totalExamsCount = 0,
+  systemCount = 0,
+  myCount = 0,
+  isTeacher = false,
 }) {
+  const sourceFilters = isTeacher
+    ? [
+        { value: 'mine', label: `Của tôi (${myCount})`, icon: User },
+        { value: 'system', label: `Hệ thống (${systemCount})`, icon: ShieldCheck },
+        { value: 'all', label: `Tất cả (${totalExamsCount})`, icon: null },
+      ]
+    : [
+        { value: 'all', label: `Tất cả (${totalExamsCount})`, icon: null },
+        { value: 'system', label: `Hệ thống (${systemCount})`, icon: ShieldCheck },
+        { value: 'mine', label: `Của tôi (${myCount})`, icon: User },
+      ]
+
+  const sourceFilterClass = (value) => {
+    if (authorFilter === value) {
+      if (value === 'mine') return 'bg-brand-600 text-white shadow-2xs'
+      if (value === 'system') return 'bg-blue-600 text-white shadow-2xs'
+      return 'bg-slate-900 text-white shadow-2xs'
+    }
+    if (value === 'mine') return 'bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200/60'
+    if (value === 'system') return 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60'
+    return 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+  }
+
   return (
-    <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+    <div className="border-b border-slate-100">
+      <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4">
       {/* Ô tìm kiếm không viền (borderless) co giãn thông minh không chiếm quá nhiều chỗ */}
       <div className="flex items-center gap-2.5 flex-1 min-w-[180px] max-w-xs xl:max-w-sm">
         <Search size={17} className="shrink-0 text-slate-400" />
@@ -168,5 +198,39 @@ export default function ExamToolbar({
         </button>
       </div>
       </div>
+
+      {/* Hàng phân loại nguồn đề thi: Tất cả | Hệ thống | Của tôi */}
+      {!trashView && onAuthorFilterChange && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-slate-50/70 border-t border-slate-100 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-slate-500 font-semibold mr-1 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-brand-500" />
+              Nguồn đề thi:
+            </span>
+            {sourceFilters.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onAuthorFilterChange(value)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${sourceFilterClass(value)}`}
+              >
+                {Icon && <Icon size={13} />}
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {authorFilter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => onAuthorFilterChange('all')}
+              className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold cursor-pointer hover:underline"
+            >
+              Đặt lại nguồn &times;
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

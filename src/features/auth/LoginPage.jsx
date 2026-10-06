@@ -132,33 +132,57 @@ function LoginPage() {
           {/* Quick test credentials */}
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3 space-y-2">
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">
-              Tài khoản mẫu (Nhấp để điền)
+              Tài khoản mẫu (Nhấp để điền nhanh)
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleFillCredentials('admin@smartenglish.com', 'Password123@')}
-                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
+                onClick={() => handleFillCredentials('teacher.john@smartenglish.com', 'Password123@')}
+                className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-2 text-left hover:border-indigo-500 hover:bg-indigo-50 transition-all cursor-pointer shadow-2xs"
               >
-                <div className="text-xs font-bold text-slate-800">Quản trị viên</div>
-                <div className="text-[10px] text-slate-400 truncate">admin@smartenglish.com</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-indigo-950">GV Premium</span>
+                  <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
+                    PRO
+                  </span>
+                </div>
+                <div className="text-[10px] text-indigo-600 truncate mt-0.5">teacher.john@...</div>
               </button>
+
               <button
                 type="button"
-                onClick={() => handleFillCredentials('teacher.john@smartenglish.com', 'Password123@')}
-                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs"
+                onClick={() => handleFillCredentials('teacher.mai@smartenglish.com', 'Password123@')}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
               >
-                <div className="text-xs font-bold text-slate-800">Giáo viên</div>
-                <div className="text-[10px] text-slate-400 truncate">teacher.john@smart...</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">GV Miễn Phí</span>
+                  <span className="text-[9px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded border border-slate-200">
+                    FREE
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate mt-0.5">teacher.mai@...</div>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => handleFillCredentials('admin@smartenglish.com', 'Password123@')}
+              className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs flex items-center justify-between"
+            >
+              <div>
+                <div className="text-xs font-bold text-slate-800">👑 Quản trị viên (Admin)</div>
+                <div className="text-[10px] text-slate-400">admin@smartenglish.com</div>
+              </div>
+              <span className="text-[10px] font-semibold text-brand-600">Điền ngay →</span>
+            </button>
+
             <button
               type="button"
               onClick={() => handleFillCredentials('student.theanh@gmail.com', 'Password123@')}
               className="w-full rounded-lg border border-amber-200 bg-amber-50/60 p-1.5 text-center hover:bg-amber-100/60 transition-all cursor-pointer"
             >
               <span className="text-[11px] font-medium text-amber-800">
-                Thử đăng nhập tài khoản Học viên (Kiểm tra chặn 403)
+                Thử đăng nhập Học viên (Kiểm tra chặn 403)
               </span>
             </button>
           </div>

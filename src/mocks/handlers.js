@@ -14,6 +14,7 @@ import * as dashboard from './data/dashboard'
 import { users, roles } from './data/users'
 import { orders, plans, coupons, revenueSummary } from './data/payments'
 import { transactions } from './data/transactions'
+import { CLASSES } from './data/classes'
 import { createMockToken, decodeMockToken, isTokenExpired } from './tokenUtils'
 
 const notFound = { status: 404, message: 'Không tìm thấy dữ liệu.', details: null }
@@ -53,9 +54,11 @@ export const handlers = {
       (item) =>
         item.email.toLowerCase() === email?.toLowerCase() ||
         (email === 'admin@smartenglish.vn' && item.id === 1) ||
-        (email === 'teacher@smartenglish.vn' && item.id === 2),
+        (email === 'teacher@smartenglish.vn' && item.id === 2) ||
+        (email === 'teacher.mai@smartenglish.com' && item.id === 8),
     )
     const validPassword =
+      password === 'Password123@' ||
       (user?.role === 'admin' && (password === 'admin123' || password === 'admin')) ||
       (user?.role === 'teacher' && (password === 'teacher123' || password === 'teacher'))
 
@@ -153,4 +156,22 @@ export const handlers = {
   [`GET ${ENDPOINTS.coupons.list}`]: ({ params }) =>
     paginate(coupons, { ...params, searchFields: ['code'] }),
   [`GET ${ENDPOINTS.coupons.detail}`]: ({ path }) => findOr404(coupons, path.id),
+
+  // ── Giáo viên & Quota lớp học (Hỗ trợ test tài khoản Pro vs Free) ──
+  [`GET ${ENDPOINTS.teacher.quota}`]: ({ params }) => {
+    const tId = Number(params?.teacherId || 2)
+    const isPro = tId === 2
+    return {
+      teacherId: tId,
+      planCode: isPro ? 'TEACHER_PRO' : 'STARTER',
+      planName: isPro ? 'Teacher Pro Plan' : 'Gói Khởi Đầu (Starter)',
+      isPremium: isPro,
+      activeClasses: isPro ? 4 : 3,
+      maxClasses: isPro ? 15 : 3,
+      canCreateMoreClasses: isPro,
+      maxStudentsPerClass: isPro ? 100 : 30,
+      aiQuotaMonthly: isPro ? 500 : 20,
+    }
+  },
+  [`GET ${ENDPOINTS.teacher.classes}`]: () => structuredClone(CLASSES),
 }

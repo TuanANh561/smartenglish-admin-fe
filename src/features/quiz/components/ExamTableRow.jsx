@@ -1,4 +1,4 @@
-import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Send, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const LEVEL_COLOR = {
@@ -31,6 +31,7 @@ export default function ExamTableRow({
   item,
   isTrash,
   canManage,
+  isTeacher,
   onRowClick,
   onEditClick,
   onDeleteClick,
@@ -38,6 +39,7 @@ export default function ExamTableRow({
   onPermanentDeleteClick,
   onTogglePublish,
   onDuplicate,
+  onAssignToClass,
 }) {
   const levelStyle  = LEVEL_COLOR[item.cefrLevel] || LEVEL_COLOR.B1
   const categoryCfg = CATEGORY_MAP[item.category] || CATEGORY_MAP.GENERAL
@@ -55,9 +57,20 @@ export default function ExamTableRow({
             <Award size={18} strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
-              {item.title}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
+                {item.title}
+              </p>
+              {canManage ? (
+                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 shrink-0">
+                  Của bạn
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 shrink-0">
+                  Hệ thống
+                </span>
+              )}
+            </div>
             {item.description && (
               <p className="text-xs text-slate-400 truncate mt-0.5 max-w-md">
                 {item.description}
@@ -151,6 +164,19 @@ export default function ExamTableRow({
               >
                 <Eye size={16} />
               </button>
+
+              {/* Nút Giao cho lớp học dành cho Giáo viên */}
+              {isTeacher && item.status === 'published' && onAssignToClass && (
+                <button
+                  type="button"
+                  onClick={() => onAssignToClass(item)}
+                  className="rounded-lg p-1.5 bg-brand-50 text-brand-600 hover:bg-brand-100 hover:text-brand-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Giao bài thi này cho lớp học của bạn"
+                >
+                  <Send size={15} />
+                </button>
+              )}
+
               {canManage && (
                 <>
                   <button

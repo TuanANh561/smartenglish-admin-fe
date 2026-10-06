@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Trash2, GraduationCap, CheckSquare } from 'lucide-react'
@@ -13,6 +13,7 @@ import ExamCard from './components/ExamCard'
 import ExamDetailPanel from './components/ExamDetailPanel'
 import PracticeQuizTab from './components/PracticeQuizTab'
 import ExamImportModal from './components/ExamImportModal'
+import AssignExamToClassModal from './components/AssignExamToClassModal'
 import {
   getExams,
   getExamCategories,
@@ -30,16 +31,16 @@ const PAGE_SIZE = 8
 export default function QuizBankPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const isTeacher = user?.role?.toLowerCase() === 'teacher'
+  const defaultAuthorFilter = isTeacher ? 'mine' : 'all'
 
   // ── Tab State: 'exams' (content-service) vs 'quizzes' (learning-service) ───
   const [activeTab, setActiveTab] = useState('exams')
 
   // ── Data State ─────────────────────────────────────────────────────────────
-  const [exams, setExams] = useState([])
+  const [allExams, setAllExams] = useState([])
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
   const [trashCount, setTrashCount] = useState(0)
 
   // ── Filter State ───────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ export default function QuizBankPage() {
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [selectedLevel, setSelectedLevel] = useState('ALL')
   const [selectedStatus, setSelectedStatus] = useState('all')
+  const [authorFilter, setAuthorFilter] = useState(defaultAuthorFilter) // 'all' | 'system' | 'mine'
   const [page, setPage] = useState(1)
   const [trashView, setTrashView] = useState(false)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('quiz_view_mode') || 'list')
@@ -58,10 +60,46 @@ export default function QuizBankPage() {
 
   // ── Modal / Drawer State ───────────────────────────────────────────────────
   const [activeExam, setActiveExam] = useState(null)
+  const [assignExamTarget, setAssignExamTarget] = useState(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [permanentTarget, setPermanentTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    setAuthorFilter(defaultAuthorFilter)
+    setPage(1)
+  }, [defaultAuthorFilter, user?.id])
+
+  // ── Kiểm tra quyền sở hữu & nguồn gốc đề thi ────────────────────────────────
+  const isOwnedByMe = useCallback((item) => {
+    if (!item || !user) return false
+    const email = user.email?.toLowerCase()
+    const name = (user.displayName || user.username || '').toLowerCase()
+    const itemEmail = item.authorEmail?.toLowerCase()
+    const itemName = (item.authorName || '').toLowerCase()
+    return Boolean(
+      (itemEmail && itemEmail === email) ||
+      (item.createdBy != null && user.id != null && String(item.createdBy) === String(user.id)) ||
+      (itemName && name && itemName === name)
+    )
+  }, [user])
+
+  const isSystemExam = useCallback((item) => {
+    if (!item) return false
+    const email = (item.authorEmail || '').toLowerCase()
+    const name = (item.authorName || '').toLowerCase()
+    return Boolean(
+      item.createdBy === 1 ||
+      !item.createdBy ||
+      email.includes('admin') ||
+      email === 'admin@smartenglish.vn' ||
+      name.includes('quản trị') ||
+      name.includes('admin') ||
+      name === 'hệ thống' ||
+      item.isSystem === true
+    )
+  }, [])
 
   // ── Refresh trash count ────────────────────────────────────────────────────
   const refreshTrashCount = useCallback(async () => {
@@ -77,7 +115,7 @@ export default function QuizBankPage() {
     refreshTrashCount()
   }, [refreshTrashCount])
 
-  // ── Load exams (paginated) ─────────────────────────────────────────────────
+  // ── Load exams (Tải toàn bộ danh sách để hỗ trợ lọc client tức thì) ─────────
   const loadExams = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -87,33 +125,62 @@ export default function QuizBankPage() {
         cefrLevel: selectedLevel !== 'ALL' ? selectedLevel : undefined,
         status: !trashView && selectedStatus !== 'all' ? selectedStatus : undefined,
         trash: trashView,
-        page,
-        size: PAGE_SIZE,
+        page: 1,
+        size: 100,
         sortBy: 'created_desc',
       })
-      setExams(res.items || [])
-      setTotal(res.total || 0)
-      setTotalPages(res.totalPages || 1)
+      setAllExams(res.items || [])
     } catch (err) {
       toast.error('Không thể tải danh sách bài thi')
       console.error(err)
     } finally {
       setIsLoading(false)
     }
-  }, [search, selectedCategory, selectedLevel, selectedStatus, page, trashView])
+  }, [search, selectedCategory, selectedLevel, selectedStatus, trashView])
 
   useEffect(() => { loadExams() }, [loadExams])
+
+  // ── Phân quyền & Lọc danh sách đề thi ──────────────────────────────────────
+  // 1. Phân quyền: Giáo viên CHỈ nhìn thấy đề Hệ thống + Đề do chính mình tạo (Ẩn hoàn toàn đề của giáo viên khác)
+  const visibleExams = useMemo(() => {
+    return allExams.filter((item) => {
+      if (!isTeacher) return true
+      return isOwnedByMe(item) || isSystemExam(item)
+    })
+  }, [allExams, isTeacher, isOwnedByMe, isSystemExam])
+
+  // 2. Thống kê số lượng theo nguồn
+  const totalExamsCount = visibleExams.length
+  const systemCount = useMemo(() => visibleExams.filter((it) => isSystemExam(it) && !isOwnedByMe(it)).length, [visibleExams, isSystemExam, isOwnedByMe])
+  const myCount = useMemo(() => visibleExams.filter((it) => isOwnedByMe(it)).length, [visibleExams, isOwnedByMe])
+
+  // 3. Lọc theo Tab nguồn (Tất cả / Hệ thống / Của tôi)
+  const filteredExams = useMemo(() => {
+    return visibleExams.filter((item) => {
+      if (authorFilter === 'system') return isSystemExam(item) && !isOwnedByMe(item)
+      if (authorFilter === 'mine') return isOwnedByMe(item)
+      return true
+    })
+  }, [visibleExams, authorFilter, isSystemExam, isOwnedByMe])
+
+  // 4. Phân trang cục bộ mượt mà
+  const total = filteredExams.length
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const start = (page - 1) * PAGE_SIZE
+  const exams = filteredExams.slice(start, start + PAGE_SIZE)
 
   // Filter handlers
   const handleSearch = (v) => { setSearch(v); setPage(1) }
   const handleCategoryChange = (v) => { setSelectedCategory(v); setPage(1) }
   const handleLevelChange = (v) => { setSelectedLevel(v); setPage(1) }
   const handleStatusChange = (v) => { setSelectedStatus(v); setPage(1) }
+  const handleAuthorFilterChange = (v) => { setAuthorFilter(v); setPage(1) }
 
   const handleToggleTrash = (nextTrashView) => {
     setTrashView(nextTrashView)
     setPage(1)
     setSearch('')
+    setAuthorFilter(defaultAuthorFilter)
   }
 
   const handleReload = () => {
@@ -121,6 +188,7 @@ export default function QuizBankPage() {
     setSelectedCategory('ALL')
     setSelectedLevel('ALL')
     setSelectedStatus('all')
+    setAuthorFilter(defaultAuthorFilter)
     setPage(1)
     refreshTrashCount()
     loadExams()
@@ -129,8 +197,9 @@ export default function QuizBankPage() {
 
   const canManage = (item) => {
     if (!item) return false
-    if (!user || user?.role !== 'student') return true
-    return item.authorEmail === user.email || !item.authorEmail
+    if (!user) return false
+    if (user.role === 'admin') return true
+    return isOwnedByMe(item)
   }
 
   const handleTogglePublish = async (item) => {
@@ -138,7 +207,7 @@ export default function QuizBankPage() {
     const nextStatus = prevStatus === 'published' ? 'draft' : 'published'
 
     // 1. Cập nhật giao diện ngay lập tức (optimistic update)
-    setExams((prev) =>
+    setAllExams((prev) =>
       prev.map((exam) => (exam.id === item.id ? { ...exam, status: nextStatus } : exam))
     )
     if (activeExam?.id === item.id) {
@@ -150,7 +219,7 @@ export default function QuizBankPage() {
       const updated = await togglePublishExam(item.id)
       const finalStatus = updated?.status || nextStatus
       if (finalStatus !== nextStatus) {
-        setExams((prev) =>
+        setAllExams((prev) =>
           prev.map((exam) => (exam.id === item.id ? { ...exam, status: finalStatus } : exam))
         )
         if (activeExam?.id === item.id) {
@@ -164,7 +233,7 @@ export default function QuizBankPage() {
       )
     } catch {
       // 3. Khôi phục lại trạng thái cũ nếu server báo lỗi
-      setExams((prev) =>
+      setAllExams((prev) =>
         prev.map((exam) => (exam.id === item.id ? { ...exam, status: prevStatus } : exam))
       )
       if (activeExam?.id === item.id) {
@@ -265,7 +334,6 @@ export default function QuizBankPage() {
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  const start = (page - 1) * PAGE_SIZE
 
   return (
     <div className="space-y-4">
@@ -309,6 +377,8 @@ export default function QuizBankPage() {
             onClose={() => setActiveExam(null)}
             canManage={canManage(activeExam)}
             onEditClick={handleEditClick}
+            isTeacher={isTeacher}
+            onAssignToClass={(item) => setAssignExamTarget(item)}
           />
         </div>
       ) : (
@@ -344,6 +414,12 @@ export default function QuizBankPage() {
           onReload={handleReload}
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
+          authorFilter={authorFilter}
+          onAuthorFilterChange={handleAuthorFilterChange}
+          totalExamsCount={totalExamsCount}
+          systemCount={systemCount}
+          myCount={myCount}
+          isTeacher={isTeacher}
         />
 
         {/* Chế độ hiển thị: Dạng Bảng (List) hoặc Dạng Thẻ (Grid) */}
@@ -396,6 +472,7 @@ export default function QuizBankPage() {
                     item={item}
                     isTrash={trashView}
                     canManage={canManage(item)}
+                    isTeacher={isTeacher}
                     onRowClick={setActiveExam}
                     onEditClick={handleEditClick}
                     onDeleteClick={handleDeleteClick}
@@ -403,6 +480,7 @@ export default function QuizBankPage() {
                     onPermanentDeleteClick={(it) => setPermanentTarget(it)}
                     onTogglePublish={handleTogglePublish}
                     onDuplicate={handleDuplicate}
+                    onAssignToClass={(it) => setAssignExamTarget(it)}
                   />
                 ))
               )}
@@ -441,6 +519,7 @@ export default function QuizBankPage() {
                     item={item}
                     isTrash={trashView}
                     canManage={canManage(item)}
+                    isTeacher={isTeacher}
                     onCardClick={setActiveExam}
                     onEditClick={handleEditClick}
                     onDeleteClick={handleDeleteClick}
@@ -448,6 +527,7 @@ export default function QuizBankPage() {
                     onPermanentDeleteClick={(it) => setPermanentTarget(it)}
                     onTogglePublish={handleTogglePublish}
                     onDuplicate={handleDuplicate}
+                    onAssignToClass={(it) => setAssignExamTarget(it)}
                   />
                 ))}
               </div>
@@ -502,6 +582,13 @@ export default function QuizBankPage() {
           loadExams()
           refreshTrashCount()
         }}
+      />
+
+      {/* Modal Giao bài thi cho Lớp học dành cho Giáo viên */}
+      <AssignExamToClassModal
+        isOpen={Boolean(assignExamTarget)}
+        onClose={() => setAssignExamTarget(null)}
+        exam={assignExamTarget}
       />
     </div>
   )

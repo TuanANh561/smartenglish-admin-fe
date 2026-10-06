@@ -3,7 +3,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Select from '@/components/ui/Select'
-import { cn, formatNumber } from '@/lib/utils'
+import { cn, formatCurrency, formatNumber } from '@/lib/utils'
 
 export default function CouponsTab({
   coupons,
@@ -95,7 +95,9 @@ export default function CouponsTab({
                   </td>
 
                   <td className="px-4 py-3 text-center font-bold text-emerald-600 text-sm">
-                    -{c.discountPercent}%
+                    {c.discountType === 'FIXED'
+                      ? `-${formatCurrency(c.discountValue)}`
+                      : `-${c.discountPercent || c.discountValue}%`}
                   </td>
 
                   <td className="px-4 py-3">
@@ -111,7 +113,7 @@ export default function CouponsTab({
                   <td className="px-4 py-3 text-center">
                     <div className="space-y-1">
                       <span className="font-bold text-navy-700">
-                        {formatNumber(c.usedCount)} / {formatNumber(c.maxUses)}
+                        {formatNumber(c.usedCount || 0)} / {formatNumber(c.maxUses || 100)}
                       </span>
                       <div className="h-1.5 w-20 mx-auto rounded-full bg-slate-100 overflow-hidden">
                         <div
@@ -126,7 +128,7 @@ export default function CouponsTab({
                   </td>
 
                   <td className="px-4 py-3 text-ink-muted">
-                    {c.validUntil}
+                    {c.validUntil ? String(c.validUntil).slice(0, 10) : 'Không giới hạn'}
                   </td>
 
                   <td className="px-4 py-3 text-center">
