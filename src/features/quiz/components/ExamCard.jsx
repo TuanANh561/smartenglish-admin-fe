@@ -1,4 +1,4 @@
-import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Sparkles, Target, Trash2 } from 'lucide-react'
+import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Send, Sparkles, Target, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const LEVEL_COLOR = {
@@ -31,6 +31,7 @@ export default function ExamCard({
   item,
   isTrash,
   canManage,
+  isTeacher,
   onCardClick,
   onEditClick,
   onDeleteClick,
@@ -38,6 +39,7 @@ export default function ExamCard({
   onPermanentDeleteClick,
   onTogglePublish,
   onDuplicate,
+  onAssignToClass,
 }) {
   const levelStyle  = LEVEL_COLOR[item.cefrLevel] || LEVEL_COLOR.B1
   const categoryCfg = CATEGORY_MAP[item.category] || CATEGORY_MAP.GENERAL
@@ -59,6 +61,17 @@ export default function ExamCard({
             <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${categoryCfg.bg}`}>
               {categoryCfg.label}
             </span>
+
+            {/* Author source badge */}
+            {canManage ? (
+              <span className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                Của bạn
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                Hệ thống
+              </span>
+            )}
 
             {/* CEFR Level badge */}
             <span
@@ -199,6 +212,18 @@ export default function ExamCard({
               >
                 <Eye size={15} />
               </button>
+
+              {/* Nút Giao cho lớp học dành cho Giáo viên */}
+              {isTeacher && item.status === 'published' && onAssignToClass && (
+                <button
+                  type="button"
+                  onClick={() => onAssignToClass(item)}
+                  className="rounded-lg p-1.5 text-brand-600 bg-brand-50 hover:bg-brand-100 hover:text-brand-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Giao bài thi này cho lớp học của bạn"
+                >
+                  <Send size={15} />
+                </button>
+              )}
 
               {canManage && (
                 <>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Pagination from '@/components/ui/Pagination'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import { deleteCourseApi, fetchCoursesApi, updateCourseApi } from './courseApi'
 import CourseFilters from './components/CourseFilters'
@@ -16,8 +17,10 @@ import DeleteCourseModal from './components/DeleteCourseModal'
 export default function CoursesPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const isAdmin = user?.role === 'admin'
-  const isTeacher = user?.role === 'teacher'
+  const normalizedRole = user?.role?.toLowerCase()
+  const isAdmin = normalizedRole === 'admin'
+  const isTeacher = normalizedRole === 'teacher'
+  const defaultAuthorFilter = isTeacher ? 'mine' : 'all'
 
   // States
   const [courses, setCourses] = useState([])
@@ -27,7 +30,7 @@ export default function CoursesPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [cefrFilter, setCefrFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [authorFilter, setAuthorFilter] = useState(isTeacher ? 'mine' : 'all')
+  const [authorFilter, setAuthorFilter] = useState(defaultAuthorFilter)
   const [page, setPage] = useState(1)
   const PAGE_SIZE = viewMode === 'table' ? 6 : 6
 
@@ -53,15 +56,19 @@ export default function CoursesPage() {
     loadCourses()
   }, [loadCourses])
 
+  useEffect(() => {
+    setAuthorFilter(defaultAuthorFilter)
+    setPage(1)
+  }, [defaultAuthorFilter, user?.id])
+
   // Kiểm tra quyền sở hữu
   const checkOwnership = (course) => {
     if (!user) return false
     if (isTeacher) {
-      return (
-        course.authorEmail === user.email ||
-        course.authorName === user.displayName ||
-        course.authorName === 'Hoàng Thị Mai'
-      )
+      const isCreatorId = course.createdBy != null && user.id != null && Number(course.createdBy) === Number(user.id)
+      const isCreatorEmail = course.authorEmail && user.email && course.authorEmail.toLowerCase() === user.email.toLowerCase()
+      const isCreatorName = course.authorName && user.displayName && course.authorName.toLowerCase() === user.displayName.toLowerCase()
+      return Boolean(isCreatorId || isCreatorEmail || isCreatorName)
     }
     return (
       course.createdBy === 1 ||
@@ -184,11 +191,20 @@ export default function CoursesPage() {
         onRefresh={loadCourses}
         isTeacher={isTeacher}
         myCount={courses.filter((c) => checkOwnership(c)).length}
+        systemCount={courses.filter((c) => c.createdBy === 1 || c.courseType === 'STRUCTURED' || c.authorName === 'Hệ thống').length}
         totalCount={courses.length}
       />
 
       {/* 3. Danh sách Khóa học (Dạng Bảng hoặc Dạng Card Lưới) */}
-      {viewMode === 'table' ? (
+      {isLoading ? (
+        <div
+          className="flex min-h-[360px] items-center justify-center rounded-2xl border border-slate-200/90 bg-white shadow-xs"
+          role="status"
+          aria-live="polite"
+        >
+          <LoadingSpinner text="Đang tải danh sách khóa học..." />
+        </div>
+      ) : viewMode === 'table' ? (
         <CourseTable
           courses={pageData}
           onEdit={(id) => navigate(`/app/hoc-lieu/khoa-hoc/${id}`)}
@@ -208,6 +224,7 @@ export default function CoursesPage() {
       )}
 
       {/* 4. Phân trang & Đếm bản ghi */}
+      {!isLoading && (
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs text-ink-muted">
         <div>
           Hiển thị <strong className="text-navy-800">{total === 0 ? 0 : start + 1}</strong> -{' '}
@@ -219,6 +236,7 @@ export default function CoursesPage() {
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         )}
       </div>
+      )}
 
       {/* Modal xác nhận xóa */}
       <DeleteCourseModal

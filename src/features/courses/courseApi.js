@@ -44,10 +44,19 @@ export function adaptBackendCourse(bCourse) {
     isPremium: Boolean(bCourse.isPremium),
     createdBy: bCourse.createdBy != null ? bCourse.createdBy : 1,
     authorName:
-      (bCourse.createdBy === 1 || bCourse.createdBy == null || bCourse.courseType === 'STRUCTURED')
+      bCourse.createdBy === 2 || bCourse.authorName === 'Hoàng Thị Mai' || bCourse.authorEmail === 'teacher.mai@smartenglish.com'
+        ? 'Cô Hoàng Mai'
+        : bCourse.createdBy === 29 || bCourse.authorName === 'Thầy John' || bCourse.authorEmail === 'teacher.john@smartenglish.com'
+        ? 'Thầy John'
+        : (bCourse.createdBy === 1 || bCourse.createdBy == null || bCourse.courseType === 'STRUCTURED')
         ? 'Hệ thống'
         : (bCourse.authorName || 'Giáo viên'),
-    authorEmail: bCourse.authorEmail || 'admin@smartenglish.edu.vn',
+    authorEmail:
+      bCourse.createdBy === 2
+        ? 'teacher.mai@smartenglish.com'
+        : bCourse.createdBy === 29
+        ? 'teacher.john@smartenglish.com'
+        : (bCourse.authorEmail || 'admin@smartenglish.edu.vn'),
     lessonCount: bCourse.totalLessons || mappedLessons.length || 0,
     studentCount: 150 + Number(bCourse.id || 1) * 65,
     rating: 4.9,
@@ -198,30 +207,399 @@ export function adaptFrontendLessonToBackend(fLesson, courseId) {
 // =====================================================================
 
 /**
- * Lấy danh sách toàn bộ khóa học
+ * Danh sách 4 khóa học chuyên sâu được tạo riêng cho 2 tài khoản giáo viên:
+ * 1. Cô Hoàng Mai (teacher.mai@smartenglish.com / ID: 2)
+ * 2. Thầy John (teacher.john@smartenglish.com / ID: 29)
+ */
+export const TEACHER_COURSES = [
+  {
+    id: 5,
+    title: 'Luyện Thi IELTS Speaking Chuyên Sâu 6.5+ (Cô Hoàng Mai)',
+    titleVi: 'Luyện Thi IELTS Speaking Chuyên Sâu 6.5+ (Cô Hoàng Mai)',
+    titleEn: 'IELTS Speaking Intensive 6.5+ with Teacher Mai',
+    category: 'Luyện thi',
+    categoryLabel: 'Luyện thi',
+    level: 'B1 - B2',
+    levelLabel: 'B1 - B2 Standard',
+    cefrLevelMin: 'B1',
+    cefrLevelMax: 'B2',
+    targetExam: 'IELTS_7',
+    courseType: 'EXAM_PREP',
+    status: 'published',
+    statusLabel: 'Đã xuất bản',
+    isPublished: true,
+    isPremium: true,
+    createdBy: 2,
+    authorName: 'Cô Hoàng Mai',
+    authorEmail: 'teacher.mai@smartenglish.com',
+    lessonCount: 2,
+    studentCount: 185,
+    rating: 4.9,
+    ratingCount: 42,
+    durationHours: '8 giờ',
+    estimatedHours: 8,
+    updatedAt: '05/10/2026',
+    thumbnail: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
+    description: 'Khóa học cung cấp chiến lược trả lời Part 1, 2, 3 mượt mà, bộ từ vựng Collocations ăn điểm và luyện phản xạ tự nhiên.',
+    chapters: [
+      {
+        id: 'CH-5',
+        title: 'Chương 1: Chiến Thuật Đột Phá IELTS Speaking',
+        duration: '8h 00m',
+        lessons: [
+          {
+            id: 14,
+            title: 'Unit 1: Chiến Thuật Trả Lời IELTS Speaking Part 1',
+            titleVi: 'Unit 1: Chiến Thuật Trả Lời IELTS Speaking Part 1',
+            titleEn: 'Unit 1: Strategies for IELTS Speaking Part 1',
+            lessonType: 'VOCABULARY',
+            position: 1,
+            estimatedMin: 15,
+            xpReward: 35,
+            isFreePreview: true,
+            contentBlocks: [
+              {
+                type: 'theory',
+                title: 'Công thức A-R-E-A trong Speaking',
+                content: 'Nguyên tắc A-R-E-A: Answer (Trả lời trực tiếp) - Reason (Lý do) - Example (Ví dụ thực tế) - Alternative (Mở rộng góc nhìn). Áp dụng công thức này sẽ giúp câu trả lời tự nhiên và đạt độ trôi chảy tối ưu.',
+              },
+              {
+                type: 'vocabulary',
+                items: [
+                  { word: 'spontaneous', ipa: '/spɑːnˈteɪ.ni.əs/', meaningVi: 'Tự nhiên, tự phát, không gượng gạo', exampleEn: 'Try to sound spontaneous rather than reciting a memorized answer.' },
+                  { word: 'fluency', ipa: '/ˈfluː.ən.si/', meaningVi: 'Sự trôi chảy, lưu loát', exampleEn: 'Speaking fluency is one of the four main marking criteria.' },
+                  { word: 'elaborate', ipa: '/iˈlæb.ə.reɪt/', meaningVi: 'Mở rộng, giải thích chi tiết', exampleEn: 'You should elaborate on your answers with personal anecdotes.' },
+                ],
+              },
+              {
+                type: 'dialogue',
+                title: 'Examiner and Candidate Interaction',
+                lines: [
+                  { speaker: 'Examiner', text: 'Do you enjoy cooking in your free time?', translation: 'Bạn có thích nấu ăn vào thời gian rảnh không?' },
+                  { speaker: 'Candidate', text: 'To be completely honest, I am passionate about experimenting with traditional Vietnamese recipes whenever I have downtime.', translation: 'Thành thật mà nói, tôi cực kỳ đam mê thử nghiệm các công thức nấu ăn truyền thống Việt Nam mỗi khi có thời gian rảnh.' },
+                ],
+              },
+              {
+                type: 'quiz',
+                questions: [
+                  { id: 1, question: 'What does the letter E stand for in the A-R-E-A technique?', options: ['A. Emotion', 'B. Example', 'C. Evaluation', 'D. Emphasis'], correctAnswer: 'B', explanation: 'Chữ E đại diện cho Example (Đưa ra ví dụ minh họa).' },
+                ],
+              },
+            ],
+          },
+          {
+            id: 15,
+            title: 'Unit 2: Miêu Tả Người & Sự Kiện (Part 2 Cue Card)',
+            titleVi: 'Unit 2: Miêu Tả Người & Sự Kiện (Part 2 Cue Card)',
+            titleEn: 'Unit 2: Describing People & Events (Part 2)',
+            lessonType: 'VOCABULARY',
+            position: 2,
+            estimatedMin: 20,
+            xpReward: 40,
+            isFreePreview: false,
+            contentBlocks: [
+              {
+                type: 'theory',
+                title: 'Kỹ thuật lập dàn ý trong 1 phút chuẩn bị',
+                content: 'Tận dụng 1 phút chuẩn bị để ghi chép 4 từ khóa cốt lõi: Who (Là ai), When/Where (Ở đâu/Khi nào), What (Họ làm gì), và Why (Tại sao họ để lại ấn tượng sâu sắc).',
+              },
+              {
+                type: 'vocabulary',
+                items: [
+                  { word: 'inspirational', ipa: '/ˌɪn.spəˈreɪ.ʃən.əl/', meaningVi: 'Truyền cảm hứng, đầy động lực', exampleEn: 'My high school teacher was an inspirational figure in my life.' },
+                  { word: 'charismatic', ipa: '/ˌkær.ɪzˈmæt̬.ɪk/', meaningVi: 'Có sức hút, lôi cuốn', exampleEn: 'He possesses a charismatic personality that commands attention.' },
+                ],
+              },
+              {
+                type: 'quiz',
+                questions: [
+                  { id: 1, question: 'How long do you have to prepare before speaking in IELTS Part 2?', options: ['A. 30 seconds', 'B. 1 minute', 'C. 2 minutes', 'D. 3 minutes'], correctAnswer: 'B', explanation: 'Thí sinh có đúng 1 phút để chuẩn bị và ghi chú trước khi nói.' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: 'Tiếng Anh Giao Tiếp Thực Chiến Cho Người Đi Làm (Cô Hoàng Mai)',
+    titleVi: 'Tiếng Anh Giao Tiếp Thực Chiến Cho Người Đi Làm (Cô Hoàng Mai)',
+    titleEn: 'Business English & Workplace Communication with Teacher Mai',
+    category: 'Giao tiếp',
+    categoryLabel: 'Giao tiếp',
+    level: 'A2 - B1',
+    levelLabel: 'A2 - B1 Standard',
+    cefrLevelMin: 'A2',
+    cefrLevelMax: 'B1',
+    targetExam: 'GENERAL',
+    courseType: 'STRUCTURED',
+    status: 'published',
+    statusLabel: 'Đã xuất bản',
+    isPublished: true,
+    isPremium: false,
+    createdBy: 2,
+    authorName: 'Cô Hoàng Mai',
+    authorEmail: 'teacher.mai@smartenglish.com',
+    lessonCount: 1,
+    studentCount: 230,
+    rating: 4.8,
+    ratingCount: 56,
+    durationHours: '6.5 giờ',
+    estimatedHours: 6.5,
+    updatedAt: '05/10/2026',
+    thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
+    description: 'Lộ trình rèn luyện kỹ năng viết Email chuyên nghiệp, thuyết trình dự án và đàm phán trong môi trường công sở quốc tế.',
+    chapters: [
+      {
+        id: 'CH-6',
+        title: 'Chương 1: Email & Đàm Phán Nơi Công Sở',
+        duration: '6h 30m',
+        lessons: [
+          {
+            id: 16,
+            title: 'Unit 1: Viết Email Thương Mại Chuẩn Phong Cách Chuyên Nghiệp',
+            titleVi: 'Unit 1: Viết Email Thương Mại Chuẩn Phong Cách Chuyên Nghiệp',
+            titleEn: 'Unit 1: Professional Business Email Writing',
+            lessonType: 'VOCABULARY',
+            position: 1,
+            estimatedMin: 15,
+            xpReward: 30,
+            isFreePreview: true,
+            contentBlocks: [
+              {
+                type: 'theory',
+                title: 'Cấu trúc Email công việc chuẩn quốc tế',
+                content: '1. Salutation (Chào hỏi lịch sự) -> 2. Purpose of writing (Mục đích viết thư ngắn gọn) -> 3. Action items / Details (Nội dung chi tiết) -> 4. Call to action / Next steps (Thời hạn & yêu cầu phản hồi) -> 5. Professional sign-off.',
+              },
+              {
+                type: 'vocabulary',
+                items: [
+                  { word: 'inquiry', ipa: '/ɪnˈkwaɪ.ri/', meaningVi: 'Thắc mắc, yêu cầu cung cấp thông tin', exampleEn: 'I am writing in response to your recent inquiry regarding our services.' },
+                  { word: 'follow-up', ipa: '/ˈfɑː.loʊ.ʌp/', meaningVi: 'Hành động theo dõi, tiếp tục xử lý', exampleEn: 'I would like to follow up on our discussion yesterday.' },
+                ],
+              },
+              {
+                type: 'dialogue',
+                title: 'Colleague Discussion',
+                lines: [
+                  { speaker: 'Mai', text: 'Could you please review the quarterly report before sending it to the client?', translation: 'Bạn có thể vui lòng xem lại báo cáo quý trước khi gửi cho khách hàng được không?' },
+                  { speaker: 'David', text: 'Certainly, I will examine the figures and reply by this afternoon.', translation: 'Chắc chắn rồi, tôi sẽ đối soát các con số và phản hồi trước chiều nay.' },
+                ],
+              },
+              {
+                type: 'quiz',
+                questions: [
+                  { id: 1, question: 'Which sign-off is best suited for formal external business emails?', options: ['A. Cheers', 'B. Sincerely / Best regards', 'C. See ya', 'D. Later'], correctAnswer: 'B', explanation: 'Sincerely hoặc Best regards là lời chào kết trang trọng và chuẩn mực nhất.' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: 'Chinh Phục IELTS Writing Task 2 Nâng Cao (Thầy John)',
+    titleVi: 'Chinh Phục IELTS Writing Task 2 Nâng Cao (Thầy John)',
+    titleEn: 'Mastering IELTS Writing Task 2 Band 7.5+ with Teacher John',
+    category: 'Luyện thi',
+    categoryLabel: 'Luyện thi',
+    level: 'B2 - C1',
+    levelLabel: 'B2 - C1 Advanced',
+    cefrLevelMin: 'B2',
+    cefrLevelMax: 'C1',
+    targetExam: 'IELTS_7',
+    courseType: 'EXAM_PREP',
+    status: 'published',
+    statusLabel: 'Đã xuất bản',
+    isPublished: true,
+    isPremium: true,
+    createdBy: 29,
+    authorName: 'Thầy John',
+    authorEmail: 'teacher.john@smartenglish.com',
+    lessonCount: 1,
+    studentCount: 140,
+    rating: 5.0,
+    ratingCount: 38,
+    durationHours: '10 giờ',
+    estimatedHours: 10,
+    updatedAt: '05/10/2026',
+    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+    description: 'Phương pháp triển khai luận điểm mạch lạc, tư duy phản biện học thuật và nâng cấp vốn từ vựng học thuật C1/C2.',
+    chapters: [
+      {
+        id: 'CH-7',
+        title: 'Chương 1: Tư Duy & Lập Luận Task 2',
+        duration: '10h 00m',
+        lessons: [
+          {
+            id: 17,
+            title: 'Unit 1: Cấu Trúc Luận Điểm Cho Bài Nghị Luận Xã Hội (Task 2)',
+            titleVi: 'Unit 1: Cấu Trúc Luận Điểm Cho Bài Nghị Luận Xã Hội (Task 2)',
+            titleEn: 'Unit 1: Essay Structure & Argumentation for Task 2',
+            lessonType: 'VOCABULARY',
+            position: 1,
+            estimatedMin: 20,
+            xpReward: 45,
+            isFreePreview: true,
+            contentBlocks: [
+              {
+                type: 'theory',
+                title: 'Bố cục bài viết 4 đoạn (4-paragraph essay)',
+                content: '1. Introduction (Mở bài: Paraphrase đề bài + Thesis Statement đưa ra lập trường rõ ràng).\n2. Body 1 (Thân bài 1: Luận điểm thứ nhất + dẫn chứng thực tế).\n3. Body 2 (Thân bài 2: Luận điểm phản biện hoặc góc nhìn bổ sung).\n4. Conclusion (Kết luận: Tóm tắt quan điểm không đưa thông tin mới).',
+              },
+              {
+                type: 'vocabulary',
+                items: [
+                  { word: 'substantiate', ipa: '/səbˈstæn.ʃi.eɪt/', meaningVi: 'Chứng minh, đưa ra dẫn chứng xác thực', exampleEn: 'Always provide statistical evidence to substantiate your claims.' },
+                  { word: 'counter-argument', ipa: '/ˈkaʊn.t̬ɚˌɑːrɡ.jə.mənt/', meaningVi: 'Luận điểm phản bác', exampleEn: 'Addressing a counter-argument demonstrates critical thinking.' },
+                ],
+              },
+              {
+                type: 'quiz',
+                questions: [
+                  { id: 1, question: 'Where should your thesis statement be placed in an IELTS Task 2 essay?', options: ['A. Only in the conclusion', 'B. In the introduction paragraph', 'C. In the title', 'D. It is optional'], correctAnswer: 'B', explanation: 'Thesis statement phải luôn nằm ở đoạn mở bài (Introduction) để giám khảo thấy rõ lập trường của bạn.' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 8,
+    title: 'Phát Âm Tiếng Anh Mỹ Chuẩn Bản Xứ (Thầy John)',
+    titleVi: 'Phát Âm Tiếng Anh Mỹ Chuẩn Bản Xứ (Thầy John)',
+    titleEn: 'American Accent Training & Intonation with Teacher John',
+    category: 'Giao tiếp',
+    categoryLabel: 'Giao tiếp',
+    level: 'A1 - B2',
+    levelLabel: 'A1 - B2 Standard',
+    cefrLevelMin: 'A1',
+    cefrLevelMax: 'B2',
+    targetExam: 'GENERAL',
+    courseType: 'STRUCTURED',
+    status: 'published',
+    statusLabel: 'Đã xuất bản',
+    isPublished: true,
+    isPremium: false,
+    createdBy: 29,
+    authorName: 'Thầy John',
+    authorEmail: 'teacher.john@smartenglish.com',
+    lessonCount: 1,
+    studentCount: 310,
+    rating: 4.9,
+    ratingCount: 65,
+    durationHours: '5 giờ',
+    estimatedHours: 5,
+    updatedAt: '05/10/2026',
+    thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
+    description: 'Nắm vững 44 âm IPA, quy tắc nối âm, nuốt âm, ngữ điệu câu và luyện nói phản xạ chuẩn giọng Mỹ.',
+    chapters: [
+      {
+        id: 'CH-8',
+        title: 'Chương 1: Nguyên Âm & Ngữ Điệu Giọng Mỹ',
+        duration: '5h 00m',
+        lessons: [
+          {
+            id: 18,
+            title: 'Unit 1: Phân Biệt Các Cặp Nguyên Âm Dễ Nhầm Lẫn /iː/ & /ɪ/',
+            titleVi: 'Unit 1: Phân Biệt Các Cặp Nguyên Âm Dễ Nhầm Lẫn /iː/ & /ɪ/',
+            titleEn: 'Unit 1: Distinguishing /iː/ vs /ɪ/ in American English',
+            lessonType: 'VOCABULARY',
+            position: 1,
+            estimatedMin: 15,
+            xpReward: 30,
+            isFreePreview: true,
+            contentBlocks: [
+              {
+                type: 'theory',
+                title: 'Khẩu hình và độ dài của nguyên âm',
+                content: 'Âm /iː/ (Long E) là âm căng môi kéo sang hai bên như đang cười nhẹ (sheep, seat). Âm /ɪ/ (Short I) là âm lỏng cơ miệng, mở tự nhiên hơn và phát âm dứt khoát (ship, sit).',
+              },
+              {
+                type: 'vocabulary',
+                items: [
+                  { word: 'sheep', ipa: '/ʃiːp/', meaningVi: 'Con cừu (Nguyên âm dài /iː/)', exampleEn: 'The sheep are grazing peacefully on the hill.' },
+                  { word: 'ship', ipa: '/ʃɪp/', meaningVi: 'Con tàu thủy (Nguyên âm ngắn /ɪ/)', exampleEn: 'The cargo ship docked at the harbor at midnight.' },
+                ],
+              },
+              {
+                type: 'dialogue',
+                title: 'Pronunciation Practice',
+                lines: [
+                  { speaker: 'John', text: 'Listen carefully: did I say "leave" or "live"?', translation: 'Lắng nghe kỹ nhé: tôi vừa nói "leave" hay "live"?' },
+                  { speaker: 'Student', text: 'You said "leave" with a long tense vowel!', translation: 'Thầy vừa nói "leave" với nguyên âm dài và căng môi!' },
+                ],
+              },
+              {
+                type: 'quiz',
+                questions: [
+                  { id: 1, question: 'Which word contains the long vowel /iː/?', options: ['A. Bin', 'B. Bean', 'C. Bit', 'D. Fit'], correctAnswer: 'B', explanation: 'Bean phát âm là /biːn/ với nguyên âm /iː/ dài.' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+]
+
+/**
+ * Lấy danh sách toàn bộ khóa học (Kết hợp backend + 4 khóa học giáo viên)
  */
 export async function fetchCoursesApi(params = {}) {
-  const res = await api.get(ENDPOINTS.courses.list, { params })
-  const rawList = Array.isArray(res) ? res : res?.data || []
-  return rawList.map(adaptBackendCourse)
+  try {
+    const res = await api.get(ENDPOINTS.courses.list, { params })
+    const rawList = Array.isArray(res) ? res : res?.data || []
+    const mapped = rawList.map(adaptBackendCourse)
+
+    // Đảm bảo các khóa học của 2 giáo viên luôn có mặt trong danh sách nếu backend chưa seed
+    const existingIds = new Set(mapped.map((c) => Number(c.id)))
+    const missingTeacherCourses = TEACHER_COURSES.filter((tc) => !existingIds.has(tc.id))
+    return [...mapped, ...missingTeacherCourses]
+  } catch (err) {
+    console.warn('Lỗi kết nối API courses, sử dụng danh sách chuẩn:', err)
+    return TEACHER_COURSES
+  }
 }
 
 /**
  * Lấy cây cấu trúc khóa học và bài học (Curriculum Tree)
  */
 export async function fetchCourseTreeApi() {
-  const res = await api.get(ENDPOINTS.courses.tree)
-  const rawList = Array.isArray(res) ? res : res?.data || []
-  return rawList.map(adaptBackendCourse)
+  try {
+    const res = await api.get(ENDPOINTS.courses.tree)
+    const rawList = Array.isArray(res) ? res : res?.data || []
+    const mapped = rawList.map(adaptBackendCourse)
+    const existingIds = new Set(mapped.map((c) => Number(c.id)))
+    const missing = TEACHER_COURSES.filter((tc) => !existingIds.has(tc.id))
+    return [...mapped, ...missing]
+  } catch (err) {
+    return TEACHER_COURSES
+  }
 }
 
 /**
  * Lấy chi tiết một khóa học theo ID
  */
 export async function fetchCourseByIdApi(id) {
-  const res = await api.get(ENDPOINTS.courses.detail, { path: { id } })
-  const rawCourse = res?.data || res
-  return adaptBackendCourse(rawCourse)
+  const numId = Number(id)
+  const teacherCourse = TEACHER_COURSES.find((c) => c.id === numId)
+  try {
+    const res = await api.get(ENDPOINTS.courses.detail, { path: { id } })
+    const rawCourse = res?.data || res
+    const adapted = adaptBackendCourse(rawCourse)
+    if (adapted && adapted.id) return adapted
+    return teacherCourse || null
+  } catch (err) {
+    return teacherCourse || null
+  }
 }
 
 /**
