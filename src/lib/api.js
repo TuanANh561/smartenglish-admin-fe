@@ -156,7 +156,14 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/ai-practice') ||
       endpoint.startsWith('/content/courses') ||
       endpoint.startsWith('/api/v1/teacher') ||
-      endpoint.startsWith('/teacher')
+      endpoint.startsWith('/teacher') ||
+      endpoint.startsWith('/payment') ||
+      endpoint.startsWith('/api/v1/payment') ||
+      endpoint.startsWith('/admin/coupons') ||
+      endpoint.startsWith('/admin/plans') ||
+      endpoint.startsWith('/admin/subscriptions') ||
+      endpoint.startsWith('/admin/orders') ||
+      endpoint.startsWith('/admin/revenue')
 
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
@@ -205,4 +212,5 @@ export const api = {
   del: (endpoint, options) => request('DELETE', endpoint, options),
 }
 
+export default api
 export { USE_MOCK, TOKEN_KEY, REFRESH_TOKEN_KEY, setTokens, clearTokens }

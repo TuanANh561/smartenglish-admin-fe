@@ -16,7 +16,7 @@ export const TEST_USERS = {
   },
   2: {
     id: 2,
-    displayName: 'Thầy John Smith',
+    displayName: 'Thầy John Smith (Teacher Pro)',
     email: 'teacher.john@smartenglish.com',
     role: 'teacher',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
@@ -30,6 +30,14 @@ export const TEST_USERS = {
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
     plan: 'premium_monthly',
   },
+  8: {
+    id: 8,
+    displayName: 'Thầy Vũ Đức Thắng (Teacher Free)',
+    email: 'thang.vd@gmail.com',
+    role: 'teacher',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80',
+    plan: 'free',
+  },
 }
 
 export const getInitialUser = () => {
@@ -40,8 +48,10 @@ export const getInitialUser = () => {
     if (queryUser) {
       const id =
         Number(queryUser) ||
-        (queryUser.toLowerCase() === 'teacher'
+        (queryUser.toLowerCase() === 'teacher' || queryUser.toLowerCase() === 'teacher-pro'
           ? 2
+          : queryUser.toLowerCase() === 'teacher-free'
+          ? 8
           : queryUser.toLowerCase() === 'student'
           ? 3
           : 1)

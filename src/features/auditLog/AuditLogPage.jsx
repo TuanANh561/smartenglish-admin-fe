@@ -33,11 +33,15 @@ import Drawer from '@/components/ui/Drawer'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Pagination from '@/components/ui/Pagination'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
 import { getAuditLogs } from './auditLogApi'
 
 const PAGE_SIZE = 10
 
 function AuditLogPage() {
+  const user = useAuthStore((s) => s.user)
+  const isTeacher = user?.role === 'TEACHER' || user?.role === 'teacher'
+
   const [logs, setLogs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -45,7 +49,7 @@ function AuditLogPage() {
 
   // Bộ lọc
   const [dateRange, setDateRange] = useState('all')
-  const [userRole, setUserRole] = useState('all')
+  const [userRole, setUserRole] = useState(isTeacher ? 'teacher' : 'all')
   const [actionType, setActionType] = useState('all')
   const [severity, setSeverity] = useState('all')
   const [search, setSearch] = useState('')
@@ -57,14 +61,18 @@ function AuditLogPage() {
   const loadLogs = useCallback(async () => {
     setIsLoading(true)
     try {
+      // Nếu là giảng viên, tự động lọc theo role teacher và username/tên nếu cần
+      const roleFilter = isTeacher ? 'teacher' : userRole
+      const searchFilter = isTeacher && !search.trim() ? (user?.displayName || user?.username || '') : search
+
       const data = await getAuditLogs({
         page,
         size: PAGE_SIZE,
         dateRange,
-        userRole,
+        userRole: roleFilter,
         actionType,
         severity,
-        search,
+        search: searchFilter,
       })
       setLogs(data.items || [])
       setTotal(data.total || 0)
@@ -75,7 +83,7 @@ function AuditLogPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, dateRange, userRole, actionType, severity, search])
+  }, [page, dateRange, userRole, actionType, severity, search, isTeacher, user])
 
   useEffect(() => {
     loadLogs()
@@ -83,7 +91,7 @@ function AuditLogPage() {
 
   const handleResetFilters = () => {
     setDateRange('all')
-    setUserRole('all')
+    setUserRole(isTeacher ? 'teacher' : 'all')
     setActionType('all')
     setSeverity('all')
     setSearch('')
@@ -230,20 +238,26 @@ function AuditLogPage() {
               <option value="30d">30 ngày qua</option>
             </select>
 
-            {/* Lọc Vai trò */}
-            <select
-              value={userRole}
-              onChange={(e) => {
-                setUserRole(e.target.value)
-                setPage(1)
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Vai trò: Tất cả</option>
-              <option value="admin">Quản trị viên (Admin)</option>
-              <option value="teacher">Giáo viên (Teacher)</option>
-              <option value="student">Học viên (Student)</option>
-            </select>
+            {/* Lọc Vai trò (Chỉ hiển thị đầy đủ cho Admin, với Giáo viên cố định xem hoạt động giáo viên) */}
+            {!isTeacher ? (
+              <select
+                value={userRole}
+                onChange={(e) => {
+                  setUserRole(e.target.value)
+                  setPage(1)
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              >
+                <option value="all">Vai trò: Tất cả</option>
+                <option value="admin">Quản trị viên (Admin)</option>
+                <option value="teacher">Giáo viên (Teacher)</option>
+                <option value="student">Học viên (Student)</option>
+              </select>
+            ) : (
+              <span className="rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-2 text-xs font-semibold text-brand-700">
+                Vai trò: Giáo viên
+              </span>
+            )}
 
             {/* Lọc Loại thao tác */}
             <select

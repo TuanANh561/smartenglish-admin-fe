@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { useAuthStore, TEST_USERS } from '@/store/authStore'
+import { useAuthStore, TEST_USERS, getInitialUser } from '@/store/authStore'
 import { TOKEN_KEY } from '@/lib/api'
 import * as authApi from '../api'
 
@@ -43,6 +43,13 @@ export function useInitAuth() {
 
   useEffect(() => {
     if (initialized) return
+
+    const initial = getInitialUser()
+    if (initial) {
+      setUser(initial)
+      setInitialized(true)
+      return
+    }
 
     const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
     if (!token) {
