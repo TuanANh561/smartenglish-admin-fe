@@ -33,7 +33,7 @@ export default function ClassBundlesTab({
               <div className="flex-1">
                 <label className="text-[10px] font-bold text-ink-muted uppercase">Tên gói sỉ</label>
                 <Input
-                  value={bundle.title}
+                  value={bundle.title || bundle.name || ''}
                   onChange={(e) => onUpdateBundle(bundle.id, 'title', e.target.value)}
                   className="font-bold text-navy-700 text-sm mt-0.5"
                 />
@@ -52,8 +52,12 @@ export default function ClassBundlesTab({
                 <label className="text-[10px] font-bold text-ink-muted uppercase">Số học viên</label>
                 <Input
                   type="number"
-                  value={bundle.minStudents}
-                  onChange={(e) => onUpdateBundle(bundle.id, 'minStudents', Number(e.target.value))}
+                  value={bundle.minStudents ?? bundle.maxStudents ?? 0}
+                  onChange={(e) => {
+                    const val = Number(e.target.value)
+                    onUpdateBundle(bundle.id, 'minStudents', val)
+                    onUpdateBundle(bundle.id, 'maxStudents', val)
+                  }}
                   className="text-xs font-bold mt-0.5"
                 />
               </div>
@@ -61,7 +65,7 @@ export default function ClassBundlesTab({
                 <label className="text-[10px] font-bold text-ink-muted uppercase">Chiết khấu (%)</label>
                 <Input
                   type="number"
-                  value={bundle.discountPercent}
+                  value={bundle.discountPercent || 0}
                   onChange={(e) => onUpdateBundle(bundle.id, 'discountPercent', Number(e.target.value))}
                   className="text-xs font-bold text-emerald-600 mt-0.5"
                 />
@@ -72,23 +76,26 @@ export default function ClassBundlesTab({
               <div>
                 <label className="text-[10px] font-bold text-ink-muted uppercase">Giá gốc (đ)</label>
                 <CurrencyInput
-                  value={bundle.originalPrice}
+                  value={bundle.originalPrice || 0}
                   onChange={(val) => onUpdateBundle(bundle.id, 'originalPrice', val)}
                   className="text-xs text-slate-400 line-through mt-0.5"
                 />
                 <span className="text-[10px] text-slate-400 mt-0.5 block font-medium">
-                  {formatCurrency(bundle.originalPrice)}
+                  {formatCurrency(bundle.originalPrice || 0)}
                 </span>
               </div>
               <div>
                 <label className="text-[10px] font-bold text-ink-muted uppercase">Giá ưu đãi (đ)</label>
                 <CurrencyInput
-                  value={bundle.discountedPrice}
-                  onChange={(val) => onUpdateBundle(bundle.id, 'discountedPrice', val)}
+                  value={bundle.discountedPrice ?? bundle.priceMonthly ?? 0}
+                  onChange={(val) => {
+                    onUpdateBundle(bundle.id, 'discountedPrice', val)
+                    onUpdateBundle(bundle.id, 'priceMonthly', val)
+                  }}
                   className="text-xs font-bold text-brand-600 mt-0.5"
                 />
                 <span className="text-[10px] font-bold text-emerald-600 mt-0.5 block">
-                  {formatCurrency(bundle.discountedPrice)}
+                  {formatCurrency(bundle.discountedPrice ?? bundle.priceMonthly ?? 0)}
                 </span>
               </div>
             </div>
@@ -96,7 +103,7 @@ export default function ClassBundlesTab({
             <div>
               <label className="text-[10px] font-bold text-ink-muted uppercase">Áp dụng cho</label>
               <Input
-                value={bundle.idealFor}
+                value={bundle.idealFor || bundle.badge || ''}
                 onChange={(e) => onUpdateBundle(bundle.id, 'idealFor', e.target.value)}
                 className="text-xs mt-0.5"
               />

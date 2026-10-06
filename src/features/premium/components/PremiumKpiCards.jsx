@@ -1,73 +1,90 @@
 import { DollarSign, Sparkles, Tag, TrendingUp, Users } from 'lucide-react'
-import Card from '@/components/ui/Card'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 
-export default function PremiumKpiCards({ stats }) {
+export default function PremiumKpiCards({ stats = {} }) {
+  const data = stats || {}
+  const monthlyRevenue = data.monthlyRevenue ?? 0
+  const revenueDelta = data.revenueDelta ?? 0
+  const activeSubscribers = data.activeSubscribers ?? 0
+  const teacherSubscribers = data.teacherSubscribers ?? 0
+  const studentSubscribers = data.studentSubscribers ?? 0
+  const activeCoupons = data.activeCoupons ?? 0
+  const couponRedemptions = data.couponRedemptions ?? 0
+  const retentionRate = data.retentionRate ?? 0
+
   return (
-    <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-      <Card className="p-4 border border-line relative overflow-hidden group hover:border-brand-400 hover:shadow-sm transition-all">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-brand-500" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-ink-muted">Doanh thu tháng</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-50 text-brand-600">
-            <DollarSign size={15} />
-          </span>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+      {/* Doanh thu tháng */}
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2 shadow-xs hover:border-brand-300 transition-all">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+          <DollarSign size={16} />
         </div>
-        <p className="text-xl font-bold text-navy-700 mt-2">
-          {formatCurrency(stats.monthlyRevenue)}
-        </p>
-        <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-          <TrendingUp size={12} /> +{stats.revenueDelta}% so tháng trước
-        </p>
-      </Card>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[11px] font-medium text-ink-muted">Doanh thu tháng</span>
+            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+              <TrendingUp size={10} /> +{revenueDelta}%
+            </span>
+          </div>
+          <p className="text-sm font-bold text-navy-700 truncate mt-0.5">
+            {formatCurrency(monthlyRevenue)}
+          </p>
+        </div>
+      </div>
 
-      <Card className="p-4 border border-line relative overflow-hidden group hover:border-indigo-400 hover:shadow-sm transition-all">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-ink-muted">Thuê bao hoạt động</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-            <Users size={15} />
-          </span>
+      {/* Thuê bao hoạt động */}
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2 shadow-xs hover:border-indigo-300 transition-all">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          <Users size={16} />
         </div>
-        <p className="text-xl font-bold text-navy-700 mt-2">
-          {formatNumber(stats.activeSubscribers)}
-        </p>
-        <p className="text-[11px] text-ink-muted mt-1">
-          <strong className="text-navy-700">{stats.teacherSubscribers}</strong> GV · <strong className="text-navy-700">{stats.studentSubscribers}</strong> Học viên
-        </p>
-      </Card>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[11px] font-medium text-ink-muted">Thuê bao hoạt động</span>
+            <span className="text-[10px] text-ink-muted">
+              {teacherSubscribers} GV · {studentSubscribers} HV
+            </span>
+          </div>
+          <p className="text-sm font-bold text-navy-700 truncate mt-0.5">
+            {formatNumber(activeSubscribers)}
+          </p>
+        </div>
+      </div>
 
-      <Card className="p-4 border border-line relative overflow-hidden group hover:border-amber-400 hover:shadow-sm transition-all">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-ink-muted">Mã ưu đãi</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-50 text-amber-600">
-            <Tag size={15} />
-          </span>
+      {/* Mã ưu đãi */}
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2 shadow-xs hover:border-amber-300 transition-all">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+          <Tag size={16} />
         </div>
-        <p className="text-xl font-bold text-navy-700 mt-2">
-          {stats.activeCoupons} Mã
-        </p>
-        <p className="text-[11px] text-amber-600 font-semibold mt-1">
-          {stats.couponRedemptions} lượt dùng tuần này
-        </p>
-      </Card>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[11px] font-medium text-ink-muted">Mã ưu đãi</span>
+            <span className="text-[10px] text-amber-600 font-semibold">
+              {couponRedemptions} dùng
+            </span>
+          </div>
+          <p className="text-sm font-bold text-navy-700 truncate mt-0.5">
+            {activeCoupons} Mã
+          </p>
+        </div>
+      </div>
 
-      <Card className="p-4 border border-line relative overflow-hidden group hover:border-emerald-400 hover:shadow-sm transition-all">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-ink-muted">Tỷ lệ gia hạn</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-600">
-            <Sparkles size={15} />
-          </span>
+      {/* Tỷ lệ gia hạn */}
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2 shadow-xs hover:border-emerald-300 transition-all">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+          <Sparkles size={16} />
         </div>
-        <p className="text-xl font-bold text-navy-700 mt-2">
-          {stats.retentionRate}%
-        </p>
-        <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-          +12% so với trung bình
-        </p>
-      </Card>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[11px] font-medium text-ink-muted">Tỷ lệ gia hạn</span>
+            <span className="text-[10px] text-emerald-600 font-semibold">
+              +12% chuẩn
+            </span>
+          </div>
+          <p className="text-sm font-bold text-navy-700 truncate mt-0.5">
+            {retentionRate}%
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
