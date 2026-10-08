@@ -15,6 +15,8 @@ const STATUS_FILTERS = [
   { value: 'ENDED', label: 'Đã kết thúc' },
 ]
 
+const PAGE_SIZE = 10
+
 export default function ClassListView({ onViewClass }) {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
@@ -23,7 +25,8 @@ export default function ClassListView({ onViewClass }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
-  const PAGE_SIZE = 5
+  const userRole = (user?.role || '').toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
 
   // Quota states
   const [quota, setQuota] = useState(null)
@@ -34,7 +37,12 @@ export default function ClassListView({ onViewClass }) {
   const [editingClass, setEditingClass] = useState(null)
 
   const loadQuota = async () => {
-    const teacherId = user?.role === 'teacher' ? (user?.id || 2) : 2
+    // Admin quản lý toàn hệ thống, không áp dụng quota và không bao giờ yêu cầu nâng cấp gói
+    if (isAdmin) {
+      setQuota(null)
+      return
+    }
+    const teacherId = user?.id || 2
     try {
       const res = await getTeacherQuotaStatus(teacherId)
       if (res) {
@@ -48,8 +56,8 @@ export default function ClassListView({ onViewClass }) {
   const loadClasses = async () => {
     setLoading(true)
     try {
-      // Nếu là giáo viên, truyền teacherId. Admin thì lấy tất cả.
-      const teacherId = user?.role === 'teacher' ? (user.id || 2) : undefined
+      // Nếu là giáo viên, chỉ lấy lớp của họ. Admin thì lấy tất cả lớp học trong hệ thống.
+      const teacherId = !isAdmin ? (user?.id || 2) : undefined
       const data = await getTeacherClasses({
         teacherId,
         status: statusFilter || undefined,
@@ -78,7 +86,7 @@ export default function ClassListView({ onViewClass }) {
   }
 
   const handleOpenCreate = () => {
-    if (quota && !quota.canCreateMoreClasses) {
+    if (!isAdmin && quota && !quota.canCreateMoreClasses) {
       setUpgradeModal({
         open: true,
         message: `Bạn đã sử dụng tối đa ${quota.activeClasses}/${quota.maxClasses} lớp học của ${quota.planName}. Vui lòng nâng cấp gói Giáo viên để mở thêm lớp mới!`
@@ -146,8 +154,8 @@ export default function ClassListView({ onViewClass }) {
 
   return (
     <div className="space-y-4">
-      {/* Teacher Quota & Premium Banner */}
-      {quota && (
+      {/* Teacher Quota & Premium Banner — chỉ hiện với giáo viên, tuyệt đối KHÔNG hiện với admin */}
+      {!isAdmin && quota && (
         <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30 p-5 shadow-xs transition-all">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
@@ -160,11 +168,11 @@ export default function ClassListView({ onViewClass }) {
                     {quota.planName || 'Gói Khởi Đầu (Starter)'}
                   </span>
                   {quota.isPremium ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
-                      <Sparkles size={11} /> Premium
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
+                      <Sparkles size={12} /> Premium
                     </span>
                   ) : (
-                    <span className="text-[11px] font-medium text-slate-500">Gói Tiêu Chuẩn</span>
+                    <span className="text-xs font-medium text-slate-500">Gói Tiêu Chuẩn</span>
                   )}
                 </div>
                 <h3 className="mt-1 text-base font-bold text-slate-900">
@@ -200,7 +208,7 @@ export default function ClassListView({ onViewClass }) {
 
               {/* Sĩ số tối đa */}
               <div className="border-l border-slate-200/80 pl-4">
-                <div className="text-[11px] font-medium text-slate-500">Sĩ số tối đa / lớp</div>
+                <div className="text-xs font-medium text-slate-500">Sĩ số tối đa / lớp</div>
                 <div className="text-sm font-bold text-slate-900">
                   {quota.maxStudentsPerClass} học viên
                 </div>
@@ -208,7 +216,7 @@ export default function ClassListView({ onViewClass }) {
 
               {/* AI Quota */}
               <div className="border-l border-slate-200/80 pl-4">
-                <div className="text-[11px] font-medium text-slate-500">AI Quota / tháng</div>
+                <div className="text-xs font-medium text-slate-500">AI Quota / tháng</div>
                 <div className="text-sm font-bold text-slate-900">
                   {quota.aiQuotaMonthly} lượt
                 </div>
@@ -260,7 +268,7 @@ export default function ClassListView({ onViewClass }) {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer focus:outline-none"
             >
               {STATUS_FILTERS.map((f) => (
                 <option key={f.value} value={f.value}>
@@ -269,7 +277,8 @@ export default function ClassListView({ onViewClass }) {
               ))}
             </select>
 
-            {quota && !quota.canCreateMoreClasses && (
+            {/* Nút nâng cấp — chỉ hiện với giáo viên khi đã hết quota */}
+            {!isAdmin && quota && !quota.canCreateMoreClasses && (
               <button
                 type="button"
                 onClick={() => navigate('/app/goi-dich-vu')}
@@ -297,6 +306,9 @@ export default function ClassListView({ onViewClass }) {
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-3.5">TÊN LỚP</th>
+                {isAdmin && (
+                  <th className="px-6 py-3.5">LỚP CỦA</th>
+                )}
                 <th className="px-6 py-3.5">GIÁO TRÌNH</th>
                 <th className="px-6 py-3.5">MÃ THAM GIA</th>
                 <th className="px-6 py-3.5 text-center">SỐ HỌC VIÊN</th>
@@ -308,13 +320,13 @@ export default function ClassListView({ onViewClass }) {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center">
+                  <td colSpan={isAdmin ? 8 : 7} className="py-8 text-center">
                     <LoadingSpinner text="Đang tải danh sách lớp học..." />
                   </td>
                 </tr>
               ) : paged.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                  <td colSpan={isAdmin ? 8 : 7} className="py-12 text-center text-sm text-slate-400">
                     Không tìm thấy lớp học nào phù hợp
                   </td>
                 </tr>
@@ -353,22 +365,36 @@ export default function ClassListView({ onViewClass }) {
                         </div>
                       </td>
 
+                      {/* Lớp của (chỉ admin) */}
+                      {isAdmin && (
+                        <td className="px-6 py-4.5">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-800">
+                              {cls.teacherName || '—'}
+                            </span>
+                            {cls.teacherId && (
+                              <span className="text-xs text-slate-400 mt-0.5">ID: {cls.teacherId}</span>
+                            )}
+                          </div>
+                        </td>
+                      )}
+
                       {/* Giáo trình khóa học */}
                       <td className="px-6 py-4.5">
                         {cls.courseTitle || cls.courseId ? (
-                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700 max-w-[200px]">
-                            <BookOpen size={12} className="shrink-0 text-brand-600" />
+                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2.5 py-1 text-sm font-medium text-brand-700 max-w-[200px]">
+                            <BookOpen size={13} className="shrink-0 text-brand-600" />
                             <span className="truncate" title={cls.courseTitle}>
                               {cls.courseTitle || `Khóa #${cls.courseId}`}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">Lớp tự do</span>
+                          <span className="text-sm text-slate-400 italic">Lớp tự do</span>
                         )}
                       </td>
 
                       {/* Mã lớp */}
-                      <td className="px-6 py-4.5 font-mono text-xs font-semibold text-brand-600">
+                      <td className="px-6 py-4.5 font-mono text-sm font-semibold text-brand-600">
                         {cls.joinCode || cls.code || 'CHƯA CÓ'}
                       </td>
 
@@ -457,7 +483,7 @@ export default function ClassListView({ onViewClass }) {
         {/* Pagination */}
         {filtered.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-500">
               Hiển thị{' '}
               <strong>
                 {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}
