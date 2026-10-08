@@ -144,6 +144,7 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/audit-logs') ||
       endpoint.startsWith('/admin/reports') ||
       endpoint.startsWith('/admin/teacher-registrations') ||
+      endpoint.startsWith('/admin/reading-passages') ||
       endpoint.startsWith('/admin/courses') ||
       endpoint.startsWith('/admin/lessons') ||
       endpoint.startsWith('/admin/upload') ||
@@ -163,7 +164,11 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/plans') ||
       endpoint.startsWith('/admin/subscriptions') ||
       endpoint.startsWith('/admin/orders') ||
-      endpoint.startsWith('/admin/revenue')
+      endpoint.startsWith('/admin/revenue') ||
+      endpoint.startsWith('/admin/transactions') ||
+      endpoint.startsWith('/admin/roles') ||
+      endpoint.startsWith('/admin/permissions') ||
+      endpoint.startsWith('/admin/stats')
 
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')

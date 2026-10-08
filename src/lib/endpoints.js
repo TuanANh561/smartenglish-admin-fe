@@ -40,6 +40,8 @@ export const ENDPOINTS = {
     create: '/admin/roles',
     update: '/admin/roles/:id',
     remove: '/admin/roles/:id',
+    resetDefaults: '/admin/roles/:id/reset-defaults',
+    permissionGroups: '/admin/roles/permission-groups',
     permissions: '/admin/permissions',
     assign: '/admin/users/:id/roles',
   },

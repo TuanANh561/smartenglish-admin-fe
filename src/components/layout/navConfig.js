@@ -16,6 +16,7 @@ import {
   Users,
   Wallet,
   Cpu,
+  User,
 } from 'lucide-react'
 
 export const ROLE_ACCESS = {
@@ -30,6 +31,7 @@ export const ROLE_ACCESS = {
     '/app/noi-dung-ai',
     '/app/nhat-ky',
     '/app/cai-dat',
+    '/app/ho-so',
   ],
 }
 
@@ -173,7 +175,8 @@ export const ROUTE_META = {
   '/app/thong-bao': { title: 'Thông báo', description: 'Quản lý thông báo hệ thống' },
   '/app/bao-cao': { title: 'Báo cáo vi phạm', description: 'Theo dõi báo cáo vi phạm từ người dùng' },
   '/app/nhat-ky': { title: 'Nhật ký hoạt động', description: 'Nhật ký hoạt động của quản trị viên' },
-  '/app/cai-dat': { title: 'Cài đặt', description: 'Cấu hình chung cho hệ thống' },
+  '/app/cai-dat': { title: 'Cài đặt', description: 'Cấu hình và tuỳ chọn cho hệ thống' },
+  '/app/ho-so': { title: 'Hồ sơ cá nhân', description: 'Quản lý thông tin tài khoản, chuyên môn giảng dạy và bảo mật' },
   '/ui': { title: 'Bộ nguyên thuỷ giao diện', description: 'Kitchen sink — chỉ dùng để phát triển' },
 }
 
