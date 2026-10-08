@@ -230,7 +230,7 @@ function AuditLogPage() {
                 setDateRange(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="all">Thời gian: Tất cả</option>
               <option value="24h">24 giờ qua</option>
@@ -246,7 +246,7 @@ function AuditLogPage() {
                   setUserRole(e.target.value)
                   setPage(1)
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
               >
                 <option value="all">Vai trò: Tất cả</option>
                 <option value="admin">Quản trị viên (Admin)</option>
@@ -254,7 +254,7 @@ function AuditLogPage() {
                 <option value="student">Học viên (Student)</option>
               </select>
             ) : (
-              <span className="rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-2 text-xs font-semibold text-brand-700">
+              <span className="rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-2 text-sm font-medium text-brand-700">
                 Vai trò: Giáo viên
               </span>
             )}
@@ -266,7 +266,7 @@ function AuditLogPage() {
                 setActionType(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[155px]"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[170px]"
             >
               <option value="all">Thao tác: Tất cả</option>
               <option value="delete">Xóa tài nguyên</option>
@@ -283,7 +283,7 @@ function AuditLogPage() {
                 setSeverity(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="all">Mức độ: Tất cả</option>
               <option value="normal">Bình thường</option>
@@ -391,14 +391,14 @@ function AuditLogPage() {
                     {/* Cột 1: Thời gian */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="font-mono text-xs font-semibold text-slate-800">
+                        <span className="font-mono text-sm font-semibold text-slate-800">
                           {log.timestamp}
                         </span>
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Clock size={11} className="shrink-0" />
+                        <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                          <Clock size={12} className="shrink-0" />
                           <span>UTC+7</span>
                           {log.logCode && (
-                            <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.2 font-mono text-[10px] text-slate-500 font-medium">
+                            <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500 font-medium">
                               #{log.logCode}
                             </span>
                           )}
@@ -416,13 +416,13 @@ function AuditLogPage() {
                           {log.userInitials || 'AD'}
                         </span>
                         <div>
-                          <p className="font-bold text-slate-900 text-xs leading-tight">
+                          <p className="font-bold text-slate-900 text-sm leading-tight">
                             {log.userName || log.user}
                           </p>
                           <div className="mt-1 flex items-center gap-1.5">
                             <span
                               className={cn(
-                                'inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                                'inline-block rounded-md px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider',
                                 (log.userRole || '').toLowerCase() === 'admin'
                                   ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                   : (log.userRole || '').toLowerCase() === 'teacher'
@@ -433,7 +433,7 @@ function AuditLogPage() {
                               {log.userRoleLabel || log.userRole}
                             </span>
                             {log.user && (
-                              <span className="text-[11px] text-slate-400">
+                              <span className="text-xs text-slate-400">
                                 @{log.user}
                               </span>
                             )}
@@ -449,22 +449,22 @@ function AuditLogPage() {
                           {renderActionIcon(log)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
+                          <p className="text-sm font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
                             {log.actionLabel || log.action}
                           </p>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             {log.targetService && (
-                              <span className="rounded bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 text-[10px] font-mono text-indigo-700 font-semibold">
+                              <span className="rounded bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 text-xs font-mono text-indigo-700 font-semibold">
                                 {log.targetService}
                               </span>
                             )}
                             {log.targetType && (
-                              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-medium">
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 font-medium">
                                 {log.targetType} {log.targetId ? `#${log.targetId}` : ''}
                               </span>
                             )}
                             {log.reason && (
-                              <span className="text-[11px] text-slate-500 italic truncate max-w-[220px]" title={log.reason}>
+                              <span className="text-xs text-slate-500 italic truncate max-w-[220px]" title={log.reason}>
                                 — {log.reason}
                               </span>
                             )}
@@ -476,14 +476,14 @@ function AuditLogPage() {
                     {/* Cột 4: IP & Thiết bị */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="font-mono text-xs font-semibold text-slate-700 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200/50 w-fit">
+                        <span className="font-mono text-sm font-semibold text-slate-700 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200/50 w-fit">
                           {log.ipAddress || '127.0.0.1'}
                         </span>
-                        <span className="text-[11px] text-slate-500 flex items-center gap-1 mt-1">
+                        <span className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                           {(log.device || '').toLowerCase().includes('mobile') ? (
-                            <Smartphone size={12} className="text-slate-400" />
+                            <Smartphone size={13} className="text-slate-400" />
                           ) : (
-                            <Laptop size={12} className="text-slate-400" />
+                            <Laptop size={13} className="text-slate-400" />
                           )}
                           <span>{log.device || 'Web Admin Console'}</span>
                         </span>
@@ -535,14 +535,14 @@ function AuditLogPage() {
         className="max-w-[500px]"
       >
         {activeLog && (
-          <div className="space-y-5 text-xs">
+          <div className="space-y-5 text-sm">
             {/* Header Drawer */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <p className="font-mono text-slate-400 text-[11px]">
+                <p className="font-mono text-slate-400 text-xs">
                   {activeLog.logCode ? `#${activeLog.logCode}` : `ID: ${activeLog.id}`}
                 </p>
-                <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   {activeLog.actionLabel || activeLog.action}
                 </h3>
               </div>
@@ -552,35 +552,35 @@ function AuditLogPage() {
             {/* Thông tin chính */}
             <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3.5 border border-slate-200/60">
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
                   Người thực hiện:
                 </span>
-                <span className="font-bold text-slate-800 text-xs mt-0.5 block">
+                <span className="font-bold text-slate-800 text-sm mt-0.5 block">
                   {activeLog.userName || activeLog.user}
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium">@{activeLog.user}</span>
+                <span className="text-xs text-slate-500 font-medium">@{activeLog.user}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
                   Vai trò:
                 </span>
-                <span className="font-semibold text-slate-800 text-xs mt-0.5 block">
+                <span className="font-semibold text-slate-800 text-sm mt-0.5 block">
                   {activeLog.userRoleLabel || activeLog.userRole}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
                   Thời gian:
                 </span>
-                <span className="font-mono text-slate-800 text-[11px] mt-0.5 block">
+                <span className="font-mono text-slate-800 text-xs mt-0.5 block">
                   {activeLog.timestamp}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
                   Địa chỉ IP:
                 </span>
-                <span className="font-mono text-slate-800 text-[11px] mt-0.5 block">
+                <span className="font-mono text-slate-800 text-xs mt-0.5 block">
                   {activeLog.ipAddress || '127.0.0.1'}
                 </span>
               </div>
@@ -589,7 +589,7 @@ function AuditLogPage() {
             {/* Dịch vụ & Đối tượng tác động */}
             {(activeLog.targetService || activeLog.targetType) && (
               <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
                   Dịch vụ & Đối tượng tác động:
                 </span>
                 <div className="flex items-center gap-2">
@@ -610,10 +610,10 @@ function AuditLogPage() {
             {/* Lý do / Ghi chú */}
             {activeLog.reason && (
               <div>
-                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-xs mb-1">
                   Lý do / Giải trình
                 </h4>
-                <p className="rounded-xl border border-slate-200 p-3 text-xs text-slate-700 bg-slate-50/50 leading-relaxed">
+                <p className="rounded-xl border border-slate-200 p-3 text-sm text-slate-700 bg-slate-50/50 leading-relaxed">
                   {activeLog.reason}
                 </p>
               </div>
@@ -621,7 +621,7 @@ function AuditLogPage() {
 
             {/* Thiết bị & Trình duyệt */}
             <div>
-              <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1">
+              <h4 className="font-bold text-slate-800 uppercase tracking-wider text-xs mb-1">
                 Thiết bị & Môi trường
               </h4>
               <p className="rounded-xl border border-slate-200 p-2.5 font-mono text-xs text-slate-700 bg-white">
@@ -632,10 +632,10 @@ function AuditLogPage() {
             {/* Dữ liệu chi tiết Payload */}
             {activeLog.details && Object.keys(activeLog.details).length > 0 && (
               <div>
-                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1">
+                <h4 className="font-bold text-slate-800 uppercase tracking-wider text-xs mb-1">
                   Dữ liệu thay đổi (Payload)
                 </h4>
-                <pre className="rounded-xl bg-slate-900 p-3 text-[11px] text-emerald-400 font-mono overflow-x-auto max-h-[220px] shadow-inner">
+                <pre className="rounded-xl bg-slate-900 p-3 text-xs text-emerald-400 font-mono overflow-x-auto max-h-[220px] shadow-inner">
                   {JSON.stringify(activeLog.details, null, 2)}
                 </pre>
               </div>

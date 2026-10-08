@@ -351,13 +351,13 @@ export default function PronunciationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('ipa')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
               activeTab === 'ipa'
                 ? 'bg-white text-indigo-600 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <BookOpen size={15} />
+            <BookOpen size={16} />
             <span>Ngân hàng phát âm IPA & Từ mẫu</span>
           </button>
 
@@ -365,15 +365,15 @@ export default function PronunciationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('scenarios')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
               activeTab === 'scenarios'
                 ? 'bg-white text-indigo-600 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <Bot size={15} />
+            <Bot size={16} />
             <span>Kịch bản Luyện nói & AI Roleplay</span>
-            <span className="ml-1 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600 border border-indigo-100">
+            <span className="ml-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600 border border-indigo-100">
               Mới
             </span>
           </button>
@@ -382,12 +382,12 @@ export default function PronunciationPage() {
           <button
             type="button"
             disabled
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl text-slate-400 cursor-not-allowed select-none opacity-80"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl text-slate-400 cursor-not-allowed select-none opacity-80"
             title="Tính năng đang được phát triển"
           >
             <span className="text-sm grayscale opacity-60">🦊</span>
             <span>Nói chuyện 1v1 với Linh vật</span>
-            <span className="ml-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700 font-bold border border-amber-200">
+            <span className="ml-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs text-amber-700 font-bold border border-amber-200">
               Coming soon
             </span>
           </button>
@@ -446,8 +446,8 @@ export default function PronunciationPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="py-3.5 px-6">Bài học & Ký hiệu IPA</th>
                     <th className="py-3.5 px-3 w-36">Phân loại</th>
@@ -644,8 +644,8 @@ export default function PronunciationPage() {
           ) : (
             /* DẠNG 2: TABLE */
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="py-3.5 px-6 w-20">Hình ảnh</th>
                     <th className="py-3.5 px-3 w-24 text-center">Trình độ</th>
@@ -679,7 +679,7 @@ export default function PronunciationPage() {
                           {item.titleEn}
                         </div>
                         {item.titleVi && (
-                          <div className="text-[11px] text-slate-400 font-normal">
+                          <div className="text-xs text-slate-400 font-normal">
                             {item.titleVi}
                           </div>
                         )}
@@ -689,7 +689,7 @@ export default function PronunciationPage() {
                           {item.category || 'Tổng hợp'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-6 text-slate-500 text-[11px]">
+                      <td className="py-3.5 px-6 text-slate-500 text-xs">
                         <p className="line-clamp-2">{item.descriptionEn || item.descriptionVi || '—'}</p>
                       </td>
                       <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>

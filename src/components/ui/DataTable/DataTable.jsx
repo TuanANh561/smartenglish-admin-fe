@@ -5,6 +5,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
 import Pagination from '@/components/ui/Pagination'
 import Skeleton from '@/components/ui/Skeleton'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { cn, formatNumber } from '@/lib/utils'
 
 /**
@@ -42,6 +43,8 @@ function DataTable({
   expandable = false,
   renderExpandedRow,
   onSelectionChange,
+  loadingMessage = 'Đang tải dữ liệu từ máy chủ...',
+  loadingVariant = 'spinner',
   controlsPosition = 'end',
   separateControls = false,
   className,
@@ -258,24 +261,32 @@ function DataTable({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, rowIndex) => (
-                <tr key={rowIndex}>
-                  {finalColumns.map((col, colIndex) => {
-                    const meta = col.columnDef?.meta || col.meta
-                    const isCompact = meta?.compact
-                    return (
-                      <td
-                        key={colIndex}
-                        className={cn(isCompact ? 'px-2 py-3' : 'px-6 py-4.5', meta?.widthClass)}
-                      >
-                        <Skeleton
-                          className={cn('h-4', isCompact ? 'w-5 mx-auto' : 'w-full max-w-[160px]')}
-                        />
-                      </td>
-                    )
-                  })}
+              loadingVariant === 'skeleton' ? (
+                Array.from({ length: 5 }).map((_, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {finalColumns.map((col, colIndex) => {
+                      const meta = col.columnDef?.meta || col.meta
+                      const isCompact = meta?.compact
+                      return (
+                        <td
+                          key={colIndex}
+                          className={cn(isCompact ? 'px-2 py-3' : 'px-6 py-4.5', meta?.widthClass)}
+                        >
+                          <Skeleton
+                            className={cn('h-4', isCompact ? 'w-5 mx-auto' : 'w-full max-w-[160px]')}
+                          />
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columnCount} className="py-14 text-center">
+                    <LoadingSpinner text={loadingMessage} size="lg" />
+                  </td>
                 </tr>
-              ))
+              )
             ) : error ? (
               <tr>
                 <td colSpan={columnCount} className="px-6 py-8">

@@ -29,3 +29,6 @@ export const approveTeacherRegistration = (id, data) =>
 
 export const rejectTeacherRegistration = (id, data) =>
   api.post('/admin/teacher-registrations/:id/reject', { path: { id }, data })
+
+export const deleteTeacherRegistration = (id) =>
+  api.del('/admin/teacher-registrations/:id', { path: { id } })

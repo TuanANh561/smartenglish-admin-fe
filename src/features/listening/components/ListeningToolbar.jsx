@@ -1,19 +1,7 @@
 import Button from '@/components/ui/Button'
 import { ArrowLeft, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { LISTENING_TOPICS } from '@/mocks/data/listening'
-
-export const LISTENING_CATEGORIES = [
-  { value: 'all', label: 'Tất cả dạng bài' },
-  { value: 'TOEIC_PART_1', label: 'Part 1 (Mô tả tranh)' },
-  { value: 'TOEIC_PART_2', label: 'Part 2 (Hỏi & Đáp)' },
-  { value: 'TOEIC_PART_3', label: 'Part 3 (Đoạn hội thoại)' },
-  { value: 'TOEIC_PART_4', label: 'Part 4 (Bài nói ngắn)' },
-  { value: 'CONVERSATION', label: 'Hội thoại giao tiếp' },
-  { value: 'SHORT_TALK', label: 'Bài nói theo chủ đề' },
-  { value: 'NEWS_PODCAST', label: 'Tin tức & Podcast' },
-  { value: 'DICTATION', label: 'Chép chính tả' },
-]
+import { LISTENING_TOPICS, LISTENING_CATEGORIES, LISTENING_ACCENTS } from '../listeningConstants'
 
 export default function ListeningToolbar({
   search,
@@ -25,6 +13,8 @@ export default function ListeningToolbar({
   setCategory,
   topic,
   setTopic,
+  accent = 'all',
+  setAccent,
   trashView,
   setTrashView,
   trashCount,
@@ -34,24 +24,41 @@ export default function ListeningToolbar({
   onOpenCreate,
   onReload,
 }) {
+  const hasFilters = Boolean(
+    search.trim() ||
+    category !== 'all' ||
+    ownershipFilter !== 'all' ||
+    topic !== 'all' ||
+    (accent && accent !== 'all')
+  )
+
+  const clearFilters = () => {
+    setSearch('')
+    setCategory('all')
+    setOwnershipFilter('all')
+    setTopic('all')
+    if (setAccent) setAccent('all')
+    setPage(1)
+  }
+
   return (
-    <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-6 py-3.5 border-b border-slate-100 bg-white">
       {/* Ô tìm kiếm không viền (borderless) chuẩn Benchmark */}
-      <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
-        <Search size={18} className="shrink-0 text-slate-400" />
+      <div className="flex items-center gap-2.5 flex-1 min-w-[200px] max-w-xs">
+        <Search size={16} className="shrink-0 text-slate-400" />
         <input
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
             setPage(1)
           }}
-          placeholder={trashView ? 'Tìm kiếm trong thùng rác...' : 'Tìm kiếm bài học, chủ đề, kịch bản...'}
-          className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+          placeholder={trashView ? 'Tìm trong thùng rác...' : 'Tìm kiếm bài học, chủ đề...'}
+          className="w-full text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
         />
       </div>
 
-      {/* Cụm bộ lọc và nút hành động trên cùng 1 hàng */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      {/* Cụm bộ lọc và nút hành động trên 1 hàng */}
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         {/* Lọc Dạng bài / TOEIC Part */}
         <select
           value={category}
@@ -59,7 +66,7 @@ export default function ListeningToolbar({
             setCategory(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
         >
           {LISTENING_CATEGORIES.map((cat) => (
             <option key={cat.value} value={cat.value}>
@@ -68,14 +75,14 @@ export default function ListeningToolbar({
           ))}
         </select>
 
-        {/* Lọc Nguồn học liệu (chỉ ghi Nguồn: ở mục Tất cả, các mục sau không lặp lại) */}
+        {/* Lọc Nguồn học liệu */}
         <select
           value={ownershipFilter}
           onChange={(e) => {
             setOwnershipFilter(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
         >
           <option value="all">Nguồn: Tất cả ({totalLessons})</option>
           <option value="mine">Của tôi ({myLessonsCount})</option>
@@ -83,14 +90,14 @@ export default function ListeningToolbar({
           {isTeacher && <option value="others">Giáo viên khác</option>}
         </select>
 
-        {/* Lọc Chủ đề (chỉ ghi Chủ đề: ở mục Tất cả, các mục sau không lặp lại) */}
+        {/* Lọc Chủ đề */}
         <select
           value={topic}
           onChange={(e) => {
             setTopic(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
         >
           <option value="all">Chủ đề: Tất cả</option>
           {LISTENING_TOPICS.map((item) => (
@@ -100,31 +107,54 @@ export default function ListeningToolbar({
           ))}
         </select>
 
-        {/* Nút Tải lại danh sách */}
-        {onReload && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={RefreshCw}
-            onClick={onReload}
-            title="Tải lại danh sách"
-          />
+        {/* Lọc Giọng đọc / Accent */}
+        {setAccent && (
+          <select
+            value={accent}
+            onChange={(e) => {
+              setAccent(e.target.value)
+              setPage(1)
+            }}
+            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
+          >
+            <option value="all">Giọng: Tất cả</option>
+            {LISTENING_ACCENTS.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
         )}
 
-
-        {/* Nút Thêm bài nghe */}
-        {!trashView && (
+        {/* Nút Xóa bộ lọc nếu có */}
+        {hasFilters && (
           <button
             type="button"
-            onClick={onOpenCreate}
-            className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+            onClick={clearFilters}
+            className="text-xs font-semibold text-brand-600 hover:text-brand-700 px-2 py-1 transition-colors cursor-pointer"
           >
-            <Plus size={15} />
-            <span>Thêm bài nghe</span>
+            Xoá lọc
           </button>
         )}
 
-        {/* Nút Thùng rác - Ở cuối kế bên nút Thêm */}
+        {/* Đường phân cách nhẹ giữa bộ lọc và nút thao tác */}
+        <div className="hidden sm:block h-5 w-px bg-slate-200 mx-0.5" />
+
+        {/* CỤM NÚT HÀNH ĐỘNG ICON-ONLY */}
+        {/* Nút Tải lại danh sách */}
+        {onReload && (
+          <button
+            type="button"
+            onClick={onReload}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-2xs cursor-pointer hover:border-slate-300"
+            title="Tải lại danh sách"
+            aria-label="Tải lại danh sách"
+          >
+            <RefreshCw size={15} />
+          </button>
+        )}
+
+        {/* Nút Thùng rác (Icon-only) */}
         <button
           type="button"
           onClick={() => {
@@ -132,30 +162,40 @@ export default function ListeningToolbar({
             setPage(1)
           }}
           className={cn(
-            'flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors shadow-2xs cursor-pointer border',
+            'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs cursor-pointer border',
             trashView
               ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
           )}
-          title={trashView ? 'Quay lại danh sách bài nghe đang hoạt động' : 'Xem các bài nghe trong thùng rác'}
+          title={trashView ? 'Quay lại danh sách bài nghe' : `Thùng rác (${trashCount || 0})`}
+          aria-label={trashView ? 'Quay lại danh sách bài nghe' : `Thùng rác (${trashCount || 0})`}
         >
           {trashView ? (
-            <>
-              <ArrowLeft size={14} />
-              <span>Quay lại</span>
-            </>
+            <ArrowLeft size={16} />
           ) : (
             <>
-              <Trash2 size={14} className="text-slate-400 group-hover:text-red-500" />
-              <span>Thùng rác</span>
+              <Trash2 size={16} />
               {trashCount > 0 && (
-                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
                   {trashCount}
                 </span>
               )}
             </>
           )}
         </button>
+
+        {/* Nút Thêm bài nghe (Icon-only) */}
+        {!trashView && (
+          <button
+            type="button"
+            onClick={onOpenCreate}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+            title="Thêm bài nghe mới"
+            aria-label="Thêm bài nghe mới"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     </div>
   )

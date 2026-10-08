@@ -248,15 +248,15 @@ export default function AiConfigPage() {
           {Object.entries(AI_SERVICES_STATUS).map(([key, svc]) => (
             <div key={key} className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-3 flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-medium text-slate-500 block">{svc.name}</span>
-                <span className="text-xs font-bold text-slate-800 mt-0.5 block">{svc.region || svc.service}</span>
+                <span className="text-xs font-medium text-slate-500 block">{svc.name}</span>
+                <span className="text-sm font-bold text-slate-800 mt-0.5 block">{svc.region || svc.service}</span>
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   {svc.latency}ms
                 </span>
-                <span className="text-[10px] text-slate-400 block">Sẵn sàng</span>
+                <span className="text-xs text-slate-400 block">Sẵn sàng</span>
               </div>
             </div>
           ))}
@@ -265,7 +265,7 @@ export default function AiConfigPage() {
         {/* Live Ping Result */}
         {pingResult && (
           <div
-            className={`mt-4 flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-medium ${
+            className={`mt-4 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium ${
               pingResult.success
                 ? 'border border-emerald-200 bg-emerald-50/80 text-emerald-900'
                 : 'border border-red-200 bg-red-50 text-red-800'
@@ -274,11 +274,11 @@ export default function AiConfigPage() {
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
               <span>{pingResult.message} ({pingResult.service})</span>
-              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
                 ⚡ {pingResult.latency} ms
               </span>
             </div>
-            <span className="text-[11px] text-slate-500">{new Date().toLocaleTimeString()}</span>
+            <span className="text-xs text-slate-500">{new Date().toLocaleTimeString()}</span>
           </div>
         )}
       </div>
@@ -288,7 +288,7 @@ export default function AiConfigPage() {
         <button
           type="button"
           onClick={() => setActiveTab('models')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition-colors cursor-pointer shrink-0 ${
             activeTab === 'models'
               ? 'border-brand-600 text-brand-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -301,7 +301,7 @@ export default function AiConfigPage() {
         <button
           type="button"
           onClick={() => setActiveTab('routing')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition-colors cursor-pointer shrink-0 ${
             activeTab === 'routing'
               ? 'border-brand-600 text-brand-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -314,7 +314,7 @@ export default function AiConfigPage() {
         <button
           type="button"
           onClick={() => setActiveTab('speech')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition-colors cursor-pointer shrink-0 ${
             activeTab === 'speech'
               ? 'border-brand-600 text-brand-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -327,7 +327,7 @@ export default function AiConfigPage() {
         <button
           type="button"
           onClick={() => setActiveTab('quotas')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition-colors cursor-pointer shrink-0 ${
             activeTab === 'quotas'
               ? 'border-brand-600 text-brand-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -354,8 +354,8 @@ export default function AiConfigPage() {
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Mô hình</th>
                     <th className="py-3 px-3">Phân cấp</th>
@@ -375,20 +375,20 @@ export default function AiConfigPage() {
                           <div className="flex items-center gap-2">
                             <span>{m.name}</span>
                             {m.recommended && (
-                              <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-[9px] font-bold">
+                              <span className="rounded bg-emerald-100 text-emerald-800 px-1.5 py-0.5 text-xs font-bold">
                                 KHUYÊN DÙNG
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-slate-400 font-normal">{m.provider}</span>
+                          <span className="text-xs text-slate-400 font-normal">{m.provider}</span>
                         </td>
-                        <td className="py-3 px-3">{m.tier}</td>
-                        <td className="py-3 px-3 font-mono text-[11px]">{m.contextWindow}</td>
+                        <td className="py-3 px-3 font-medium text-slate-700">{m.tier}</td>
+                        <td className="py-3 px-3 font-mono text-xs">{m.contextWindow}</td>
                         <td className="py-3 px-3">
                           <span className="font-semibold text-slate-700">~{m.latencyAvg}</span>
                         </td>
-                        <td className="py-3 px-3 text-[11px] font-semibold text-slate-700">{m.costScore}</td>
-                        <td className="py-3 px-4 text-slate-500 max-w-xs">{m.bestFor}</td>
+                        <td className="py-3 px-3 text-xs font-semibold text-slate-700">{m.costScore}</td>
+                        <td className="py-3 px-4 text-slate-600 max-w-xs">{m.bestFor}</td>
                         <td className="py-3 px-4 text-right">
                           <button
                             type="button"
@@ -413,10 +413,10 @@ export default function AiConfigPage() {
             <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-800">
+                  <label className="text-sm font-bold text-slate-800">
                     Nhiệt độ sinh nội dung (Temperature): <span className="text-brand-600 font-mono">{config.temperature}</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">0.2 (Chính xác học thuật) - 0.7 (Hội thoại tự nhiên)</span>
+                  <span className="text-xs text-slate-400">0.2 (Chính xác) - 0.7 (Tự nhiên)</span>
                 </div>
                 <input
                   type="range"
@@ -431,10 +431,10 @@ export default function AiConfigPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-800">
+                  <label className="text-sm font-bold text-slate-800">
                     Giới hạn Tokens mỗi lượt phản hồi: <span className="text-brand-600 font-mono">{config.maxOutputTokens}</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">Tối đa cho 1 câu trả lời từ máy chủ</span>
+                  <span className="text-xs text-slate-400">Tối đa cho 1 câu trả lời từ máy chủ</span>
                 </div>
                 <input
                   type="range"
@@ -484,9 +484,9 @@ export default function AiConfigPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-900">{k.label}</span>
+                          <span className="text-sm font-bold text-slate-900">{k.label}</span>
                           <span
-                            className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                            className={`rounded px-2 py-0.5 text-xs font-semibold ${
                               isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
                             }`}
                           >
@@ -494,7 +494,7 @@ export default function AiConfigPage() {
                           </span>
                         </div>
                         <div className="mt-1 flex items-center gap-2">
-                          <code className="text-xs font-mono text-slate-600">
+                          <code className="text-sm font-mono text-slate-600">
                             {isRevealed ? k.keyMasked : `${k.keyMasked.slice(0, 10)}••••••••••••••••${k.keyMasked.slice(-6)}`}
                           </code>
                           <button
@@ -556,8 +556,8 @@ export default function AiConfigPage() {
             <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Sinh Đề thi, Bài đọc & Quiz (AI Studio)</h4>
-                  <span className="text-[11px] text-slate-500">content-service:8082 /admin/ai/contents</span>
+                  <h4 className="text-sm font-bold text-slate-900">Sinh Đề thi, Bài đọc & Quiz (AI Studio)</h4>
+                  <span className="text-xs text-slate-500">content-service:8082 /admin/ai/contents</span>
                 </div>
                 <select
                   value={config.routing.contentStudio.model}
@@ -567,7 +567,7 @@ export default function AiConfigPage() {
                       routing: { ...prev.routing, contentStudio: { ...prev.routing.contentStudio, model: e.target.value } },
                     }))
                   }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
+                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng)</option>
                   <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -575,7 +575,7 @@ export default function AiConfigPage() {
                 </select>
               </div>
 
-              <div className="text-xs text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div className="text-sm text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span>Tự động duyệt bài khi điểm tin cậy đạt:</span>
                 <span className="font-bold text-slate-800 font-mono">≥ {config.routing.contentStudio.autoApproveThreshold}%</span>
               </div>
@@ -585,8 +585,8 @@ export default function AiConfigPage() {
             <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Bóc tách Từ vựng từ PDF (Multimodal OCR)</h4>
-                  <span className="text-[11px] text-slate-500">content-service:8082 /admin/ai/extract-pdf</span>
+                  <h4 className="text-sm font-bold text-slate-900">Bóc tách Từ vựng từ PDF (Multimodal OCR)</h4>
+                  <span className="text-xs text-slate-500">content-service:8082 /admin/ai/extract-pdf</span>
                 </div>
                 <select
                   value={config.routing.pdfExtractor.model}
@@ -596,7 +596,7 @@ export default function AiConfigPage() {
                       routing: { ...prev.routing, pdfExtractor: { ...prev.routing.pdfExtractor, model: e.target.value } },
                     }))
                   }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
+                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                   <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
@@ -604,7 +604,7 @@ export default function AiConfigPage() {
                 </select>
               </div>
 
-              <div className="text-xs text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div className="text-sm text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span>Chế độ quét hình ảnh PDF:</span>
                 <span className="font-bold text-slate-800">Đa phương thức (High-Res)</span>
               </div>
@@ -614,8 +614,8 @@ export default function AiConfigPage() {
             <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white md:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Gia sư Ảo Teacher Cáo (Hội thoại & Phản xạ Mobile)</h4>
-                  <span className="text-[11px] text-slate-500">ai-practice-service:8084 /ai-practice/chat</span>
+                  <h4 className="text-sm font-bold text-slate-900">Gia sư Ảo Teacher Cáo (Hội thoại & Phản xạ Mobile)</h4>
+                  <span className="text-xs text-slate-500">ai-practice-service:8084 /ai-practice/chat</span>
                 </div>
                 <select
                   value={config.routing.teacherCaoChat.model}
@@ -625,7 +625,7 @@ export default function AiConfigPage() {
                       routing: { ...prev.routing, teacherCaoChat: { ...prev.routing.teacherCaoChat, model: e.target.value } },
                     }))
                   }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
+                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
                 >
                   <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Độ trễ thấp)</option>
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -635,8 +635,8 @@ export default function AiConfigPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold text-slate-700">System Persona Prompt (Tính cách & Quy tắc sư phạm):</label>
-                  <span className="text-[10px] text-slate-400">Lưu ngữ cảnh: {config.routing.teacherCaoChat.contextMemoryTurns} lượt hội thoại</span>
+                  <label className="text-xs font-bold text-slate-700">System Persona Prompt (Tính cách & Quy tắc sư phạm):</label>
+                  <span className="text-xs text-slate-400">Lưu ngữ cảnh: {config.routing.teacherCaoChat.contextMemoryTurns} lượt hội thoại</span>
                 </div>
                 <textarea
                   rows={3}
@@ -650,7 +650,7 @@ export default function AiConfigPage() {
                       },
                     }))
                   }
-                  className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 focus:outline-none focus:border-brand-400 leading-relaxed font-sans"
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 focus:outline-none focus:border-brand-400 leading-relaxed font-sans"
                 />
               </div>
             </div>
@@ -659,8 +659,8 @@ export default function AiConfigPage() {
             <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white md:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Động cơ Chấm Bài Viết Luận (AI Writing Rubric)</h4>
-                  <span className="text-[11px] text-slate-500">Chấm điểm 4 tiêu chí CEFR / IELTS: Ngữ pháp, Từ vựng, Tính mạch lạc, Độ hoàn thành</span>
+                  <h4 className="text-sm font-bold text-slate-900">Động cơ Chấm Bài Viết Luận (AI Writing Rubric)</h4>
+                  <span className="text-xs text-slate-500">Chấm điểm 4 tiêu chí CEFR / IELTS: Ngữ pháp, Từ vựng, Tính mạch lạc, Độ hoàn thành</span>
                 </div>
                 <select
                   value={config.routing.writingEvaluation.model}
@@ -670,7 +670,7 @@ export default function AiConfigPage() {
                       routing: { ...prev.routing, writingEvaluation: { ...prev.routing.writingEvaluation, model: e.target.value } },
                     }))
                   }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
+                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
                 >
                   <option value="gemini-2.5-pro">Gemini 2.5 Pro (Khuyên dùng cho văn luận)</option>
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -700,27 +700,27 @@ export default function AiConfigPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="rounded-xl border border-slate-200 p-3.5 bg-white">
-                <span className="text-[11px] font-bold text-slate-600 block mb-1">Điểm Tổng quan Đạt (Overall)</span>
+                <span className="text-xs font-bold text-slate-600 block mb-1">Điểm Tổng quan Đạt (Overall)</span>
                 <span className="text-lg font-bold text-slate-900 block font-mono">≥ {config.speechEngine.passingOverallThreshold}%</span>
-                <span className="text-[10px] text-slate-400 mt-1 block">Học viên nhận sao hoàn thành</span>
+                <span className="text-xs text-slate-400 mt-1 block">Học viên nhận sao hoàn thành</span>
               </div>
 
               <div className="rounded-xl border border-slate-200 p-3.5 bg-white">
-                <span className="text-[11px] font-bold text-slate-600 block mb-1">Độ chính xác từ (Accuracy)</span>
+                <span className="text-xs font-bold text-slate-600 block mb-1">Độ chính xác từ (Accuracy)</span>
                 <span className="text-lg font-bold text-slate-900 block font-mono">≥ {config.speechEngine.minAccuracyScore}%</span>
-                <span className="text-[10px] text-slate-400 mt-1 block">Khớp từng nguyên âm & phụ âm</span>
+                <span className="text-xs text-slate-400 mt-1 block">Khớp từng nguyên âm & phụ âm</span>
               </div>
 
               <div className="rounded-xl border border-slate-200 p-3.5 bg-white">
-                <span className="text-[11px] font-bold text-slate-600 block mb-1">Trọng âm từ (Word Stress)</span>
+                <span className="text-xs font-bold text-slate-600 block mb-1">Trọng âm từ (Word Stress)</span>
                 <span className="text-lg font-bold text-slate-900 block font-mono">≥ {config.speechEngine.minStressScore}%</span>
-                <span className="text-[10px] text-slate-400 mt-1 block">Độ nhấn âm tiết chính xác</span>
+                <span className="text-xs text-slate-400 mt-1 block">Độ nhấn âm tiết chính xác</span>
               </div>
 
               <div className="rounded-xl border border-slate-200 p-3.5 bg-white">
-                <span className="text-[11px] font-bold text-slate-600 block mb-1">Độ lưu loát (Fluency)</span>
+                <span className="text-xs font-bold text-slate-600 block mb-1">Độ lưu loát (Fluency)</span>
                 <span className="text-lg font-bold text-slate-900 block font-mono">≥ {config.speechEngine.minFluencyScore}%</span>
-                <span className="text-[10px] text-slate-400 mt-1 block">Tốc độ & khoảng dừng tự nhiên</span>
+                <span className="text-xs text-slate-400 mt-1 block">Tốc độ & khoảng dừng tự nhiên</span>
               </div>
             </div>
 
@@ -784,24 +784,24 @@ export default function AiConfigPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">{vp.name}</span>
-                      <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      <span className="text-sm font-bold text-slate-900">{vp.name}</span>
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                         {vp.accent}
                       </span>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">{vp.tag}</p>
+                    <p className="mt-1 text-xs text-slate-500 line-clamp-2">{vp.tag}</p>
 
                     <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 font-mono">Tốc độ chuẩn: {vp.wpm} WPM</span>
+                      <span className="text-xs text-slate-400 font-mono">Tốc độ chuẩn: {vp.wpm} WPM</span>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
                           handlePlayVoice(vp)
                         }}
-                        className="flex items-center gap-1 text-[11px] font-bold text-brand-600 hover:text-brand-700 cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer"
                       >
-                        <Play size={12} className="fill-brand-600" />
+                        <Play size={13} className="fill-brand-600" />
                         <span>Nghe thử giọng</span>
                       </button>
                     </div>
@@ -814,10 +814,10 @@ export default function AiConfigPage() {
             <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-800">
+                  <label className="text-sm font-bold text-slate-800">
                     Hệ số Tốc độ đọc mẫu (Speech Rate): <span className="font-mono text-brand-600">{config.speechEngine.speechRate}x</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">0.8x (Chậm rõ cho từ mới) - 1.2x (Tự nhiên)</span>
+                  <span className="text-xs text-slate-400">0.8x (Chậm rõ) - 1.2x (Tự nhiên)</span>
                 </div>
                 <input
                   type="range"
@@ -837,10 +837,10 @@ export default function AiConfigPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-800">
+                  <label className="text-sm font-bold text-slate-800">
                     Cao độ giọng nói (Pitch): <span className="font-mono text-brand-600">{config.speechEngine.speechPitch}</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">Độ trầm hoặc thanh thoát</span>
+                  <span className="text-xs text-slate-400">Độ trầm hoặc thanh thoát</span>
                 </div>
                 <input
                   type="range"
@@ -874,11 +874,11 @@ export default function AiConfigPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-slate-200 p-4 bg-white">
-              <label className="text-xs font-bold text-slate-800 block mb-1">Tài khoản Miễn phí (Free Tier)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Học viên trải nghiệm cơ bản</span>
+              <label className="text-sm font-bold text-slate-800 block mb-1">Tài khoản Miễn phí (Free Tier)</label>
+              <span className="text-xs text-slate-400 block mb-3">Học viên trải nghiệm cơ bản</span>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[11px] text-slate-600">Chatbot Teacher Cáo / ngày:</span>
+                  <span className="text-xs text-slate-600">Chatbot Teacher Cáo / ngày:</span>
                   <input
                     type="number"
                     value={config.quotas.freeUserChatLimitPerDay}
@@ -888,11 +888,11 @@ export default function AiConfigPage() {
                         quotas: { ...prev.quotas, freeUserChatLimitPerDay: parseInt(e.target.value) || 0 },
                       }))
                     }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
+                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:border-brand-400"
                   />
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-600">Lượt chấm phát âm IPA / ngày:</span>
+                  <span className="text-xs text-slate-600">Lượt chấm phát âm IPA / ngày:</span>
                   <input
                     type="number"
                     value={config.quotas.freeUserSpeakingLimitPerDay}
@@ -902,18 +902,18 @@ export default function AiConfigPage() {
                         quotas: { ...prev.quotas, freeUserSpeakingLimitPerDay: parseInt(e.target.value) || 0 },
                       }))
                     }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
+                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:border-brand-400"
                   />
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border border-amber-200 bg-amber-50/20 p-4">
-              <label className="text-xs font-bold text-amber-900 block mb-1">Học viên VIP (Premium)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Đã đăng ký gói cước VIP 3/6/12 tháng</span>
+              <label className="text-sm font-bold text-amber-900 block mb-1">Học viên VIP (Premium)</label>
+              <span className="text-xs text-slate-400 block mb-3">Đã đăng ký gói cước VIP 3/6/12 tháng</span>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[11px] text-slate-600">Chatbot Teacher Cáo / ngày:</span>
+                  <span className="text-xs text-slate-600">Chatbot Teacher Cáo / ngày:</span>
                   <input
                     type="number"
                     value={config.quotas.vipUserChatLimitPerDay}
@@ -923,11 +923,11 @@ export default function AiConfigPage() {
                         quotas: { ...prev.quotas, vipUserChatLimitPerDay: parseInt(e.target.value) || 0 },
                       }))
                     }
-                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
+                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:border-brand-400"
                   />
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-600">Lượt chấm phát âm IPA / ngày:</span>
+                  <span className="text-xs text-slate-600">Lượt chấm phát âm IPA / ngày:</span>
                   <input
                     type="number"
                     value={config.quotas.vipUserSpeakingLimitPerDay}
@@ -937,18 +937,18 @@ export default function AiConfigPage() {
                         quotas: { ...prev.quotas, vipUserSpeakingLimitPerDay: parseInt(e.target.value) || 0 },
                       }))
                     }
-                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
+                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:border-brand-400"
                   />
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 p-4 bg-white">
-              <label className="text-xs font-bold text-slate-800 block mb-1">Giáo viên (Teacher Studio)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Biên soạn bài tập và giáo án lớp học</span>
+              <label className="text-sm font-bold text-slate-800 block mb-1">Giáo viên (Teacher Studio)</label>
+              <span className="text-xs text-slate-400 block mb-3">Biên soạn bài tập và giáo án lớp học</span>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[11px] text-slate-600">Sinh bài thi & đề kiểm tra / ngày:</span>
+                  <span className="text-xs text-slate-600">Sinh bài thi & đề kiểm tra / ngày:</span>
                   <input
                     type="number"
                     value={config.quotas.teacherGenLimitPerDay}
@@ -958,7 +958,7 @@ export default function AiConfigPage() {
                         quotas: { ...prev.quotas, teacherGenLimitPerDay: parseInt(e.target.value) || 0 },
                       }))
                     }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
+                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 font-mono focus:outline-none focus:border-brand-400"
                   />
                 </div>
               </div>

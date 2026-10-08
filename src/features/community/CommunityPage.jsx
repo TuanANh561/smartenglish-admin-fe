@@ -18,7 +18,15 @@ import { useAuthStore, TEST_USERS } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { http } from '@/lib/api'
 import { formatRelativeTime, cn } from '@/lib/utils'
-import { subscribeToConversation, connectSocket, subscribeToTyping, sendTyping, subscribeToUserEvents } from './socketService'
+import {
+  subscribeToConversation,
+  connectSocket,
+  subscribeToTyping,
+  sendTyping,
+  subscribeToUserEvents,
+  subscribeToPresence,
+  sendPresenceHeartbeat,
+} from './socketService'
 
 
 
@@ -81,6 +89,33 @@ function CommunityPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState(new Set())
   const [conversations, setConversations] = useState([])
+  const [onlineUserIds, setOnlineUserIds] = useState(new Set())
+
+  // Kiểm tra trạng thái online theo quy tắc:
+  // - 1-1: đối phương online thì true, offline thì false
+  // - Nhóm: có bất kỳ thành viên nào khác trong nhóm (ngoại trừ bản thân) online thì true
+  const isConversationOnline = useCallback(
+    (c, currentOnlineSet) => {
+      const isDirect = (c.type || '').toLowerCase() === 'direct'
+      if (isDirect) {
+        const otherMember = c.members?.find((m) => Number(m.userId) !== myId)
+        const otherUserId = Number(
+          otherMember?.userId ||
+            c.memberIds?.find((id) => Number(id) !== myId) ||
+            c.participantId,
+        )
+        return Boolean(otherUserId && currentOnlineSet.has(otherUserId))
+      } else {
+        const memberIds = [
+          ...(c.members?.map((m) => Number(m.userId)) || []),
+          ...(c.memberIds?.map(Number) || []),
+        ]
+        const otherIds = memberIds.filter((id) => id && id !== myId && !isNaN(id))
+        return otherIds.some((id) => currentOnlineSet.has(id))
+      }
+    },
+    [myId],
+  )
 
   const contacts = useMemo(() => {
     return realUsers.map((u) => ({
@@ -342,7 +377,7 @@ function CommunityPage() {
               lastMessage: c.lastMessage || 'Bắt đầu cuộc trò chuyện',
               lastTime: formatRelativeTime(c.lastMessageAt),
               unread: Number(c.unreadCount) || 0,
-              online: true,
+              online: isConversationOnline(c, onlineUserIds),
               messages: preservedMessages,
             }
           })
@@ -351,7 +386,7 @@ function CommunityPage() {
     } catch (err) {
       console.warn('Cannot fetch conversations from MongoDB Atlas, using fallback:', err)
     }
-  }, [myId, getRoleLabel])
+  }, [myId, getRoleLabel, isConversationOnline, onlineUserIds])
 
   // Load friends and pending requests from MongoDB Atlas
   const fetchFriends = useCallback(async () => {
@@ -397,6 +432,75 @@ function CommunityPage() {
     // Connect WebSocket on page load
     connectSocket()
   }, [myId])
+
+  // Quản lý trạng thái Realtime Presence (Online/Offline)
+  useEffect(() => {
+    if (!myId) return
+    let active = true
+
+    // 1. Lấy danh sách ID các người dùng đang online ban đầu
+    http
+      .get('/api/v1/social/presence/online-users')
+      .then((res) => {
+        if (!active) return
+        const raw = res?.data || res
+        const ids = Array.isArray(raw) ? raw.map(Number) : []
+        const newSet = new Set(ids)
+        newSet.add(myId) // Đảm bảo bản thân là online
+        setOnlineUserIds(newSet)
+        useChatStore.getState().setOnlineUserIds(Array.from(newSet))
+      })
+      .catch((err) => {
+        console.warn('Could not fetch initial online users:', err)
+      })
+
+    // 2. Gửi tín hiệu Heartbeat định kỳ mỗi 20 giây để giữ trạng thái online
+    const sendHb = () => {
+      http.post(`/api/v1/social/presence/heartbeat?userId=${myId}`).catch(() => {})
+      sendPresenceHeartbeat(myId)
+    }
+    sendHb()
+    const hbInterval = setInterval(sendHb, 20000)
+
+    // 3. Đăng ký nhận sự kiện realtime từ WebSocket /topic/presence
+    const unsubPresence = subscribeToPresence((event) => {
+      if (!event) return
+      if (event.type === 'PRESENCE_CHANGE') {
+        const targetUserId = Number(event.userId)
+        const isOnline = Boolean(event.online)
+
+        setOnlineUserIds((prev) => {
+          const next = new Set(prev)
+          if (isOnline) {
+            next.add(targetUserId)
+          } else {
+            next.delete(targetUserId)
+          }
+          useChatStore.getState().setOnlineUserIds(Array.from(next))
+          return next
+        })
+      }
+    })
+
+    return () => {
+      active = false
+      clearInterval(hbInterval)
+      unsubPresence()
+      // Khai báo offline khi rời trang
+      http.post(`/api/v1/social/presence/offline?userId=${myId}`).catch(() => {})
+    }
+  }, [myId])
+
+  // Đồng bộ lại trạng thái online của danh sách cuộc trò chuyện khi onlineUserIds thay đổi
+  useEffect(() => {
+    setConversations((prev) => {
+      if (!prev || prev.length === 0) return prev
+      return prev.map((c) => ({
+        ...c,
+        online: isConversationOnline(c, onlineUserIds),
+      }))
+    })
+  }, [onlineUserIds, isConversationOnline])
 
   useEffect(() => {
     if (isFindFriendsOpen) {

@@ -158,7 +158,10 @@ export default function ChatConversationSidebar({
                   size="md"
                 />
                 {conversation.online && (
-                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                  <span
+                    className="absolute bottom-0 right-0 h-3 w-3 translate-x-0.5 translate-y-0.5 rounded-full border-2 border-white bg-emerald-500 shadow-2xs"
+                    title="Đang hoạt động"
+                  />
                 )}
               </div>
 

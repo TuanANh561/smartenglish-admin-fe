@@ -229,6 +229,66 @@ export function subscribeToUserEvents(userId, onEvent) {
   }
 }
 
+export function subscribeToPresence(onPresence) {
+  const client = getSocketClient()
+  const topic = '/topic/presence'
+
+  const doSubscribe = () => {
+    if (!client.connected) return
+    if (subscriptions.has(topic)) {
+      try {
+        subscriptions.get(topic).unsubscribe()
+      } catch {
+        // ignore
+      }
+    }
+    const sub = client.subscribe(topic, (message) => {
+      try {
+        const payload = JSON.parse(message.body)
+        onPresence(payload)
+      } catch (err) {
+        console.error('Error parsing presence WS message:', err)
+      }
+    })
+    subscriptions.set(topic, sub)
+  }
+
+  connectListeners.add(doSubscribe)
+
+  if (client.connected) {
+    doSubscribe()
+  } else {
+    connectSocket()
+  }
+
+  return () => {
+    connectListeners.delete(doSubscribe)
+    if (subscriptions.has(topic)) {
+      try {
+        subscriptions.get(topic).unsubscribe()
+      } catch {
+        // ignore
+      }
+      subscriptions.delete(topic)
+    }
+  }
+}
+
+export function sendPresenceHeartbeat(userId) {
+  if (!userId) return
+  const client = getSocketClient()
+  if (client && client.connected) {
+    try {
+      client.publish({
+        destination: '/app/presence.heartbeat',
+        body: JSON.stringify({ userId }),
+      })
+    } catch (err) {
+      console.warn('Cannot publish presence heartbeat via WS:', err)
+    }
+  }
+}
+
 export function disconnectSocket() {
   if (stompClient) {
     connectListeners.clear()

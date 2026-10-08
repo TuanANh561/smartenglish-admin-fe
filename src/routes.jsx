@@ -26,6 +26,7 @@ import ReadingPage from '@/features/reading/ReadingPage'
 import ReportsPage from '@/features/reports/ReportsPage'
 import RevenueListPage from '@/features/revenue/RevenueListPage'
 import SettingsPage from '@/features/settings/SettingsPage'
+import ProfilePage from '@/features/profile/ProfilePage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
 import UsersPage from '@/features/users/UsersPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
@@ -87,12 +88,15 @@ export const router = createBrowserRouter([
           { path: 'bao-cao', element: <ReportsPage /> },
           { path: 'nhat-ky', element: <AuditLogPage /> },
           { path: 'cai-dat', element: <SettingsPage /> },
+          { path: 'ho-so', element: <ProfilePage /> },
         ],
       },
     ],
   },
   { path: '/ui', element: <UiKitchenSink /> },
   // Redirects tiện ích cho đường dẫn học liệu không kèm tiền tố /app
+  { path: '/cai-dat', element: <Navigate to="/app/cai-dat" replace /> },
+  { path: '/ho-so', element: <Navigate to="/app/ho-so" replace /> },
   { path: '/lop-hoc', element: <Navigate to="/app/lop-hoc" replace /> },
   { path: '/goi-dich-vu', element: <Navigate to="/app/goi-dich-vu" replace /> },
   { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },

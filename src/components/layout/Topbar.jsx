@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Bell, Calendar, ChevronDown, LogOut, PanelLeft, User } from 'lucide-react'
+import { Bell, Calendar, ChevronDown, LogOut, PanelLeft, Settings, User } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ROUTE_META } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
@@ -246,14 +246,28 @@ function Topbar({ actions }) {
                 type="button"
                 onClick={() => {
                   setUserMenuOpen(false)
-                  navigate('/cai-dat')
+                  navigate('/app/ho-so')
+                }}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 shrink-0">
+                  <User size={16} />
+                </div>
+                <span>Hồ sơ cá nhân</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setUserMenuOpen(false)
+                  navigate('/app/cai-dat')
                 }}
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 shrink-0">
-                  <User size={16} />
+                  <Settings size={16} />
                 </div>
-                <span>Xem Profile & Cài đặt</span>
+                <span>Cài đặt hệ thống</span>
               </button>
 
               <button
