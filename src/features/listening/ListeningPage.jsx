@@ -304,6 +304,8 @@ function ListeningPage() {
           setCategory={setCategory}
           topic={topic}
           setTopic={setTopic}
+          accent={accent}
+          setAccent={setAccent}
           trashView={trashView}
           setTrashView={setTrashView}
           trashCount={stats.trash || 0}
@@ -313,6 +315,7 @@ function ListeningPage() {
           onOpenCreate={handleOpenCreate}
           onReload={fetchLessons}
         />
+
 
         {/* Table Content */}
         <div className="overflow-x-auto">

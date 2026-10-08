@@ -62,11 +62,11 @@ export default function ExamTableRow({
                 {item.title}
               </p>
               {canManage ? (
-                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 shrink-0">
+                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-xs font-semibold text-amber-700 shrink-0">
                   Của bạn
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 shrink-0">
+                <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-600 shrink-0">
                   Hệ thống
                 </span>
               )}
@@ -90,7 +90,7 @@ export default function ExamTableRow({
       {/* Cấp độ */}
       <td className="px-3 py-3.5 text-center">
         <span
-          className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-bold"
+          className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
         >
           {item.cefrLevel}
@@ -103,7 +103,7 @@ export default function ExamTableRow({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); canManage && onTogglePublish(item) }}
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors ${statusBadge.bg} ${statusBadge.text} ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${statusBadge.bg} ${statusBadge.text} ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             title={canManage ? 'Nhấn để đổi trạng thái' : undefined}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
@@ -115,17 +115,17 @@ export default function ExamTableRow({
       </td>
 
       {/* Thời lượng */}
-      <td className="px-3 py-3.5 text-center text-xs text-slate-700 font-medium">
+      <td className="px-3 py-3.5 text-center text-sm text-slate-700 font-medium">
         {item.durationMinutes} phút
       </td>
 
       {/* Số câu hỏi */}
-      <td className="px-3 py-3.5 text-center font-semibold text-slate-700 text-xs">
+      <td className="px-3 py-3.5 text-center font-semibold text-slate-700 text-sm">
         {item.totalQuestions ?? item.questions?.length ?? 0} câu
       </td>
 
       {/* Ngày tạo */}
-      <td className="px-3 py-3.5 text-xs text-slate-500">
+      <td className="px-3 py-3.5 text-sm text-slate-500">
         {formatDate(item.createdAt)}
       </td>
 

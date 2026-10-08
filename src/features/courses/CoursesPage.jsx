@@ -32,7 +32,7 @@ export default function CoursesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [authorFilter, setAuthorFilter] = useState(defaultAuthorFilter)
   const [page, setPage] = useState(1)
-  const PAGE_SIZE = viewMode === 'table' ? 6 : 6
+  const PAGE_SIZE = viewMode === 'table' ? 10 : 6
 
   // Delete modal state
   const [courseToDelete, setCourseToDelete] = useState(null)

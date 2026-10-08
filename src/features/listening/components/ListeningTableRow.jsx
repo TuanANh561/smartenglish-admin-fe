@@ -78,7 +78,7 @@ export default function ListeningTableRow({
 
           <div className="flex items-center gap-2 min-w-0">
             {/* Category / Part Badge */}
-            <span className={cn('inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold border shadow-2xs', cat.bg)}>
+            <span className={cn('inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-xs font-semibold border shadow-2xs', cat.bg)}>
               {cat.label}
             </span>
 
@@ -135,7 +135,7 @@ export default function ListeningTableRow({
         <div className="flex flex-col gap-1">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium w-fit',
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium w-fit',
               isReady
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                 : 'bg-amber-50 text-amber-800 border border-amber-100',
@@ -150,7 +150,7 @@ export default function ListeningTableRow({
             {isReady ? `${item.syncedTranscripts.length} câu đồng bộ` : 'Bản chép đầy đủ'}
           </span>
           {item.questions && item.questions.length > 0 && (
-            <span className="text-[11px] text-slate-500 font-medium">
+            <span className="text-xs text-slate-500 font-medium">
               {item.questions.length} câu hỏi bài tập
             </span>
           )}

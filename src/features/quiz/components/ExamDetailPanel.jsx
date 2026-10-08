@@ -58,7 +58,7 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
                 const text = q.audioScript || q.questionText || opts.map(o => typeof o === 'object' ? o.text : o).join('. ')
                 audioEngine.play(`dp-${qNum}`, { audioUrl: q.audioUrl, fallbackText: text })
               }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                 isPlaying
                   ? 'bg-amber-50 text-amber-800 border-amber-200'
                   : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'
@@ -66,12 +66,12 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
             >
               {isPlaying ? (
                 <>
-                  <VolumeX size={12} className="animate-pulse text-amber-600" />
+                  <VolumeX size={13} className="animate-pulse text-amber-600" />
                   <span>Dừng</span>
                 </>
               ) : (
                 <>
-                  <Volume2 size={12} className="text-indigo-600" />
+                  <Volume2 size={13} className="text-indigo-600" />
                   <span>Nghe</span>
                 </>
               )}
@@ -92,14 +92,14 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
 
           {/* Lời thoại */}
           {isListening && showTranscript && q.audioScript && (
-            <div className="rounded-xl bg-indigo-50/70 border border-indigo-100 p-2.5 text-[11px] text-indigo-900 leading-relaxed italic">
+            <div className="rounded-xl bg-indigo-50/70 border border-indigo-100 p-2.5 text-xs text-indigo-900 leading-relaxed italic">
               <span className="not-italic font-semibold text-indigo-700 mr-1">Lời thoại:</span>
               {q.audioScript}
             </div>
           )}
 
           {/* Nội dung câu hỏi */}
-          <p className="text-xs font-semibold text-slate-800 leading-relaxed">
+          <p className="text-sm font-semibold text-slate-800 leading-relaxed">
             {q.questionText || (partNum === 1 ? 'Quan sát hình ảnh và chọn mô tả đúng nhất.' : `Câu ${qNum}`)}
           </p>
 
@@ -113,19 +113,19 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
                 return (
                   <div
                     key={oi}
-                    className={`flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs transition-all ${
+                    className={`flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition-all ${
                       isCorrect
                         ? 'bg-emerald-50/90 border border-emerald-300 text-emerald-950 font-medium shadow-2xs'
                         : 'bg-slate-50/70 border border-slate-200 text-slate-700'
                     }`}
                   >
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                       isCorrect ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-slate-600'
                     }`}>
                       {key}
                     </span>
                     <span className="leading-snug truncate flex-1" title={text}>{text}</span>
-                    {isCorrect && <CheckCircle2 size={13} className="text-emerald-600 shrink-0 ml-auto" />}
+                    {isCorrect && <CheckCircle2 size={14} className="text-emerald-600 shrink-0 ml-auto" />}
                   </div>
                 )
               })}
@@ -136,7 +136,7 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
 
       {/* Lời giải thích */}
       {(q.explanation || q.explanationVi) && (
-        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2 text-[11px] text-slate-600 leading-relaxed">
+        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2 text-xs text-slate-600 leading-relaxed">
           <span className="font-bold text-slate-700">Giải thích: </span>
           {q.explanation || q.explanationVi}
         </div>
@@ -324,7 +324,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
       {/* ── Header thông tin đề thi ── */}
       <div className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-200">
         <div className="flex flex-wrap items-center gap-2 mb-1.5">
-          <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
+          <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${
             exam.status === 'published'
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
               : 'bg-slate-100 text-slate-500 border-slate-200'
@@ -332,16 +332,16 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
             {exam.status === 'published' ? 'Đang hoạt động' : 'Bản nháp'}
           </span>
           {exam.cefrLevel && (
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+            <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
               Cấp độ {exam.cefrLevel}
             </span>
           )}
-          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
             {exam.category || 'TOEIC'}
           </span>
         </div>
         <h1 className="text-xl font-bold text-slate-900 leading-snug">{exam.title}</h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 mt-1">
           {exam.totalQuestions ?? questions.length} câu hỏi &bull; {exam.durationMinutes || 120} phút làm bài
           {exam.description && <span className="ml-2 text-slate-400">— {exam.description}</span>}
         </p>
@@ -360,7 +360,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
               <Icon size={16} />
             </div>
             <div>
-              <p className="text-[11px] text-slate-500 leading-none mb-0.5">{label}</p>
+              <p className="text-xs text-slate-500 leading-none mb-0.5">{label}</p>
               <p className="text-sm font-bold text-slate-800">{value}</p>
             </div>
           </div>
@@ -372,7 +372,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => setSelectedPart('ALL')}
-            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
               selectedPart === 'ALL'
                 ? 'bg-brand-600 text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -386,13 +386,13 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
               <button
                 key={p.id}
                 onClick={() => setSelectedPart(p.id)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`shrink-0 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   active
                     ? 'bg-brand-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {p.name} <span className={`text-[10px] ml-0.5 ${active ? 'opacity-80' : 'text-slate-400'}`}>({partCounts[p.id] || 0})</span>
+                {p.name} <span className={`text-xs ml-0.5 ${active ? 'opacity-80' : 'text-slate-400'}`}>({partCounts[p.id] || 0})</span>
               </button>
             )
           })}
@@ -478,15 +478,15 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                   {/* Header nhóm bài đọc */}
                   <div className="flex items-center justify-between px-5 py-2.5 bg-amber-50/70 border-b border-amber-200/80">
                     <div className="flex items-center gap-2">
-                      <FileText size={14} className="text-amber-700 shrink-0" />
-                      <span className="text-xs font-bold text-amber-900">
+                      <FileText size={15} className="text-amber-700 shrink-0" />
+                      <span className="text-sm font-bold text-amber-900">
                         {group.partNum === 6 ? 'Bài đọc điền từ' : 'Bài đọc hiểu'}
                       </span>
                       {group.groupRangeText && (
-                        <span className="text-xs text-amber-700 ml-1 font-medium">— {group.groupRangeText}</span>
+                        <span className="text-sm text-amber-700 ml-1 font-medium">— {group.groupRangeText}</span>
                       )}
                     </div>
-                    <span className="text-[11px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-200/60">
+                    <span className="text-xs font-semibold text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-md border border-amber-200/60">
                       {group.questions.length} câu hỏi
                     </span>
                   </div>
@@ -498,8 +498,8 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                       className="lg:col-span-5 p-5 bg-amber-50/20 max-h-[640px] overflow-y-auto"
                       style={{ scrollbarWidth: 'thin', scrollbarColor: '#f59e0b transparent' }}
                     >
-                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Nội dung đoạn văn:</p>
-                      <div className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-serif">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nội dung đoạn văn:</p>
+                      <div className="text-sm text-slate-800 leading-relaxed whitespace-pre-line font-serif">
                         {group.passage}
                       </div>
                     </div>
@@ -542,10 +542,10 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                         <Headphones size={16} />
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-indigo-950">
+                        <span className="text-sm font-bold text-indigo-950">
                           {group.partNum === 3 ? 'Part 3: Hội thoại' : 'Part 4: Bài nói'}
                         </span>
-                        <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200">
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200">
                           {group.groupRangeText}
                         </span>
                       </div>
@@ -599,11 +599,11 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                   {/* Lời thoại bài nghe (Transcript) */}
                   {isExpandedTranscript && group.audioScript && (
                     <div className="bg-indigo-50/40 border-b border-indigo-100 p-4">
-                      <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-900 mb-1.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 mb-1.5">
                         <Sparkles size={13} className="text-indigo-600" />
                         <span>Kịch bản lời thoại (Transcript đoạn nghe):</span>
                       </div>
-                      <div className="text-xs text-indigo-950 font-sans leading-relaxed whitespace-pre-line bg-white/90 p-3.5 rounded-xl border border-indigo-100 shadow-2xs italic">
+                      <div className="text-sm text-indigo-950 font-sans leading-relaxed whitespace-pre-line bg-white/90 p-3.5 rounded-xl border border-indigo-100 shadow-2xs italic">
                         {group.audioScript}
                       </div>
                     </div>
@@ -619,7 +619,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                       />
                       <div className="text-xs text-slate-600">
                         <span className="font-bold text-slate-800">Biểu đồ / Hình ảnh đi kèm bài nghe:</span>
-                        <p className="text-[11px] text-slate-500 mt-0.5">Dùng để trả lời câu hỏi có liên quan đến hình ảnh trong đoạn nghe này.</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Dùng để trả lời câu hỏi có liên quan đến hình ảnh trong đoạn nghe này.</p>
                       </div>
                     </div>
                   )}
@@ -651,9 +651,9 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
       </div>
 
       {/* ── Footer ── */}
-      <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2.5 flex items-center justify-between text-[11px] text-slate-400">
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2.5 flex items-center justify-between text-xs text-slate-500">
         <span>Ngày tạo: {formatDate(exam.createdAt) || '—'}</span>
-        <span className="flex items-center gap-1"><User size={12} />{exam.authorName || 'Hệ thống'}</span>
+        <span className="flex items-center gap-1"><User size={13} />{exam.authorName || 'Hệ thống'}</span>
       </div>
     </div>
   )

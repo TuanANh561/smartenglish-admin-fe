@@ -58,24 +58,24 @@ export default function ExamCard({
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Category badge */}
-            <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${categoryCfg.bg}`}>
+            <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${categoryCfg.bg}`}>
               {categoryCfg.label}
             </span>
 
             {/* Author source badge */}
             {canManage ? (
-              <span className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+              <span className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
                 Của bạn
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                 Hệ thống
               </span>
             )}
 
             {/* CEFR Level badge */}
             <span
-              className="inline-flex items-center rounded-lg border px-2 py-1 text-[11px] font-bold"
+              className="inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold"
               style={{
                 backgroundColor: levelStyle.bg,
                 color: levelStyle.text,
@@ -88,7 +88,7 @@ export default function ExamCard({
 
           {/* Status or Trash badge */}
           {isTrash ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-semibold text-red-600">
               <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
               Đã xóa
             </span>
@@ -101,7 +101,7 @@ export default function ExamCard({
               }}
               disabled={!canManage}
               title={canManage ? 'Nhấp để đổi trạng thái xuất bản' : undefined}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-opacity ${statusBadge.bg} ${statusBadge.text} ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity ${statusBadge.bg} ${statusBadge.text} ${
                 canManage ? 'cursor-pointer hover:opacity-85' : 'cursor-default'
               }`}
             >
@@ -117,32 +117,32 @@ export default function ExamCard({
         </h3>
 
         {/* Description */}
-        <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[2rem]">
+        <p className="mt-1.5 text-sm text-slate-500 line-clamp-2 leading-relaxed min-h-[2rem]">
           {item.description || 'Chưa có phần giới thiệu chi tiết cho đề thi này.'}
         </p>
 
         {/* Key Metrics Grid */}
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50/80 p-2.5 border border-slate-100">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <Clock size={14} className="text-brand-500 shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Clock size={15} className="text-brand-500 shrink-0" />
             <span className="truncate">
               Thời gian: <strong className="text-slate-900">{item.durationMinutes || 45}p</strong>
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <HelpCircle size={14} className="text-emerald-500 shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <HelpCircle size={15} className="text-emerald-500 shrink-0" />
             <span className="truncate">
               Quy mô: <strong className="text-slate-900">{questionCount} câu</strong>
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <Target size={14} className="text-purple-500 shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Target size={15} className="text-purple-500 shrink-0" />
             <span className="truncate">
               Điểm sàn: <strong className="text-slate-900">{item.passingScore || 0}</strong>
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <Sparkles size={14} className="text-amber-500 shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Sparkles size={15} className="text-amber-500 shrink-0" />
             <span className="truncate">
               Thưởng: <strong className="text-amber-600">+{item.xpReward || 50} XP</strong>
             </span>
@@ -153,12 +153,12 @@ export default function ExamCard({
         {Array.isArray(item.sections) && item.sections.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {item.sections.slice(0, 3).map((sec, i) => (
-              <span key={i} className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+              <span key={i} className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                 {sec.title || sec.sectionName}
               </span>
             ))}
             {item.sections.length > 3 && (
-              <span className="inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+              <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
                 +{item.sections.length - 3}
               </span>
             )}
@@ -169,10 +169,10 @@ export default function ExamCard({
       {/* Footer: Author/Date & Action buttons */}
       <div className="mt-5 border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-slate-700 truncate">
+          <p className="text-xs font-semibold text-slate-700 truncate">
             {item.authorName || 'Quản trị viên'}
           </p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-xs text-slate-400">
             {formatDate(item.createdAt)}
           </p>
         </div>

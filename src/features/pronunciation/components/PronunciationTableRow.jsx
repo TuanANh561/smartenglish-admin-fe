@@ -82,7 +82,7 @@ export default function PronunciationTableRow({
       </td>
 
       {/* Cập nhật */}
-      <td className="px-3 py-4 w-32 text-xs text-slate-500 whitespace-nowrap">
+      <td className="px-3 py-4 w-32 text-sm text-slate-500 whitespace-nowrap">
         {formatRelativeTime(item.updatedAt)}
       </td>
 
