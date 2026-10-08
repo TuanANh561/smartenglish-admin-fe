@@ -73,12 +73,12 @@ export default function TeacherPlansTab({
               {/* Badge & Popular Toggle */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-ink-muted uppercase">Nhãn phụ</label>
+                  <label className="text-xs font-bold text-ink-muted uppercase">Nhãn phụ</label>
                   <Input
                     value={plan.badge || ''}
                     onChange={(e) => onUpdatePlan(plan.id, 'badge', e.target.value)}
                     placeholder="VD: Khuyên dùng"
-                    className="text-xs mt-0.5"
+                    className="text-sm mt-0.5"
                   />
                 </div>
                 <div className="flex items-end pb-1.5">
@@ -98,25 +98,25 @@ export default function TeacherPlansTab({
               <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-200/80 space-y-2">
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[10px] font-bold text-ink-muted uppercase">Giá / Tháng (đ)</label>
+                    <label className="text-xs font-bold text-ink-muted uppercase">Giá / Tháng (đ)</label>
                     <CurrencyInput
                       value={plan.priceMonthly}
                       onChange={(val) => onUpdatePlan(plan.id, 'priceMonthly', val)}
-                      className="font-bold text-navy-700 text-xs mt-0.5"
+                      className="font-bold text-navy-700 text-sm mt-0.5"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-ink-muted uppercase">Giá / Năm (đ)</label>
+                    <label className="text-xs font-bold text-ink-muted uppercase">Giá / Năm (đ)</label>
                     <CurrencyInput
                       value={plan.priceYearly}
                       onChange={(val) => onUpdatePlan(plan.id, 'priceYearly', val)}
-                      className="font-bold text-navy-700 text-xs mt-0.5"
+                      className="font-bold text-navy-700 text-sm mt-0.5"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 font-semibold">
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60 font-semibold">
                   <span className="text-ink-muted">Hiển thị giá:</span>
                   <span className="text-brand-600">
                     {plan.priceMonthly === 0 ? 'Miễn phí' : `${formatCurrency(plan.priceMonthly)} / tháng`}
@@ -126,35 +126,35 @@ export default function TeacherPlansTab({
 
               {/* Hạn mức cấu hình (Quotas) */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-navy-700 uppercase tracking-wide block">
+                <span className="text-xs font-bold text-navy-700 uppercase tracking-wide block">
                   Hạn mức tài nguyên
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-lg border border-line bg-white p-2">
-                    <span className="text-ink-muted block text-[10px] font-medium">Lớp tối đa:</span>
+                    <span className="text-ink-muted block text-xs font-medium">Lớp tối đa:</span>
                     <Input
                       type="number"
                       value={plan.maxClasses}
                       onChange={(e) => onUpdatePlan(plan.id, 'maxClasses', Number(e.target.value))}
-                      className="mt-0.5 font-bold text-navy-700 text-xs"
+                      className="mt-0.5 font-bold text-navy-700 text-sm"
                     />
                   </div>
                   <div className="rounded-lg border border-line bg-white p-2">
-                    <span className="text-ink-muted block text-[10px] font-medium">Học viên:</span>
+                    <span className="text-ink-muted block text-xs font-medium">Học viên:</span>
                     <Input
                       type="number"
                       value={plan.maxStudents}
                       onChange={(e) => onUpdatePlan(plan.id, 'maxStudents', Number(e.target.value))}
-                      className="mt-0.5 font-bold text-navy-700 text-xs"
+                      className="mt-0.5 font-bold text-navy-700 text-sm"
                     />
                   </div>
                   <div className="rounded-lg border border-line bg-white p-2">
-                    <span className="text-ink-muted block text-[10px] font-medium">AI / tháng:</span>
+                    <span className="text-ink-muted block text-xs font-medium">AI / tháng:</span>
                     <Input
                       type="number"
                       value={plan.aiQuotaMonthly}
                       onChange={(e) => onUpdatePlan(plan.id, 'aiQuotaMonthly', Number(e.target.value))}
-                      className="mt-0.5 font-bold text-navy-700 text-xs"
+                      className="mt-0.5 font-bold text-navy-700 text-sm"
                     />
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export default function TeacherPlansTab({
               {/* Danh sách Tính năng */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-navy-700 uppercase tracking-wide">
+                  <span className="text-xs font-bold text-navy-700 uppercase tracking-wide">
                     Tính năng ({plan.features.filter((f) => f.enabled).length}/{plan.features.length})
                   </span>
                 </div>
@@ -181,11 +181,11 @@ export default function TeacherPlansTab({
                     >
                       <div className="flex items-center gap-1.5 flex-1 min-w-0">
                         {feature.enabled ? (
-                          <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                          <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                         ) : (
-                          <X size={13} className="text-slate-300 shrink-0" />
+                          <X size={14} className="text-slate-300 shrink-0" />
                         )}
-                        <span className={cn('text-[11px] truncate', !feature.enabled && 'line-through')}>
+                        <span className={cn('text-xs truncate', !feature.enabled && 'line-through')}>
                           {feature.label}
                         </span>
                       </div>

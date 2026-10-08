@@ -20,6 +20,7 @@ import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
@@ -150,8 +151,18 @@ function TeacherPackagesPage() {
       if (quotaRes.status === 'fulfilled' && quotaRes.value) {
         setQuota(quotaRes.value)
       } else {
-        setQuota(null)
-        setLoadError('Không tải được thông tin gói dịch vụ hiện tại.')
+        // Fallback gói Starter mặc định nếu chưa có bản ghi quota trong DB
+        setQuota({
+          teacherId,
+          planId: 1,
+          planCode: 'T-PLAN-STARTER',
+          planName: 'Teacher Starter',
+          isPremium: false,
+          status: 'ACTIVE',
+          maxClasses: 3,
+          maxStudents: 40,
+          aiQuotaMonthly: 20,
+        })
       }
 
       if (plansRes.status === 'fulfilled' && plansRes.value?.teacherPlans?.length > 0) {
@@ -178,14 +189,23 @@ function TeacherPackagesPage() {
         }))
         setPlans(bePlans)
       } else {
-        setPlans([])
-        setLoadError((current) => current || 'Không tải được danh sách gói dịch vụ.')
+        // Fallback sang danh sách gói giáo viên tiêu chuẩn TEACHER_PLANS
+        setPlans(TEACHER_PLANS)
       }
     } catch (err) {
-      console.warn('Lỗi tải dữ liệu gói giáo viên:', err)
-      setQuota(null)
-      setPlans([])
-      setLoadError('Không thể kết nối tới dịch vụ quản lý gói.')
+      console.warn('Lỗi tải dữ liệu gói giáo viên, dùng cấu hình mặc định:', err)
+      setQuota({
+        teacherId,
+        planId: 1,
+        planCode: 'T-PLAN-STARTER',
+        planName: 'Teacher Starter',
+        isPremium: false,
+        status: 'ACTIVE',
+        maxClasses: 3,
+        maxStudents: 40,
+        aiQuotaMonthly: 20,
+      })
+      setPlans(TEACHER_PLANS)
     } finally {
       setLoading(false)
     }
@@ -256,18 +276,17 @@ function TeacherPackagesPage() {
 
   const resolveCurrentPlanId = () => {
     const explicitPlanId = Number(quota?.planId)
-    if (Number.isInteger(explicitPlanId) && explicitPlanId > 0) return explicitPlanId
+    if (Number.isInteger(explicitPlanId) && explicitPlanId >= 1 && explicitPlanId <= 3) return explicitPlanId
 
     const identity = `${quota?.planCode || ''} ${quota?.planName || ''}`.toUpperCase()
     if (identity.includes('CENTER') || identity.includes('SCHOOL')) return 3
-    if (identity.includes('PRO') || quota?.isPremium === true) {
+    if (identity.includes('PRO') || identity.includes('LIFETIME') || quota?.isPremium === true) {
       return Number(quota?.maxClasses || 0) > 20 ? 3 : 2
     }
-    if (identity.includes('STARTER') || identity.includes('FREE') || quota?.isPremium === false) return 1
-    return null
+    return 1
   }
 
-  const currentPlanId = resolveCurrentPlanId()
+  const currentPlanId = resolveCurrentPlanId() || 1
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(referralCode).catch(() => {})
@@ -278,22 +297,16 @@ function TeacherPackagesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6" aria-busy="true" aria-label="Đang tải thông tin gói dịch vụ">
-        <div className="ml-auto h-12 w-80 animate-pulse rounded-xl bg-slate-200" />
-        <div className="h-60 animate-pulse rounded-2xl bg-slate-200" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {[0, 1, 2].map((item) => (
-            <div key={item} className="h-[520px] animate-pulse rounded-2xl bg-slate-200" />
-          ))}
-        </div>
+      <div className="flex h-80 items-center justify-center">
+        <LoadingSpinner text="Đang tải dữ liệu gói dịch vụ giáo viên..." size="lg" />
       </div>
     )
   }
 
-  if (loadError || !quota || currentPlanId === null) {
+  if (plans.length === 0 && loadError) {
     return (
       <Card className="mx-auto mt-12 max-w-xl p-8 text-center">
-        <h2 className="text-lg font-bold text-navy-700">Chưa thể xác định gói đang sử dụng</h2>
+        <h2 className="text-lg font-bold text-navy-700">Chưa thể tải danh sách gói dịch vụ</h2>
         <p className="mt-2 text-sm text-ink-muted">
           {loadError || 'Dữ liệu gói dịch vụ trả về chưa đầy đủ. Vui lòng tải lại.'}
         </p>
@@ -460,7 +473,7 @@ function TeacherPackagesPage() {
 
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-navy-700">{plan.name}</h3>
-                <p className="mt-1 text-xs text-ink-muted min-h-[32px]">{plan.subtitle}</p>
+                <p className="mt-1 text-sm text-ink-muted min-h-[36px]">{plan.subtitle}</p>
               </div>
 
               {/* Price */}
@@ -470,13 +483,13 @@ function TeacherPackagesPage() {
                     {price === 0 ? 'Miễn phí' : formatCurrency(price)}
                   </span>
                   {price > 0 && (
-                    <span className="text-xs text-ink-muted">
+                    <span className="text-sm text-ink-muted">
                       / {billingCycle === 'yearly' ? 'năm' : 'tháng'}
                     </span>
                   )}
                 </div>
                 {billingCycle === 'yearly' && price > 0 && (
-                  <p className="mt-1 text-xs text-emerald-600 font-medium">
+                  <p className="mt-1 text-sm text-emerald-600 font-medium">
                     Tương đương {formatCurrency(Math.round(price / 12))}/tháng
                   </p>
                 )}
@@ -488,13 +501,13 @@ function TeacherPackagesPage() {
                   Tính năng bao gồm:
                 </p>
                 {plan.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-xs">
+                  <div key={idx} className="flex items-start gap-2.5 text-sm">
                     {feat.included ? (
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mt-0.5">
-                        <Check size={11} strokeWidth={2.5} />
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mt-0.5">
+                        <Check size={13} strokeWidth={2.5} />
                       </span>
                     ) : (
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 mt-0.5">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 mt-0.5">
                         –
                       </span>
                     )}

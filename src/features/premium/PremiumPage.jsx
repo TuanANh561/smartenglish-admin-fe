@@ -11,6 +11,7 @@ import {
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Tabs from '@/components/ui/Tabs'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import PremiumKpiCards from './components/PremiumKpiCards'
 import TeacherPlansTab from './components/TeacherPlansTab'
 import StudentPlansTab from './components/StudentPlansTab'
@@ -408,6 +409,14 @@ function PremiumPage() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-80 items-center justify-center">
+        <LoadingSpinner text="Đang tải dữ liệu cấu hình gói premium..." size="lg" />
+      </div>
+    )
   }
 
   return (
