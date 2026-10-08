@@ -166,7 +166,7 @@ function NotificationsPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="h-9 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-xs text-navy-700 placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="h-9 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm text-navy-700 placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
             <Button size="sm" icon={Plus} onClick={() => setIsCreateOpen(true)}>
@@ -218,25 +218,25 @@ function NotificationsPage() {
                         {item.title}
                       </h3>
                       {item.isImportant && (
-                        <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600">
+                        <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-red-600">
                           Quan trọng
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs text-ink-muted leading-relaxed">
+                    <p className="text-sm text-ink-muted leading-relaxed">
                       {item.content}
                     </p>
 
                     {/* Metadata line */}
-                    <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-ink-muted">
+                    <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-ink-muted">
                       <span className="flex items-center gap-1">
-                        <User size={12} />
+                        <User size={13} />
                         {item.sender}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Users size={12} />
+                        <Users size={13} />
                         {item.targetGroupLabel}
                       </span>
                     </div>
@@ -244,18 +244,18 @@ function NotificationsPage() {
 
                   {/* Right Meta & Actions */}
                   <div className="flex flex-col items-end gap-2.5 shrink-0">
-                    <span className="text-[11px] text-ink-muted">
+                    <span className="text-xs text-ink-muted">
                       {isScheduledItem ? item.scheduledFor : item.sentAt}
                     </span>
 
                     <div className="flex items-center gap-2">
                       {isScheduledItem ? (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700 flex items-center gap-1">
-                          <Clock size={11} /> Lịch gửi
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 flex items-center gap-1">
+                          <Clock size={12} /> Lịch gửi
                         </span>
                       ) : (
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
-                          <Send size={11} /> Đã gửi
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                          <Send size={12} /> Đã gửi
                         </span>
                       )}
 
@@ -277,7 +277,7 @@ function NotificationsPage() {
 
         {/* Footer Pagination */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-          <p className="text-xs text-ink-muted">
+          <p className="text-sm text-ink-muted">
             Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng số{' '}
             <strong>{total}</strong> thông báo
           </p>
@@ -301,7 +301,7 @@ function NotificationsPage() {
               placeholder="VD: Bảo trì hệ thống AI khẩn cấp"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 font-semibold"
+              className="mt-1 font-semibold text-sm"
               required
             />
           </div>
@@ -315,7 +315,7 @@ function NotificationsPage() {
               placeholder="Nhập nội dung thông báo gửi tới người dùng..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-line bg-canvas p-3 text-xs focus:border-brand-500 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-line bg-canvas p-3 text-sm focus:border-brand-500 focus:outline-none"
               required
             />
           </div>
@@ -328,7 +328,7 @@ function NotificationsPage() {
               <Select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="mt-1 text-xs"
+                className="mt-1 text-sm font-medium"
               >
                 <option value="info">Thông tin chung</option>
                 <option value="critical">Khẩn cấp / Quan trọng</option>
@@ -343,7 +343,7 @@ function NotificationsPage() {
               <Select
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
-                className="mt-1 text-xs"
+                className="mt-1 text-sm font-medium"
               >
                 <option value="All Users">Toàn bộ người dùng</option>
                 <option value="Students">Học viên</option>
@@ -354,7 +354,7 @@ function NotificationsPage() {
 
           {/* Lên lịch gửi */}
           <div className="rounded-xl border border-line p-3 space-y-2 bg-slate-50/50">
-            <label className="flex items-center gap-2 text-xs font-semibold text-navy-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm font-semibold text-navy-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isScheduled}
@@ -369,7 +369,7 @@ function NotificationsPage() {
                 type="datetime-local"
                 value={scheduleTime}
                 onChange={(e) => setScheduleTime(e.target.value)}
-                className="text-xs mt-1"
+                className="text-sm mt-1"
                 required={isScheduled}
               />
             )}

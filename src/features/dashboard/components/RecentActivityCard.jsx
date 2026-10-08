@@ -27,7 +27,7 @@ function RecentActivityCard({ data, isLoading = false, error = null, onRetry }) 
         }
         action={
           <Link
-            to="/hoc-vien"
+            to="/app/nhat-ky"
             className="inline-flex items-center gap-0.5 text-sm font-medium text-brand-500 hover:text-brand-600"
           >
             Xem tất cả
@@ -43,7 +43,7 @@ function RecentActivityCard({ data, isLoading = false, error = null, onRetry }) 
       ) : !data?.length ? (
         <EmptyState
           title="Chưa có hoạt động nào"
-          description="Hoạt động của học viên sẽ hiện ở đây."
+          description="Hoạt động của người dùng sẽ hiện ở đây."
         />
       ) : (
         <div className="overflow-x-auto">
@@ -51,7 +51,7 @@ function RecentActivityCard({ data, isLoading = false, error = null, onRetry }) 
             <thead>
               <tr className="bg-canvas">
                 <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Học viên
+                  Người dùng
                 </th>
                 <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   Hành động
@@ -86,14 +86,22 @@ function RecentActivityCard({ data, isLoading = false, error = null, onRetry }) 
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-ink">{item.action}</td>
+                    <td className="px-3 py-3 text-ink font-medium">{item.action}</td>
                     <td className="px-3 py-3">
                       <Badge tone={status.tone}>{status.label}</Badge>
                     </td>
                     <td className="px-3 py-3 text-ink-muted">{formatRelativeTime(item.occurredAt)}</td>
                     <td className="px-3 py-3 text-right font-medium">
-                      {item.amount ? (
-                        <span className="text-[#15803D]">+{formatCurrency(item.amount)}</span>
+                      {item.amount != null ? (
+                        item.amount < 0 ? (
+                          <span className="font-semibold text-rose-600">
+                            {formatCurrency(item.amount)}
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-emerald-700">
+                            +{formatCurrency(item.amount)}
+                          </span>
+                        )
                       ) : (
                         <span className="text-ink-muted">-</span>
                       )}

@@ -343,7 +343,7 @@ function ReportsPage() {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="all">Trạng thái: Tất cả</option>
               <option value="pending">Đang chờ xử lý</option>
@@ -358,7 +358,7 @@ function ReportsPage() {
                 setContentTypeFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="all">Loại nội dung: Tất cả</option>
               <option value="POST">Bài viết</option>
@@ -374,7 +374,7 @@ function ReportsPage() {
                 setSeverityFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="all">Mức độ: Tất cả</option>
               <option value="CRITICAL">Nghiêm trọng</option>
@@ -547,7 +547,7 @@ function ReportsPage() {
                       </td>
 
                       {/* Thời gian */}
-                      <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                      <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                         {item.timeAgo || formatDate(item.createdAt)}
                       </td>
 
@@ -595,11 +595,11 @@ function ReportsPage() {
         className="max-w-[520px]"
       >
         {activeReport && (
-          <div className="space-y-5 text-xs">
+          <div className="space-y-5 text-sm">
             {/* Header info */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="font-mono text-[11px] text-slate-400">ID: {activeReport.id}</span>
+                <span className="font-mono text-xs text-slate-400">ID: {activeReport.id}</span>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">{activeReport.reason}</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -642,7 +642,7 @@ function ReportsPage() {
 
             {/* Trích dẫn nội dung vi phạm */}
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500 block mb-1.5">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">
                 Nội dung vi phạm được báo cáo:
               </label>
               <div className="rounded-xl border border-red-200 bg-red-50/40 p-3.5 text-slate-800 text-sm leading-relaxed font-sans italic">
@@ -652,7 +652,7 @@ function ReportsPage() {
 
             {/* Ghi chú xử lý của Quản trị viên */}
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-600 block mb-1.5">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-600 block mb-1.5">
                 Ghi chú kiểm duyệt (Admin Note):
               </label>
               <textarea
@@ -660,13 +660,13 @@ function ReportsPage() {
                 onChange={(e) => setAdminNote(e.target.value)}
                 placeholder="Nhập lý do xử lý hoặc căn cứ vi phạm..."
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
 
             {/* Các hành động xử lý vi phạm */}
             <div className="space-y-2 pt-3 border-t border-slate-100">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-900 block mb-2">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-900 block mb-2">
                 Hành động xử lý của Quản trị viên:
               </span>
 
