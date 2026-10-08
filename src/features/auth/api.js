@@ -20,3 +20,8 @@ export const logout = () => {
 
 export const getMe = () => api.get(ENDPOINTS.auth.me)
 
+export const registerTeacher = (data) => api.post('/auth/register-teacher', { data })
+
+export const getTeacherRegistrationStatus = (email) =>
+  api.get('/auth/teacher-registration/status', { params: { email } })
+

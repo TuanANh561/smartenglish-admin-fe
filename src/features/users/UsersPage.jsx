@@ -14,6 +14,7 @@ import {
   getTeacherRegistrations,
   approveTeacherRegistration,
   rejectTeacherRegistration,
+  deleteTeacherRegistration,
 } from './api'
 import { buildUserColumns } from './columns'
 import { useAuthStore } from '@/store/authStore'
@@ -93,12 +94,12 @@ export default function UsersPage() {
   }
 
   // Thao tác phê duyệt hồ sơ giáo viên qua API Backend
-  const handleApproveTeacher = async (regId) => {
+  const handleApproveTeacher = async (regId, note) => {
     try {
       await approveTeacherRegistration(regId, {
-        note: 'Đã xác minh bằng cấp & cấp quyền Teacher Pro',
+        note: note || 'Đã xác minh bằng cấp & cấp quyền Teacher Pro',
       })
-      toast.success('Đã phê duyệt hồ sơ và cấp tài khoản Teacher Pro thành công!')
+      toast.success('Đã phê duyệt hồ sơ và kích hoạt tài khoản Teacher Pro thành công!')
       await Promise.all([
         registrationsQuery.refetch(),
         usersQuery.refetch(),
@@ -109,15 +110,26 @@ export default function UsersPage() {
   }
 
   // Thao tác từ chối hồ sơ giáo viên qua API Backend
-  const handleRejectTeacher = async (regId) => {
+  const handleRejectTeacher = async (regId, reason) => {
     try {
       await rejectTeacherRegistration(regId, {
-        note: 'Tệp minh chứng chưa đáp ứng yêu cầu',
+        note: reason || 'Tệp minh chứng chưa đáp ứng yêu cầu',
       })
       toast.success('Đã từ chối hồ sơ đăng ký giáo viên')
       await registrationsQuery.refetch()
     } catch (err) {
       toast.error(err?.message || 'Có lỗi khi từ chối hồ sơ!')
+    }
+  }
+
+  // Thao tác xóa hồ sơ đăng ký giáo viên
+  const handleDeleteTeacher = async (regId) => {
+    try {
+      await deleteTeacherRegistration(regId)
+      toast.success('Đã xóa bản ghi hồ sơ đăng ký')
+      await registrationsQuery.refetch()
+    } catch (err) {
+      toast.error(err?.message || 'Có lỗi khi xóa hồ sơ!')
     }
   }
 
@@ -174,6 +186,7 @@ export default function UsersPage() {
           isLoading={registrationsQuery.isLoading}
           onApprove={handleApproveTeacher}
           onReject={handleRejectTeacher}
+          onDelete={handleDeleteTeacher}
         />
       )}
 
