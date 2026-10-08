@@ -201,7 +201,12 @@ export default function ChatFloatingWindows({
           >
             {/* Window Header */}
             <div className="flex shrink-0 items-center gap-3 border-b border-line bg-white px-4 py-3">
-              <Avatar src={getConversationAvatar(conversation)} name={conversation.participantName} size="md" />
+              <div className="relative shrink-0">
+                <Avatar src={getConversationAvatar(conversation)} name={conversation.participantName} size="md" />
+                {conversation.online && (
+                  <span className="absolute bottom-0 right-0 h-3 w-3 translate-x-0.5 translate-y-0.5 rounded-full border-2 border-white bg-emerald-500 shadow-2xs" />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-sm font-bold text-navy-800">{conversation.participantName}</p>
