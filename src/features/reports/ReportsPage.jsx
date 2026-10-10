@@ -7,6 +7,7 @@ import {
   Clock,
   Eye,
   Layers,
+  Loader2,
   MessageSquare,
   RefreshCw,
   Search,
@@ -22,6 +23,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
 import Pagination from '@/components/ui/Pagination'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { cn } from '@/lib/utils'
 import {
   bulkResolveAdminReports,
@@ -469,9 +471,12 @@ function ReportsPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-sm text-slate-400">
-                    <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-brand-500" />
-                    Đang tải danh sách báo cáo vi phạm...
+                  <td colSpan={8} className="px-6 py-12 text-center">
+                    <LoadingSpinner
+                      size="md"
+                      text="Đang tải danh sách báo cáo vi phạm..."
+                      className="py-4"
+                    />
                   </td>
                 </tr>
               ) : reports.length === 0 ? (

@@ -149,7 +149,7 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
             </label>
             {loadingClasses ? (
               <div className="flex items-center gap-2 py-2 text-xs text-slate-500">
-                <Loader2 size={15} className="animate-spin text-brand-500" /> Đang tải danh sách lớp...
+                <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0 text-brand-600" /> Đang tải danh sách lớp...
               </div>
             ) : classes.length === 0 ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
@@ -231,7 +231,7 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />
                   <span>Đang giao bài...</span>
                 </>
               ) : (

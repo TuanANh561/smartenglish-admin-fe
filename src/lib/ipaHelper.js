@@ -1,3 +1,5 @@
+import { claimAppAudio, releaseAppAudio } from '@/lib/appAudioCoordinator'
+
 // Cache key for LocalStorage
 const IPA_CACHE_KEY = 'smartenglish_online_ipa_cache_v1'
 
@@ -13,7 +15,6 @@ function loadCache() {
     // Ignore storage errors
   }
 }
-
 function saveToCache(wordKey, result) {
   if (typeof window === 'undefined') return
   try {
@@ -135,6 +136,7 @@ export function stopAudio() {
       // Ignore
     }
   }
+  releaseAppAudio('ipa-audio')
 }
 
 /**
@@ -145,6 +147,7 @@ export function stopAudio() {
  */
 export function speakWord(text, audioUrl = null, onEnd = null) {
   stopAudio()
+  claimAppAudio('ipa-audio', stopAudio)
   const cleanText = String(text || '').replace(/[[\]/]/g, '').trim()
   if (!cleanText && !audioUrl) {
     if (onEnd) onEnd()
@@ -636,6 +639,7 @@ export function resolveNarratorVoice(options = {}, voices = [], speaker1Resolved
  */
 export function speakSingleVoiceSample(text, config = {}, onEnd = null) {
   stopAudio()
+  claimAppAudio('ipa-audio', stopAudio)
   dialogueStopRequested = false
 
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -669,6 +673,7 @@ export function speakSingleVoiceSample(text, config = {}, onEnd = null) {
  */
 export function speakDialogue(dialogueText, options = {}, onEnd = null) {
   stopAudio()
+  claimAppAudio('ipa-audio', stopAudio)
   dialogueStopRequested = false
 
   if (!dialogueText && !options.intro) {
@@ -779,6 +784,7 @@ export function speakDialogue(dialogueText, options = {}, onEnd = null) {
  */
 export function playListeningLessonFull(lesson, onEnd = null) {
   stopAudio()
+  claimAppAudio('ipa-audio', stopAudio)
   dialogueStopRequested = false
 
   if (!lesson) {
@@ -1195,3 +1201,4 @@ export async function generateIpaWithSpellCheck(rawWord) {
     notFound: true,
   }
 }
+

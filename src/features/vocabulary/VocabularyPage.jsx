@@ -366,14 +366,15 @@ function VocabularyPage() {
               Import
             </Button>
 
-            {/* Nút Thêm mới */}
+            {/* Nút Thêm mới (Icon-only) */}
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+              title="Thêm từ mới"
+              aria-label="Thêm từ mới"
             >
-              <Plus size={15} />
-              <span>Thêm từ mới</span>
+              <Plus size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>

@@ -151,7 +151,7 @@ export default function ChatConversationSidebar({
               className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-slate-50"
             >
               {/* Avatar */}
-              <div className="relative shrink-0">
+              <div className="relative flex shrink-0 items-center justify-center w-10 h-10">
                 <Avatar
                   src={getConversationAvatar(conversation)}
                   name={conversation.participantName}
@@ -159,7 +159,7 @@ export default function ChatConversationSidebar({
                 />
                 {conversation.online && (
                   <span
-                    className="absolute bottom-0 right-0 h-3 w-3 translate-x-0.5 translate-y-0.5 rounded-full border-2 border-white bg-emerald-500 shadow-2xs"
+                    className="absolute bottom-0 right-0 h-3.5 w-3.5 aspect-square rounded-full border-2 border-white bg-emerald-500 shadow-xs z-10 block shrink-0"
                     title="Đang hoạt động"
                   />
                 )}
@@ -167,8 +167,22 @@ export default function ChatConversationSidebar({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1 mb-0.5">
-                  <p className="truncate text-xs font-semibold text-slate-800">{conversation.participantName}</p>
-                  <span className="shrink-0 text-[10px] text-slate-400">{conversation.lastTime}</span>
+                  <p
+                    className={cn(
+                      'truncate text-xs',
+                      conversation.unread > 0 ? 'font-bold text-slate-900' : 'font-semibold text-slate-800',
+                    )}
+                  >
+                    {conversation.participantName}
+                  </p>
+                  <span
+                    className={cn(
+                      'shrink-0 text-[10px]',
+                      conversation.unread > 0 ? 'font-medium text-slate-500' : 'text-slate-400',
+                    )}
+                  >
+                    {conversation.lastTime}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {roleLabel && (
@@ -179,7 +193,7 @@ export default function ChatConversationSidebar({
                   <p
                     className={cn(
                       'truncate text-[11px]',
-                      conversation.unread > 0 ? 'font-medium text-slate-700' : 'text-slate-400',
+                      conversation.unread > 0 ? 'font-bold text-slate-900' : 'text-slate-500',
                     )}
                   >
                     {displayLastMessage}
@@ -188,7 +202,7 @@ export default function ChatConversationSidebar({
               </div>
 
               {conversation.unread > 0 && (
-                <span className="min-w-[18px] rounded-full bg-brand-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white shrink-0">
+                <span className="min-w-[19px] h-[19px] flex items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white shadow-xs shrink-0 animate-pulse">
                   {conversation.unread}
                 </span>
               )}

@@ -20,6 +20,7 @@ import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { maskEmail, maskIdentityCard, maskPhone } from '@/lib/utils'
 
 /**
@@ -223,11 +224,12 @@ export default function TeacherApprovalTab({
             <tbody className="divide-y divide-slate-100 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
-                      <span>Đang tải danh sách hồ sơ giáo viên từ máy chủ...</span>
-                    </div>
+                  <td colSpan={7} className="p-8 text-center">
+                    <LoadingSpinner
+                      size="sm"
+                      text="Đang tải danh sách hồ sơ giáo viên từ máy chủ..."
+                      className="py-2"
+                    />
                   </td>
                 </tr>
               ) : filteredRegistrations.length === 0 ? (

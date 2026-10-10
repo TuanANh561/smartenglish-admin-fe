@@ -124,7 +124,7 @@ export default function LessonVideoTab({
               >
                 {isUploadingVideo ? (
                   <div className="space-y-2.5 max-w-xs mx-auto">
-                    <Loader2 size={28} className="mx-auto animate-spin text-orange-600" />
+                    <Loader2 size={28} strokeWidth={2.25} className="mx-auto animate-spin shrink-0 text-brand-600" />
                     <p className="text-xs font-semibold text-orange-800">
                       Đang tải video lên Cloudflare R2... ({uploadVideoProgress}%)
                     </p>

@@ -4,6 +4,7 @@ if (typeof window !== 'undefined' && typeof window.global === 'undefined') {
 
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
+import { TOKEN_KEY } from '@/lib/api'
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8088/ws-chat'
 
@@ -19,8 +20,11 @@ export function getSocketClient() {
     reconnectDelay: 3000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
-    debug: (str) => {
-      // console.log('[STOMP debug]', str)
+    debug: () => {},
+    beforeConnect: () => {
+      const token = window.localStorage.getItem(TOKEN_KEY)
+      if (!token) throw new Error('Yêu cầu đăng nhập để kết nối realtime chat')
+      stompClient.connectHeaders = { Authorization: `Bearer ${token}` }
     },
     onConnect: (frame) => {
       console.log('STOMP connected to social-service WebSocket:', frame)
@@ -169,10 +173,6 @@ export function sendTyping(conversationId, userId, userName, isTyping) {
     try {
       client.publish({
         destination: '/app/chat.typing',
-        body: JSON.stringify(payload),
-      })
-      client.publish({
-        destination: `/topic/conversation/${conversationId}/typing`,
         body: JSON.stringify(payload),
       })
     } catch (err) {

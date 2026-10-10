@@ -295,7 +295,7 @@ export default function CourseFormGeneral({
               />
               {isUploading && (
                 <div className="absolute inset-0 bg-navy-900/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2">
-                  <Loader2 size={24} className="animate-spin text-brand-400" />
+                  <Loader2 size={24} strokeWidth={2.25} className="animate-spin shrink-0 text-brand-600" />
                   <span className="text-xs font-semibold">Đang tải lên...</span>
                 </div>
               )}

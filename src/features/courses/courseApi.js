@@ -681,12 +681,18 @@ export async function deleteLessonApi(id) {
  */
 export async function generateCourseCurriculumWithAi({ topic, level = 'B1', courseType = 'STRUCTURED' }) {
   try {
-    const res = await api.post('/admin/ai/generate-curriculum', { topic, level, courseType })
+    const res = await api.post('/admin/ai/generate-curriculum', {
+      data: { topic, level, courseType },
+    })
     const data = res?.data !== undefined ? res.data : res
     if (data && (data.titleVi || data.units)) return data
   } catch (err) {
-    console.warn('[AI Course Gen] Backend /admin/ai/generate-curriculum không phản hồi:', err?.message)
+    throw new Error(`Backend AI không thể sinh chương trình học: ${err?.message || 'Không xác định'}`, { cause: err })
   }
+  throw new Error('Backend AI trả về chương trình học không hợp lệ')
+
+  // Legacy code below is intentionally unreachable until it is removed in a dedicated cleanup.
+  // eslint-disable-next-line no-unreachable
   const GEMINI_API_KEY = null
   const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
@@ -954,10 +960,13 @@ export async function generateLessonBlocksWithAi({ prompt, titleVi, titleEn, les
       return { ...normalized, isValidTopic: true }
     }
   } catch (backendErr) {
-    console.warn('Backend AI generate-ai không khả dụng, chuyển sang gọi Gemini trực tiếp:', backendErr)
+    throw new Error(`Backend AI không thể sinh bài học: ${backendErr?.message || 'Không xác định'}`, { cause: backendErr })
   }
 
+  throw new Error('Backend AI trả về nội dung bài học không hợp lệ')
+
   // 3. Gọi Google Gemini API trực tiếp bằng VITE_GEMINI_API_KEY
+  // eslint-disable-next-line no-unreachable
   const GEMINI_API_KEY = null
   const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 

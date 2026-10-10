@@ -79,7 +79,16 @@ export const NAV_GROUPS = [
   {
     label: 'Nội dung AI',
     items: [
-      { to: '/app/noi-dung-ai', label: 'Duyệt nội dung AI', icon: Sparkles, roles: ['admin', 'teacher'] },
+      {
+        to: '/app/noi-dung-ai',
+        label: 'Duyệt nội dung AI',
+        labelByRole: {
+          teacher: 'Tạo nội dung AI',
+          admin: 'Duyệt nội dung AI',
+        },
+        icon: Sparkles,
+        roles: ['admin', 'teacher'],
+      },
       { to: '/app/voice-ai', label: 'Cấu hình AI', icon: Cpu, roles: ['admin'] },
     ],
   },
@@ -104,19 +113,40 @@ export const NAV_GROUPS = [
 ]
 
 export function getVisibleNavGroups(role = 'admin') {
+  const normRole = String(role || 'admin').toLowerCase()
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: (group.items || []).filter((item) => {
-      if (item.children) {
-        const children = (item.children || []).filter((child) =>
-          !child.roles || child.roles.includes(role),
-        )
+    items: (group.items || [])
+      .filter((item) => {
+        if (item.children) {
+          const children = (item.children || []).filter((child) =>
+            !child.roles || child.roles.map((r) => r.toLowerCase()).includes(normRole),
+          )
 
-        return children.length > 0
-      }
+          return children.length > 0
+        }
 
-      return !item.roles || item.roles.includes(role)
-    }),
+        return !item.roles || item.roles.map((r) => r.toLowerCase()).includes(normRole)
+      })
+      .map((item) => {
+        const itemLabel = item.labelByRole?.[normRole] || (item.to === '/app/noi-dung-ai' && normRole === 'teacher' ? 'Tạo nội dung AI' : item.label)
+        if (item.children) {
+          return {
+            ...item,
+            label: itemLabel,
+            children: (item.children || [])
+              .filter((child) => !child.roles || child.roles.map((r) => r.toLowerCase()).includes(normRole))
+              .map((child) => ({
+                ...child,
+                label: child.labelByRole?.[normRole] || child.label,
+              })),
+          }
+        }
+        return {
+          ...item,
+          label: itemLabel,
+        }
+      }),
   })).filter((group) => group.items.length > 0)
 }
 

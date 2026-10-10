@@ -21,6 +21,14 @@ export function sanitizeAvatarUrl(url) {
   return null
 }
 
+const STATUS_DOT_SIZES = {
+  xs: 'h-2 w-2 border',
+  sm: 'h-2.5 w-2.5 border-[1.5px]',
+  md: 'h-3.5 w-3.5 border-2',
+  lg: 'h-4 w-4 border-2',
+  xl: 'h-4.5 w-4.5 border-2',
+}
+
 function Avatar({ src, name = '', size = 'md', status, className }) {
   const [hasError, setHasError] = useState(false)
   const initial = name?.trim()?.charAt(0)?.toUpperCase() || 'U'
@@ -45,10 +53,13 @@ function Avatar({ src, name = '', size = 'md', status, className }) {
         </span>
       )}
       {status === 'online' && (
-        <span className="absolute bottom-0 right-0 flex h-3 w-3">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#15803D] opacity-60" />
-          <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#15803D]" />
-        </span>
+        <span
+          className={cn(
+            'absolute bottom-0 right-0 aspect-square rounded-full border-white bg-emerald-500 shadow-xs z-10 block shrink-0',
+            STATUS_DOT_SIZES[size] || STATUS_DOT_SIZES.md
+          )}
+          title="Đang hoạt động"
+        />
       )}
     </span>
   )

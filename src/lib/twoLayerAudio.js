@@ -1,3 +1,5 @@
+import { claimAppAudio, releaseAppAudio } from '@/lib/appAudioCoordinator'
+
 /**
  * twoLayerAudio.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -255,6 +257,7 @@ export function stopAllTwoLayerAudio() {
       window.speechSynthesis.cancel()
     } catch (_) {}
   }
+  releaseAppAudio('two-layer-audio')
 }
 
 /**
@@ -280,6 +283,7 @@ export function playTwoLayerAudio({
   onError,
 }) {
   stopAllTwoLayerAudio()
+  claimAppAudio('two-layer-audio', stopAllTwoLayerAudio)
 
   const cleanUrl = typeof audioUrl === 'string' ? audioUrl.trim() : ''
   const cleanText = typeof fallbackText === 'string' ? fallbackText.trim() : ''
@@ -329,6 +333,7 @@ export function playTwoLayerAudio({
         if (isAborted) return
         if (index >= segments.length) {
           activeSpeechController = null
+          releaseAppAudio('two-layer-audio')
           onEnd?.()
           return
         }
@@ -360,6 +365,7 @@ export function playTwoLayerAudio({
             }, 280)
           } else {
             activeSpeechController = null
+            releaseAppAudio('two-layer-audio')
             onEnd?.()
           }
         }
@@ -382,6 +388,7 @@ export function playTwoLayerAudio({
     } catch (err) {
       console.error('[2-Layer Audio] Lỗi khi kích hoạt Web Speech API:', err)
       activeSpeechController = null
+      releaseAppAudio('two-layer-audio')
       onEnd?.()
       onError?.(err)
     }
@@ -413,6 +420,7 @@ export function playTwoLayerAudio({
         if (activeAudioElement === audio) {
           activeAudioElement = null
         }
+        releaseAppAudio('two-layer-audio')
         onEnd?.()
       }
 

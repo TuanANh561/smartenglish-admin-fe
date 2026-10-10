@@ -171,7 +171,13 @@ function CommunityPage() {
   const fetchUsers = useCallback(async () => {
     try {
       const res = await http.get('/admin/users?size=50')
-      const userList = res?.data?.items || (Array.isArray(res?.data) ? res?.data : (res?.items || []))
+      const userList =
+        res?.items ||
+        res?.data?.items ||
+        res?.data?.data?.items ||
+        res?.content ||
+        res?.data?.content ||
+        (Array.isArray(res?.data) ? res?.data : Array.isArray(res) ? res : [])
       if (Array.isArray(userList)) {
         setRealUsers(
           userList.map((u) => ({
@@ -340,22 +346,23 @@ function CommunityPage() {
                 c.participantId,
             )
 
-            // Look up details from realUsers (via ref) or TEST_USERS
+            // Look up details from realUsers (via ref)
             const currentUsers = realUsersRef.current || []
-            const matchedUser =
-              (otherUserId ? currentUsers.find((u) => Number(u.id) === otherUserId) : null) ||
-              (otherUserId ? TEST_USERS[otherUserId] : null)
+            const matchedUser = otherUserId
+              ? currentUsers.find((u) => Number(u.id) === Number(otherUserId))
+              : null
 
             const resolvedRole = isDirect
               ? getRoleLabel(matchedUser?.role || otherMember?.role)
               : `Nhóm (${c.memberIds?.length || 2} thành viên)`
 
             const resolvedName = isDirect
-              ? (matchedUser?.displayName || matchedUser?.name || otherMember?.name || 'Người dùng')
+              ? (matchedUser?.displayName || matchedUser?.name || otherMember?.name || c.name || 'Người dùng')
               : (c.name || 'Nhóm trò chuyện')
 
+            // Lấy đúng avatar từ database, không lấy mock TEST_USERS hay static unsplash
             const rawAvatar = isDirect
-              ? (matchedUser?.avatarUrl || matchedUser?.avatar || otherMember?.avatar)
+              ? (matchedUser?.avatarUrl || matchedUser?.avatar || null)
               : c.avatar
             const resolvedAvatar = sanitizeAvatarUrl(rawAvatar)
 
@@ -454,13 +461,25 @@ function CommunityPage() {
         console.warn('Could not fetch initial online users:', err)
       })
 
-    // 2. Gửi tín hiệu Heartbeat định kỳ mỗi 20 giây để giữ trạng thái online
-    const sendHb = () => {
+    // 2. Gửi tín hiệu Heartbeat và đồng bộ danh sách online định kỳ mỗi 5 giây
+    const sendHbAndSync = () => {
       http.post(`/api/v1/social/presence/heartbeat?userId=${myId}`).catch(() => {})
       sendPresenceHeartbeat(myId)
+      http
+        .get('/api/v1/social/presence/online-users')
+        .then((res) => {
+          if (!active) return
+          const raw = res?.data || res
+          const ids = Array.isArray(raw) ? raw.map(Number) : []
+          const newSet = new Set(ids)
+          newSet.add(myId)
+          setOnlineUserIds(newSet)
+          useChatStore.getState().setOnlineUserIds(Array.from(newSet))
+        })
+        .catch(() => {})
     }
-    sendHb()
-    const hbInterval = setInterval(sendHb, 20000)
+    sendHbAndSync()
+    const hbInterval = setInterval(sendHbAndSync, 5000)
 
     // 3. Đăng ký nhận sự kiện realtime từ WebSocket /topic/presence
     const unsubPresence = subscribeToPresence((event) => {
@@ -696,10 +715,64 @@ function CommunityPage() {
     )
   }, [conversationSearch, conversations])
 
-  const getConversationAvatar = (conversation) =>
-    conversation.participantAvatar ||
-    conversation.avatar ||
-    contacts.find((contact) => contact.id === conversation.participantId)?.avatar
+  // Lấy avatar thực tế hiện tại của cuộc trò chuyện từ CSDL (auth-service)
+  const getConversationAvatar = useCallback(
+    (conversation) => {
+      if (!conversation) return null
+      // 1. Cho chat 1-1 (direct): Luôn ưu tiên avatar thực tế mới nhất của user từ PostgreSQL (realUsers)
+      if (conversation.type === 'direct' && conversation.participantId) {
+        const liveUser = realUsers.find(
+          (u) => Number(u.id) === Number(conversation.participantId),
+        )
+        if (liveUser) {
+          return sanitizeAvatarUrl(liveUser.avatarUrl || liveUser.avatar) || null
+        }
+      }
+      // 2. Cho nhóm hoặc fallback: lấy participantAvatar nếu có và không phải fake Unsplash
+      const fallback = conversation.participantAvatar || conversation.avatar
+      const sanitized = sanitizeAvatarUrl(fallback)
+      return sanitized && !sanitized.includes('unsplash.com') ? sanitized : null
+    },
+    [realUsers],
+  )
+
+  // Lấy avatar thực tế của từng người gửi tin nhắn
+  const getSenderAvatar = useCallback(
+    (senderId) => {
+      if (!senderId) return null
+      if (Number(senderId) === Number(myId)) {
+        return myAvatar || null
+      }
+      const u = realUsers.find((user) => Number(user.id) === Number(senderId))
+      if (u) {
+        return sanitizeAvatarUrl(u.avatarUrl || u.avatar) || null
+      }
+      return null
+    },
+    [realUsers, myId, myAvatar],
+  )
+
+  // Tự động đồng bộ tên và avatar thực tế mới nhất vào danh sách cuộc trò chuyện mỗi khi realUsers thay đổi
+  useEffect(() => {
+    if (realUsers.length > 0) {
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.type === 'direct' && c.participantId) {
+            const liveUser = realUsers.find((u) => Number(u.id) === Number(c.participantId))
+            if (liveUser) {
+              return {
+                ...c,
+                participantName: liveUser.displayName || liveUser.name || c.participantName,
+                participantAvatar: sanitizeAvatarUrl(liveUser.avatarUrl || liveUser.avatar) || null,
+                participantRole: getRoleLabel(liveUser.role) || c.participantRole,
+              }
+            }
+          }
+          return c
+        }),
+      )
+    }
+  }, [realUsers, getRoleLabel])
 
   const handleOpenConversation = async (conversationId) => {
     setActiveConversationId(conversationId)
@@ -810,6 +883,7 @@ function CommunityPage() {
 
   const handleSendTyping = (convId, isTyping) => {
     sendTyping(convId, myId, myName, isTyping)
+    http.post(`/api/v1/social/conversations/${convId}/typing?isTyping=${isTyping}`).catch(() => {})
   }
 
   const handleCloseConversation = (conversationId) => {
@@ -1608,6 +1682,7 @@ function CommunityPage() {
         typingMap={typingMap}
         onTyping={handleSendTyping}
         onNavigateToPost={handleNavigateToPost}
+        getSenderAvatar={getSenderAvatar}
       />
 
       {/* Modal tạo nhóm mới */}
