@@ -41,6 +41,7 @@ export default function ChatFloatingWindows({
   typingMap = {},
   onTyping,
   onNavigateToPost,
+  getSenderAvatar,
 }) {
   const [hoveredMessageId, setHoveredMessageId] = useState(null)
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState(null)
@@ -201,10 +202,10 @@ export default function ChatFloatingWindows({
           >
             {/* Window Header */}
             <div className="flex shrink-0 items-center gap-3 border-b border-line bg-white px-4 py-3">
-              <div className="relative shrink-0">
+              <div className="relative flex shrink-0 items-center justify-center w-10 h-10">
                 <Avatar src={getConversationAvatar(conversation)} name={conversation.participantName} size="md" />
                 {conversation.online && (
-                  <span className="absolute bottom-0 right-0 h-3 w-3 translate-x-0.5 translate-y-0.5 rounded-full border-2 border-white bg-emerald-500 shadow-2xs" />
+                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 aspect-square rounded-full border-2 border-white bg-emerald-500 shadow-xs z-10 block shrink-0" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -344,10 +345,15 @@ export default function ChatFloatingWindows({
                     {/* Sender Avatar: only show on the LAST (most recent) message of this sender */}
                     {!isMe ? (
                       isLastOfSequence ? (
-                        <img
-                          src={message.senderAvatar || getConversationAvatar(conversation)}
-                          alt={message.senderName || conversation.participantName}
-                          className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0 mb-0.5"
+                        <Avatar
+                          src={
+                            !isGroup
+                              ? getConversationAvatar(conversation)
+                              : (getSenderAvatar ? getSenderAvatar(message.senderId) : getConversationAvatar(conversation))
+                          }
+                          name={message.senderName || conversation.participantName}
+                          size="xs"
+                          className="h-7 w-7 shrink-0 mb-0.5"
                         />
                       ) : (
                         <span className="w-7 shrink-0" />
@@ -365,142 +371,176 @@ export default function ChatFloatingWindows({
                         </span>
                       )}
 
-                      {/* Main Bubble */}
-                      <div
-                        className={`relative rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-xs transition-shadow ${
-                          isMe
-                            ? 'rounded-br-xs bg-navy-700 text-white'
-                            : 'rounded-bl-xs border border-slate-200/90 bg-white text-slate-800'
-                        } ${isRecalled ? 'opacity-70 italic border-dashed' : ''}`}
-                      >
-                        {/* Reply Quote Preview inside Bubble */}
-                        {message.replyTo && (
-                          <div
-                            className={`mb-2 rounded-lg border-l-2 p-2 text-xs text-left ${
-                              isMe
-                                ? 'border-brand-400 bg-navy-800/80 text-white/90'
-                                : 'border-brand-500 bg-slate-100/90 text-slate-700'
-                            }`}
-                          >
-                            <span className="font-semibold text-brand-500 block text-[11px]">
-                              {message.replyTo.senderName}
-                            </span>
-                            <span className="line-clamp-1 text-[11px] opacity-80">
-                              {message.replyTo.content}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Shared Post Card Attachment */}
-                        {message.sharedPost && (
-                          <div
-                            onClick={() => handleGoToPost(message.sharedPost.postId, conversation.id)}
-                            className={`mb-2 rounded-xl border p-2.5 text-xs text-left cursor-pointer transition-all duration-200 group/sharedcard hover:scale-[1.01] hover:shadow-md ${
-                              isMe
-                                ? 'border-navy-600 bg-navy-800/95 hover:bg-navy-700/90 text-white'
-                                : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800'
-                            }`}
-                            title="Nhấn để chuyển tới bài viết này"
-                          >
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <div className="flex items-center gap-2 min-w-0">
-                                {message.sharedPost.authorAvatar && (
-                                  <img
-                                    src={message.sharedPost.authorAvatar}
-                                    alt={message.sharedPost.authorName}
-                                    className="h-5 w-5 rounded-full object-cover shrink-0"
-                                  />
-                                )}
-                                <span className="font-semibold truncate">{message.sharedPost.authorName}</span>
-                                <span className={`text-[10px] shrink-0 ${isMe ? 'text-white/60' : 'text-slate-400'}`}>• Bài viết</span>
-                              </div>
-                              <span className={`text-[10px] font-medium shrink-0 flex items-center gap-0.5 group-hover/sharedcard:underline ${isMe ? 'text-sky-300' : 'text-brand-600'}`}>
-                                Xem bài viết →
-                              </span>
-                            </div>
-                            <p className="line-clamp-2 text-xs italic mb-1.5 opacity-90">
-                              "{message.sharedPost.content}"
-                            </p>
-                            {message.sharedPost.imageUrl && (
-                              <img
-                                src={message.sharedPost.imageUrl}
-                                alt="Post media"
-                                className="h-24 w-full object-cover rounded-lg"
-                              />
+                      {/* Main Bubble / Media Container */}
+                      {message.type === 'IMAGE' && message.attachmentUrl ? (
+                        <div className="relative group/img overflow-hidden rounded-2xl shadow-sm border border-slate-200/60 bg-slate-100">
+                          <img
+                            src={message.attachmentUrl}
+                            alt="Attached media"
+                            className="max-h-64 max-w-[280px] w-auto object-cover rounded-2xl cursor-pointer hover:opacity-95 transition-opacity"
+                            onClick={() => window.open(message.attachmentUrl, '_blank')}
+                          />
+                          <div className="absolute bottom-1.5 right-2 rounded-md bg-black/45 backdrop-blur-xs px-1.5 py-0.5 text-[10px] text-white font-medium flex items-center gap-1">
+                            {message.isPinned && (
+                              <Pin size={9} className="text-amber-300 fill-amber-300" />
                             )}
+                            <span>
+                              {message.time ||
+                                (message.createdAt
+                                  ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                  : 'Vừa xong')}
+                            </span>
                           </div>
-                        )}
-
-                        {/* Image Attachment */}
-                        {message.type === 'IMAGE' && message.attachmentUrl && (
-                          <div className="mb-2 overflow-hidden rounded-xl">
-                            <img
-                              src={message.attachmentUrl}
-                              alt="Attached media"
-                              className="max-h-52 w-full object-cover rounded-xl"
-                            />
-                          </div>
-                        )}
-
-                        {/* File Attachment */}
-                        {message.type === 'FILE' && (
-                          <div
-                            onClick={() => handleDownloadFile(message.attachmentUrl, message.attachmentName)}
-                            className={`mb-2 flex items-center justify-between gap-3 rounded-xl border p-2.5 text-xs cursor-pointer hover:opacity-90 transition-opacity ${
-                              isMe ? 'border-navy-600 bg-navy-800' : 'border-slate-200 bg-slate-100'
-                            }`}
-                            title="Bấm để tải tệp về máy"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-[10px]">
-                                DOC
-                              </span>
-                              <div className="min-w-0">
-                                <p className="truncate font-semibold">{message.attachmentName || 'Tệp đính kèm'}</p>
-                                <p className={`text-[10px] ${isMe ? 'text-white/60' : 'text-slate-400'}`}>
-                                  {message.attachmentSize}
-                                </p>
-                              </div>
+                          {/* Reaction Badges for standalone image */}
+                          {Object.keys(reactionCounts).length > 0 && (
+                            <div
+                              className={`absolute -bottom-2.5 ${
+                                isMe ? 'left-2' : 'right-2'
+                              } flex items-center gap-0.5 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 shadow-xs text-[11px]`}
+                            >
+                              {Object.entries(reactionCounts).map(([rType, count]) => {
+                                const rItem = REACTIONS.find((r) => r.type === rType)
+                                return (
+                                  <span key={rType} className="flex items-center gap-0.5">
+                                    <span>{rItem?.icon || '👍'}</span>
+                                    {count > 1 && <span className="text-[10px] text-slate-600 font-semibold">{count}</span>}
+                                  </span>
+                                )
+                              })}
                             </div>
-                            <Download size={15} className="shrink-0 opacity-80" />
-                          </div>
-                        )}
-
-                        {/* Text Content */}
-                        <div>{message.text || message.content}</div>
-
-                        {/* Time & Pinned Indicator */}
-                        <div className="mt-1 flex items-center justify-end gap-1.5">
-                          {message.isPinned && (
-                            <Pin size={10} className="text-amber-400 fill-amber-400" />
                           )}
-                          <p className={`text-[10px] ${isMe ? 'text-white/60' : 'text-slate-400'}`}>
-                            {message.time ||
-                              (message.createdAt
-                                ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : 'Vừa xong')}
-                          </p>
                         </div>
+                      ) : (
+                        <div
+                          className={`relative rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-xs transition-shadow ${
+                            isMe
+                              ? 'rounded-br-xs bg-navy-700 text-white'
+                              : 'rounded-bl-xs border border-slate-200/90 bg-white text-slate-800'
+                          } ${isRecalled ? 'opacity-70 italic border-dashed' : ''}`}
+                        >
+                          {/* Reply Quote Preview inside Bubble */}
+                          {message.replyTo && (
+                            <div
+                              className={`mb-2 rounded-lg border-l-2 p-2 text-xs text-left ${
+                                isMe
+                                  ? 'border-brand-400 bg-navy-800/80 text-white/90'
+                                  : 'border-brand-500 bg-slate-100/90 text-slate-700'
+                              }`}
+                            >
+                              <span className="font-semibold text-brand-500 block text-[11px]">
+                                {message.replyTo.senderName}
+                              </span>
+                              <span className="line-clamp-1 text-[11px] opacity-80">
+                                {message.replyTo.content}
+                              </span>
+                            </div>
+                          )}
 
-                        {/* Reaction Badges at bottom corner */}
-                        {Object.keys(reactionCounts).length > 0 && (
-                          <div
-                            className={`absolute -bottom-2.5 ${
-                              isMe ? 'left-2' : 'right-2'
-                            } flex items-center gap-0.5 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 shadow-xs text-[11px]`}
-                          >
-                            {Object.entries(reactionCounts).map(([rType, count]) => {
-                              const rItem = REACTIONS.find((r) => r.type === rType)
-                              return (
-                                <span key={rType} className="flex items-center gap-0.5">
-                                  <span>{rItem?.icon || '👍'}</span>
-                                  {count > 1 && <span className="text-[9px] font-bold text-slate-600">{count}</span>}
+                          {/* Shared Post Card Attachment */}
+                          {message.sharedPost && (
+                            <div
+                              onClick={() => handleGoToPost(message.sharedPost.postId, conversation.id)}
+                              className={`mb-2 rounded-xl border p-2.5 text-xs text-left cursor-pointer transition-all duration-200 group/sharedcard hover:scale-[1.01] hover:shadow-md ${
+                                isMe
+                                  ? 'border-navy-600 bg-navy-800/95 hover:bg-navy-700/90 text-white'
+                                  : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800'
+                              }`}
+                              title="Nhấn để chuyển tới bài viết này"
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {message.sharedPost.authorAvatar && (
+                                    <img
+                                      src={message.sharedPost.authorAvatar}
+                                      alt={message.sharedPost.authorName}
+                                      className="h-5 w-5 rounded-full object-cover shrink-0"
+                                    />
+                                  )}
+                                  <span className="font-semibold truncate">{message.sharedPost.authorName}</span>
+                                  <span className={`text-[10px] shrink-0 ${isMe ? 'text-white/60' : 'text-slate-400'}`}>• Bài viết</span>
+                                </div>
+                                <span className={`text-[10px] font-medium shrink-0 flex items-center gap-0.5 group-hover/sharedcard:underline ${isMe ? 'text-sky-300' : 'text-brand-600'}`}>
+                                  Xem bài viết →
                                 </span>
-                              )
-                            })}
+                              </div>
+                              <p className="line-clamp-2 text-xs italic mb-1.5 opacity-90">
+                                "{message.sharedPost.content}"
+                              </p>
+                              {message.sharedPost.imageUrl && (
+                                <img
+                                  src={message.sharedPost.imageUrl}
+                                  alt="Post media"
+                                  className="h-24 w-full object-cover rounded-lg"
+                                />
+                              )}
+                            </div>
+                          )}
+
+                          {/* File Attachment */}
+                          {message.type === 'FILE' && (
+                            <div
+                              onClick={() => handleDownloadFile(message.attachmentUrl, message.attachmentName)}
+                              className={`mb-1 flex items-center justify-between gap-3 rounded-xl border p-2.5 text-xs cursor-pointer hover:opacity-90 transition-opacity ${
+                                isMe ? 'border-navy-600 bg-navy-800' : 'border-slate-200 bg-slate-100'
+                              }`}
+                              title="Bấm để tải tệp về máy"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-[10px]">
+                                  DOC
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="truncate font-semibold">{message.attachmentName || 'Tệp đính kèm'}</p>
+                                  <p className={`text-[10px] ${isMe ? 'text-white/60' : 'text-slate-400'}`}>
+                                    {message.attachmentSize}
+                                  </p>
+                                </div>
+                              </div>
+                              <Download size={15} className="shrink-0 opacity-80" />
+                            </div>
+                          )}
+
+                          {/* Text Content: Only show if not just a file or image placeholder */}
+                          {message.type !== 'FILE' &&
+                            message.type !== 'IMAGE' &&
+                            !message.content?.startsWith('[Hình ảnh]') &&
+                            !message.content?.startsWith('[Tệp đính kèm]') && (
+                              <div>{message.text || message.content}</div>
+                            )}
+
+                          {/* Time & Pinned Indicator */}
+                          <div className="mt-1 flex items-center justify-end gap-1.5">
+                            {message.isPinned && (
+                              <Pin size={10} className="text-amber-400 fill-amber-400" />
+                            )}
+                            <p className={`text-[10px] ${isMe ? 'text-white/60' : 'text-slate-400'}`}>
+                              {message.time ||
+                                (message.createdAt
+                                  ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                  : 'Vừa xong')}
+                            </p>
                           </div>
-                        )}
-                      </div>
+
+                          {/* Reaction Badges at bottom corner */}
+                          {Object.keys(reactionCounts).length > 0 && (
+                            <div
+                              className={`absolute -bottom-2.5 ${
+                                isMe ? 'left-2' : 'right-2'
+                              } flex items-center gap-0.5 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 shadow-xs text-[11px]`}
+                            >
+                              {Object.entries(reactionCounts).map(([rType, count]) => {
+                                const rItem = REACTIONS.find((r) => r.type === rType)
+                                return (
+                                  <span key={rType} className="flex items-center gap-0.5">
+                                    <span>{rItem?.icon || '👍'}</span>
+                                    {count > 1 && <span className="text-[10px] text-slate-600 font-semibold">{count}</span>}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Quick Action Floating Bar on Hover */}

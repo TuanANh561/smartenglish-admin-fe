@@ -307,7 +307,7 @@ export default function CreateGroupModal({
                   >
                     {/* Trái: Avatar + Thông tin người dùng */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="relative shrink-0">
+                      <div className="relative flex shrink-0 items-center justify-center w-9 h-9">
                         <Avatar
                           src={u.avatar}
                           name={u.name}
@@ -315,7 +315,7 @@ export default function CreateGroupModal({
                           className="h-9 w-9"
                         />
                         {u.status === 'online' && (
-                          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                          <span className="absolute bottom-0 right-0 h-3 w-3 aspect-square rounded-full border-2 border-white bg-emerald-500 shadow-xs z-10 block shrink-0" />
                         )}
                       </div>
 

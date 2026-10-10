@@ -223,7 +223,7 @@ export default function PostComposer({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-brand-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAiGenerating ? (
-              <Loader2 size={15} className="animate-spin text-brand-600" />
+              <Loader2 size={15} strokeWidth={2.25} className="animate-spin shrink-0 text-brand-600" />
             ) : (
               <Sparkles size={15} className="text-brand-600" />
             )}
