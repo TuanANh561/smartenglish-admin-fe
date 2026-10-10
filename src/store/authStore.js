@@ -11,7 +11,7 @@ export const TEST_USERS = {
     displayName: 'Quản trị viên Hệ thống',
     email: 'admin@smartenglish.com',
     role: 'admin',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+    avatarUrl: '',
     plan: 'lifetime',
   },
   2: {
@@ -19,7 +19,7 @@ export const TEST_USERS = {
     displayName: 'Thầy John Smith (Teacher Pro)',
     email: 'teacher.john@smartenglish.com',
     role: 'teacher',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    avatarUrl: '',
     plan: 'premium_yearly',
   },
   3: {
@@ -27,7 +27,7 @@ export const TEST_USERS = {
     displayName: 'Nguyễn Thế Anh',
     email: 'student.theanh@gmail.com',
     role: 'student',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
+    avatarUrl: '',
     plan: 'premium_monthly',
   },
   8: {
@@ -35,7 +35,7 @@ export const TEST_USERS = {
     displayName: 'Thầy Vũ Đức Thắng (Teacher Free)',
     email: 'thang.vd@gmail.com',
     role: 'teacher',
-    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80',
+    avatarUrl: '',
     plan: 'free',
   },
 }

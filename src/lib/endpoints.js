@@ -212,11 +212,20 @@ export const ENDPOINTS = {
 
   // ── notification-service & vận hành hệ thống ────────────────────
   notifications: {
-    list: '/admin/notifications',
+    list: '/api/v1/notifications',
+    unreadCount: '/api/v1/notifications/unread-count',
+    markRead: '/api/v1/notifications/:id/read',
+    markAllRead: '/api/v1/notifications/read-all',
+    create: '/api/v1/notifications',
+    remove: '/api/v1/notifications/:id',
+    email: '/api/v1/notifications/email',
+    schedules: '/api/v1/notifications/schedules',
+    removeSchedule: '/api/v1/notifications/schedules/:id',
+    activities: '/api/v1/notifications/activities',
+    logActivity: '/api/v1/notifications/activities',
+    adminList: '/admin/notifications',
     detail: '/admin/notifications/:id',
-    create: '/admin/notifications',
     send: '/admin/notifications/:id/send',
-    remove: '/admin/notifications/:id',
     templates: '/admin/notifications/templates',
     templateDetail: '/admin/notifications/templates/:id',
   },

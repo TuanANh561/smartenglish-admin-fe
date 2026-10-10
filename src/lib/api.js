@@ -168,7 +168,10 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/transactions') ||
       endpoint.startsWith('/admin/roles') ||
       endpoint.startsWith('/admin/permissions') ||
-      endpoint.startsWith('/admin/stats')
+      endpoint.startsWith('/admin/stats') ||
+      endpoint.startsWith('/api/v1/notifications') ||
+      endpoint.startsWith('/notifications') ||
+      endpoint.startsWith('/admin/notifications')
 
     if (USE_MOCK || !isReadyBackend) {
       const { resolveMock } = await import('../mocks')
