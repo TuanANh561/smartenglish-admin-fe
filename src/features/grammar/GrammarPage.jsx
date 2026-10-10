@@ -314,40 +314,39 @@ function GrammarPage() {
                   Import
                 </Button>
 
+                {/* Thêm bài học (Icon-only) */}
                 <button
                   type="button"
                   onClick={handleOpenCreate}
-                  className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                  title="Thêm bài học mới"
+                  aria-label="Thêm bài học mới"
                 >
-                  <Plus size={15} />
-                  <span>Thêm bài học</span>
+                  <Plus size={18} strokeWidth={2.5} />
                 </button>
               </>
             )}
 
-            {/* Nút Thùng rác - Ở cuối kế bên nút Thêm */}
+            {/* Nút Thùng rác (Icon-only) */}
             <button
               type="button"
               onClick={() => handleTabChange(activeTab === 'trash' ? 'active' : 'trash')}
               className={cn(
-                'flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors shadow-2xs cursor-pointer border',
+                'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs cursor-pointer border',
                 activeTab === 'trash'
                   ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
               )}
-              title={activeTab === 'trash' ? 'Quay lại danh sách bài học đang hoạt động' : 'Xem các bài học trong thùng rác'}
+              title={activeTab === 'trash' ? 'Quay lại danh sách bài học đang hoạt động' : `Thùng rác (${trashCount || 0})`}
+              aria-label={activeTab === 'trash' ? 'Quay lại danh sách bài học đang hoạt động' : `Thùng rác (${trashCount || 0})`}
             >
               {activeTab === 'trash' ? (
-                <>
-                  <ArrowLeft size={14} />
-                  <span>Quay lại</span>
-                </>
+                <ArrowLeft size={16} />
               ) : (
                 <>
-                  <Trash2 size={14} className="text-slate-400 group-hover:text-red-500" />
-                  <span>Thùng rác</span>
+                  <Trash2 size={16} />
                   {trashCount > 0 && (
-                    <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
                       {trashCount}
                     </span>
                   )}

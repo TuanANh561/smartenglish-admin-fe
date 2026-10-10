@@ -48,6 +48,7 @@ function DataTable({
   controlsPosition = 'end',
   separateControls = false,
   className,
+  meta,
 }) {
   const [rowSelection, setRowSelectionState] = useState({})
   const [expandedRows, setExpandedRows] = useState({})
@@ -202,6 +203,7 @@ function DataTable({
     manualSorting: true,
     manualPagination: true,
     manualExpanding: true,
+    meta,
   })
 
   const columnCount = finalColumns.length

@@ -350,7 +350,7 @@ export default function SpeakingSimulatorModal({
               ) : (
                 (scenario.partnerName || 'P')[0].toUpperCase()
               )}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 aspect-square rounded-full border-2 border-white bg-emerald-500 shadow-xs z-10 block shrink-0" />
             </div>
 
             <div>
