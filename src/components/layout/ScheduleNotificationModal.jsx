@@ -16,52 +16,21 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { cn } from '@/lib/utils'
-
-const INITIAL_SCHEDULED = [
-  {
-    id: 'sch-1',
-    title: 'Nhắc nhở nộp bài tập Viết Unit 4',
-    target: 'Lớp IELTS 6.5 — Tối T3, T5',
-    date: '2026-08-20',
-    time: '09:00',
-    type: 'class',
-    content: 'Hạn chót nộp bài essay Task 2 vào 23:59 ngày mai. Các bạn nhớ hoàn thành đúng hạn nhé!',
-    status: 'pending',
-  },
-  {
-    id: 'sch-2',
-    title: 'Lịch thi thử trắc nghiệm Ngữ pháp tuần 3',
-    target: 'Tất cả học viên',
-    date: '2026-08-22',
-    time: '14:30',
-    type: 'exam',
-    content: 'Bài kiểm tra trắc nghiệm 30 câu chuẩn CEFR B1 sẽ mở vào 14:30 thứ Bảy tuần này.',
-    status: 'pending',
-  },
-  {
-    id: 'sch-3',
-    title: 'Cập nhật bài học phát âm âm Schwa /ə/',
-    target: 'Lớp Tiếng Anh Giao Tiếp',
-    date: '2026-08-25',
-    time: '08:00',
-    type: 'lesson',
-    content: 'Bài học mới đã được đăng tải kèm bài tập thu âm giọng nói chấm điểm AI.',
-    status: 'pending',
-  },
-]
-
-const STORAGE_KEY = 'smartenglish_scheduled_reminders'
+import { useAuthStore } from '@/store/authStore'
+import {
+  getScheduledNotifications,
+  createScheduledNotification,
+  cancelScheduledNotification,
+} from '@/features/notifications/notificationApi'
 
 function ScheduleNotificationModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('create') // 'create' | 'list'
-  const [scheduledList, setScheduledList] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : INITIAL_SCHEDULED
-    } catch {
-      return INITIAL_SCHEDULED
-    }
-  })
+  const user = useAuthStore((s) => s.user)
+  const currentUserId = user?.id || 2
+
+  // Dữ liệu lịch hẹn thông báo thật 100% từ backend notification-service (Không fake data)
+  const [scheduledList, setScheduledList] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -71,20 +40,63 @@ function ScheduleNotificationModal({ isOpen, onClose }) {
   const [type, setType] = useState('class')
   const [content, setContent] = useState('')
 
-  useEffect(() => {
+  // Lấy dữ liệu thật từ notification-service
+  const fetchBackendSchedules = async () => {
+    setIsLoading(true)
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduledList))
-    } catch {
-      // ignore
+      const res = await getScheduledNotifications({ creatorId: currentUserId })
+      const list = Array.isArray(res) ? res : res?.data || []
+      if (Array.isArray(list)) {
+        const mapped = list.map((item) => {
+          let d = '2026-08-21'
+          let t = '09:00'
+          if (item.scheduledAt) {
+            const dt = new Date(item.scheduledAt)
+            if (!isNaN(dt.getTime())) {
+              const yr = dt.getFullYear()
+              const mo = String(dt.getMonth() + 1).padStart(2, '0')
+              const day = String(dt.getDate()).padStart(2, '0')
+              d = `${yr}-${mo}-${day}`
+              t = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+            }
+          }
+          return {
+            id: item.id,
+            title: item.title,
+            target: item.targetLabel || 'Tất cả học viên',
+            date: d,
+            time: t,
+            type: (item.remindType || 'class').toLowerCase(),
+            content: item.content || item.title,
+            status: (item.status || 'pending').toLowerCase(),
+          }
+        })
+        setScheduledList(mapped)
+      } else {
+        setScheduledList([])
+      }
+    } catch (err) {
+      console.warn('Lỗi tải lịch từ backend:', err)
+      setScheduledList([])
+    } finally {
+      setIsLoading(false)
     }
-  }, [scheduledList])
+  }
 
-  const handleCreate = (e) => {
+  useEffect(() => {
+    if (isOpen) {
+      fetchBackendSchedules()
+    }
+  }, [isOpen, currentUserId])
+
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!title.trim()) {
       toast.error('Vui lòng nhập tiêu đề thông báo')
       return
     }
+
+    const scheduledDateTime = new Date(`${date}T${time}:00`).toISOString()
 
     const newItem = {
       id: `sch-${Date.now()}`,
@@ -104,11 +116,33 @@ function ScheduleNotificationModal({ isOpen, onClose }) {
     setTitle('')
     setContent('')
     setActiveTab('list')
+
+    try {
+      await createScheduledNotification({
+        creatorId: currentUserId,
+        title: newItem.title,
+        content: newItem.content || newItem.title,
+        targetType: type.toUpperCase(),
+        targetLabel: target,
+        scheduledAt: scheduledDateTime,
+        remindType: type.toUpperCase(),
+        repeatType: 'NONE',
+        channels: 'IN_APP,WEB',
+      })
+      fetchBackendSchedules()
+    } catch (err) {
+      console.warn('Lỗi lưu schedule lên backend:', err)
+    }
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     setScheduledList(scheduledList.filter((item) => item.id !== id))
     toast.success('Đã hủy lịch thông báo')
+    try {
+      await cancelScheduledNotification(id, currentUserId)
+    } catch {
+      // retain optimistic deletion
+    }
   }
 
   return (

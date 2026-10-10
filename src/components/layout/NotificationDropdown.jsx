@@ -16,81 +16,31 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
+import {
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+} from '@/features/notifications/notificationApi'
 
-const STORAGE_KEY = 'smartenglish_teacher_notifications'
-
-export const DEFAULT_NOTIFICATIONS = [
-  {
-    id: 'notif-1',
-    title: 'Học viên nộp bài tập mới',
-    content: 'Nguyễn Văn An vừa nộp bài "Luyện nói Speaking Unit 4 - Travel Plans".',
-    time: '5 phút trước',
-    isRead: false,
-    type: 'submission',
-    targetLink: '/app/lop-hoc',
-    sender: {
-      name: 'Nguyễn Văn An',
-      role: 'Học viên',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-    },
-  },
-  {
-    id: 'notif-2',
-    title: 'Câu hỏi mới từ học sinh trong lớp',
-    content: 'Trần Thị Mai thắc mắc trong bài giảng "Thì Quá khứ hoàn thành": "Khi nào dùng had done ạ?"',
-    time: '25 phút trước',
-    isRead: false,
-    type: 'question',
-    targetLink: '/app/cong-dong',
-    sender: {
-      name: 'Trần Thị Mai',
-      role: 'Học viên',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    },
-  },
-  {
-    id: 'notif-3',
-    title: 'Học liệu biên soạn đã được duyệt',
-    content: 'Bài nghe "TOEIC Part 3 - Office Conversation" đã được quản trị viên duyệt xuất bản.',
-    time: '2 giờ trước',
-    isRead: false,
-    type: 'approval',
-    targetLink: '/app/hoc-lieu/bai-nghe',
-    sender: {
-      name: 'Ban Quản trị',
-      role: 'Hệ thống',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-    },
-  },
-  {
-    id: 'notif-4',
-    title: 'Nhắc nhở buổi học trực tuyến',
-    content: 'Lớp "IELTS Speaking Master 01" sẽ diễn ra lúc 19:30 tối nay. Hãy chuẩn bị slide bài giảng.',
-    time: 'Hôm nay, 14:00',
-    isRead: true,
-    type: 'schedule',
-    targetLink: '/app/lop-hoc',
-    sender: {
-      name: 'Lịch học tự động',
-      role: 'Hệ thống',
-      avatar: null,
-    },
-  },
-  {
-    id: 'notif-5',
-    title: 'Báo cáo tiến độ học viên định kỳ',
-    content: 'Báo cáo tuần của 28 học viên đã được AI tổng hợp và sẵn sàng để bạn nhận xét.',
-    time: 'Hôm qua',
-    isRead: true,
-    type: 'report',
-    targetLink: '/app/lop-hoc',
-    sender: {
-      name: 'AI Analytics',
-      role: 'Hệ thống',
-      avatar: null,
-    },
-  },
-]
+function formatTimeVi(dateInput) {
+  if (!dateInput) return 'Vừa xong'
+  const date = new Date(dateInput)
+  if (isNaN(date.getTime())) return String(dateInput)
+  const diffMs = Date.now() - date.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 60) return 'Vừa xong'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin} phút trước`
+  const diffHours = Math.floor(diffMin / 60)
+  if (diffHours < 24) return `${diffHours} giờ trước`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays === 1) return 'Hôm qua'
+  if (diffDays < 7) return `${diffDays} ngày trước`
+  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`
+}
 
 export default function NotificationDropdown({
   isOpen,
@@ -102,24 +52,57 @@ export default function NotificationDropdown({
   const navigate = useNavigate()
   const dropdownRef = useRef(null)
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'unread'
+  const user = useAuthStore((s) => s.user)
+  const currentUserId = user?.id || 2
 
-  const [notifications, setNotifications] = useState(() => {
+  // Dữ liệu thông báo thật 100% từ backend notification-service (Không fake data)
+  const [notifications, setNotifications] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Lấy dữ liệu thật từ notification-service
+  const fetchBackendNotifications = async () => {
+    setIsLoading(true)
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : DEFAULT_NOTIFICATIONS
-    } catch {
-      return DEFAULT_NOTIFICATIONS
+      const res = await getNotifications({ userId: currentUserId, size: 50 })
+      const list = res?.content || (Array.isArray(res) ? res : res?.data?.content || [])
+      if (Array.isArray(list)) {
+        const mapped = list.map((item) => ({
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          time: formatTimeVi(item.createdAt),
+          isRead: Boolean(item.isRead),
+          type: (item.type || 'SYSTEM').toLowerCase(),
+          targetLink: item.targetLink || '/app/lop-hoc',
+          sender: {
+            name: item.senderName || 'Hệ thống',
+            role: 'Học viên / Hệ thống',
+            avatar: item.senderAvatar || null,
+          },
+          channel: item.channel,
+        }))
+        setNotifications(mapped)
+      } else {
+        setNotifications([])
+      }
+    } catch (err) {
+      console.warn('Lỗi kết nối notification-service:', err)
+      setNotifications([])
+    } finally {
+      setIsLoading(false)
     }
-  })
+  }
 
-  // Lưu lại vào localStorage khi có thay đổi
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications))
-    } catch {
-      // ignore
-    }
-  }, [notifications])
+    fetchBackendNotifications()
+    getUnreadNotificationCount(currentUserId)
+      .then((count) => {
+        if (typeof count === 'number') {
+          onUnreadCountChange?.(count)
+        }
+      })
+      .catch(() => {})
+  }, [currentUserId, isOpen])
 
   // Tính số lượng chưa đọc và báo ra ngoài cho chuông thông báo
   const unreadCount = useMemo(() => {
@@ -156,15 +139,28 @@ export default function NotificationDropdown({
   }, [isOpen, onClose, anchorRef])
 
   // Đánh dấu tất cả đã đọc
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
     setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
+    onUnreadCountChange?.(0)
+    try {
+      await markAllNotificationsAsRead(currentUserId)
+    } catch {
+      // retain optimistic update
+    }
   }
 
   // Đánh dấu 1 thông báo là đã đọc
-  const handleItemClick = (item) => {
+  const handleItemClick = async (item) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
     )
+    if (!item.isRead) {
+      try {
+        await markNotificationAsRead(item.id, currentUserId)
+      } catch {
+        // retain optimistic update
+      }
+    }
     if (item.targetLink) {
       navigate(item.targetLink)
       onClose()
@@ -172,9 +168,14 @@ export default function NotificationDropdown({
   }
 
   // Xóa 1 thông báo
-  const handleDeleteItem = (e, id) => {
+  const handleDeleteItem = async (e, id) => {
     e.stopPropagation()
     setNotifications((prev) => prev.filter((n) => n.id !== id))
+    try {
+      await deleteNotification(id, currentUserId)
+    } catch {
+      // retain optimistic update
+    }
   }
 
   if (!isOpen) return null
@@ -182,13 +183,17 @@ export default function NotificationDropdown({
   const getIconForType = (type) => {
     switch (type) {
       case 'submission':
+      case 'submit_assignment':
         return <FileCheck size={14} className="text-emerald-600" />
       case 'question':
         return <MessageSquare size={14} className="text-blue-600" />
       case 'approval':
         return <Sparkles size={14} className="text-amber-600" />
       case 'schedule':
+      case 'reminder':
         return <Calendar size={14} className="text-indigo-600" />
+      case 'payment_success':
+        return <Check size={14} className="text-emerald-600" />
       default:
         return <AlertCircle size={14} className="text-slate-600" />
     }

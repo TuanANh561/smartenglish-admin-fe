@@ -10,6 +10,12 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
 import CalendarScheduleDropdown from './CalendarScheduleDropdown'
 import NotificationDropdown from './NotificationDropdown'
+import {
+  getScheduledNotifications,
+  getUnreadNotificationCount,
+} from '@/features/notifications/notificationApi'
+import { http } from '@/lib/api'
+import { sendPresenceHeartbeat } from '@/features/community/socketService'
 
 function Topbar({ actions }) {
   const { pathname } = useLocation()
@@ -17,11 +23,25 @@ function Topbar({ actions }) {
   const logout = useLogout()
   const user = useAuthStore((s) => s.user)
 
+  // Global realtime presence heartbeat across all admin/teacher pages
+  useEffect(() => {
+    if (!user?.id) return
+    const pingPresence = () => {
+      http.post(`/api/v1/social/presence/heartbeat?userId=${user.id}`).catch(() => {})
+      sendPresenceHeartbeat(user.id)
+    }
+    pingPresence()
+    const timer = setInterval(pingPresence, 20000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [user?.id])
+
   const [isScheduleOpen, setIsScheduleOpen] = useState(false)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [unreadNotifCount, setUnreadNotifCount] = useState(3)
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
 
   const dateButtonRef = useRef(null)
   const notifButtonRef = useRef(null)
@@ -35,19 +55,37 @@ function Topbar({ actions }) {
     })
   }, [])
 
-  // Đếm số lượng thông báo đã đặt
-  const [scheduleCount, setScheduleCount] = useState(3)
+  // Đếm số lượng thông báo / lịch hẹn thực tế từ backend
+  const [scheduleCount, setScheduleCount] = useState(0)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('smartenglish_scheduled_reminders')
-      if (saved) {
-        const list = JSON.parse(saved)
-        setScheduleCount(list.length)
+    let isMounted = true
+    const fetchCounts = async () => {
+      try {
+        const targetUserId = user?.id || 2
+        // 1. Lấy số lượng lịch hẹn thực tế từ notification-service
+        const schedRes = await getScheduledNotifications({ creatorId: targetUserId }).catch(() => null)
+        const schedList = Array.isArray(schedRes) ? schedRes : schedRes?.data || []
+        if (isMounted) {
+          setScheduleCount(Array.isArray(schedList) ? schedList.length : 0)
+        }
+
+        // 2. Lấy số lượng thông báo chưa đọc thực tế
+        if (user?.role === 'teacher') {
+          const unread = await getUnreadNotificationCount(targetUserId).catch(() => null)
+          if (isMounted && typeof unread === 'number') {
+            setUnreadNotifCount(unread)
+          }
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
-  }, [isScheduleOpen])
+
+    fetchCounts()
+    return () => {
+      isMounted = false
+    }
+  }, [user?.id, user?.role, isScheduleOpen, isNotifOpen])
 
   // Handle clicking outside user menu dropdown
   useEffect(() => {
@@ -83,6 +121,11 @@ function Topbar({ actions }) {
       title = 'Dashboard Tổng quan'
       description = 'Chào mừng trở lại, hệ thống đang hoạt động ổn định.'
     }
+  }
+
+  if (pathname === '/app/noi-dung-ai' && (user?.role === 'teacher' || user?.role === 'TEACHER')) {
+    title = 'Tạo nội dung AI'
+    description = 'Tạo và quản lý nội dung học liệu được sinh bởi AI'
   }
 
   const isCollapsed = useSidebarStore((s) => s.isCollapsed)

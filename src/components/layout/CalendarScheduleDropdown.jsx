@@ -16,41 +16,12 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
-
-const STORAGE_KEY = 'smartenglish_scheduled_reminders'
-
-const INITIAL_SCHEDULED = [
-  {
-    id: 'sch-1',
-    title: 'Nhắc nhở nộp bài tập Viết Unit 4',
-    target: 'Lớp IELTS 6.5 — Tối T3, T5',
-    date: '2026-08-20',
-    time: '09:00',
-    type: 'class',
-    content: 'Hạn chót nộp bài essay Task 2 vào 23:59 ngày mai. Các bạn nhớ hoàn thành đúng hạn nhé!',
-    status: 'pending',
-  },
-  {
-    id: 'sch-2',
-    title: 'Lịch thi thử trắc nghiệm Ngữ pháp tuần 3',
-    target: 'Tất cả học viên',
-    date: '2026-08-22',
-    time: '14:30',
-    type: 'exam',
-    content: 'Bài kiểm tra trắc nghiệm 30 câu chuẩn CEFR B1 sẽ mở vào 14:30 thứ Bảy tuần này.',
-    status: 'pending',
-  },
-  {
-    id: 'sch-3',
-    title: 'Cập nhật bài học phát âm âm Schwa /ə/',
-    target: 'Lớp Tiếng Anh Giao Tiếp',
-    date: '2026-08-25',
-    time: '08:00',
-    type: 'lesson',
-    content: 'Bài học mới đã được đăng tải kèm bài tập thu âm giọng nói chấm điểm AI.',
-    status: 'pending',
-  },
-]
+import { useAuthStore } from '@/store/authStore'
+import {
+  getScheduledNotifications,
+  createScheduledNotification,
+  cancelScheduledNotification,
+} from '@/features/notifications/notificationApi'
 
 const DAYS_OF_WEEK = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
@@ -73,15 +44,61 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   // Ngày đang được chọn trên lịch (YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState(todayStr)
 
-  // Danh sách lịch thông báo
-  const [scheduledList, setScheduledList] = useState(() => {
+  const user = useAuthStore((s) => s.user)
+  const currentUserId = user?.id || 2
+
+  // Danh sách lịch thông báo thật 100% từ backend notification-service (Không fake data)
+  const [scheduledList, setScheduledList] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Lấy dữ liệu thật từ notification-service
+  const fetchBackendSchedules = async () => {
+    setIsLoading(true)
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : INITIAL_SCHEDULED
-    } catch {
-      return INITIAL_SCHEDULED
+      const res = await getScheduledNotifications({ creatorId: currentUserId })
+      const list = Array.isArray(res) ? res : res?.data || []
+      if (Array.isArray(list)) {
+        const mapped = list.map((item) => {
+          let date = todayStr
+          let time = '09:00'
+          if (item.scheduledAt) {
+            const dt = new Date(item.scheduledAt)
+            if (!isNaN(dt.getTime())) {
+              const y = dt.getFullYear()
+              const m = String(dt.getMonth() + 1).padStart(2, '0')
+              const d = String(dt.getDate()).padStart(2, '0')
+              date = `${y}-${m}-${d}`
+              time = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+            }
+          }
+          return {
+            id: item.id,
+            title: item.title,
+            content: item.content || item.title,
+            target: item.targetLabel || 'Tất cả học viên',
+            date,
+            time,
+            type: (item.remindType || 'class').toLowerCase(),
+            status: (item.status || 'pending').toLowerCase(),
+          }
+        })
+        setScheduledList(mapped)
+      } else {
+        setScheduledList([])
+      }
+    } catch (err) {
+      console.warn('Lỗi tải lịch thông báo từ backend:', err)
+      setScheduledList([])
+    } finally {
+      setIsLoading(false)
     }
-  })
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchBackendSchedules()
+    }
+  }, [isOpen, currentUserId])
 
   // Form thêm nhắc nhở / thông báo cho ngày được chọn
   const [noteTitle, setNoteTitle] = useState('')
@@ -89,15 +106,6 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   const [noteTime, setNoteTime] = useState('09:00')
   const [noteTarget, setNoteTarget] = useState('Lớp IELTS 6.5')
   const [activeTab, setActiveTab] = useState('add') // 'add' | 'list'
-
-  // Lưu vào localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduledList))
-    } catch {
-      // ignore
-    }
-  }, [scheduledList])
 
   // Đóng dropdown khi click outside hoặc ấn Escape
   useEffect(() => {
@@ -220,12 +228,14 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   }, [scheduledList, selectedDate])
 
   // Xử lý tạo ghi chú / lịch thông báo mới
-  const handleSaveReminder = (e) => {
+  const handleSaveReminder = async (e) => {
     e.preventDefault()
     if (!noteTitle.trim()) {
       toast.error('Vui lòng nhập nội dung hoặc tiêu đề thông báo!')
       return
     }
+
+    const scheduledDateTime = new Date(`${selectedDate}T${noteTime}:00`).toISOString()
 
     const newItem = {
       id: `sch-${Date.now()}`,
@@ -243,12 +253,34 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
     setNoteTitle('')
     setNoteContent('')
     setActiveTab('list')
+
+    try {
+      await createScheduledNotification({
+        creatorId: currentUserId,
+        title: newItem.title,
+        content: newItem.content,
+        targetType: 'CLASS',
+        targetLabel: noteTarget,
+        scheduledAt: scheduledDateTime,
+        remindType: 'CLASS',
+        repeatType: 'NONE',
+        channels: 'IN_APP,WEB',
+      })
+      fetchBackendSchedules()
+    } catch (err) {
+      console.warn('Lỗi lưu schedule lên backend:', err)
+    }
   }
 
   // Xóa thông báo
-  const handleDeleteItem = (id) => {
+  const handleDeleteItem = async (id) => {
     setScheduledList((prev) => prev.filter((item) => item.id !== id))
     toast.success('Đã xóa lịch thông báo')
+    try {
+      await cancelScheduledNotification(id, currentUserId)
+    } catch {
+      // retain optimistic deletion
+    }
   }
 
   // Format ngày tiếng Việt hiển thị
