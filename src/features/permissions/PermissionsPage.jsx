@@ -29,14 +29,7 @@ import Select from '@/components/ui/Select'
 import Switch from '@/components/ui/Switch'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { cn, formatNumber } from '@/lib/utils'
-import { PERMISSION_GROUPS } from '@/mocks/data/rolesPermissions'
-import {
-  getRoles,
-  createRole,
-  updateRole,
-  deleteRole,
-  resetRoleDefaults,
-} from './api'
+import { PERMISSION_GROUPS, INITIAL_ROLES } from '@/mocks/data/rolesPermissions'
 
 const ICONS_MAP = {
   GraduationCap: GraduationCap,
@@ -51,10 +44,32 @@ const TOTAL_PERMISSIONS_COUNT = PERMISSION_GROUPS.reduce(
   0,
 )
 
+const STORAGE_KEY = 'smartenglish_admin_roles_v1'
+
 function PermissionsPage() {
-  const [roles, setRoles] = useState([])
+  const [roles, setRoles] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // Kiểm tra nghiêm ngặt: phải là array có item, mỗi item phải có id + permissions
+        if (
+          Array.isArray(parsed) &&
+          parsed.length > 0 &&
+          parsed.every((r) => r?.id && r?.permissions)
+        ) {
+          return parsed
+        }
+      }
+    } catch (_) {}
+    // Xóa localStorage bị corrupt, khởi động lại từ INITIAL_ROLES
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch (_) {}
+    return INITIAL_ROLES
+  })
   const [selectedRoleId, setSelectedRoleId] = useState('teacher')
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -67,30 +82,33 @@ function PermissionsPage() {
   const [cloneFromRole, setCloneFromRole] = useState('teacher')
   const [isCreating, setIsCreating] = useState(false)
 
-  // Tải danh sách vai trò từ backend thật
-  const loadRoles = async (preserveSelectedId = null) => {
-    try {
-      setIsLoading(true)
-      const data = await getRoles()
-      if (Array.isArray(data) && data.length > 0) {
-        setRoles(data)
-        const targetId = preserveSelectedId || selectedRoleId
-        const exists = data.some((r) => r.id === targetId)
-        setSelectedRoleId(exists ? targetId : data[0].id)
-      } else {
-        setRoles([])
-      }
-    } catch (err) {
-      console.error('Lỗi khi tải vai trò phân quyền:', err)
-      toast.error(err.message || 'Không thể tải danh sách vai trò từ máy chủ')
-    } finally {
+  // Tải danh sách vai trò
+  const loadRoles = (preserveSelectedId = null) => {
+    setIsLoading(true)
+    setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (
+            Array.isArray(parsed) &&
+            parsed.length > 0 &&
+            parsed.every((r) => r?.id && r?.permissions)
+          ) {
+            setRoles(parsed)
+            const targetId = preserveSelectedId || selectedRoleId
+            const exists = parsed.some((r) => r.id === targetId)
+            setSelectedRoleId(exists ? targetId : parsed[0].id)
+            setIsLoading(false)
+            return
+          }
+        }
+      } catch (_) {}
+      setRoles(INITIAL_ROLES)
+      setSelectedRoleId(preserveSelectedId || 'teacher')
       setIsLoading(false)
-    }
+    }, 200)
   }
-
-  useEffect(() => {
-    loadRoles()
-  }, [])
 
   const currentRole = useMemo(() => {
     return roles.find((r) => r.id === selectedRoleId) || roles[0] || null
@@ -104,8 +122,8 @@ function PermissionsPage() {
 
   const handleTogglePermission = (permKey) => {
     if (!currentRole) return
-    setRoles((prev) =>
-      prev.map((role) => {
+    setRoles((prev) => {
+      const next = prev.map((role) => {
         if (role.id !== selectedRoleId) return role
         return {
           ...role,
@@ -114,8 +132,12 @@ function PermissionsPage() {
             [permKey]: !role.permissions?.[permKey],
           },
         }
-      }),
-    )
+      })
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      } catch (_) {}
+      return next
+    })
   }
 
   // Bật/tắt nhanh toàn bộ quyền trong một nhóm
@@ -124,99 +146,100 @@ function PermissionsPage() {
     const group = PERMISSION_GROUPS.find((g) => g.key === groupKey)
     if (!group) return
 
-    setRoles((prev) =>
-      prev.map((role) => {
+    setRoles((prev) => {
+      const next = prev.map((role) => {
         if (role.id !== selectedRoleId) return role
         const updatedPerms = { ...role.permissions }
         group.items.forEach((item) => {
           updatedPerms[item.key] = shouldEnable
         })
         return { ...role, permissions: updatedPerms }
-      }),
-    )
-  }
-
-  // Lưu cấu hình phân quyền xuống Backend thật
-  const handleSaveRolePermissions = async () => {
-    if (!currentRole) return
-    try {
-      setIsSaving(true)
-      const updated = await updateRole(currentRole.id, {
-        name: currentRole.name,
-        description: currentRole.description,
-        status: currentRole.status,
-        permissions: currentRole.permissions,
       })
-      if (updated) {
-        setRoles((prev) =>
-          prev.map((r) => (r.id === currentRole.id ? { ...r, ...updated } : r)),
-        )
-      }
-      toast.success(`Đã lưu cấu hình phân quyền cho vai trò "${currentRole?.name}"`)
-    } catch (err) {
-      console.error('Lỗi lưu phân quyền:', err)
-      toast.error(err.message || 'Không thể lưu phân quyền lên hệ thống')
-    } finally {
-      setIsSaving(false)
-    }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      } catch (_) {}
+      return next
+    })
   }
 
-  // Khôi phục quyền mặc định từ Backend thật
-  const handleResetDefaults = async () => {
+  // Lưu cấu hình phân quyền
+  const handleSaveRolePermissions = () => {
     if (!currentRole) return
-    try {
-      setIsResetting(true)
-      const updated = await resetRoleDefaults(selectedRoleId)
-      if (updated) {
-        setRoles((prev) =>
-          prev.map((r) => (r.id === selectedRoleId ? { ...r, ...updated } : r)),
-        )
-      }
-      toast.success(`Đã khôi phục quyền mặc định cho "${currentRole?.name}"`)
-    } catch (err) {
-      console.error('Lỗi khôi phục quyền mặc định:', err)
-      toast.error(err.message || 'Không thể khôi phục quyền mặc định')
-    } finally {
-      setIsResetting(false)
-    }
+    setIsSaving(true)
+    setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(roles))
+      } catch (_) {}
+      setIsSaving(false)
+      toast.success(`Đã lưu cấu hình phân quyền cho vai trò "${currentRole?.name}"`)
+    }, 300)
   }
 
-  // Tạo vai trò mới lưu vào Database thật
-  const handleCreateRole = async (e) => {
+  // Khôi phục quyền mặc định
+  const handleResetDefaults = () => {
+    if (!currentRole) return
+    setIsResetting(true)
+    setTimeout(() => {
+      const defaultRole = INITIAL_ROLES.find((r) => r.id === selectedRoleId)
+      if (defaultRole) {
+        setRoles((prev) => {
+          const next = prev.map((r) =>
+            r.id === selectedRoleId
+              ? { ...r, permissions: { ...defaultRole.permissions } }
+              : r,
+          )
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+          } catch (_) {}
+          return next
+        })
+      }
+      setIsResetting(false)
+      toast.success(`Đã khôi phục quyền mặc định cho "${currentRole?.name}"`)
+    }, 300)
+  }
+
+  // Tạo vai trò mới
+  const handleCreateRole = (e) => {
     e.preventDefault()
     if (!newRoleName.trim()) {
       toast.error('Vui lòng nhập tên vai trò')
       return
     }
 
-    try {
-      setIsCreating(true)
-      const created = await createRole({
+    setIsCreating(true)
+    setTimeout(() => {
+      const baseRole = roles.find((r) => r.id === cloneFromRole) || INITIAL_ROLES[0]
+      const created = {
+        id: `role_${Date.now()}`,
         name: newRoleName.trim(),
         code: (newRoleCode || newRoleName).toUpperCase().replace(/\s+/g, '_'),
         description: newRoleDesc.trim() || 'Vai trò tùy chỉnh mới',
-        cloneFromRole,
-      })
-
-      if (created) {
-        setRoles((prev) => [...prev, created])
-        setSelectedRoleId(created.id)
-        setIsCreateOpen(false)
-        setNewRoleName('')
-        setNewRoleCode('')
-        setNewRoleDesc('')
-        toast.success(`Đã tạo vai trò mới "${created.name}" thành công!`)
+        userCount: 0,
+        status: 'active',
+        isSystem: false,
+        permissions: { ...baseRole.permissions },
       }
-    } catch (err) {
-      console.error('Lỗi tạo vai trò mới:', err)
-      toast.error(err.message || 'Không thể tạo vai trò mới')
-    } finally {
+
+      setRoles((prev) => {
+        const next = [...prev, created]
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+        } catch (_) {}
+        return next
+      })
+      setSelectedRoleId(created.id)
+      setIsCreateOpen(false)
+      setNewRoleName('')
+      setNewRoleCode('')
+      setNewRoleDesc('')
       setIsCreating(false)
-    }
+      toast.success(`Đã tạo vai trò mới "${created.name}" thành công!`)
+    }, 300)
   }
 
-  // Xóa vai trò tùy chỉnh khỏi Database thật
-  const handleDeleteRole = async (id, e) => {
+  // Xóa vai trò tùy chỉnh
+  const handleDeleteRole = (id, e) => {
     e.stopPropagation()
     const roleToDelete = roles.find((r) => r.id === id)
     if (roleToDelete?.isSystem) {
@@ -228,20 +251,21 @@ function PermissionsPage() {
       return
     }
 
-    try {
-      setIsDeleting(true)
-      await deleteRole(id)
-      setRoles((prev) => prev.filter((r) => r.id !== id))
+    setIsDeleting(true)
+    setTimeout(() => {
+      setRoles((prev) => {
+        const next = prev.filter((r) => r.id !== id)
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+        } catch (_) {}
+        return next
+      })
       if (selectedRoleId === id) {
         setSelectedRoleId(roles.find((r) => r.id !== id)?.id || 'teacher')
       }
-      toast.success(`Đã xoá vai trò "${roleToDelete?.name}" thành công`)
-    } catch (err) {
-      console.error('Lỗi xoá vai trò:', err)
-      toast.error(err.message || 'Không thể xoá vai trò này')
-    } finally {
       setIsDeleting(false)
-    }
+      toast.success(`Đã xoá vai trò "${roleToDelete?.name}" thành công`)
+    }, 300)
   }
 
   return (
