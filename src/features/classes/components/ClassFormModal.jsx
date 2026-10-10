@@ -205,7 +205,7 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit,
               </label>
               {loadingCourses && (
                 <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                  <Loader2 size={10} className="animate-spin" /> Đang tải...
+                  <Loader2 size={12} strokeWidth={2.25} className="animate-spin shrink-0" /> Đang tải...
                 </span>
               )}
             </div>
@@ -424,7 +424,7 @@ export default function ClassFormModal({ isOpen, onClose, initialData, onSubmit,
               disabled={submitting}
               className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
-              {submitting && <Loader2 size={14} className="animate-spin" />}
+              {submitting && <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />}
               <span>{isEditing ? 'Lưu thay đổi' : 'Tạo lớp học'}</span>
             </button>
           </div>

@@ -103,7 +103,7 @@ export default function AddStudentModal({ isOpen, onClose, onAddMember }) {
               disabled={submitting}
               className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
-              {submitting && <Loader2 size={14} className="animate-spin" />}
+              {submitting && <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />}
               <span>Thêm ngay</span>
             </button>
           </div>
