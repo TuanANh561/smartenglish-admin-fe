@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   Cpu,
-  KeyRound,
   SlidersHorizontal,
   Mic,
   ShieldCheck,
@@ -13,24 +12,13 @@ import {
   RotateCcw,
   Save,
   CheckCircle2,
-  AlertTriangle,
   Play,
-  Volume2,
-  Layers,
-  Bot,
-  FileText,
-  Check,
-  ExternalLink,
-  Zap,
-  Gauge,
-  Info,
-  Sliders,
-  Sparkles,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Modal from '@/components/ui/Modal'
+import { claimAppAudio, releaseAppAudio, stopAllAppAudio } from '@/lib/appAudioCoordinator'
 import {
   AI_SERVICES_STATUS,
   LLM_MODELS_CATALOG,
@@ -39,16 +27,25 @@ import {
 } from './aiConfigConstants'
 
 const STORAGE_KEY = 'smartenglish_ai_system_config_v2'
+const BACKEND_KEY_PLACEHOLDER = 'managed-by-backend'
+
+const withoutClientSecrets = (value) => ({
+  ...value,
+  apiKeyPool: (value.apiKeyPool || []).map((item) => ({
+    ...item,
+    keyMasked: BACKEND_KEY_PLACEHOLDER,
+  })),
+})
 
 export default function AiConfigPage() {
   const [config, setConfig] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
+      if (saved) return withoutClientSecrets(JSON.parse(saved))
     } catch (e) {
       console.warn('Cannot load config:', e)
     }
-    return INITIAL_AI_SYSTEM_CONFIG
+    return withoutClientSecrets(INITIAL_AI_SYSTEM_CONFIG)
   })
 
   const [activeTab, setActiveTab] = useState('models') // 'models' | 'routing' | 'speech' | 'quotas'
@@ -57,13 +54,13 @@ export default function AiConfigPage() {
   const [pingResult, setPingResult] = useState(null)
   const [isAddKeyModalOpen, setIsAddKeyModalOpen] = useState(false)
   const [newKeyData, setNewKeyData] = useState({ label: '', keyMasked: '' })
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  const [, setIsPlayingAudio] = useState(false)
 
   // Save settings
   const handleSave = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-      toast.success('Đã lưu cấu hình AI vào hệ thống thành công!', {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(withoutClientSecrets(config)))
+      toast.success('Đã lưu tùy chọn giao diện AI trên trình duyệt!', {
         icon: '💾',
       })
     } catch {
@@ -74,8 +71,9 @@ export default function AiConfigPage() {
   // Reset to defaults
   const handleReset = () => {
     if (window.confirm('Đặt lại toàn bộ cấu hình AI về thông số tiêu chuẩn của hệ thống?')) {
-      setConfig(INITIAL_AI_SYSTEM_CONFIG)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_AI_SYSTEM_CONFIG))
+      const safeDefaults = withoutClientSecrets(INITIAL_AI_SYSTEM_CONFIG)
+      setConfig(safeDefaults)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeDefaults))
       toast.success('Đã khôi phục cấu hình mặc định!')
     }
   }
@@ -116,7 +114,8 @@ export default function AiConfigPage() {
     }
 
     try {
-      window.speechSynthesis.cancel()
+      stopAllAppAudio()
+      claimAppAudio('ai-config-voice', () => window.speechSynthesis.cancel())
       setIsPlayingAudio(true)
 
       const utterance = new SpeechSynthesisUtterance(persona.sampleText)
@@ -131,8 +130,14 @@ export default function AiConfigPage() {
         utterance.lang = 'en-US'
       }
 
-      utterance.onend = () => setIsPlayingAudio(false)
-      utterance.onerror = () => setIsPlayingAudio(false)
+      utterance.onend = () => {
+        releaseAppAudio('ai-config-voice')
+        setIsPlayingAudio(false)
+      }
+      utterance.onerror = () => {
+        releaseAppAudio('ai-config-voice')
+        setIsPlayingAudio(false)
+      }
 
       window.speechSynthesis.speak(utterance)
       toast.success(`Đang phát giọng đọc mẫu: ${persona.name}`, { duration: 1800 })
@@ -143,30 +148,9 @@ export default function AiConfigPage() {
 
   // Add new API key
   const handleAddKey = () => {
-    if (!newKeyData.keyMasked.trim()) {
-      toast.error('Vui lòng nhập chuỗi API Key!')
-      return
-    }
-
-    const item = {
-      id: `key-user-${Date.now()}`,
-      label: newKeyData.label.trim() || `API Key #${config.apiKeyPool.length + 1}`,
-      keyMasked: newKeyData.keyMasked.trim(),
-      status: 'STANDBY',
-      usageToday: 0,
-      quotaLimit: 50000,
-      errorRate: '0.00%',
-      lastCall: 'Chưa sử dụng',
-    }
-
-    setConfig((prev) => ({
-      ...prev,
-      apiKeyPool: [...prev.apiKeyPool, item],
-    }))
-
     setNewKeyData({ label: '', keyMasked: '' })
     setIsAddKeyModalOpen(false)
-    toast.success('Đã thêm API Key mới vào danh sách xoay vòng!')
+    toast.error('Không lưu API key trên trình duyệt. Hãy cấu hình GEMINI_API_KEY trong môi trường backend.')
   }
 
   // Delete key
@@ -1003,11 +987,14 @@ export default function AiConfigPage() {
             <label className="text-xs font-bold text-slate-800 block mb-1">Giá trị API Key (từ Google AI Studio)</label>
             <input
               type="password"
-              placeholder="AIzaSy..."
-              value={newKeyData.keyMasked}
-              onChange={(e) => setNewKeyData((p) => ({ ...p, keyMasked: e.target.value }))}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-400"
+              placeholder="Chỉ cấu hình tại biến môi trường backend"
+              value=""
+              disabled
+              className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-mono text-slate-500"
             />
+            <p className="mt-2 text-xs text-amber-700">
+              Vì lý do bảo mật, giao diện web không nhận hoặc lưu khóa bí mật. Hãy đặt GEMINI_API_KEY trên máy chủ.
+            </p>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">

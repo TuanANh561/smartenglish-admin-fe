@@ -3,7 +3,6 @@
  * Toàn bộ yêu cầu sinh nội dung được gửi trực tiếp về Backend Service
  * (/admin/ai/generate-content) để bảo vệ Gemini API Key và đảm bảo hiệu năng.
  */
-import axios from 'axios'
 import { api } from '@/lib/api'
 
 export class GeminiServiceError extends Error {
@@ -16,65 +15,26 @@ export class GeminiServiceError extends Error {
 }
 
 /**
- * Gọi API backend sinh nội dung AI với cơ chế fallback giữa Vite Proxy và Gateway
+ * Gọi API backend sinh nội dung AI. Không tạo dữ liệu giả khi provider lỗi.
  */
 async function callBackendAiContent(payload) {
-  // 1. Thử qua Vite Proxy
   try {
-    const res = await axios.post('/admin/ai/generate-content', payload)
-    const data = res?.data?.data || res?.data
+    const res = await api.post('/admin/ai/generate-content', { data: payload })
+    const data = res?.data !== undefined ? res.data : res
     if (data && (data.questions || data.text || data.title)) {
       return data
     }
-  } catch (proxyErr) {
-    // 2. Thử qua API Gateway
-    try {
-      const res = await api.post('/admin/ai/generate-content', payload)
-      const data = res?.data !== undefined ? res.data : res
-      if (data && (data.questions || data.text || data.title)) {
-        return data
-      }
-    } catch (gatewayErr) {
-      console.warn('[Gemini AI Studio] Backend AI không phản hồi, chuyển sang fallback:', gatewayErr?.message)
+    throw new GeminiServiceError('Backend trả về nội dung AI không hợp lệ', 'INVALID_RESPONSE')
+  } catch (error) {
+    if (error instanceof GeminiServiceError) throw error
+    const status = error?.response?.status
+    if (status === 401 || status === 403) {
+      throw new GeminiServiceError('Bạn không có quyền sử dụng chức năng AI này', 'FORBIDDEN')
     }
-  }
-
-  // 3. Fallback mẫu thông minh nếu mất kết nối backend
-  return generateSmartFallback(payload)
-}
-
-function generateSmartFallback({ type = 'reading', topic = 'General English', level = 'B2', questionCount = 3 }) {
-  const safeQCount = Math.min(Math.max(Number(questionCount) || 3, 1), 10)
-  const isReading = type === 'reading'
-  const isToeic6 = type === 'toeic_part_6' || type === 'cloze_paragraph'
-
-  let text = ''
-  if (isReading) {
-    text = `Effective English communication requires consistent practice and exposure to authentic materials regarding ${topic}. By reading regularly, learners naturally absorb grammar patterns and expand their vocabulary in realistic contexts. Dedicating just fifteen minutes every day can create a profound difference in your overall language fluency and test performance.`
-  } else if (isToeic6) {
-    text = `Employees often strive to improve their workplace performance in international environments. The department [131] _____ a comprehensive training workshop next month regarding ${topic}. Participants [132] _____ receive valuable certification upon completion.`
-  }
-
-  const questions = []
-  for (let i = 1; i <= safeQCount; i++) {
-    questions.push({
-      id: i,
-      questionText: isToeic6 ? `${130 + i}.` : `Which statement is correct regarding ${topic}?`,
-      options: [
-        'Consistent daily practice leads to natural fluency',
-        'Studying once a month is sufficient for mastery',
-        'Vocabulary cannot be acquired through context',
-        'Grammar rules are unhelpful in communication',
-      ],
-      correctAnswer: 'A',
-      explanationVi: 'Đáp án A chính xác theo ngữ cảnh lý thuyết và phương pháp học tiếng Anh chuẩn quốc tế.',
-    })
-  }
-
-  return {
-    title: `${topic} - ${type.toUpperCase()}`,
-    text,
-    questions,
+    if (status === 429) {
+      throw new GeminiServiceError('Đã vượt hạn mức AI. Vui lòng thử lại sau', 'RATE_LIMIT')
+    }
+    throw new GeminiServiceError('Dịch vụ AI tạm thời không khả dụng', 'BACKEND_UNAVAILABLE')
   }
 }
 

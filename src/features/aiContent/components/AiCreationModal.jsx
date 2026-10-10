@@ -37,7 +37,7 @@ export default function AiCreationModal({
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center gap-4 py-12">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-7 w-7 animate-spin text-brand-600" />
+            <Loader2 className="h-7 w-7 animate-spin shrink-0 text-brand-600" strokeWidth={2.25} />
             <div>
               <p className="font-bold text-base text-slate-800">Đang khởi tạo học liệu...</p>
               <p className="text-xs text-slate-500">{generatingStatus}</p>

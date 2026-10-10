@@ -100,42 +100,40 @@ export default function AiContentToolbar({
             </Button>
           )}
 
-          {/* Nút Tạo nội dung AI */}
+          {/* Nút Tạo nội dung AI (Icon-only) */}
           {!showTrash && (
             <button
               type="button"
               onClick={onOpenCreationModal}
               disabled={isGenerating}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Tạo nội dung AI mới"
+              aria-label="Tạo nội dung AI mới"
             >
-              <Plus size={15} />
-              <span>Tạo nội dung AI</span>
+              <Plus size={18} strokeWidth={2.5} />
             </button>
           )}
 
-          {/* Nút Thùng rác - Ở cuối kế bên nút Thêm */}
+          {/* Nút Thùng rác (Icon-only) */}
           <button
             type="button"
             onClick={() => setShowTrash((value) => !value)}
             className={cn(
-              'flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors shadow-2xs cursor-pointer border',
+              'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs cursor-pointer border',
               showTrash
                 ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
-                : 'border-slate-200 bg-white text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200',
             )}
-            title={showTrash ? 'Quay lại danh sách nội dung AI' : 'Xem các nội dung trong thùng rác'}
+            title={showTrash ? 'Quay lại danh sách nội dung AI' : `Thùng rác (${trashCount || 0})`}
+            aria-label={showTrash ? 'Quay lại danh sách nội dung AI' : `Thùng rác (${trashCount || 0})`}
           >
             {showTrash ? (
-              <>
-                <ArrowLeft size={14} />
-                <span>Quay lại</span>
-              </>
+              <ArrowLeft size={16} />
             ) : (
               <>
-                <Trash2 size={14} className="text-slate-400 group-hover:text-red-500" />
-                <span>Thùng rác</span>
+                <Trash2 size={16} />
                 {trashCount > 0 && (
-                  <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
                     {trashCount}
                   </span>
                 )}

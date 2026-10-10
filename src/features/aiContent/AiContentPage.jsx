@@ -347,7 +347,7 @@ function AiContentPage() {
       {isGenerating && (
         <Card className="border-primary/20 bg-primary/5 p-4 shadow-sm animate-pulse">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <Loader2 className="h-5 w-5 animate-spin shrink-0 text-brand-600" />
             <div>
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 AI đang xử lý yêu cầu...
