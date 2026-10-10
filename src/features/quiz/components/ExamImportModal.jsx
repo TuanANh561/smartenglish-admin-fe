@@ -431,7 +431,7 @@ export default function ExamImportModal({ isOpen, onClose, onSuccess }) {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />
                   <span>Đang nạp đề...</span>
                 </>
               ) : (
