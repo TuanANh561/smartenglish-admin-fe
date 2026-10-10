@@ -142,7 +142,7 @@ export default function LessonAiChatDrawer({
             title="Gửi yêu cầu đến AI"
           >
             {isAiGenerating ? (
-              <Loader2 size={13} className="animate-spin" />
+              <Loader2 size={13} strokeWidth={2.25} className="animate-spin shrink-0" />
             ) : (
               <Send size={13} />
             )}
