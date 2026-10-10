@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { FileCheck2 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { GATEWAY_META, TXN_STATUS_META } from './transactionsConstants'
@@ -77,6 +78,24 @@ export const transactionColumns = [
       const meta = TXN_STATUS_META[val] || { label: val, tone: 'neutral' }
       return <Badge tone={meta.tone}>{meta.label}</Badge>
     },
+  }),
+  columnHelper.display({
+    id: 'actions',
+    header: 'Hóa đơn',
+    cell: (info) => (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          info.table.options.meta?.onOpenInvoice?.(info.row.original)
+        }}
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 hover:text-brand-700 transition-colors cursor-pointer shadow-2xs border border-brand-100/60"
+        title="Xem chi tiết giao dịch & In hóa đơn điện tử"
+      >
+        <FileCheck2 size={13} strokeWidth={2.2} />
+        <span>Hóa đơn</span>
+      </button>
+    ),
   }),
 ]
 

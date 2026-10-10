@@ -23,6 +23,7 @@ import {
   useApproveRefund,
   useRejectRefund,
 } from './hooks/useTransactions'
+import TransactionInvoiceModal from './components/TransactionInvoiceModal'
 
 function TransactionsPage() {
   const [dateRange, setDateRange] = useState('7d')
@@ -31,6 +32,8 @@ function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null)
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
 
   // Hooks gọi API Backend thật
   const statsQuery = useReconciliationStats()
@@ -276,6 +279,12 @@ function TransactionsPage() {
           onPageChange={(p) => setPage(p)}
           emptyMessage="Không có giao dịch nào khớp bộ lọc"
           expandable
+          meta={{
+            onOpenInvoice: (order) => {
+              setSelectedInvoiceOrder(order)
+              setIsInvoiceModalOpen(true)
+            },
+          }}
           renderExpandedRow={(txn) =>
             txn.refundReason ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -360,6 +369,13 @@ function TransactionsPage() {
           }
         />
       </div>
+
+      {/* Modal Chi tiết Giao dịch & Hóa đơn Điện tử */}
+      <TransactionInvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        order={selectedInvoiceOrder}
+      />
     </div>
   )
 }
