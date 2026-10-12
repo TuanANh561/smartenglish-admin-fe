@@ -16,6 +16,8 @@ import {
 } from '@/features/notifications/notificationApi'
 import { http } from '@/lib/api'
 import { sendPresenceHeartbeat } from '@/features/community/socketService'
+import toast from 'react-hot-toast'
+import { useNotificationStream } from '@/features/notifications/useNotificationStream'
 
 function Topbar({ actions }) {
   const { pathname } = useLocation()
@@ -42,6 +44,29 @@ function Topbar({ actions }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
+  const [hasNewPulse, setHasNewPulse] = useState(false)
+
+  // Kết nối Server-Sent Events (SSE) theo thời gian thực cho Admin / Giáo viên
+  useNotificationStream({
+    onNotification: (notif) => {
+      setUnreadNotifCount((prev) => prev + 1)
+      setHasNewPulse(true)
+      setTimeout(() => setHasNewPulse(false), 2500)
+
+      toast((t) => (
+        <div className="flex items-start gap-2.5">
+          <span className="text-xl">🔔</span>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-slate-900">{notif.title || 'Thông báo mới'}</p>
+            <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{notif.body || notif.message}</p>
+          </div>
+        </div>
+      ), {
+        duration: 4500,
+        position: 'top-right',
+      })
+    },
+  })
 
   const dateButtonRef = useRef(null)
   const notifButtonRef = useRef(null)
@@ -61,7 +86,7 @@ function Topbar({ actions }) {
     let isMounted = true
     const fetchCounts = async () => {
       try {
-        const targetUserId = user?.id || 2
+        const targetUserId = user?.id || 1
         // 1. Lấy số lượng lịch hẹn thực tế từ notification-service
         const schedRes = await getScheduledNotifications({ creatorId: targetUserId }).catch(() => null)
         const schedList = Array.isArray(schedRes) ? schedRes : schedRes?.data || []
@@ -70,7 +95,7 @@ function Topbar({ actions }) {
         }
 
         // 2. Lấy số lượng thông báo chưa đọc thực tế
-        if (user?.role === 'teacher') {
+        if (user?.role === 'teacher' || user?.role === 'admin') {
           const unread = await getUnreadNotificationCount(targetUserId).catch(() => null)
           if (isMounted && typeof unread === 'number') {
             setUnreadNotifCount(unread)
@@ -195,8 +220,8 @@ function Topbar({ actions }) {
           </div>
         )}
 
-        {/* ── NÚT CHUÔNG THÔNG BÁO DÀNH RIÊNG CHO GIÁO VIÊN (KẾ BÊN AVATAR) ────────── */}
-        {user?.role === 'teacher' && (
+        {/* ── NÚT CHUÔNG THÔNG BÁO DÀNH CHO GIÁO VIÊN & ADMIN (KẾ BÊN AVATAR) ────────── */}
+        {(user?.role === 'teacher' || user?.role === 'admin') && (
           <div className="relative">
             <button
               ref={notifButtonRef}
@@ -207,14 +232,15 @@ function Topbar({ actions }) {
                 setUserMenuOpen(false)
               }}
               className={cn(
-                'relative flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer',
+                'relative flex h-10 w-10 items-center justify-center rounded-full transition-all cursor-pointer',
+                hasNewPulse && 'animate-bounce ring-2 ring-brand-500 shadow-md',
                 isNotifOpen
                   ? 'bg-brand-50 text-brand-600 ring-2 ring-brand-400/40'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700',
               )}
-              title="Thông báo dành cho giáo viên"
+              title="Thông báo hệ thống"
             >
-              <Bell size={19} className={isNotifOpen ? 'text-brand-600' : 'text-slate-800'} />
+              <Bell size={19} className={cn(isNotifOpen ? 'text-brand-600' : 'text-slate-800', hasNewPulse && 'text-brand-600')} />
               {unreadNotifCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-2xs">
                   {unreadNotifCount > 9 ? '9+' : unreadNotifCount}

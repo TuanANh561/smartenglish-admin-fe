@@ -53,7 +53,7 @@ export default function NotificationDropdown({
   const dropdownRef = useRef(null)
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'unread'
   const user = useAuthStore((s) => s.user)
-  const currentUserId = user?.id || 2
+  const currentUserId = user?.id || 1
 
   // Dữ liệu thông báo thật 100% từ backend notification-service (Không fake data)
   const [notifications, setNotifications] = useState([])
