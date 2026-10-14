@@ -116,14 +116,14 @@ export const users = [
   {
     id: 9,
     displayName: 'Nguyễn Tuấn Anh',
-    email: 'nguyentuananh11a1.lhpt@gmail.com',
+    email: 'tuananh.nguyen@smartenglish.vn',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
     role: 'student',
     plan: 'free',
     cefrLevel: 'B2',
     isActive: false,
     isEmailVerified: true,
-    username: 'nguyentuananh11a1.lhpt_5140',
+    username: 'tuananh_nguyen',
     createdAt: daysAgo(1),
   },
   {

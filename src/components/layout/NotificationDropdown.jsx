@@ -12,6 +12,7 @@ import {
   X,
   FileCheck,
   Calendar,
+  CreditCard,
   AlertCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -102,6 +103,24 @@ export default function NotificationDropdown({
         }
       })
       .catch(() => {})
+
+    const handleUpdate = () => {
+      fetchBackendNotifications()
+      getUnreadNotificationCount(currentUserId)
+        .then((count) => {
+          if (typeof count === 'number') {
+            onUnreadCountChange?.(count)
+          }
+        })
+        .catch(() => {})
+    }
+
+    window.addEventListener('smartenglish:notification_update', handleUpdate)
+    window.addEventListener('focus', handleUpdate)
+    return () => {
+      window.removeEventListener('smartenglish:notification_update', handleUpdate)
+      window.removeEventListener('focus', handleUpdate)
+    }
   }, [currentUserId, isOpen])
 
   // Tính số lượng chưa đọc và báo ra ngoài cho chuông thông báo
@@ -193,7 +212,9 @@ export default function NotificationDropdown({
       case 'reminder':
         return <Calendar size={14} className="text-indigo-600" />
       case 'payment_success':
-        return <Check size={14} className="text-emerald-600" />
+      case 'payment_receipt':
+      case 'payment':
+        return <CreditCard size={14} className="text-emerald-600" />
       default:
         return <AlertCircle size={14} className="text-slate-600" />
     }

@@ -12,6 +12,8 @@ import {
   BookOpenText,
   PanelLeftClose,
   PanelLeftOpen,
+  Crown,
+  Receipt,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -29,6 +31,8 @@ const SUB_CONFIG = {
   '/app/hoc-lieu/phat-am':  { icon: Mic,          color: 'text-rose-600',   bg: 'bg-rose-50' },
   '/app/hoc-lieu/bai-doc':  { icon: BookOpen,     color: 'text-emerald-600',bg: 'bg-emerald-50' },
   '/app/hoc-lieu/bai-nghe': { icon: Headphones,   color: 'text-amber-600',  bg: 'bg-amber-50' },
+  '/app/goi-dich-vu':       { icon: Crown,        color: 'text-amber-600',  bg: 'bg-amber-50' },
+  '/app/giao-dich':         { icon: Receipt,      color: 'text-blue-600',   bg: 'bg-blue-50' },
 }
 
 /**
@@ -38,11 +42,12 @@ const SUB_CONFIG = {
  */
 function NavItemGroup({ item, role, isCollapsed }) {
   const location = useLocation()
+  const normRole = String(role || 'admin').toLowerCase()
   const visibleChildren = (item.children || []).filter(
-    (child) => !child.roles || child.roles.includes(role),
+    (child) => !child.roles || child.roles.map((r) => r.toLowerCase()).includes(normRole),
   )
   const isChildActive = visibleChildren.some((child) => location.pathname === child.to)
-  const [open, setOpen] = useState(isChildActive)
+  const [open, setOpen] = useState(true)
 
   // Floating Portal Popover khi thu nhỏ
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
@@ -121,19 +126,19 @@ function NavItemGroup({ item, role, isCollapsed }) {
               <div className="flex items-center justify-between px-3 py-2 bg-slate-50/90 rounded-xl border border-slate-100 mb-2">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-                    <BookOpen size={15} strokeWidth={2} />
+                    <item.icon size={15} strokeWidth={2} />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
                       {item.label}
                     </span>
                     <span className="text-[10px] text-slate-400 block font-normal">
-                      Học liệu cốt lõi
+                      Danh mục chức năng
                     </span>
                   </div>
                 </div>
                 <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-bold text-slate-600">
-                  {visibleChildren.length} bài
+                  {visibleChildren.length} mục
                 </span>
               </div>
 

@@ -24,9 +24,12 @@ const REFRESH_TOKEN_KEY = 'se_admin_refresh_token'
 const storage = typeof window !== 'undefined' ? window.localStorage : null
 const getStoredToken = (key) => storage?.getItem(key) ?? null
 
+const rawBaseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080'
+const safeBaseURL = rawBaseURL.replace('localhost', '127.0.0.1')
+
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 0, // 0 = Không giới hạn timeout, không tự ý ngắt kết nối
+  baseURL: safeBaseURL,
+  timeout: 15000, // 15 giây timeout chống treo request vô hạn
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -152,6 +155,8 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/pronunciation-lessons') ||
       endpoint.startsWith('/admin/grammar-lessons') ||
       endpoint.startsWith('/admin/listening-lessons') ||
+      endpoint.startsWith('/admin/exams') ||
+      endpoint.startsWith('/admin/quizzes') ||
       endpoint.startsWith('/content/listening') ||
       endpoint.startsWith('/admin/ai') ||
       endpoint.startsWith('/ai-practice') ||

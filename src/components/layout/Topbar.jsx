@@ -153,6 +153,11 @@ function Topbar({ actions }) {
     description = 'Tạo và quản lý nội dung học liệu được sinh bởi AI'
   }
 
+  if (pathname === '/app/nhat-ky' && (user?.role === 'teacher' || user?.role === 'TEACHER')) {
+    title = 'Nhật ký hoạt động'
+    description = 'Lịch sử hoạt động, nâng cấp dịch vụ & thao tác sư phạm của bạn'
+  }
+
   const isCollapsed = useSidebarStore((s) => s.isCollapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggleSidebar)
 
