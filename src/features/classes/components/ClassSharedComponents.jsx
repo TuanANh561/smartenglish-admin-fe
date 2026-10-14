@@ -37,6 +37,13 @@ export function ProgressBar({ value }) {
 
 // Badge điểm trung bình — màu theo điểm
 export function ScoreBadge({ score }) {
+  if (score == null) {
+    return (
+      <span className="inline-flex h-7 w-10 items-center justify-center rounded-lg text-xs font-semibold bg-slate-100 text-slate-400">
+        --
+      </span>
+    )
+  }
   const color =
     score >= 8.5
       ? '#15803d'
