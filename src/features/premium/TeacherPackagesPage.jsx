@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Award,
   BookOpen,
@@ -11,23 +12,31 @@ import {
   Percent,
   Radio,
   ShieldCheck,
-  Sparkles,
   Users,
   Zap,
   Loader2,
   FileCheck2,
+  Receipt,
+  Calendar,
+  RefreshCw,
+  QrCode,
+  RotateCcw,
+  X,
+  AlertTriangle,
+  Building2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { formatCurrency, formatNumber } from '@/lib/utils'
+import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { getTeacherQuotaStatus } from '../classes/classApi'
 import { getAdminPlans } from './api/premiumApi'
 import TransactionInvoiceModal from '@/features/transactions/components/TransactionInvoiceModal'
+import SepayVietQrPaymentModal from './components/SepayVietQrPaymentModal'
 
 // Danh sách các gói dành cho giáo viên
 const TEACHER_PLANS = [
@@ -52,9 +61,9 @@ const TEACHER_PLANS = [
   {
     id: 'plan_pro',
     name: 'Teacher Pro',
-    subtitle: 'Dành cho giáo viên chuyên nghiệp & luyện thi',
-    priceMonthly: 299000,
-    priceYearly: 2390000, // Tiết kiệm ~33%
+    subtitle: 'Ưu đãi trải nghiệm độc quyền dành cho Giáo viên',
+    priceMonthly: 20000,
+    priceYearly: 20000, // Ưu đãi test 20.000đ
     isCurrent: true,
     badge: 'Đang sử dụng',
     isPopular: true,
@@ -123,7 +132,7 @@ function TeacherPackagesPage() {
   const user = useAuthStore((s) => s.user)
   const teacherId = user?.id ?? null
 
-  const [billingCycle, setBillingCycle] = useState('yearly') // 'monthly' | 'yearly'
+  const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly' | 'yearly'
   const [copiedCode, setCopiedCode] = useState(false)
   const [quota, setQuota] = useState(null)
   const [plans, setPlans] = useState([])
@@ -133,6 +142,17 @@ function TeacherPackagesPage() {
   const [cancellingRenewal, setCancellingRenewal] = useState(false)
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null)
+  const [isSepayModalOpen, setIsSepayModalOpen] = useState(false)
+  const [sepayOrder, setSepayOrder] = useState(null)
+  const [myOrders, setMyOrders] = useState([])
+  const [loadingOrders, setLoadingOrders] = useState(false)
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false)
+  const [selectedRefundOrder, setSelectedRefundOrder] = useState(null)
+  const [refundReason, setRefundReason] = useState('')
+  const [refundBank, setRefundBank] = useState('')
+  const [refundAcc, setRefundAcc] = useState('')
+  const [refundName, setRefundName] = useState('')
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false)
 
   const referralCode = 'TEACHER-MAI20'
 
@@ -213,6 +233,27 @@ function TeacherPackagesPage() {
     } finally {
       setLoading(false)
     }
+    // Tải song song danh sách đơn hàng & hóa đơn của giáo viên
+    fetchMyOrders()
+  }
+
+  const fetchMyOrders = async () => {
+    if (!teacherId) return
+    setLoadingOrders(true)
+    try {
+      const res = await api.get(`/payment/user/orders?userId=${teacherId}`)
+      const ordersList = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.data)
+          ? res.data
+          : []
+      setMyOrders(ordersList)
+    } catch (err) {
+      console.warn('Lỗi lấy lịch sử đơn hàng giáo viên:', err)
+      setMyOrders([])
+    } finally {
+      setLoadingOrders(false)
+    }
   }
 
   useEffect(() => {
@@ -220,43 +261,65 @@ function TeacherPackagesPage() {
   }, [teacherId])
 
   const handleSubscribe = async (plan) => {
+    // 1. Kiểm tra nhanh: Nếu đang có đơn hàng PENDING còn hiệu lực (< 10 phút) cho cùng gói/tiền -> Tái sử dụng ngay
+    const targetPrice = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly
+    if (sepayOrder && (sepayOrder.status || '').toUpperCase() === 'PENDING') {
+      const orderExpires = sepayOrder.expiresAt
+        ? new Date(sepayOrder.expiresAt).getTime()
+        : (new Date(sepayOrder.createdAt || Date.now()).getTime() + 10 * 60 * 1000)
+      const isStillValid = orderExpires > Date.now()
+      const isSameAmount = Number(sepayOrder.amountFinal || sepayOrder.amount) === targetPrice
+      if (isStillValid && isSameAmount) {
+        setIsSepayModalOpen(true)
+        return
+      }
+    }
+
     setSubscribingId(plan.id)
     try {
       const planId = plan.numericId || (plan.id.includes('pro') ? 2 : plan.id.includes('center') ? 3 : 1)
       const res = await api.post(`/payment/subscriptions/subscribe?userId=${teacherId}`, {
         data: {
           planId,
-          paymentMethod: 'STRIPE',
+          paymentMethod: 'SEPAY',
           billingCycle: billingCycle.toUpperCase(),
-          customerName: user?.name || user?.fullName || 'Thầy John Smith',
-          customerEmail: user?.email || 'teacher.john@smartenglish.com',
+          customerName: user?.displayName || user?.name || user?.fullName || 'Thầy Nguyễn Văn Hùng',
+          customerEmail: user?.email || 'teacher01@smartenglish.vn',
         },
       })
 
       const payload = res?.data !== undefined ? res.data : res
       const latestOrder = payload?.latestOrder || {
-        id: Date.now(),
-        orderCode: `INV-202610-${String(Date.now()).slice(-5)}`,
+        id: payload?.orderId || Date.now(),
+        orderCode: payload?.orderCode || `SEAI${String(Date.now()).slice(-6)}`,
         planName: plan.name,
-        amount: billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly,
-        customerName: user?.name || user?.fullName || 'Thầy John Smith',
-        customerEmail: user?.email || 'teacher.john@smartenglish.com',
+        amount: payload?.amountFinal || targetPrice,
+        amountFinal: payload?.amountFinal || targetPrice,
+        customerName: user?.displayName || user?.name || user?.fullName || 'Thầy Nguyễn Văn Hùng',
+        customerEmail: user?.email || 'teacher01@smartenglish.vn',
         customerRole: 'Giáo viên (Teacher)',
-        status: 'completed',
-        gateway: 'stripe',
+        status: 'PENDING',
+        gateway: 'SEPAY',
+        qrUrl: payload?.qrUrl,
+        expiresAt: payload?.expiresAt || new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString(),
       }
 
-      setSelectedInvoiceOrder(latestOrder)
-      setIsInvoiceModalOpen(true)
-      toast.success(`Đã nâng cấp thành công gói ${plan.name}!`)
-      await loadData()
+      setSepayOrder(latestOrder)
+      setIsSepayModalOpen(true)
     } catch (err) {
       console.error(err)
-      toast.error('Nâng cấp thất bại: ' + (err?.message || 'Lỗi server'))
+      toast.error('Khởi tạo thanh toán VietQR thất bại: ' + (err?.message || 'Lỗi server'))
     } finally {
       setSubscribingId(null)
     }
+  }
+
+  const handlePaymentSuccess = async (completedOrder) => {
+    setIsSepayModalOpen(false)
+    await loadData()
+    setSelectedInvoiceOrder(completedOrder || sepayOrder)
+    setIsInvoiceModalOpen(true)
   }
 
   const handleOpenLatestInvoice = async () => {
@@ -326,6 +389,43 @@ function TeacherPackagesPage() {
     }
   }
 
+  const handleOpenRefundModal = (order) => {
+    setSelectedRefundOrder(order)
+    setRefundReason('')
+    setRefundBank('')
+    setRefundAcc('')
+    setRefundName(user?.displayName || user?.name || user?.fullName || 'Thầy/Cô')
+    setIsRefundModalOpen(true)
+  }
+
+  const handleSubmitRefund = async () => {
+    if (!selectedRefundOrder) return
+    if (!refundReason.trim()) {
+      toast.error('Vui lòng nhập lý do yêu cầu hoàn tiền')
+      return
+    }
+    if (!refundBank.trim() || !refundAcc.trim() || !refundName.trim()) {
+      toast.error('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng nhận tiền hoàn')
+      return
+    }
+    setIsSubmittingRefund(true)
+    try {
+      await api.post(`/payment/orders/${selectedRefundOrder.id}/request-refund?userId=${teacherId}`, {
+        reason: refundReason,
+        bankName: refundBank,
+        accountNumber: refundAcc,
+        accountHolderName: refundName,
+      })
+      toast.success('Đã gửi yêu cầu hoàn tiền thành công! Admin sẽ đối soát và xử lý.')
+      setIsRefundModalOpen(false)
+      await fetchMyOrders()
+    } catch (err) {
+      toast.error(err?.message || 'Không thể gửi yêu cầu hoàn tiền')
+    } finally {
+      setIsSubmittingRefund(false)
+    }
+  }
+
   const periodEndLabel = quota?.currentPeriodEnd
     ? new Intl.DateTimeFormat('vi-VN').format(new Date(quota.currentPeriodEnd))
     : null
@@ -379,18 +479,8 @@ function TeacherPackagesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top action: Hóa đơn & Chu kỳ thanh toán toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={FileCheck2}
-          onClick={handleOpenLatestInvoice}
-          className="shadow-2xs border-slate-200"
-        >
-          Hóa đơn & Chi tiết giao dịch
-        </Button>
-
+      {/* Top action: Chu kỳ thanh toán toggle */}
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2 rounded-xl border border-line bg-white p-1 shadow-xs">
           <button
             type="button"
@@ -543,6 +633,17 @@ function TeacherPackagesPage() {
                 </span>
               )}
 
+              {/* Mác ưu đãi nổi bật góc trên bên phải */}
+              {(plan.id.includes('pro') || plan.name.includes('Pro') || price === 20000) && (
+                <span className="absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-200/90 px-2.5 py-0.5 text-[11px] font-extrabold text-rose-600 shadow-2xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </span>
+                  Ưu đãi 20k
+                </span>
+              )}
+
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-navy-700">{plan.name}</h3>
                 <p className="mt-1 text-sm text-ink-muted min-h-[36px]">{plan.subtitle}</p>
@@ -550,17 +651,27 @@ function TeacherPackagesPage() {
 
               {/* Price */}
               <div className="mb-6 border-b border-line pb-5">
-                <div className="flex items-baseline gap-1">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-3xl font-black text-navy-700">
                     {price === 0 ? 'Miễn phí' : formatCurrency(price)}
                   </span>
+                  {(plan.id.includes('pro') || plan.name.includes('Pro') || price === 20000) && (
+                    <>
+                      <span className="text-sm font-semibold text-slate-400 line-through">
+                        {formatCurrency(billingCycle === 'yearly' ? 1990000 : 199000)}
+                      </span>
+                      <span className="rounded-md bg-rose-100 text-rose-700 font-extrabold text-[10px] px-1.5 py-0.5 border border-rose-200">
+                        GIẢM 90%
+                      </span>
+                    </>
+                  )}
                   {price > 0 && (
                     <span className="text-sm text-ink-muted">
                       / {billingCycle === 'yearly' ? 'năm' : 'tháng'}
                     </span>
                   )}
                 </div>
-                {billingCycle === 'yearly' && price > 0 && (
+                {billingCycle === 'yearly' && price > 0 && !(plan.id.includes('pro') || plan.name.includes('Pro')) && (
                   <p className="mt-1 text-sm text-emerald-600 font-medium">
                     Tương đương {formatCurrency(Math.round(price / 12))}/tháng
                   </p>
@@ -741,12 +852,115 @@ function TeacherPackagesPage() {
         </div>
       </div>
 
+      {/* Modal Quét mã VietQR SePay Napas 24/7 */}
+      <SepayVietQrPaymentModal
+        isOpen={isSepayModalOpen}
+        onClose={() => setIsSepayModalOpen(false)}
+        order={sepayOrder}
+        onSuccess={handlePaymentSuccess}
+      />
+
       {/* Modal Chi tiết Giao dịch & Hóa đơn Điện tử */}
       <TransactionInvoiceModal
         isOpen={isInvoiceModalOpen}
         onClose={() => setIsInvoiceModalOpen(false)}
         order={selectedInvoiceOrder}
       />
+
+      {/* Modal Yêu cầu hoàn tiền (Refund Guarantee 7 ngày) */}
+      {isRefundModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-line overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-line bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                  <RotateCcw size={18} />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-navy-800">Yêu cầu hoàn tiền (7 ngày)</h3>
+                  <p className="text-[11px] text-ink-muted">Mã đơn: {selectedRefundOrder?.orderCode || selectedRefundOrder?.id}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRefundModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3.5">
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+                <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  Chính sách cam kết hoàn tiền 7 ngày. Số tiền hoàn: <strong>{formatCurrency(selectedRefundOrder?.amount || 0)}</strong>. Sau khi hoàn tất đối soát, quyền lợi gói Pro sẽ được tự động thu hồi.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-navy-700 block mb-1">
+                  Lý do yêu cầu hoàn tiền <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Ví dụ: Đăng ký nhầm gói hoặc chuyển lớp..."
+                  className="w-full text-xs p-2.5 rounded-xl border border-line focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-hidden"
+                />
+              </div>
+
+              <div className="space-y-2 pt-1 border-t border-line">
+                <p className="text-xs font-bold text-navy-800">Tài khoản nhận tiền hoàn (Napas 24/7):</p>
+                <div>
+                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Tên Ngân hàng:</label>
+                  <input
+                    type="text"
+                    value={refundBank}
+                    onChange={(e) => setRefundBank(e.target.value)}
+                    placeholder="VD: Vietcombank, MB Bank, Techcombank..."
+                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line"
+                  />
+                </div>
+                <div>
+                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Số tài khoản nhận hoàn:</label>
+                  <input
+                    type="text"
+                    value={refundAcc}
+                    onChange={(e) => setRefundAcc(e.target.value)}
+                    placeholder="VD: 1029384756"
+                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Tên chủ tài khoản (Viết hoa không dấu):</label>
+                  <input
+                    type="text"
+                    value={refundName}
+                    onChange={(e) => setRefundName(e.target.value)}
+                    placeholder="VD: NGUYEN VAN HUNG"
+                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-line flex items-center justify-end gap-2">
+              <Button variant="secondary" onClick={() => setIsRefundModalOpen(false)}>
+                Hủy
+              </Button>
+              <Button
+                variant="danger"
+                loading={isSubmittingRefund}
+                onClick={handleSubmitRefund}
+              >
+                Gửi yêu cầu hoàn tiền
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
