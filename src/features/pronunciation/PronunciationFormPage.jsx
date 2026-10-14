@@ -21,13 +21,13 @@ import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { PRONUNCIATION_CATEGORIES } from '@/mocks/data/pronunciation'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 import PronunciationQuestionCard from './components/PronunciationQuestionCard'
 import SampleWordsSection from './components/SampleWordsSection'
 import {
+  PRONUNCIATION_CATEGORIES,
   getPronunciationLessonById,
   createPronunciationLesson,
   updatePronunciationLesson,

@@ -798,9 +798,9 @@ function CommunityPage() {
       })
       .catch(() => {})
 
-    // Load messages from MongoDB Atlas
+    // Load messages from MongoDB Atlas (mặc định tải 50 tin nhắn gần nhất)
     try {
-      const res = await http.get(`/api/v1/social/conversations/${conversationId}/messages`)
+      const res = await http.get(`/api/v1/social/conversations/${conversationId}/messages?size=50`)
       const msgs = res?.data || res
       if (Array.isArray(msgs)) {
         setConversations((prev) =>
@@ -808,6 +808,7 @@ function CommunityPage() {
             c.id === conversationId
               ? {
                   ...c,
+                  hasMoreMessages: msgs.length >= 50,
                   messages: msgs.map((m) => ({
                     ...m,
                     from: m.senderId === myId ? 'me' : 'other',
@@ -891,6 +892,57 @@ function CommunityPage() {
     if (activeConversationId === conversationId) setActiveConversationId(null)
   }
 
+  const [loadingOlderMap, setLoadingOlderMap] = useState({})
+
+  // Tải thêm tin nhắn cũ hơn khi người dùng cuộn lên trên đỉnh
+  const handleLoadOlderMessages = async (conversationId) => {
+    if (loadingOlderMap[conversationId]) return
+    const target = conversations.find((c) => c.id === conversationId)
+    if (!target || !target.messages || target.messages.length === 0 || target.hasMoreMessages === false) return
+
+    const oldest = target.messages[0]
+    if (!oldest?.createdAt) return
+
+    setLoadingOlderMap((prev) => ({ ...prev, [conversationId]: true }))
+    try {
+      const res = await http.get(
+        `/api/v1/social/conversations/${conversationId}/messages?size=50&before=${encodeURIComponent(oldest.createdAt)}`,
+      )
+      const olderMsgs = res?.data || res
+      if (Array.isArray(olderMsgs) && olderMsgs.length > 0) {
+        const formattedOlder = olderMsgs.map((m) => ({
+          ...m,
+          from: m.senderId === myId ? 'me' : 'other',
+          text: m.content,
+          time: m.createdAt
+            ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : 'Vừa xong',
+        }))
+
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== conversationId) return c
+            const existingIds = new Set((c.messages || []).map((m) => m.id))
+            const filteredNew = formattedOlder.filter((m) => !existingIds.has(m.id))
+            return {
+              ...c,
+              hasMoreMessages: olderMsgs.length >= 50,
+              messages: [...filteredNew, ...(c.messages || [])],
+            }
+          }),
+        )
+      } else {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === conversationId ? { ...c, hasMoreMessages: false } : c)),
+        )
+      }
+    } catch (err) {
+      console.warn('Error loading older messages:', err)
+    } finally {
+      setLoadingOlderMap((prev) => ({ ...prev, [conversationId]: false }))
+    }
+  }
+
   // Create Group in MongoDB Atlas
   const handleCreateGroup = async ({ name, members, avatar }) => {
     try {
@@ -936,11 +988,13 @@ function CommunityPage() {
   }
 
   // Send Message (supporting ReplyTo) in MongoDB Atlas
-  const handleSendMessage = async (conversationId, replyTarget = null) => {
-    const text = messageDraft.trim()
+  const handleSendMessage = async (conversationId, replyTarget = null, customText = null) => {
+    const text = (customText !== null ? customText : messageDraft).trim()
     if (!text) return
 
-    setMessageDraft('')
+    if (customText === null) {
+      setMessageDraft('')
+    }
 
     const payload = {
       senderId: myId,
@@ -1683,6 +1737,8 @@ function CommunityPage() {
         onTyping={handleSendTyping}
         onNavigateToPost={handleNavigateToPost}
         getSenderAvatar={getSenderAvatar}
+        onLoadOlderMessages={handleLoadOlderMessages}
+        loadingOlderMap={loadingOlderMap}
       />
 
       {/* Modal tạo nhóm mới */}

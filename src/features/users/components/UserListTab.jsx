@@ -2,6 +2,7 @@ import Card from '@/components/ui/Card'
 import DataTable from '@/components/ui/DataTable/DataTable'
 import DataTableToolbar from '@/components/ui/DataTable/DataTableToolbar'
 import FilterChipRow from '@/components/ui/DataTable/FilterChipRow'
+import { maskPhone } from '@/lib/utils'
 
 const ROLE_CHIPS = [
   { key: 'student', label: 'Học viên' },
@@ -77,7 +78,7 @@ export default function UserListTab({
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-500 mb-0.5">Số điện thoại</p>
-                <p className="text-slate-800 font-medium text-sm">{user.phone || 'Chưa cập nhật'}</p>
+                <p className="text-slate-800 font-medium text-sm font-mono">{user.phone ? maskPhone(user.phone) : 'Chưa cập nhật'}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-500 mb-0.5">Mục tiêu học tập</p>

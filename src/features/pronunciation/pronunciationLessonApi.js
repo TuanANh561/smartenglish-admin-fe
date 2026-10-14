@@ -11,6 +11,16 @@ import { api } from '@/lib/api'
 
 const BASE = '/admin/pronunciation-lessons'
 
+export const PRONUNCIATION_CATEGORIES = [
+  'Tất cả phân loại',
+  'Vowels',
+  'Consonants',
+  'Diphthongs',
+  'Stress',
+  'Intonation',
+  'Connected Speech',
+]
+
 async function callContentApi(method, path, options = {}) {
   // 1. Ưu tiên gọi qua Vite Proxy (url tương đối, Vite chuyển tiếp sang 8082 không bị chặn CORS)
   try {

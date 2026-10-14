@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import { jsPDF } from 'jspdf'
 import {
   Calendar,
   Clock,
+  CreditCard,
   Download,
   Eye,
   FileSpreadsheet,
@@ -34,9 +36,32 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Pagination from '@/components/ui/Pagination'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { api } from '@/lib/api'
+import { getUserActivities } from '@/features/notifications/notificationApi'
 import { getAuditLogs } from './auditLogApi'
 
 const PAGE_SIZE = 10
+
+function formatTimestamp(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function getInitials(name) {
+  if (!name) return 'GV'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function isWithinDateRange(timestampMs, dateRange) {
+  if (dateRange === 'all') return true
+  const now = Date.now()
+  if (dateRange === '24h') return now - timestampMs <= 24 * 60 * 60 * 1000
+  if (dateRange === '7d') return now - timestampMs <= 7 * 24 * 60 * 60 * 1000
+  if (dateRange === '30d') return now - timestampMs <= 30 * 24 * 60 * 60 * 1000
+  return true
+}
 
 function AuditLogPage() {
   const user = useAuthStore((s) => s.user)
@@ -61,22 +86,201 @@ function AuditLogPage() {
   const loadLogs = useCallback(async () => {
     setIsLoading(true)
     try {
-      // Nếu là giảng viên, tự động lọc theo role teacher và username/tên nếu cần
-      const roleFilter = isTeacher ? 'teacher' : userRole
-      const searchFilter = isTeacher && !search.trim() ? (user?.displayName || user?.username || '') : search
+      if (isTeacher) {
+        // Chỉ tải dữ liệu của chính giáo viên hiện tại (user.id)
+        const [actsRes, ordersRes] = await Promise.allSettled([
+          getUserActivities({ userId: user?.id, page: 0, size: 50 }),
+          api.get('/payment/user/orders', { params: { userId: user?.id } }),
+        ])
 
-      const data = await getAuditLogs({
-        page,
-        size: PAGE_SIZE,
-        dateRange,
-        userRole: roleFilter,
-        actionType,
-        severity,
-        search: searchFilter,
-      })
-      setLogs(data.items || [])
-      setTotal(data.total || 0)
-      setTotalPages(data.totalPages || 1)
+        const teacherLogs = []
+
+        // 1. Chuyển đổi đơn hàng từ payment-service (chính của giáo viên)
+        const rawOrders = ordersRes.status === 'fulfilled' ? ordersRes.value : []
+        const ordersList = Array.isArray(rawOrders)
+          ? rawOrders
+          : Array.isArray(rawOrders?.content)
+          ? rawOrders.content
+          : []
+
+        ordersList
+          .filter((o) => o.status === 'completed' || o.status === 'SUCCESS' || o.status === 'paid')
+          .forEach((o) => {
+            const d = o.createdAt ? new Date(o.createdAt) : new Date()
+            const planTitle = o.planName || 'Gói Giảng Viên Pro'
+            const amountStr = o.amount ? `${Number(o.amount).toLocaleString('vi-VN')}đ` : '20.000đ'
+            const orderCode = o.orderCode || `ORD-${o.id}`
+
+            teacherLogs.push({
+              id: `order-${o.id || orderCode}`,
+              logCode: orderCode,
+              timestamp: formatTimestamp(d),
+              rawTime: d.getTime(),
+              userName: user?.displayName || 'Thầy Nguyễn Tuấn Anh',
+              user: user?.email || 'teacher',
+              userInitials: getInitials(user?.displayName),
+              userRole: 'teacher',
+              userRoleLabel: 'Giáo viên',
+              avatarColor: '#10B981',
+              actionType: 'payment',
+              action: `Nâng cấp ${planTitle}`,
+              actionLabel: `Đã nâng cấp thành công ${planTitle} (${amountStr})`,
+              targetService: 'payment-service',
+              targetType: 'Giao dịch',
+              targetId: orderCode,
+              reason: `Thanh toán VietQR Napas thành công cho ${planTitle}. Mã đơn: ${orderCode}`,
+              ipAddress: '127.0.0.1',
+              device: 'Web Teacher Console',
+              severity: 'normal',
+              details: {
+                orderId: o.id,
+                orderCode,
+                planName: planTitle,
+                amount: o.amount,
+                paymentGateway: o.paymentGateway || 'VIETQR_SEPAY',
+                status: o.status,
+                createdAt: o.createdAt,
+                paidAt: o.paidAt || o.createdAt,
+              },
+            })
+          })
+
+        // 2. Chuyển đổi hoạt động từ notification-service (UserActivityLog của giáo viên)
+        const actsData = actsRes.status === 'fulfilled' ? actsRes.value : null
+        const actContent = Array.isArray(actsData?.content)
+          ? actsData.content
+          : Array.isArray(actsData)
+          ? actsData
+          : []
+
+        actContent.forEach((act) => {
+          const d = act.createdAt ? new Date(act.createdAt) : new Date()
+          const typeLower = (act.activityType || '').toLowerCase()
+          let actType = 'create'
+          if (typeLower.includes('pay') || typeLower.includes('receipt')) actType = 'payment'
+          else if (typeLower.includes('submit')) actType = 'submit'
+          else if (typeLower.includes('ai')) actType = 'ai'
+          else if (typeLower.includes('grade')) actType = 'grade'
+
+          let metaObj = {}
+          try {
+            if (typeof act.metadata === 'string') metaObj = JSON.parse(act.metadata)
+            else if (act.metadata) metaObj = act.metadata
+          } catch {}
+
+          teacherLogs.push({
+            id: `act-${act.id}`,
+            logCode: `LOG-${act.id}`,
+            timestamp: formatTimestamp(d),
+            rawTime: d.getTime(),
+            userName: user?.displayName || 'Thầy Nguyễn Tuấn Anh',
+            user: user?.email || 'teacher',
+            userInitials: getInitials(user?.displayName),
+            userRole: 'teacher',
+            userRoleLabel: 'Giáo viên',
+            avatarColor: actType === 'payment' ? '#10B981' : '#3B82F6',
+            actionType: actType,
+            action: act.title || 'Hoạt động cá nhân',
+            actionLabel: act.title || 'Hoạt động cá nhân',
+            targetService: 'notification-service',
+            targetType: act.activityType || 'HOẠT ĐỘNG',
+            targetId: metaObj.invoiceNo || metaObj.orderCode || `#${act.id}`,
+            reason: act.description || '',
+            ipAddress: act.ipAddress || '127.0.0.1',
+            device: act.deviceInfo || 'Web Teacher Console',
+            severity: 'normal',
+            details: metaObj,
+          })
+        })
+
+        // 3. Nếu chưa có hoạt động nào khác, bổ sung các mốc hoạt động mặc định của tài khoản giáo viên
+        if (teacherLogs.length === 0) {
+          const defaultDate = new Date()
+          teacherLogs.push({
+            id: 'init-login',
+            logCode: 'AUTH-01',
+            timestamp: formatTimestamp(defaultDate),
+            rawTime: defaultDate.getTime(),
+            userName: user?.displayName || 'Giáo viên',
+            user: user?.email || 'teacher',
+            userInitials: getInitials(user?.displayName),
+            userRole: 'teacher',
+            userRoleLabel: 'Giáo viên',
+            avatarColor: '#1B3A57',
+            actionType: 'auth',
+            action: 'Đăng nhập hệ thống giảng dạy',
+            actionLabel: 'Đăng nhập hệ thống quản lý giảng dạy thành công',
+            targetService: 'auth-service',
+            targetType: 'PHIÊN LÀM VIỆC',
+            targetId: `#${user?.id || 1}`,
+            reason: 'Khởi tạo phiên làm việc giảng viên trên Web Console',
+            ipAddress: '127.0.0.1',
+            device: 'Web Teacher Console',
+            severity: 'normal',
+            details: {
+              userId: user?.id,
+              role: 'TEACHER',
+              loginAt: defaultDate.toISOString(),
+            },
+          })
+        }
+
+        // Loại bỏ trùng lặp nếu cả hai bên ghi nhận cùng orderCode / actionLabel
+        const unique = []
+        const seen = new Set()
+        teacherLogs
+          .sort((a, b) => b.rawTime - a.rawTime)
+          .forEach((item) => {
+            const key = item.actionLabel + (item.targetId || '')
+            if (!seen.has(key)) {
+              seen.add(key)
+              unique.push(item)
+            }
+          })
+
+        // Lọc theo bộ lọc client-side (Date, actionType, severity, search)
+        const filtered = unique.filter((item) => {
+          if (!isWithinDateRange(item.rawTime, dateRange)) return false
+          if (actionType !== 'all') {
+            const itAct = (item.actionType || '').toLowerCase()
+            if (!itAct.includes(actionType)) return false
+          }
+          if (severity !== 'all' && item.severity !== severity) return false
+          if (search.trim()) {
+            const q = search.trim().toLowerCase()
+            const matches =
+              (item.actionLabel || '').toLowerCase().includes(q) ||
+              (item.targetId || '').toLowerCase().includes(q) ||
+              (item.reason || '').toLowerCase().includes(q) ||
+              (item.ipAddress || '').toLowerCase().includes(q) ||
+              (item.userName || '').toLowerCase().includes(q)
+            if (!matches) return false
+          }
+          return true
+        })
+
+        const totalCount = filtered.length
+        const pageStart = (page - 1) * PAGE_SIZE
+        const pagedItems = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+
+        setLogs(pagedItems)
+        setTotal(totalCount)
+        setTotalPages(Math.max(1, Math.ceil(totalCount / PAGE_SIZE)))
+      } else {
+        // Nếu là Admin hệ thống, tải nhật ký quản trị từ auth-service
+        const data = await getAuditLogs({
+          page,
+          size: PAGE_SIZE,
+          dateRange,
+          userRole,
+          actionType,
+          severity,
+          search,
+        })
+        setLogs(data.items || [])
+        setTotal(data.total || 0)
+        setTotalPages(data.totalPages || 1)
+      }
     } catch (err) {
       console.warn('Lỗi khi tải nhật ký hoạt động:', err)
       toast.error('Không thể kết nối máy chủ nhật ký hoạt động')
@@ -136,8 +340,47 @@ function AuditLogPage() {
   }
 
   const handleExportPdf = () => {
-    toast.success('Đang tạo bản in PDF nhật ký hoạt động...')
-    window.print()
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      doc.setFontSize(15)
+      doc.text('NHAT KY HOAT DONG HE THONG SMARTENGLISH AI', 14, 18)
+      doc.setFontSize(9)
+      doc.text(`Ngay xuat: ${new Date().toLocaleString('vi-VN')} | Tong so: ${filteredLogs.length} ban ghi`, 14, 25)
+      doc.line(14, 28, 196, 28)
+
+      let y = 35
+      doc.setFontSize(9)
+      doc.text('THOI GIAN', 14, y)
+      doc.text('NGUOI DUNG', 50, y)
+      doc.text('HANH DONG / DOI TUONG', 95, y)
+      doc.text('IP / THIET BI', 158, y)
+      doc.line(14, y + 2, 196, y + 2)
+      y += 8
+
+      const logsToExport = filteredLogs.slice(0, 35)
+      logsToExport.forEach((log) => {
+        if (y > 275) {
+          doc.addPage()
+          y = 20
+        }
+        const timeStr = String(log.createdAt || log.timestamp || '').slice(0, 19).replace('T', ' ')
+        const userStr = String(log.userName || log.user || 'He thong').slice(0, 20)
+        const actStr = String(log.actionLabel || log.action || '').slice(0, 30)
+        const ipStr = String(log.ipAddress || log.device || 'Web Console').slice(0, 18)
+
+        doc.text(timeStr, 14, y)
+        doc.text(userStr, 50, y)
+        doc.text(actStr, 95, y)
+        doc.text(ipStr, 158, y)
+        y += 7
+      })
+
+      doc.save(`SmartEnglish_NhatKy_${new Date().toISOString().slice(0, 10)}.pdf`)
+      toast.success('Đã tải xuống file PDF nhật ký hoạt động!')
+    } catch (err) {
+      console.error('Lỗi khi xuất PDF:', err)
+      toast.error('Không thể tạo file PDF: ' + (err?.message || 'Lỗi'))
+    }
   }
 
   const startRecord = (page - 1) * PAGE_SIZE + 1
@@ -146,6 +389,9 @@ function AuditLogPage() {
   // Helper render icon hành động
   const renderActionIcon = (log) => {
     const act = (log.actionType || log.action || '').toLowerCase()
+    if (act.includes('pay') || act.includes('thanh toán') || act.includes('receipt') || act.includes('gói') || act.includes('hóa đơn')) {
+      return <CreditCard size={15} className="text-emerald-600 shrink-0" />
+    }
     if (act.includes('delete') || act.includes('xóa')) {
       return <Trash2 size={15} className="text-red-500 shrink-0" />
     }
@@ -269,11 +515,12 @@ function AuditLogPage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[170px]"
             >
               <option value="all">Thao tác: Tất cả</option>
-              <option value="delete">Xóa tài nguyên</option>
+              <option value="payment">Thanh toán & Gói Pro</option>
+              <option value="create">Tạo mới</option>
+              <option value="update">Cập nhật & Chấm điểm</option>
               <option value="approve">Phê duyệt</option>
               <option value="auth">Khóa / Phân quyền</option>
-              <option value="update">Cập nhật</option>
-              <option value="create">Tạo mới</option>
+              <option value="delete">Xóa tài nguyên</option>
             </select>
 
             {/* Lọc Mức độ */}

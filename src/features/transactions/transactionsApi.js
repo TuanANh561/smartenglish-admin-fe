@@ -48,3 +48,32 @@ export const rejectRefund = async (id, reason) => {
   })
   return res?.data !== undefined ? res.data : res
 }
+
+/**
+ * Lấy danh sách sổ phụ ngân hàng SePay phục vụ đối soát
+ * @param {string} matchStatus
+ */
+export const getSepayTransactions = async (matchStatus) => {
+  const params = {}
+  if (matchStatus && matchStatus !== 'all') params.matchStatus = matchStatus
+  const res = await api.get('/admin/sepay-transactions', { params })
+  return res?.data !== undefined ? res.data : res
+}
+
+/**
+ * Khớp lệnh đối soát thủ công cho giao dịch ngân hàng
+ * @param {string|number} id
+ * @param {string} orderCode
+ */
+export const manualMatchTransaction = async (id, orderCode) => {
+  const res = await api.post(`/admin/sepay-transactions/${id}/match`, { orderCode })
+  return res?.data !== undefined ? res.data : res
+}
+
+/**
+ * Lấy dữ liệu mã VietQR tĩnh thu tại quầy
+ */
+export const getStaticQr = async () => {
+  const res = await api.get('/admin/sepay/qr-static')
+  return res?.data !== undefined ? res.data : res
+}

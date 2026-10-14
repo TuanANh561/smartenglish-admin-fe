@@ -40,8 +40,8 @@ export const INITIAL_TEACHER_PLANS = [
     name: 'Teacher Pro',
     badge: 'Bán chạy nhất',
     target: 'teacher',
-    priceMonthly: 299000,
-    priceYearly: 2390000,
+    priceMonthly: 20000,
+    priceYearly: 20000,
     maxClasses: 15,
     maxStudents: 300,
     aiQuotaMonthly: 9999, // Không giới hạn

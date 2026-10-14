@@ -86,10 +86,9 @@ export default function ClassStudentsTab({
                   email: student.userEmail || student.email || '',
                   avatarUrl: student.userAvatar || student.avatarUrl,
                   avatarColor: student.avatarColor || '#2563eb',
-                  initials: (student.userName || student.name || 'H').slice(0, 2).toUpperCase(),
-                  avgScore: student.avgScore ?? 7.5,
-                  progress: student.progress ?? 60,
-                  lastSeen: student.lastSeen || 'Gần đây',
+                  avgScore: student.avgScore ?? null,
+                  progress: student.progress ?? 0,
+                  lastSeen: student.lastSeen || (student.joinedAt ? `Gia nhập: ${new Date(student.joinedAt).toLocaleDateString('vi-VN')}` : '--'),
                 }
 
                 return (

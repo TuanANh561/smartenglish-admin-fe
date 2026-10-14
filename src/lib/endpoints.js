@@ -212,6 +212,7 @@ export const ENDPOINTS = {
 
   // ── notification-service & vận hành hệ thống ────────────────────
   notifications: {
+    stream: '/api/v1/notifications/stream',
     list: '/api/v1/notifications',
     unreadCount: '/api/v1/notifications/unread-count',
     markRead: '/api/v1/notifications/:id/read',

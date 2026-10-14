@@ -38,6 +38,14 @@ export const TEST_USERS = {
     avatarUrl: '',
     plan: 'free',
   },
+  43: {
+    id: 43,
+    displayName: 'Thầy Nguyễn Tuấn Anh',
+    email: 'anhn07929@gmail.com',
+    role: 'teacher',
+    avatarUrl: '',
+    plan: 'teacher_pro',
+  },
 }
 
 export const getInitialUser = () => {
@@ -56,10 +64,19 @@ export const getInitialUser = () => {
           ? 3
           : 1)
       sessionStorage.setItem('se_test_user_id', String(id))
+      try {
+        localStorage.setItem('se_admin_token', `mock-jwt-token-${id}`)
+        localStorage.setItem('se_admin_refresh_token', `mock-refresh-token-${id}`)
+      } catch {}
       return TEST_USERS[id] || null
     }
     const savedId = sessionStorage.getItem('se_test_user_id')
     if (savedId && TEST_USERS[savedId]) {
+      try {
+        if (!localStorage.getItem('se_admin_token')) {
+          localStorage.setItem('se_admin_token', `mock-jwt-token-${savedId}`)
+        }
+      } catch {}
       return TEST_USERS[savedId]
     }
   } catch {
@@ -68,22 +85,41 @@ export const getInitialUser = () => {
   return null
 }
 
-export const DEFAULT_ADMIN_USER = TEST_USERS[1]
+const getStoredUser = () => {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('se_admin_user')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+const initialSavedUser = getStoredUser()
 
 export const useAuthStore = create((set) => ({
-  user: null,
-  initialized: false,
+  user: initialSavedUser,
+  initialized: Boolean(initialSavedUser && (typeof window !== 'undefined' && localStorage.getItem('se_admin_token'))),
 
   setSession: ({ user, accessToken, refreshToken }) => {
     setTokens({ accessToken, refreshToken })
+    if (typeof window !== 'undefined' && user) {
+      localStorage.setItem('se_admin_user', JSON.stringify(user))
+    }
     set({ user, initialized: true })
   },
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    if (typeof window !== 'undefined' && user) {
+      localStorage.setItem('se_admin_user', JSON.stringify(user))
+    }
+    set({ user, initialized: true })
+  },
   setInitialized: (initialized) => set({ initialized }),
   clearSession: () => {
     clearTokens()
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('se_test_user_id')
+      localStorage.removeItem('se_admin_user')
     }
     set({ user: null, initialized: true })
   },

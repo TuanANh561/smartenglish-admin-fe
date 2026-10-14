@@ -92,3 +92,10 @@ export function maskPhone(phone) {
   return `${str.slice(0, 3)}****${str.slice(-3)}`
 }
 
+export function maskBankAccount(account) {
+  if (!account) return '••••••••'
+  const str = String(account).trim()
+  if (str.length <= 4) return '••••' + str
+  return `${str.slice(0, 3)}••••${str.slice(-3)}`
+}
+

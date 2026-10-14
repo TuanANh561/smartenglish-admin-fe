@@ -36,44 +36,42 @@ export function useLogout() {
  * báo 401 và lib/api.js tự thử làm mới bằng refresh token trước khi thất bại hẳn.
  */
 export function useInitAuth() {
-  const initialized = useAuthStore((state) => state.initialized)
+  const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
   const setInitialized = useAuthStore((state) => state.setInitialized)
   const clearSession = useAuthStore((state) => state.clearSession)
 
   useEffect(() => {
-    if (initialized) return
-
-    const initial = getInitialUser()
-    if (initial) {
-      setUser(initial)
+    const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
+    if (!token) {
+      clearSession()
       setInitialized(true)
       return
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
-    if (!token) {
-      if (typeof window !== 'undefined') {
-        const testId = sessionStorage.getItem('se_test_user_id')
-        if (testId && TEST_USERS[testId]) {
-          setUser(TEST_USERS[testId])
-        }
-      }
+    // Nếu đã có user hợp lệ từ localStorage, kích hoạt hiển thị app ngay lập tức
+    if (user) {
       setInitialized(true)
-      return
     }
 
     authApi
       .getMe()
-      .then((user) => {
-        if (!user || user.role === 'student') {
+      .then((me) => {
+        const role = String(me?.role || '').trim().toLowerCase()
+        if (!me || role === 'student') {
           toast.error('Tài khoản học viên không thể truy cập trang quản trị.')
           clearSession()
         } else {
-          setUser(user)
+          setUser(me)
           setInitialized(true)
         }
       })
-      .catch(() => clearSession())
-  }, [initialized, setUser, setInitialized, clearSession])
+      .catch((err) => {
+        // Nếu token bị từ chối hoặc hết hạn, dọn sạch phiên làm việc
+        if (err?.status === 401 || err?.status === 403 || err?.status === 409) {
+          clearSession()
+        }
+        setInitialized(true)
+      })
+  }, [setUser, setInitialized, clearSession])
 }

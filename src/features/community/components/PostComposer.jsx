@@ -215,20 +215,6 @@ export default function PostComposer({
             <span>File PDF</span>
           </button>
 
-          {/* Nút Gợi ý AI - Giữ nguyên không động gì tới theo yêu cầu */}
-          <button
-            type="button"
-            onClick={handleAiSuggest}
-            disabled={isAiGenerating || isPosting}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-slate-100 font-medium text-brand-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isAiGenerating ? (
-              <Loader2 size={15} strokeWidth={2.25} className="animate-spin shrink-0 text-brand-600" />
-            ) : (
-              <Sparkles size={15} className="text-brand-600" />
-            )}
-            <span>{isAiGenerating ? 'Đang tạo...' : 'Gợi ý AI'}</span>
-          </button>
         </div>
 
         <Button

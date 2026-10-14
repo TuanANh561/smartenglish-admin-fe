@@ -1,20 +1,26 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, cn } from '@/lib/utils'
 
 const STATUS_LABEL = {
   completed: 'Thành công',
+  success: 'Thành công',
   pending: 'Chờ xác thực',
   failed: 'Thất bại',
   refunded: 'Hoàn tiền',
+  cancelled: 'Đã hủy',
+  canceled: 'Đã hủy',
 }
 
 const STATUS_TONE = {
   completed: 'success',
+  success: 'success',
   pending: 'warning',
   failed: 'danger',
   refunded: 'info',
+  cancelled: 'neutral',
+  canceled: 'neutral',
 }
 
 const PLAN_LABEL = {
@@ -22,6 +28,7 @@ const PLAN_LABEL = {
   premium_monthly: 'Premium tháng',
   premium_yearly: 'Premium năm',
   lifetime: 'Trọn đời',
+  teacher_pro: 'Giảng viên Pro',
 }
 
 const columnHelper = createColumnHelper()
@@ -51,25 +58,43 @@ export const transactionColumns = [
   columnHelper.accessor('plan', {
     header: 'Gói dịch vụ',
     enableSorting: false,
-    cell: (info) => (
-      <span className="text-sm font-medium text-slate-700">
-        {PLAN_LABEL[info.getValue()] ?? info.getValue()}
-      </span>
-    ),
+    cell: (info) => {
+      const raw = info.row.original.planName || PLAN_LABEL[info.getValue()] || info.getValue() || 'Gói Premium'
+      const cleanName = raw.replace(/\s*\([^)]*\)/g, '').trim()
+      return (
+        <span className="text-sm font-medium text-slate-700">
+          {cleanName}
+        </span>
+      )
+    },
   }),
   columnHelper.accessor('amount', {
     header: 'Khoản tiền',
     enableSorting: true,
     meta: { align: 'right' },
-    cell: (info) => (
-      <span className="font-bold text-slate-900 text-sm">{formatCurrency(info.getValue(), { compact: false })}</span>
-    ),
+    cell: (info) => {
+      const status = (info.row.original.status || '').toLowerCase()
+      const isCancelled = ['cancelled', 'canceled', 'expired', 'failed'].includes(status)
+      const isRefunded = status === 'refunded'
+      const isInactive = isCancelled || isRefunded
+      return (
+        <span
+          className={cn(
+            'text-sm',
+            isInactive ? 'font-normal text-slate-400 line-through' : 'font-bold text-slate-900'
+          )}
+          title={isCancelled ? 'Đơn hàng đã hủy (0đ thực thu)' : isRefunded ? 'Đã hoàn tiền' : ''}
+        >
+          {formatCurrency(info.getValue(), { compact: false })}
+        </span>
+      )
+    },
   }),
   columnHelper.accessor('status', {
     header: 'Trạng thái',
     enableSorting: false,
     cell: (info) => {
-      const status = info.getValue()
+      const status = (info.getValue() || 'completed').toLowerCase()
       return <Badge tone={STATUS_TONE[status] ?? 'neutral'}>{STATUS_LABEL[status] ?? status}</Badge>
     },
   }),

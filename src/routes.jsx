@@ -20,6 +20,7 @@ import NotificationsPage from '@/features/notifications/NotificationsPage'
 import PermissionsPage from '@/features/permissions/PermissionsPage'
 import PremiumPage from '@/features/premium/PremiumPage'
 import TeacherPackagesPage from '@/features/premium/TeacherPackagesPage'
+import TeacherTransactionsPage from '@/features/premium/TeacherTransactionsPage'
 import PronunciationPage from '@/features/pronunciation/PronunciationPage'
 import QuizBankPage from '@/features/quiz/QuizBankPage'
 import ReadingPage from '@/features/reading/ReadingPage'
@@ -83,6 +84,7 @@ export const router = createBrowserRouter([
           { path: 'doi-soat', element: <TransactionsPage /> },
           { path: 'goi-premium', element: <PremiumPage /> },
           { path: 'goi-dich-vu', element: <TeacherPackagesPage /> },
+          { path: 'giao-dich', element: <TeacherTransactionsPage /> },
           { path: 'phan-quyen', element: <PermissionsPage /> },
           { path: 'thong-bao', element: <NotificationsPage /> },
           { path: 'bao-cao', element: <ReportsPage /> },
@@ -99,6 +101,8 @@ export const router = createBrowserRouter([
   { path: '/ho-so', element: <Navigate to="/app/ho-so" replace /> },
   { path: '/lop-hoc', element: <Navigate to="/app/lop-hoc" replace /> },
   { path: '/goi-dich-vu', element: <Navigate to="/app/goi-dich-vu" replace /> },
+  { path: '/giao-dich', element: <Navigate to="/app/giao-dich" replace /> },
+  { path: '/transactions', element: <Navigate to="/app/giao-dich" replace /> },
   { path: '/hoc-lieu/tu-vung', element: <Navigate to="/app/hoc-lieu/tu-vung" replace /> },
   { path: '/hoc-lieu/tu-vung/tao-moi', element: <Navigate to="/app/hoc-lieu/tu-vung/tao-moi" replace /> },
   { path: '/hoc-lieu/tu-vung/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/tu-vung/:id/chinh-sua" replace /> },

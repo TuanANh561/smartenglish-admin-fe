@@ -26,7 +26,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
-import { PRONUNCIATION_CATEGORIES } from '@/mocks/data/pronunciation'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
@@ -45,6 +44,7 @@ import {
   deleteSpeakingScenario,
 } from './speakingScenarioApi'
 import {
+  PRONUNCIATION_CATEGORIES,
   getPronunciationLessons,
   createPronunciationLesson,
   updatePronunciationLesson,

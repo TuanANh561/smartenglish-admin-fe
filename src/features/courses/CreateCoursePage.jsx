@@ -14,7 +14,6 @@ import {
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { INITIAL_COURSES } from '@/mocks/data/courses'
 import { useAuthStore } from '@/store/authStore'
 import {
   createCourseApi,
@@ -40,61 +39,28 @@ export default function CreateCoursePage() {
   const isTeacher = user?.role === 'teacher'
   const isEditing = Boolean(id)
 
-  const existingMock = isEditing
-    ? INITIAL_COURSES.find((c) => String(c.id) === String(id)) || null
-    : null
-
   // 1. Form States theo chuẩn Database content.courses
-  const [titleVi, setTitleVi] = useState(existingMock?.titleVi || existingMock?.title || '')
-  const [titleEn, setTitleEn] = useState(existingMock?.titleEn || '')
-  const [descriptionVi, setDescriptionVi] = useState(
-    existingMock?.descriptionVi || existingMock?.description || '',
-  )
-  const [courseType, setCourseType] = useState(existingMock?.courseType || 'STRUCTURED')
-  const [cefrLevelMin, setCefrLevelMin] = useState(existingMock?.cefrLevelMin || 'A1')
-  const [cefrLevelMax, setCefrLevelMax] = useState(existingMock?.cefrLevelMax || 'A2')
-  const [targetExam, setTargetExam] = useState(existingMock?.targetExam || 'GENERAL')
-  const [estimatedHours, setEstimatedHours] = useState(
-    existingMock?.estimatedHours || (existingMock?.durationHours ? parseInt(existingMock.durationHours) : 6.0),
-  )
-  const [isPremium, setIsPremium] = useState(Boolean(existingMock?.isPremium))
-  const [isPublished, setIsPublished] = useState(existingMock?.isPublished !== false)
+  const [titleVi, setTitleVi] = useState('')
+  const [titleEn, setTitleEn] = useState('')
+  const [descriptionVi, setDescriptionVi] = useState('')
+  const [courseType, setCourseType] = useState('STRUCTURED')
+  const [cefrLevelMin, setCefrLevelMin] = useState('A1')
+  const [cefrLevelMax, setCefrLevelMax] = useState('A2')
+  const [targetExam, setTargetExam] = useState('GENERAL')
+  const [estimatedHours, setEstimatedHours] = useState(6.0)
+  const [isPremium, setIsPremium] = useState(false)
+  const [isPublished, setIsPublished] = useState(true)
   const [thumbnailUrl, setThumbnailUrl] = useState(
-    existingMock?.thumbnailUrl ||
-      existingMock?.thumbnail ||
-      'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846',
+    'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846',
   )
   const [creatorType, setCreatorType] = useState(isAdmin ? 'system' : 'teacher')
 
   // 2. Mục tiêu & Đối tượng
-  const [objectives, setObjectives] = useState(
-    existingMock?.objectives || [
-      'Nắm vững từ vựng và mẫu câu giao tiếp trọng tâm của chương',
-      'Tự tin phản xạ và đàm thoại trực tiếp cùng trợ lý Speaking AI',
-      'Đạt chuẩn năng lực CEFR theo lộ trình học tương tác',
-    ],
-  )
-  const [targetAudience, setTargetAudience] = useState(
-    existingMock?.targetAudience || [
-      'Học viên theo học lộ trình tiếng Anh chuẩn toàn diện của hệ thống',
-      'Người học cần rèn luyện phản xạ nghe nói thực tế',
-    ],
-  )
+  const [objectives, setObjectives] = useState([])
+  const [targetAudience, setTargetAudience] = useState([])
 
   // 3. Cấu trúc Chương & Unit bài học
-  const [chapters, setChapters] = useState(
-    existingMock?.chapters || [
-      {
-        id: `CH-1`,
-        title: 'Chương 1: Bài học trọng tâm',
-        duration: '6h 00m',
-        lessons: [
-          { id: 'L-1', title: 'Unit 1: Chào hỏi & Khởi động', type: 'quiz', duration: '15:00' },
-          { id: 'L-2', title: 'Unit 2: Luyện nghe đàm thoại', type: 'video', duration: '15:00' },
-        ],
-      },
-    ],
-  )
+  const [chapters, setChapters] = useState([])
 
   const [isSaving, setIsSaving] = useState(false)
   const [isAiModalOpen, setIsAiModalOpen] = useState(false)
