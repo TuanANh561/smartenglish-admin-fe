@@ -16,48 +16,52 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/auth': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
       '/admin/pronunciation-lessons': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/grammar-lessons': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/listening-lessons': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/reading-passages': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/exams': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/ai': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
       '/admin/audit-logs': {
-        target: 'http://localhost:8081',
+        target: 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
       '/admin/quizzes': {
-        target: 'http://localhost:8083',
+        target: 'http://127.0.0.1:8083',
         changeOrigin: true,
       },
       '/admin/reports': {
-        target: 'http://localhost:8088',
+        target: 'http://127.0.0.1:8088',
         changeOrigin: true,
       },
       '/social': {
-        target: 'http://localhost:8088',
+        target: 'http://127.0.0.1:8088',
         changeOrigin: true,
       },
       '/content': {
-        target: 'http://localhost:8082',
+        target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
     },

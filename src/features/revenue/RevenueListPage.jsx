@@ -1,4 +1,4 @@
-import { Download, RefreshCw, Search, Wallet, Receipt, BarChart3, Percent } from 'lucide-react'
+import { Download, RefreshCw, Search, Wallet, Receipt, BarChart3, Percent, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import DataTable from '@/components/ui/DataTable/DataTable'
@@ -41,82 +41,132 @@ function RevenueListPage() {
 
   return (
     <div className="space-y-4">
-      {/* KPI row */}
+      {/* 4 KPI Cards - Tinh gọn, phẳng, thẩm mỹ đồng bộ */}
       {statsQuery.data && (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <Card>
-            <div className="flex items-start justify-between">
-              <span className="rounded-xl bg-emerald-50 text-emerald-600 p-2.5 border border-emerald-100/80 shadow-2xs">
-                <Wallet size={20} strokeWidth={2} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Card 1: Tổng doanh thu */}
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Tổng doanh thu
               </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <Wallet size={16} strokeWidth={2} />
+              </div>
             </div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng doanh thu</p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">
-              {formatCurrency(statsQuery.data.totalRevenue, { compact: true })}
-            </p>
-          </Card>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {formatCurrency(statsQuery.data.totalRevenue, { compact: false })}
+              </span>
+              {statsQuery.data.revenueDelta != null && (
+                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  {statsQuery.data.revenueDelta >= 0 ? `+${statsQuery.data.revenueDelta}%` : `${statsQuery.data.revenueDelta}%`}
+                </span>
+              )}
+            </div>
+          </div>
 
-          <Card>
-            <div className="flex items-start justify-between">
-              <span className="rounded-xl bg-blue-50 text-blue-600 p-2.5 border border-blue-100/80 shadow-2xs">
-                <Receipt size={20} strokeWidth={2} />
+          {/* Card 2: Doanh thu tháng */}
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Doanh thu tháng
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <BarChart3 size={16} strokeWidth={2} />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {formatCurrency(statsQuery.data.monthlyRevenue ?? statsQuery.data.totalRevenue, { compact: false })}
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                {statsQuery.data.totalTransactions} GD
               </span>
             </div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng giao dịch</p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">{statsQuery.data.totalTransactions}</p>
-          </Card>
+          </div>
 
-          <Card>
-            <div className="flex items-start justify-between">
-              <span className="rounded-xl bg-amber-50 text-amber-600 p-2.5 border border-amber-100/80 shadow-2xs">
-                <BarChart3 size={20} strokeWidth={2} />
+          {/* Card 3: Giá trị trung bình (AOV) */}
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Giá trị trung bình
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <Receipt size={16} strokeWidth={2} />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {formatCurrency(statsQuery.data.averageOrderValue, { compact: false })}
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                / đơn
               </span>
             </div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Giá trị trung bình</p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">
-              {formatCurrency(statsQuery.data.averageOrderValue, { compact: false })}
-            </p>
-          </Card>
+          </div>
 
-          <Card>
-            <div className="flex items-start justify-between">
-              <span className="rounded-xl bg-violet-50 text-violet-600 p-2.5 border border-violet-100/80 shadow-2xs">
-                <Percent size={20} strokeWidth={2} />
+          {/* Card 4: Tỉ lệ chuyển đổi */}
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Tỉ lệ chuyển đổi
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                <Percent size={16} strokeWidth={2} />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {statsQuery.data.conversionRate}%
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                {statsQuery.data.activeSubscribers ?? 0} hội viên
               </span>
             </div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tỉ lệ chuyển đổi</p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">{statsQuery.data.conversionRate}%</p>
-          </Card>
+          </div>
         </div>
       )}
 
       {/* Table Card với 1 ROW DUY NHẤT ở đầu */}
+      {/* Table Card với 1 ROW DUY NHẤT ở đầu */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* 1 Row duy nhất chứa thanh tìm kiếm, các nút lọc và nút bấm */}
-        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
-          {/* Ô tìm kiếm không viền (borderless) chuẩn Benchmark */}
-          <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
-            <Search size={18} className="shrink-0 text-slate-400" />
+        {/* 1 Row duy nhất: Search (trái) + Filters & Action Buttons (phải) */}
+        <div className="flex flex-col gap-3 px-5 py-3 border-b border-slate-100 bg-white lg:flex-row lg:items-center lg:justify-between">
+          {/* Left: Ô tìm kiếm không viền */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-[200px] max-w-xs xl:max-w-sm">
+            <Search size={17} className="shrink-0 text-slate-400" />
             <input
               type="text"
               value={dataTable.search}
               onChange={(e) => dataTable.setSearch(e.target.value)}
-              placeholder="Tìm theo học viên, email hoặc mã đơn..."
+              placeholder="Tìm mã đơn, học viên, email..."
               className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
             />
+            {dataTable.search && (
+              <button
+                type="button"
+                onClick={() => dataTable.setSearch('')}
+                className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer p-0.5"
+                title="Xóa tìm kiếm"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {/* Cụm bộ lọc và nút hành động trên 1 hàng */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Right: Cụm bộ lọc dropdowns + Nút xóa lọc + Action buttons */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-nowrap">
             {/* Lọc trạng thái */}
             <select
               value={dataTable.filters.status || 'all'}
               onChange={(e) => dataTable.setFilter('status', e.target.value === 'all' ? undefined : e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
             >
               <option value="all">Trạng thái: Tất cả</option>
               <option value="completed">Thành công</option>
               <option value="pending">Chờ xác thực</option>
+              <option value="cancelled">Đã hủy</option>
               <option value="failed">Thất bại</option>
               <option value="refunded">Hoàn tiền</option>
             </select>
@@ -125,7 +175,7 @@ function RevenueListPage() {
             <select
               value={dataTable.filters.planType || 'all'}
               onChange={(e) => dataTable.setFilter('planType', e.target.value === 'all' ? undefined : e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
             >
               <option value="all">Gói: Tất cả</option>
               <option value="premium_monthly">Premium tháng</option>
@@ -139,31 +189,37 @@ function RevenueListPage() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="text-xs font-medium text-brand-600 hover:text-brand-700 px-2 py-1 transition-colors cursor-pointer"
+                className="h-8.5 px-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                title="Đặt lại bộ lọc"
               >
-                Xoá lọc
+                Xóa lọc
               </button>
             )}
 
-            {/* Nút Tải lại */}
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={RefreshCw}
-              onClick={handleReload}
-              title="Tải lại danh sách"
-            />
+            <div className="h-4 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
-            {/* Nút Xuất CSV */}
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={Download}
-              onClick={handleExportCsv}
-              title="Xuất báo cáo ra file CSV"
-            >
-              Xuất báo cáo
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleReload}
+                className="flex h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                title="Tải lại danh sách"
+                aria-label="Tải lại"
+              >
+                <RefreshCw size={14} />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="flex h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                title="Xuất file CSV"
+                aria-label="Xuất CSV"
+              >
+                <Download size={15} />
+              </button>
+            </div>
           </div>
         </div>
 

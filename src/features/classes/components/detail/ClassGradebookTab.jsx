@@ -44,8 +44,8 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
       const rows = filtered.map((s) => [
         `"${s.userName || s.name || 'Học viên'}"`,
         `"${s.userEmail || s.email || ''}"`,
-        s.avgScore ?? 7.8,
-        s.progress ?? 70,
+        s.avgScore != null ? s.avgScore : '',
+        s.progress != null ? `${s.progress}%` : '0%',
       ])
       const csvContent =
         '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
@@ -163,20 +163,30 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
                   avatarUrl: student.userAvatar || student.avatarUrl,
                   avatarColor: student.avatarColor || '#2563eb',
                   initials: (student.userName || student.name || 'H').slice(0, 2).toUpperCase(),
-                  avgScore: student.avgScore ?? 7.8,
-                  progress: student.progress ?? 70,
+                  avgScore: student.avgScore ?? null,
+                  progress: student.progress ?? 0,
                 }
                 const score = sObj.avgScore
                 const rating =
-                  score >= 8.5 ? 'Xuất sắc' : score >= 7.0 ? 'Khá' : score >= 5.0 ? 'Trung bình' : 'Yếu'
+                  score == null
+                    ? 'Chưa đánh giá'
+                    : score >= 8.5
+                      ? 'Xuất sắc'
+                      : score >= 7.0
+                        ? 'Khá'
+                        : score >= 5.0
+                          ? 'Trung bình'
+                          : 'Yếu'
                 const ratingColor =
-                  score >= 8.5
-                    ? 'text-emerald-700 bg-emerald-50'
-                    : score >= 7.0
-                      ? 'text-blue-700 bg-blue-50'
-                      : score >= 5.0
-                        ? 'text-amber-700 bg-amber-50'
-                        : 'text-red-700 bg-red-50'
+                  score == null
+                    ? 'text-slate-500 bg-slate-100'
+                    : score >= 8.5
+                      ? 'text-emerald-700 bg-emerald-50'
+                      : score >= 7.0
+                        ? 'text-blue-700 bg-blue-50'
+                        : score >= 5.0
+                          ? 'text-amber-700 bg-amber-50'
+                          : 'text-red-700 bg-red-50'
 
                 return (
                   <tr key={sObj.id} className="hover:bg-slate-50/60 transition-colors">

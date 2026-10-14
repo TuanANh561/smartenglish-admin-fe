@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Calendar, CheckCircle2, Copy, ExternalLink, GraduationCap, Shield, Users } from 'lucide-react'
-import { LEVEL_COLOR } from '@/mocks/data/classes'
+import { LEVEL_COLOR } from '../../classConstants'
 
 export default function ClassOverviewTab({ cls, members = [], assignments = [], copied, onCopyCode }) {
   const navigate = useNavigate()

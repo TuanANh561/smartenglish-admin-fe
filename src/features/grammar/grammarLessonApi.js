@@ -1,19 +1,27 @@
 /**
  * grammarLessonApi.js
  * ─────────────────────────────────────────────────────────────────────────────
- * API calls cho quản lý Ngân hàng Bài học Ngữ pháp
- * Backend: content-service  →  /admin/grammar-lessons
- * Hỗ trợ fallback tự động giữa Vite Proxy (8082), Gateway (8080) và in-memory mock store
+ * API client kết nối trực tiếp tới content-service (/admin/grammar-lessons)
+ * Đã kết nối với Database PostgreSQL thật, KHÔNG sử dụng mock data.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import axios from 'axios'
 import { api } from '@/lib/api'
-import { grammarLessons as MOCK_LESSONS, GRAMMAR_TOPICS } from '@/mocks/data/grammar'
 
 const BASE = '/admin/grammar-lessons'
 
-// In-memory mock store initialized from mock data
-let localLessons = [...MOCK_LESSONS]
+export const DEFAULT_GRAMMAR_TOPICS = [
+  'Các thì trong tiếng Anh',
+  'Câu điều kiện (Conditionals)',
+  'Câu bị động (Passive Voice)',
+  'Mệnh đề quan hệ (Relative Clauses)',
+  'Động từ khiếm khuyết (Modal Verbs)',
+  'Câu gián tiếp (Reported Speech)',
+  'Danh động từ & Động từ nguyên mẫu',
+  'Mạo từ (Articles a/an/the)',
+  'So sánh (Comparisons)',
+  'Cụm giới từ & Liên từ',
+]
 
 function normalizeLesson(item) {
   if (!item) return item
@@ -31,7 +39,7 @@ function normalizeLesson(item) {
 }
 
 async function callContentApi(method, path, options = {}) {
-  // 1. Ưu tiên gọi qua Vite Proxy (url tương đối, Vite chuyển tiếp sang 8082 không bị chặn CORS)
+  // 1. Ưu tiên gọi qua Vite Proxy
   try {
     const res = await axios({
       method,
@@ -51,7 +59,7 @@ async function callContentApi(method, path, options = {}) {
       const res = await api[method](path, options)
       return res?.data !== undefined ? res.data : res
     } catch (gatewayErr) {
-      console.warn('[grammarLessonApi] Lỗi khi gọi API qua Proxy/Gateway, chuyển sang fallback:', proxyErr?.message)
+      console.error('[grammarLessonApi] Lỗi khi gọi API:', proxyErr?.message || gatewayErr?.message)
       throw proxyErr
     }
   }
@@ -59,7 +67,6 @@ async function callContentApi(method, path, options = {}) {
 
 /**
  * Lấy danh sách bài học ngữ pháp có phân trang, tìm kiếm và lọc
- * @param {{ search?, topic?, cefrLevel?, status?, sortBy?, page?, size? }} params
  */
 export async function getGrammarLessons(params = {}) {
   const p = {}
@@ -98,56 +105,31 @@ export async function getGrammarLessons(params = {}) {
         totalPages: Math.ceil(data.length / (p.size || 8)) || 1,
       }
     }
-    return data
+    return data || { items: [], total: 0, page: 1, size: 8, totalPages: 1 }
   } catch (err) {
-    // Mock fallback nếu backend chưa kết nối được
-    let list = [...localLessons]
-    if (p.search) {
-      const q = p.search.toLowerCase()
-      list = list.filter(item =>
-        item.title?.toLowerCase().includes(q) ||
-        item.topic?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q)
-      )
-    }
-    if (p.topic) {
-      list = list.filter(item => item.topic === p.topic)
-    }
-    if (p.cefrLevel) {
-      list = list.filter(item => item.level === p.cefrLevel || item.cefrLevel === p.cefrLevel)
-    }
-    if (p.status) {
-      list = list.filter(item => item.status === p.status)
-    }
-
-    const page = p.page || 1
-    const size = p.size || 8
-    const total = list.length
-    const totalPages = Math.max(1, Math.ceil(total / size))
-    const items = list.slice((page - 1) * size, page * size).map(normalizeLesson)
-
+    console.error('[grammarLessonApi] Lỗi getGrammarLessons:', err)
     return {
-      items,
-      total,
-      page,
-      size,
-      totalPages,
+      items: [],
+      total: 0,
+      page: p.page || 1,
+      size: p.size || 8,
+      totalPages: 1,
     }
   }
 }
 
 /**
- * Lấy danh sách các chủ điểm ngữ pháp
+ * Lấy danh sách các chủ điểm ngữ pháp từ database
  */
 export async function getGrammarTopics() {
   try {
     const res = await callContentApi('get', `${BASE}/topics`)
     const topics = res?.data !== undefined ? res.data : res
     if (Array.isArray(topics) && topics.length > 0) return topics
-    return GRAMMAR_TOPICS.filter(t => t !== 'Tất cả chủ điểm')
-  } catch {
-    const distinctTopics = Array.from(new Set(localLessons.map(l => l.topic))).filter(Boolean)
-    return distinctTopics.length > 0 ? distinctTopics : GRAMMAR_TOPICS.filter(t => t !== 'Tất cả chủ điểm')
+    return DEFAULT_GRAMMAR_TOPICS
+  } catch (err) {
+    console.warn('[grammarLessonApi] Không thể tải danh mục chủ điểm từ backend:', err.message)
+    return DEFAULT_GRAMMAR_TOPICS
   }
 }
 
@@ -155,15 +137,9 @@ export async function getGrammarTopics() {
  * Lấy chi tiết bài học ngữ pháp theo ID
  */
 export async function getGrammarLessonById(id) {
-  try {
-    const res = await callContentApi('get', `${BASE}/${id}`)
-    const item = res?.data !== undefined ? res.data : res
-    return normalizeLesson(item)
-  } catch (err) {
-    const found = localLessons.find(item => String(item.id) === String(id))
-    if (found) return normalizeLesson(found)
-    throw err
-  }
+  const res = await callContentApi('get', `${BASE}/${id}`)
+  const item = res?.data !== undefined ? res.data : res
+  return normalizeLesson(item)
 }
 
 /**
@@ -189,21 +165,9 @@ export async function createGrammarLesson(data) {
     authorEmail: data.authorEmail || 'admin@smartenglish.com',
   }
 
-  try {
-    const res = await callContentApi('post', BASE, { data: payload })
-    const created = res?.data !== undefined ? res.data : res
-    localLessons.unshift(normalizeLesson(created))
-    return normalizeLesson(created)
-  } catch (err) {
-    const localNew = normalizeLesson({
-      ...payload,
-      id: `gram-${Date.now()}`,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    })
-    localLessons.unshift(localNew)
-    return localNew
-  }
+  const res = await callContentApi('post', BASE, { data: payload })
+  const created = res?.data !== undefined ? res.data : res
+  return normalizeLesson(created)
 }
 
 /**
@@ -229,117 +193,51 @@ export async function updateGrammarLesson(id, data) {
     authorEmail: data.authorEmail,
   }
 
-  try {
-    const res = await callContentApi('put', `${BASE}/${id}`, { data: payload })
-    const updated = res?.data !== undefined ? res.data : res
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? normalizeLesson({ ...l, ...updated }) : l)
-    return normalizeLesson(updated)
-  } catch (err) {
-    let updated = null
-    localLessons = localLessons.map(l => {
-      if (String(l.id) === String(id)) {
-        updated = normalizeLesson({
-          ...l,
-          ...payload,
-          updatedAt: new Date().toISOString(),
-        })
-        return updated
-      }
-      return l
-    })
-    return updated || normalizeLesson(payload)
-  }
+  const res = await callContentApi('put', `${BASE}/${id}`, { data: payload })
+  const updated = res?.data !== undefined ? res.data : res
+  return normalizeLesson(updated)
 }
 
 /**
  * Toggle trạng thái publish / draft
  */
 export async function togglePublishGrammarLesson(id) {
-  try {
-    const res = await callContentApi('patch', `${BASE}/${id}/publish`)
-    const updated = res?.data !== undefined ? res.data : res
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? normalizeLesson({ ...l, ...updated }) : l)
-    return normalizeLesson(updated)
-  } catch (err) {
-    let updated = null
-    localLessons = localLessons.map(l => {
-      if (String(l.id) === String(id)) {
-        const nextStatus = l.status === 'published' ? 'draft' : 'published'
-        updated = normalizeLesson({ ...l, status: nextStatus, updatedAt: new Date().toISOString() })
-        return updated
-      }
-      return l
-    })
-    return updated
-  }
+  const res = await callContentApi('patch', `${BASE}/${id}/publish`)
+  const updated = res?.data !== undefined ? res.data : res
+  return normalizeLesson(updated)
 }
 
 /**
  * Nhân bản bài học ngữ pháp
  */
 export async function duplicateGrammarLesson(id, authorInfo = {}) {
-  try {
-    const res = await callContentApi('post', `${BASE}/${id}/duplicate`, { data: authorInfo })
-    const created = res?.data !== undefined ? res.data : res
-    localLessons.unshift(normalizeLesson(created))
-    return normalizeLesson(created)
-  } catch (err) {
-    const original = localLessons.find(l => String(l.id) === String(id))
-    const duplicated = normalizeLesson({
-      ...(original || {}),
-      id: `gram-${Date.now()}`,
-      title: `${original?.title || 'Bài học'} (Bản sao)`,
-      status: 'draft',
-      authorName: authorInfo.authorName || 'Quản trị viên Hệ thống',
-      authorEmail: authorInfo.authorEmail || 'admin@smartenglish.com',
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    })
-    localLessons.unshift(duplicated)
-    return duplicated
-  }
+  const res = await callContentApi('post', `${BASE}/${id}/duplicate`, { data: authorInfo })
+  const created = res?.data !== undefined ? res.data : res
+  return normalizeLesson(created)
 }
 
 /**
  * Xóa bài học ngữ pháp theo ID (xóa mềm - chuyển vào thùng rác)
  */
 export async function deleteGrammarLesson(id) {
-  try {
-    const res = await callContentApi('delete', `${BASE}/${id}`)
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? { ...l, deletedAt: new Date().toISOString() } : l)
-    return res?.data !== undefined ? res.data : res
-  } catch (err) {
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? { ...l, deletedAt: new Date().toISOString() } : l)
-    return { success: true }
-  }
+  const res = await callContentApi('delete', `${BASE}/${id}`)
+  return res?.data !== undefined ? res.data : res
 }
 
 /**
  * Khôi phục bài học ngữ pháp từ thùng rác
  */
 export async function restoreGrammarLesson(id) {
-  try {
-    const res = await callContentApi('patch', `${BASE}/${id}/restore`)
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? { ...l, deletedAt: null } : l)
-    return res?.data !== undefined ? res.data : res
-  } catch (err) {
-    localLessons = localLessons.map(l => String(l.id) === String(id) ? { ...l, deletedAt: null } : l)
-    return { success: true }
-  }
+  const res = await callContentApi('patch', `${BASE}/${id}/restore`)
+  return res?.data !== undefined ? res.data : res
 }
 
 /**
  * Xóa vĩnh viễn bài học ngữ pháp khỏi cơ sở dữ liệu
  */
 export async function permanentDeleteGrammarLesson(id) {
-  try {
-    const res = await callContentApi('delete', `${BASE}/${id}/permanent`)
-    localLessons = localLessons.filter(l => String(l.id) !== String(id))
-    return res?.data !== undefined ? res.data : res
-  } catch (err) {
-    localLessons = localLessons.filter(l => String(l.id) !== String(id))
-    return { success: true }
-  }
+  const res = await callContentApi('delete', `${BASE}/${id}/permanent`)
+  return res?.data !== undefined ? res.data : res
 }
 
 /**
@@ -351,8 +249,6 @@ export async function getGrammarTrashCount() {
     const count = res?.data !== undefined ? res.data : res
     return typeof count === 'number' ? count : (Number(count) || 0)
   } catch (err) {
-    const count = localLessons.filter(l => Boolean(l.deletedAt)).length
-    return count
+    return 0
   }
 }
-

@@ -26,6 +26,7 @@ export const ROLE_ACCESS = {
     '/app/lop-hoc',
     '/app/cong-dong',
     '/app/goi-dich-vu',
+    '/app/giao-dich',
     '/app/hoc-lieu/khoa-hoc',
     '/app/hoc-lieu/bai-kiem-tra',
     '/app/noi-dung-ai',
@@ -36,8 +37,9 @@ export const ROLE_ACCESS = {
 }
 
 export function isRouteAllowed(pathname, role = 'admin') {
-  if (role === 'admin') return true
-  if (role === 'teacher') {
+  const normRole = String(role || 'admin').trim().toLowerCase()
+  if (normRole === 'admin') return true
+  if (normRole === 'teacher') {
     if (!pathname) return false
     return ROLE_ACCESS.teacher.some((allowed) =>
       pathname === allowed || pathname.startsWith(`${allowed}/`),
@@ -54,7 +56,15 @@ export const NAV_GROUPS = [
       { to: '/app/cong-dong', label: 'Cộng đồng', icon: MessagesSquare, unreadCount: 0, roles: ['admin', 'teacher'] },
       { to: '/app/hoc-vien', label: 'Người dùng', icon: Users, roles: ['admin'] },
       { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher', 'admin'] },
-      { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', icon: Crown, roles: ['teacher'] },
+      {
+        label: 'Gói & Giao dịch',
+        icon: Crown,
+        roles: ['teacher'],
+        children: [
+          { to: '/app/goi-dich-vu', label: 'Gói dịch vụ Pro', roles: ['teacher'] },
+          { to: '/app/giao-dich', label: 'Lịch sử giao dịch', roles: ['teacher'] },
+        ],
+      },
     ],
   },
   {
@@ -162,6 +172,7 @@ export const ROUTE_META = {
   '/app/hoc-vien': { title: 'Người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
   '/app/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
+  '/app/giao-dich': { title: 'Quản lý Giao dịch & Hóa đơn', description: 'Tra cứu lịch sử thanh toán, xuất hóa đơn điện tử và hoàn ứng' },
   '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/app/hoc-lieu/ngu-phap': {
     title: 'Quản lý Bài học Ngữ pháp',
@@ -195,16 +206,16 @@ export const ROUTE_META = {
   '/app/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
   '/app/doi-soat': {
     title: 'Giao dịch & Đối soát',
-    description: 'Quản lý dòng tiền, theo dõi thanh toán và xử lý các yêu cầu hoàn tiền từ học viên',
+    description: '',
   },
   '/app/goi-premium': {
-    title: 'Premium Package & Pricing Configurator',
-    description: 'Quản lý các gói dịch vụ và mã giảm giá cho hệ thống SmartEnglish AI',
+    title: 'Gói Premium',
+    description: '',
   },
   '/app/phan-quyen': { title: 'Phân quyền', description: 'Quản lý vai trò và phân quyền' },
   '/app/thong-bao': { title: 'Thông báo', description: 'Quản lý thông báo hệ thống' },
   '/app/bao-cao': { title: 'Báo cáo vi phạm', description: 'Theo dõi báo cáo vi phạm từ người dùng' },
-  '/app/nhat-ky': { title: 'Nhật ký hoạt động', description: 'Nhật ký hoạt động của quản trị viên' },
+  '/app/nhat-ky': { title: 'Nhật ký hoạt động', description: 'Theo dõi lịch sử hoạt động, nâng cấp dịch vụ & thao tác hệ thống' },
   '/app/cai-dat': { title: 'Cài đặt', description: 'Cấu hình và tuỳ chọn cho hệ thống' },
   '/app/ho-so': { title: 'Hồ sơ cá nhân', description: 'Quản lý thông tin tài khoản, chuyên môn giảng dạy và bảo mật' },
   '/ui': { title: 'Bộ nguyên thuỷ giao diện', description: 'Kitchen sink — chỉ dùng để phát triển' },

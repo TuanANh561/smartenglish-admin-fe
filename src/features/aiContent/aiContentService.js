@@ -1,4 +1,3 @@
-import { aiContentItems } from '@/mocks/data/aiContent'
 import { http } from '@/lib/api'
 
 // Key lưu trữ dự phòng trong localStorage khi offline hoặc chưa kịp sync
@@ -103,19 +102,7 @@ export function normalizeRecord(item) {
 }
 
 function seedRecords() {
-  const base = (aiContentItems || []).map((item) => normalizeRecord(item))
-  const storage = getStorage()
-
-  if (storage) {
-    storage.setItem(STORAGE_KEY, JSON.stringify(base))
-    return base
-  }
-
-  if (MEMORY_STORE.length === 0) {
-    MEMORY_STORE.push(...base)
-  }
-
-  return [...MEMORY_STORE]
+  return []
 }
 
 export function persistRecords(records) {

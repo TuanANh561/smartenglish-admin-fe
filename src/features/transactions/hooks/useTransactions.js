@@ -5,6 +5,9 @@ import {
   getReconciliationStats,
   approveRefund,
   rejectRefund,
+  getSepayTransactions,
+  manualMatchTransaction,
+  getStaticQr,
 } from '../transactionsApi'
 
 export function useTransactions(params = {}) {
@@ -53,3 +56,36 @@ export function useRejectRefund() {
     },
   })
 }
+
+export function useSepayTransactions(matchStatus) {
+  return useQuery({
+    queryKey: ['admin', 'sepay-transactions', matchStatus],
+    queryFn: () => getSepayTransactions(matchStatus),
+  })
+}
+
+export function useManualMatch() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, orderCode }) => manualMatchTransaction(id, orderCode),
+    onSuccess: () => {
+      toast.success('Đã khớp lệnh thành công và kích hoạt đơn hàng!')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'sepay-transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'revenue'] })
+    },
+    onError: (err) => {
+      toast.error('Khớp lệnh thất bại: ' + (err?.response?.data?.message || err.message || 'Lỗi kiểm tra'))
+    },
+  })
+}
+
+export function useStaticQr() {
+  return useQuery({
+    queryKey: ['admin', 'sepay', 'static-qr'],
+    queryFn: () => getStaticQr(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
