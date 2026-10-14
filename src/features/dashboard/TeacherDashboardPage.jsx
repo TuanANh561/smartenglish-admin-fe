@@ -8,6 +8,7 @@ import {
   CheckCircle,
   ClipboardList,
   Clock,
+  CreditCard,
   FileText,
   History,
   Loader2,
@@ -18,6 +19,8 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { api } from '@/lib/api'
+import { getUserActivities } from '@/features/notifications/notificationApi'
 import { getAuditLogs } from '@/features/auditLog/auditLogApi'
 import {
   computeTeacherStats,
@@ -84,6 +87,8 @@ function ActivityIcon({ type }) {
     ai: { Icon: Sparkles, bg: 'bg-purple-50 text-purple-600', ring: 'ring-purple-200' },
     grade: { Icon: Award, bg: 'bg-amber-50 text-amber-600', ring: 'ring-amber-200' },
     exam: { Icon: ClipboardList, bg: 'bg-teal-50 text-teal-600', ring: 'ring-teal-200' },
+    payment: { Icon: CreditCard, bg: 'bg-emerald-50 text-emerald-600', ring: 'ring-emerald-200' },
+    payment_receipt: { Icon: CreditCard, bg: 'bg-emerald-50 text-emerald-600', ring: 'ring-emerald-200' },
   }
   const { Icon, bg, ring } = map[type] ?? map.submit
   return (
@@ -134,7 +139,8 @@ function TeacherDashboardPage() {
 
   const [classes, setClasses] = useState([])
   const [assignments, setAssignments] = useState([])
-  const [auditActivities, setAuditActivities] = useState([])
+  const [userActivities, setUserActivities] = useState([])
+  const [userOrders, setUserOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true)
 
@@ -146,40 +152,65 @@ function TeacherDashboardPage() {
     })
   }, [])
 
-  // ── Tải dữ liệu thực từ teacher-service & audit-logs ───────────────────────
+  // ── Tải dữ liệu thực từ teacher-service, notification-service & payment-service ──
   useEffect(() => {
     let isMounted = true
     const load = async () => {
       setIsLoading(true)
+      setIsActivitiesLoading(true)
       if (!user?.id) {
         setClasses([])
         setAssignments([])
+        setUserActivities([])
+        setUserOrders([])
         setIsLoading(false)
         setIsActivitiesLoading(false)
         return
       }
 
-      // Tải song song danh sách lớp và audit logs để không bị block loading
-      getAuditLogs({ size: 6, userRole: 'teacher' })
-        .then((res) => {
-          if (isMounted && res?.items && res.items.length > 0) {
-            setAuditActivities(res.items)
+      // 1. Chỉ tải hoạt động và giao dịch của chính giáo viên đang đăng nhập (user.id)
+      const currentTeacherId = user.id
+      Promise.allSettled([
+        getUserActivities({ userId: currentTeacherId, size: 10 }),
+        api.get('/payment/user/orders', { params: { userId: currentTeacherId } }),
+      ])
+        .then(([actsRes, ordsRes]) => {
+          if (!isMounted) return
+
+          if (actsRes.status === 'fulfilled' && actsRes.value) {
+            const raw = actsRes.value
+            const list = raw?.content || (Array.isArray(raw) ? raw : raw?.data?.content || raw?.data || [])
+            setUserActivities(Array.isArray(list) ? list : [])
+          } else {
+            setUserActivities([])
+          }
+
+          if (ordsRes.status === 'fulfilled' && ordsRes.value) {
+            const raw = ordsRes.value
+            const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []
+            setUserOrders(list)
+          } else {
+            setUserOrders([])
           }
         })
         .catch((err) => {
-          console.warn('[TeacherDashboard] Không thể tải audit logs:', err)
+          console.warn('[TeacherDashboard] Lỗi tải hoạt động cá nhân:', err)
+          if (isMounted) {
+            setUserActivities([])
+            setUserOrders([])
+          }
         })
         .finally(() => {
           if (isMounted) setIsActivitiesLoading(false)
         })
 
+      // 2. Tải lớp học và bài tập
       try {
         const { classes: cls } = await getMyClasses({ size: 100, teacherId: user.id })
         if (!isMounted) return
         setClasses(cls)
         setIsLoading(false)
 
-        // Tải bài tập của các lớp ở nền để cập nhật thống kê mà không giữ treo UI
         getAllAssignments(cls)
           .then((asgns) => {
             if (isMounted) setAssignments(asgns)
@@ -205,97 +236,89 @@ function TeacherDashboardPage() {
     return Math.round((closed / assignments.length) * 100)
   }, [assignments])
 
-  // Danh sách hoạt động sư phạm gần đây, phù hợp vai trò giảng viên
+  // Danh sách hoạt động gần đây của chính giáo viên (Thanh toán gói Pro, bài tập, chấm điểm)
   const recentActivities = useMemo(() => {
-    // 1. Ưu tiên dữ liệu nhật ký hoạt động thực tế từ Backend nếu có
-    if (auditActivities && auditActivities.length > 0) {
-      return auditActivities.slice(0, 5).map((log) => {
-        const actionText = log.actionLabel || log.action || ''
-        const lower = actionText.toLowerCase()
-        let type = 'create'
-        if (lower.includes('nộp') || lower.includes('submit')) type = 'submit'
-        else if (lower.includes('ai') || lower.includes('tạo đề') || lower.includes('sinh')) type = 'ai'
-        else if (lower.includes('chấm') || lower.includes('grade') || lower.includes('điểm')) type = 'grade'
-        else if (lower.includes('tham gia') || lower.includes('join') || lower.includes('học viên')) type = 'join'
-        else if (lower.includes('bài tập') || lower.includes('exam') || lower.includes('kiểm tra')) type = 'exam'
+    const combined = []
 
-        return {
-          id: log.logCode || log.id || Math.random().toString(),
-          type,
-          actor: log.userName || log.user || 'Học viên / Hệ thống',
-          action: actionText,
-          target: log.reason || log.description || '',
-          time: log.timestamp
-            ? new Date(log.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + new Date(log.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
-            : 'Gần đây',
-        }
+    // A. Giao dịch thanh toán gói Pro thành công của chính giáo viên
+    if (userOrders && userOrders.length > 0) {
+      const successfulOrders = userOrders.filter(
+        (o) => o.status === 'completed' || o.status === 'SUCCESS' || o.status === 'paid'
+      )
+      successfulOrders.forEach((o) => {
+        const orderDate = o.createdAt ? new Date(o.createdAt) : new Date()
+        const amountFormatted = o.amount ? `${Number(o.amount).toLocaleString('vi-VN')}đ` : '20.000đ'
+        const planTitle = o.planName || 'Gói Giảng Viên Pro'
+        combined.push({
+          id: `order-${o.id || o.orderCode}`,
+          type: 'payment',
+          actor: 'Bạn',
+          action: `Đã nâng cấp thành công ${planTitle} (${amountFormatted})`,
+          target: `Mã đơn: ${o.orderCode || 'SEAI...'} • VietQR Napas`,
+          timestamp: orderDate.getTime(),
+          time:
+            orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+            ' - ' +
+            orderDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+        })
       })
     }
 
-    // 2. Tự động sinh các hoạt động sư phạm phong phú, phù hợp ngữ cảnh giáo viên theo các lớp học thực tế
-    const classNames = classes.map((c) => c.className || c.name).filter(Boolean)
-    const c1 = classNames[0] || 'IELTS Intensive 6.5'
-    const c2 = classNames[1] || 'Giao tiếp Phản xạ B2'
-    const c3 = classNames[2] || c1
+    // B. Nhật ký hoạt động từ notification-service (UserActivityLog của riêng giáo viên)
+    if (userActivities && userActivities.length > 0) {
+      userActivities.forEach((act) => {
+        const typeLower = (act.activityType || '').toLowerCase()
+        let type = 'create'
+        if (typeLower.includes('pay') || typeLower.includes('receipt')) type = 'payment'
+        else if (typeLower.includes('submit')) type = 'submit'
+        else if (typeLower.includes('ai')) type = 'ai'
+        else if (typeLower.includes('grade')) type = 'grade'
+        else if (typeLower.includes('join')) type = 'join'
+        else if (typeLower.includes('exam')) type = 'exam'
 
-    return [
-      {
-        id: 'act-1',
-        type: 'submit',
-        actor: 'Học viên Nguyễn Minh Trang',
-        action: 'đã nộp bài tập',
-        target: 'Writing Task 1 - Line Graph',
-        className: c1,
-        time: '15 phút trước',
-      },
-      {
-        id: 'act-2',
-        type: 'ai',
-        actor: 'Trợ lý AI SmartEnglish',
-        action: 'đã tạo xong bộ',
-        target: '20 câu trắc nghiệm Grammar & Vocab',
-        className: c2,
-        time: '45 phút trước',
-      },
-      {
-        id: 'act-3',
-        type: 'grade',
-        actor: 'Giáo viên',
-        action: 'đã hoàn thành chấm điểm & nhận xét',
-        target: 'Speaking Assignment Unit 4',
-        className: c1,
-        time: '3 giờ trước',
-      },
-      {
-        id: 'act-4',
-        type: 'join',
-        actor: 'Học viên Trần Hải Đăng',
-        action: 'đã tham gia vào lớp học',
-        target: c2,
-        className: c2,
-        time: 'Hôm qua',
-      },
-      {
-        id: 'act-5',
-        type: 'exam',
-        actor: 'Giáo viên',
-        action: 'đã mở hạn nộp bài kiểm tra',
-        target: 'Reading Comprehension Test 02',
-        className: c3,
-        time: '2 ngày trước',
-      },
-    ]
-  }, [auditActivities, classes])
+        const actDate = act.createdAt ? new Date(act.createdAt) : new Date()
+        combined.push({
+          id: `act-${act.id}`,
+          type,
+          actor: 'Bạn',
+          action: act.title || 'Hoạt động cá nhân',
+          target: act.description || '',
+          timestamp: actDate.getTime(),
+          time:
+            actDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+            ' - ' +
+            actDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+        })
+      })
+    }
 
-  // ScoreChart: tạo từ số lớp (placeholder tạm thời)
-  const SCORE_CHART = [
-    { label: 'T2', value: 6.8 },
-    { label: 'T3', value: 7.1 },
-    { label: 'T4', value: 7.3 },
-    { label: 'T5', value: 6.9 },
-    { label: 'T6', value: 7.5 },
-    { label: 'T7', value: 7.8 },
-  ]
+    // Nếu có hoạt động thực tế từ đơn hàng hoặc log, ưu tiên hiển thị và sắp xếp theo thời gian mới nhất
+    if (combined.length > 0) {
+      // Loại bỏ trùng lặp nếu cả hai bên cùng ghi nhận cùng mã đơn
+      const unique = []
+      const seen = new Set()
+      combined
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .forEach((item) => {
+          const key = item.action + item.target
+          if (!seen.has(key)) {
+            seen.add(key)
+            unique.push(item)
+          }
+        })
+      return unique.slice(0, 5)
+    }
+
+    return []
+  }, [userActivities, userOrders])
+
+  // Tính điểm trung bình từ các bài tập đã có điểm nếu có
+  const averageClassScore = useMemo(() => {
+    const gradedAssignments = assignments.filter((a) => a.averageScore != null || a.score != null)
+    if (gradedAssignments.length === 0) return null
+    const total = gradedAssignments.reduce((acc, a) => acc + (a.averageScore || a.score || 0), 0)
+    return (total / gradedAssignments.length).toFixed(1)
+  }, [assignments])
 
   return (
     <div className="space-y-6">
@@ -395,13 +418,27 @@ function TeacherDashboardPage() {
               )}
             </div>
 
-            {/* Bar chart — Điểm trung bình lớp (static placeholder) */}
+            {/* Bar chart — Điểm trung bình lớp */}
             <div className="flex flex-col gap-2 rounded-xl bg-canvas p-4">
-              <p className="text-xs font-semibold text-ink-muted">Điểm trung bình (ước tính)</p>
-              <p className="text-4xl font-bold text-navy-700">7.8</p>
-              <div className="mt-auto">
-                <ScoreBarChart data={SCORE_CHART} />
-              </div>
+              <p className="text-xs font-semibold text-ink-muted">Điểm trung bình lớp</p>
+              {averageClassScore === null ? (
+                <div className="flex flex-col justify-between flex-1 py-1">
+                  <div>
+                    <p className="text-3xl font-bold text-slate-300">--</p>
+                    <p className="mt-1 text-[11px] text-slate-400">Chưa có bài làm được chấm điểm</p>
+                  </div>
+                  <div className="mt-4 flex h-[64px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white/60 text-[11px] text-slate-400 text-center px-2">
+                    Điểm số trung bình sẽ hiển thị khi bạn chấm bài tập của học viên
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col justify-between flex-1 py-1">
+                  <div>
+                    <p className="text-4xl font-bold text-navy-700">{averageClassScore}</p>
+                    <p className="mt-1 text-[11px] text-emerald-600 font-medium">Dựa trên các bài tập đã chấm</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -427,7 +464,15 @@ function TeacherDashboardPage() {
                   <span className="text-xs text-slate-500">Đang tải hoạt động...</span>
                 </div>
               ) : recentActivities.length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">Chưa có hoạt động nào gần đây.</p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-2.5">
+                    <History size={18} strokeWidth={1.75} />
+                  </div>
+                  <p className="text-xs font-medium text-slate-600">Chưa có hoạt động nào gần đây</p>
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-[220px]">
+                    Hoạt động giao bài, chấm điểm và học viên nộp bài sẽ tự động hiển thị tại đây khi bạn tạo lớp học.
+                  </p>
+                </div>
               ) : (
                 recentActivities.map((act) => (
                   <div key={act.id} className="flex items-start gap-3 group">
