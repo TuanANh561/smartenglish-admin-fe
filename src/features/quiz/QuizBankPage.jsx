@@ -24,6 +24,7 @@ import {
   togglePublishExam,
   duplicateExam,
   seedToeic200ExamApi,
+  EXAM_CATEGORIES,
 } from './examApi'
 
 const PAGE_SIZE = 8
@@ -39,7 +40,7 @@ export default function QuizBankPage() {
 
   // ── Data State ─────────────────────────────────────────────────────────────
   const [allExams, setAllExams] = useState([])
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState(EXAM_CATEGORIES || [])
   const [isLoading, setIsLoading] = useState(true)
   const [trashCount, setTrashCount] = useState(0)
 

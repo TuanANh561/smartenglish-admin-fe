@@ -16,7 +16,6 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { GRAMMAR_TOPICS } from '@/mocks/data/grammar'
 import { useAuthStore } from '@/store/authStore'
 import GrammarQuestionCard from './components/GrammarQuestionCard'
 import {
@@ -24,10 +23,11 @@ import {
   createGrammarLesson,
   updateGrammarLesson,
   getGrammarTopics,
+  DEFAULT_GRAMMAR_TOPICS,
 } from './grammarLessonApi'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-const TOPIC_LIST = GRAMMAR_TOPICS.filter((t) => t !== 'Tất cả chủ điểm')
+const TOPIC_LIST = DEFAULT_GRAMMAR_TOPICS
 
 const EMPTY_QUESTION = {
   question: '',
