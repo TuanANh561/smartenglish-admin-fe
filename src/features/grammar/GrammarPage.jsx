@@ -24,6 +24,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import GrammarTableRow from './components/GrammarTableRow'
 import GrammarDetailDrawer from './components/GrammarDetailDrawer'
 import {
+  DEFAULT_GRAMMAR_TOPICS,
   getGrammarLessons,
   getGrammarTopics,
   getGrammarTrashCount,
@@ -48,7 +49,7 @@ function GrammarPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [lessons, setLessons] = useState([])
-  const [topics, setTopics] = useState(GRAMMAR_TOPICS)
+  const [topics, setTopics] = useState(['Tất cả chủ điểm', ...DEFAULT_GRAMMAR_TOPICS])
   const [isLoading, setIsLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
