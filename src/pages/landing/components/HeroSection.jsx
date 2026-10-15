@@ -1,108 +1,105 @@
-import { motion, useMotionValue, useSpring } from 'framer-motion'
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { Play, ArrowRight, Star, BookOpen, Mic, Volume2, CheckCircle, TrendingUp, Globe } from 'lucide-react'
+import { motion, useReducedMotion, useMotionValue, useTransform, useSpring } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import AuroraBackground from './AuroraBackground'
+import loxeraLogo from '../../../assets/LoxeraFront.png'
 
-// ─── Animation Variants ───────────────────────────────────────────────
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } },
-}
-const slideUpVariants = {
-  hidden: { y: 40, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } },
-}
-const floatingVariants = {
-  animate: {
-    y: [0, -14, 0],
-    transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
-  },
-}
-const blobVariants = {
-  animate1: {
-    x: [0, 40, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1],
-    transition: { duration: 14, repeat: Infinity, ease: 'easeInOut' },
-  },
-  animate2: {
-    x: [0, -30, 50, 0], y: [0, 40, -10, 0], scale: [1, 0.9, 1.15, 1],
-    transition: { duration: 18, repeat: Infinity, ease: 'easeInOut' },
-  },
-  animate3: {
-    x: [0, 20, -40, 0], y: [0, -20, 30, 0], scale: [1, 1.05, 0.9, 1],
-    transition: { duration: 11, repeat: Infinity, ease: 'easeInOut' },
-  },
-}
-
-// ─── Typewriter ────────────────────────────────────────────────────────
-const WORDS = ['Faster Than You Think', 'With Expert Tutors', 'Anytime, Anywhere', 'Starting Today']
-
-function TypewriterText() {
-  const [wordIndex, setWordIndex] = useState(0)
-  const [displayed, setDisplayed] = useState('')
-  const [deleting, setDeleting] = useState(false)
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Hook: animated counter
+function useCounter(target, duration = 1.8, delay = 0.9) {
+  const [val, setVal] = useState(0)
   useEffect(() => {
-    const word = WORDS[wordIndex]
-    let timeout
-    if (!deleting && displayed.length < word.length) {
-      timeout = setTimeout(() => setDisplayed(word.slice(0, displayed.length + 1)), 55)
-    } else if (!deleting && displayed.length === word.length) {
-      timeout = setTimeout(() => setDeleting(true), 2400)
-    } else if (deleting && displayed.length > 0) {
-      timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 30)
-    } else {
-      setDeleting(false)
-      setWordIndex((i) => (i + 1) % WORDS.length)
-    }
-    return () => clearTimeout(timeout)
-  }, [displayed, deleting, wordIndex])
+    let start = null
+    const timer = setTimeout(() => {
+      const step = (ts) => {
+        if (!start) start = ts
+        const progress = Math.min((ts - start) / (duration * 1000), 1)
+        const ease = 1 - Math.pow(1 - progress, 3) // cubic ease-out
+        setVal(Math.round(ease * target))
+        if (progress < 1) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    }, delay * 1000)
+    return () => clearTimeout(timer)
+  }, [target, duration, delay])
+  return val
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Orbiting particle dots around phone
+function OrbitRing({ radius, count, color, duration, phase = 0 }) {
+  const shouldReduce = useReducedMotion()
+  if (shouldReduce) return null
   return (
-    <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-amber-400">
-      {displayed}
-      <motion.span
-        animate={{ opacity: [1, 0, 1] }}
-        transition={{ duration: 0.9, repeat: Infinity }}
-        className="text-violet-400 ml-0.5"
-      >|</motion.span>
-    </span>
+    <>
+      {Array.from({ length: count }).map((_, i) => {
+        const angle = (i / count) * Math.PI * 2 + phase
+        const delay = (i / count) * duration
+        return (
+          <motion.div
+            key={i}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: color,
+              boxShadow: `0 0 6px ${color}`,
+              marginLeft: -3,
+              marginTop: -3,
+            }}
+            animate={{
+              x: [
+                Math.cos(angle) * radius,
+                Math.cos(angle + Math.PI * 2) * radius,
+              ],
+              y: [
+                Math.sin(angle) * radius,
+                Math.sin(angle + Math.PI * 2) * radius,
+              ],
+              opacity: [0.3, 1, 0.3],
+              scale: [0.7, 1.2, 0.7],
+            }}
+            transition={{
+              duration,
+              delay: delay,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        )
+      })}
+    </>
   )
 }
 
-// ─── Floating Particles ────────────────────────────────────────────────
-function FloatingParticles() {
-  const particles = useMemo(() =>
-    Array.from({ length: 24 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      duration: Math.random() * 10 + 8,
-      delay: Math.random() * 4,
-      opacity: Math.random() * 0.4 + 0.1,
-    })), [])
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Animated waveform
+function LiveWaveform({ active }) {
+  const shouldReduce = useReducedMotion()
+  const bars = [3, 7, 14, 9, 20, 12, 18, 8, 22, 10, 16, 6, 14, 11, 5]
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map((p) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 24 }}>
+      {bars.map((h, i) => (
         <motion.div
-          key={p.id}
-          className="absolute rounded-full bg-violet-400"
-          style={{
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-            opacity: p.opacity,
-          }}
-          animate={{
-            y: [0, -60, 0],
-            opacity: [p.opacity, p.opacity * 0.3, p.opacity],
-          }}
+          key={i}
+          style={{ width: 3, background: '#F59E0B', borderRadius: 2, originY: 1 }}
+          animate={
+            shouldReduce
+              ? { height: h }
+              : {
+                  height: active
+                    ? [`${h}px`, `${Math.min(h * 2.2, 24)}px`, `${h * 0.4}px`, `${h}px`]
+                    : [`${h * 0.3}px`, `${h * 0.5}px`, `${h * 0.3}px`],
+                }
+          }
           transition={{
-            duration: p.duration,
-            delay: p.delay,
+            duration: active ? 0.5 + i * 0.03 : 1.2,
             repeat: Infinity,
+            repeatType: 'reverse',
             ease: 'easeInOut',
+            delay: i * 0.04,
           }}
         />
       ))}
@@ -110,393 +107,628 @@ function FloatingParticles() {
   )
 }
 
-// ─── Lesson Card Illustration (replacing AI robot) ──────────────────────
-function LessonCardIllustration() {
-  const [activeScore, setActiveScore] = useState(82)
-  const [recording, setRecording] = useState(false)
-
-  // Simulate score changing
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActiveScore((s) => {
-        const next = s + Math.floor(Math.random() * 5) - 1
-        return Math.min(99, Math.max(70, next))
-      })
-    }, 2000)
-    return () => clearInterval(id)
-  }, [])
-
-  // Simulate recording state
-  useEffect(() => {
-    const id = setInterval(() => setRecording((r) => !r), 3000)
-    return () => clearInterval(id)
-  }, [])
-
-  const scoreColor = activeScore >= 90 ? 'text-emerald-400' : activeScore >= 75 ? 'text-amber-400' : 'text-rose-400'
-  const scoreBar = activeScore >= 90 ? 'from-emerald-500 to-teal-500' : activeScore >= 75 ? 'from-amber-500 to-orange-500' : 'from-rose-500 to-pink-500'
+// ─────────────────────────────────────────────────────────────────────────────
+// Score ring with animated stroke + pulsing glow
+function AnimatedScoreRing({ score = 87, size = 118, stroke = 11 }) {
+  const shouldReduce = useReducedMotion()
+  const r = (size - stroke * 2) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ - (score / 100) * circ
+  const countedScore = useCounter(score, 1.8, 0.9)
 
   return (
-    <motion.div
-      variants={floatingVariants}
-      animate="animate"
-      className="relative w-full max-w-[420px] mx-auto select-none"
-    >
-      {/* Glow behind card */}
-      <div className="absolute -inset-6 bg-violet-600/15 rounded-[3rem] blur-3xl" />
-      <div className="absolute -inset-3 bg-indigo-500/10 rounded-[2.5rem] blur-2xl" />
+    <div style={{ position: 'relative', width: size, height: size }}>
+      {/* Outer pulsing glow */}
+      <motion.div
+        animate={shouldReduce ? {} : { scale: [1, 1.15, 1], opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          inset: -8,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
 
-      {/* Main lesson card */}
-      <div className="relative bg-[#14142A]/90 backdrop-blur-2xl border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl shadow-black/40">
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        {/* Track */}
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+        {/* Progress */}
+        <motion.circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke="url(#scoreGrad)" strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={circ}
+          initial={shouldReduce ? {} : { strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.8, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#FBBF24" />
+          </linearGradient>
+        </defs>
+      </svg>
 
-        {/* Top color stripe */}
-        <div className="h-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-indigo-600" />
-
-        {/* Course header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/30 to-indigo-500/30 border border-violet-500/20 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-violet-400" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-white/90" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Speaking Lesson 14
-              </div>
-              <div className="text-[10px] text-white/40">Business English · Intermediate</div>
-            </div>
+      {/* Center text */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%,-50%)', textAlign: 'center',
+      }}>
+        <motion.div
+          initial={shouldReduce ? {} : { opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.0, duration: 0.5, ease: 'backOut' }}
+        >
+          <div style={{
+            fontFamily: "'Merriweather', serif", fontWeight: 900,
+            fontSize: size * 0.24, color: 'white', lineHeight: 1,
+            textShadow: '0 0 20px rgba(245,158,11,0.5)',
+          }}>
+            {countedScore}
           </div>
-          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-emerald-400 font-semibold">Live</span>
+          <div style={{ fontSize: size * 0.1, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+            / 100
           </div>
-        </div>
-
-        {/* Sentence to pronounce */}
-        <div className="px-5 pt-4 pb-2">
-          <div className="text-[10px] text-white/35 font-medium uppercase tracking-wider mb-2">Repeat after the instructor</div>
-          <div className="bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/[0.07] rounded-2xl px-4 py-3">
-            <p className="text-sm text-white/85 leading-relaxed italic" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              "I'd like to schedule a meeting to discuss the project timeline."
-            </p>
-          </div>
-        </div>
-
-        {/* Audio waveform (fake) */}
-        <div className="px-5 py-3">
-          <div className="flex items-center gap-1.5 h-10">
-            {Array.from({ length: 32 }, (_, i) => (
-              <motion.div
-                key={i}
-                className={`flex-1 rounded-full ${recording ? 'bg-violet-500' : 'bg-white/15'}`}
-                animate={recording ? {
-                  scaleY: [0.3, Math.random() * 0.7 + 0.3, 0.3],
-                } : { scaleY: 0.2 }}
-                transition={{
-                  duration: 0.5 + Math.random() * 0.5,
-                  repeat: Infinity,
-                  delay: i * 0.03,
-                  ease: 'easeInOut',
-                }}
-                style={{ originY: 'center' }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Controls row */}
-        <div className="flex items-center gap-2 px-5 pb-4">
-          <button className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2 text-xs text-white/60 hover:text-white/90 transition-colors">
-            <Volume2 className="w-3.5 h-3.5" />
-            Listen
-          </button>
-          <motion.button
-            animate={recording ? {
-              boxShadow: ['0 0 0 0 rgba(239,68,68,0)', '0 0 0 8px rgba(239,68,68,0.2)', '0 0 0 0 rgba(239,68,68,0)'],
-            } : {}}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
-              recording
-                ? 'bg-rose-500 text-white border border-rose-400'
-                : 'bg-white/[0.06] border border-white/10 text-white/60 hover:text-white/90'
-            }`}
-          >
-            <Mic className="w-3.5 h-3.5" />
-            {recording ? 'Recording...' : 'Speak'}
-          </motion.button>
-
-          {/* Pronunciation score */}
-          <div className="ml-auto flex flex-col items-end">
-            <div className={`text-lg font-bold ${scoreColor}`} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              {activeScore}%
-            </div>
-            <div className="text-[9px] text-white/35">accuracy</div>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="px-5 pb-4">
-          <div className="flex justify-between text-[10px] text-white/30 mb-1.5">
-            <span>Pronunciation Score</span>
-            <span className={scoreColor}>{activeScore >= 90 ? 'Excellent!' : activeScore >= 75 ? 'Good job!' : 'Keep going!'}</span>
-          </div>
-          <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full bg-gradient-to-r ${scoreBar} rounded-full`}
-              animate={{ width: `${activeScore}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
-          </div>
-        </div>
-
-        {/* Word chips */}
-        <div className="px-5 pb-5">
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { w: 'schedule', ok: true },
-              { w: 'meeting', ok: true },
-              { w: 'discuss', ok: recording },
-              { w: 'timeline', ok: false },
-            ].map(({ w, ok }) => (
-              <div
-                key={w}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all duration-500 ${
-                  ok
-                    ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
-                    : 'bg-white/[0.04] border-white/[0.08] text-white/35'
-                }`}
-              >
-                {ok && <CheckCircle className="w-2.5 h-2.5" />}
-                {w}
-              </div>
-            ))}
-          </div>
-        </div>
+        </motion.div>
       </div>
+    </div>
+  )
+}
 
-      {/* Floating stat cards */}
-      <motion.div
-        initial={{ opacity: 0, x: -20, scale: 0.85 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        transition={{ delay: 1.4, duration: 0.5, type: 'spring', bounce: 0.3 }}
-        className="absolute -left-10 top-1/3 bg-[#1C1C35]/90 backdrop-blur-xl border border-white/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-xl"
-      >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-blue-500/30 border border-indigo-500/20 flex items-center justify-center">
-          <Globe className="w-4 h-4 text-indigo-400" />
-        </div>
-        <div>
-          <div className="text-xs font-bold text-white leading-tight">120+ Countries</div>
-          <div className="text-[10px] text-white/40">Active learners</div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, x: 20, scale: 0.85 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        transition={{ delay: 1.8, duration: 0.5, type: 'spring', bounce: 0.3 }}
-        className="absolute -right-10 bottom-1/3 bg-[#1C1C35]/90 backdrop-blur-xl border border-white/10 rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5 shadow-xl"
-      >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 border border-amber-500/20 flex items-center justify-center">
-          <TrendingUp className="w-4 h-4 text-amber-400" />
-        </div>
-        <div>
-          <div className="text-xs font-bold text-white leading-tight">+42% faster</div>
-          <div className="text-[10px] text-white/40">vs. traditional class</div>
-        </div>
-      </motion.div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Animated metric bar row
+function MetricBar({ label, value, color, delay }) {
+  const shouldReduce = useReducedMotion()
+  return (
+    <motion.div
+      initial={shouldReduce ? {} : { opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay, duration: 0.5, ease: 'easeOut' }}
+      style={{ marginBottom: '0.45rem' }}
+    >
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        fontSize: '0.6rem', color: 'rgba(255,255,255,0.7)', marginBottom: 3, fontWeight: 500,
+      }}>
+        <span>{label}</span>
+        <motion.span
+          style={{ color, fontWeight: 700 }}
+          initial={shouldReduce ? {} : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: delay + 0.5 }}
+        >
+          {value}%
+        </motion.span>
+      </div>
+      <div style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 999, height: 4, overflow: 'hidden' }}>
+        <motion.div
+          style={{ height: '100%', background: color, borderRadius: 999 }}
+          initial={shouldReduce ? {} : { width: 0, opacity: 0 }}
+          animate={{ width: `${value}%`, opacity: 1 }}
+          transition={{ duration: 1.1, delay: delay + 0.2, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
     </motion.div>
   )
 }
 
-// ─── Hero Section ────────────────────────────────────────────────────────
-export default function HeroSection() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Floating achievement card
+function FloatCard({ children, style, delay, direction = 'left' }) {
+  const shouldReduce = useReducedMotion()
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <motion.div
+      initial={shouldReduce ? {} : {
+        opacity: 0,
+        x: direction === 'left' ? -24 : 24,
+        y: 8,
+      }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ delay, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        position: 'absolute',
+        background: 'rgba(14, 24, 45, 0.75)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 12,
+        padding: '0.5rem 0.75rem',
+        whiteSpace: 'nowrap',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.35)',
+        ...style,
+      }}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
-      {/* Animated background blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div variants={blobVariants} animate="animate1"
-          className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-700/20 blur-[120px]" />
-        <motion.div variants={blobVariants} animate="animate2"
-          className="absolute -bottom-40 -right-20 w-[600px] h-[600px] rounded-full bg-indigo-600/15 blur-[120px]" />
-        <motion.div variants={blobVariants} animate="animate3"
-          className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-fuchsia-600/10 blur-[100px]" />
+// ─────────────────────────────────────────────────────────────────────────────
+// Full 3D-perspective phone with parallax on mouse
+function CinematicPhone({ reduced }) {
+  const containerRef = useRef(null)
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
 
-        {/* Dot grid */}
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-        />
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [8, -8]), { stiffness: 80, damping: 20 })
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [-6, 6]), { stiffness: 80, damping: 20 })
 
-        {/* Floating particles */}
-        <FloatingParticles />
+  const [isListening, setIsListening] = useState(false)
+  const [cycle, setCycle] = useState(0)
+
+  // Auto-cycle animation states
+  useEffect(() => {
+    if (reduced) return
+    const t = setInterval(() => {
+      setIsListening(v => !v)
+      setCycle(c => c + 1)
+    }, 3500)
+    return () => clearInterval(t)
+  }, [reduced])
+
+  const handleMouseMove = (e) => {
+    if (reduced) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+
+  const METRICS = [
+    { label: 'Phát âm', value: 87, color: '#F59E0B' },
+    { label: 'Ngữ điệu', value: 73, color: '#29A8E8' },
+    { label: 'Trôi chảy', value: 91, color: '#4ADE80' },
+    { label: 'Ngữ pháp', value: 78, color: '#A78BFA' },
+  ]
+
+  // Cycling achievement cards
+  const ACHIEVEMENTS = [
+    { icon: '🔥', text: '7 ngày liên tiếp!', color: '#F97316' },
+    { icon: '🎯', text: 'Độ chính xác 91%', color: '#22C55E' },
+    { icon: '⚡', text: 'Cải thiện nhanh nhất', color: '#F59E0B' },
+  ]
+  const currentAch = ACHIEVEMENTS[cycle % ACHIEVEMENTS.length]
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => { mouseX.set(0); mouseY.set(0) }}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 340,
+        height: 560,
+        perspective: 1200,
+      }}
+    >
+      {/* Orbit rings */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <OrbitRing radius={160} count={5} color="rgba(245,158,11,0.7)" duration={9} phase={0} />
+        <OrbitRing radius={190} count={4} color="rgba(41,168,232,0.5)" duration={13} phase={1.5} />
+        <OrbitRing radius={135} count={3} color="rgba(74,222,128,0.6)" duration={7} phase={0.8} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 xl:gap-20 items-center">
+      {/* 3D phone with mouse parallax */}
+      <motion.div
+        style={{
+          rotateY: reduced ? 0 : rotateY,
+          rotateX: reduced ? 0 : rotateX,
+          transformStyle: 'preserve-3d',
+        }}
+        initial={reduced ? {} : { opacity: 0, scale: 0.85, y: 40 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* Float animation */}
+        <motion.div
+          animate={reduced ? {} : { y: [0, -10, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'relative' }}
+        >
+          {/* Glow */}
+          <div style={{
+            position: 'absolute', top: '5%', left: '5%',
+            width: '90%', height: '90%',
+            background: 'radial-gradient(ellipse, rgba(245,158,11,0.2) 0%, transparent 65%)',
+            filter: 'blur(24px)',
+            pointerEvents: 'none',
+          }} />
 
-          {/* ── Left: Text ── */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="text-center lg:text-left"
-          >
-            {/* Trust chips row */}
-            <motion.div
-              variants={slideUpVariants}
-              className="flex flex-wrap items-center gap-2 justify-center lg:justify-start mb-8"
-            >
-              <div className="flex items-center gap-2 bg-white/[0.06] border border-white/[0.10] rounded-full px-4 py-1.5 backdrop-blur-sm">
-                <div className="flex -space-x-1">
-                  {['🇬🇧', '🇺🇸', '🇦🇺'].map((f, i) => (
-                    <span key={i} className="text-sm">{f}</span>
-                  ))}
-                </div>
-                <span className="text-xs font-medium text-white/65">
-                  Native-level fluency in weeks
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-emerald-500/[0.08] border border-emerald-500/20 rounded-full px-3 py-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-medium text-emerald-400">50,000+ active learners</span>
-              </div>
-            </motion.div>
+          {/* Phone shell */}
+          <div style={{
+            background: 'linear-gradient(160deg, #1c2e44, #0d1724)',
+            borderRadius: 40,
+            padding: '10px 7px',
+            width: 248,
+            boxShadow: `
+              0 0 0 1px rgba(255,255,255,0.09),
+              0 40px 90px rgba(0,0,0,0.65),
+              0 12px 36px rgba(245,158,11,0.12),
+              inset 0 1px 0 rgba(255,255,255,0.07)
+            `,
+          }}>
+            {/* Notch */}
+            <div style={{
+              width: 80, height: 22, background: '#0d1724',
+              borderRadius: '0 0 14px 14px', margin: '0 auto 6px',
+            }} />
 
-            {/* Headline */}
-            <motion.h1
-              variants={slideUpVariants}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-[68px] font-bold leading-[1.08] mb-5 text-white tracking-tight"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Speak English{' '}
-              <span className="relative">
-                <span className="relative z-10">Like a Native</span>
-                {/* Underline accent */}
-                <motion.span
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 1, duration: 0.8, ease: 'easeOut' }}
-                  className="absolute -bottom-1 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full origin-left"
-                />
-              </span>
-              {' —'}
-              <span className="block mt-3 text-3xl sm:text-4xl lg:text-5xl xl:text-[52px]">
-                <TypewriterText />
-              </span>
-            </motion.h1>
-
-            {/* Sub-headline */}
-            <motion.p
-              variants={slideUpVariants}
-              className="text-base sm:text-lg text-white/55 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              Master English through real-life conversation practice, personalized
-              learning paths, and instant pronunciation feedback — all in one place.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              variants={slideUpVariants}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <motion.a
-                href="/dang-nhap"
-                className="relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-white overflow-hidden group"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                {/* Animated gradient */}
-                <motion.span
-                  className="absolute inset-0 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600"
-                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                  style={{ backgroundSize: '200% 200%' }}
-                />
-                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-violet-500 to-indigo-500 transition-opacity duration-300" />
-                {/* Glow ring */}
-                <span className="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-violet-500/40 to-indigo-500/40 blur-md" />
-                <span className="relative flex items-center gap-2">
-                  Get Started Free
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                </span>
-              </motion.a>
-
-              <motion.a
-                href="#demo"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-base font-semibold text-white/80 bg-white/[0.05] border border-white/[0.10] hover:bg-white/[0.09] hover:border-white/20 hover:text-white transition-all duration-300 group backdrop-blur-sm"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center group-hover:bg-violet-500/20 group-hover:border-violet-500/30 transition-all duration-300">
-                  <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
-                </div>
-                Watch Demo
-              </motion.a>
-            </motion.div>
-
-            {/* Rating strip */}
-            <motion.div
-              variants={slideUpVariants}
-              className="mt-10 flex flex-col sm:flex-row items-center gap-5 justify-center lg:justify-start"
-            >
-              {/* Avatar stack */}
-              <div className="flex -space-x-3">
-                {[
-                  { bg: 'from-violet-500 to-purple-600', text: 'AN' },
-                  { bg: 'from-indigo-500 to-blue-600', text: 'CM' },
-                  { bg: 'from-fuchsia-500 to-pink-600', text: 'JY' },
-                  { bg: 'from-amber-500 to-orange-600', text: 'AD' },
-                  { bg: 'from-teal-500 to-emerald-600', text: 'EP' },
-                ].map(({ bg, text }, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1 + i * 0.08, type: 'spring', bounce: 0.5 }}
-                    className={`w-9 h-9 rounded-full bg-gradient-to-br ${bg} border-2 border-[#0F0F1A] flex items-center justify-center text-[10px] font-bold text-white shadow-lg`}
-                  >
-                    {text}
-                  </motion.div>
-                ))}
+            {/* Screen */}
+            <div style={{
+              background: 'linear-gradient(180deg, #0E1D2E 0%, #0A1520 100%)',
+              borderRadius: 30, overflow: 'hidden', padding: '0.875rem',
+            }}>
+              {/* App top bar */}
+              <div style={{
+                display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', marginBottom: '0.625rem',
+              }}>
+                <img src={loxeraLogo} alt="Loxera" style={{ height: 26, objectFit: 'contain' }} />
                 <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.5, type: 'spring' }}
-                  className="w-9 h-9 rounded-full bg-white/10 border-2 border-[#0F0F1A] flex items-center justify-center text-[10px] font-bold text-white/60"
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  style={{
+                    background: 'rgba(245,158,11,0.15)',
+                    border: '1px solid rgba(245,158,11,0.35)',
+                    borderRadius: 20, padding: '2px 8px',
+                    fontSize: '0.52rem', fontWeight: 700, color: '#F59E0B',
+                    display: 'flex', alignItems: 'center', gap: 3,
+                  }}
                 >
-                  50K+
+                  <motion.div
+                    animate={{ scale: [1, 1.4, 1] }}
+                    transition={{ duration: 1.2, repeat: Infinity }}
+                    style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }}
+                  />
+                  AI LIVE
                 </motion.div>
               </div>
-              <div className="text-sm text-white/55" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                <div>Join <span className="text-white font-semibold">50,000+</span> satisfied learners</div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  ))}
-                  <span className="text-amber-400 font-bold ml-1">4.9/5</span>
-                  <span className="text-white/35 ml-1">(2,400+ reviews)</span>
-                </div>
+
+              {/* Score section */}
+              <div style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', marginBottom: '0.625rem',
+              }}>
+                <p style={{
+                  margin: '0 0 0.375rem', fontSize: '0.6rem',
+                  color: 'rgba(255,255,255,0.45)', fontWeight: 600,
+                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                }}>
+                  Điểm phát âm
+                </p>
+                <AnimatedScoreRing score={87} size={110} stroke={10} />
+              </div>
+
+              {/* Metric bars */}
+              <div style={{
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: 12, padding: '0.625rem',
+                border: '1px solid rgba(255,255,255,0.05)',
+                marginBottom: '0.5rem',
+              }}>
+                {METRICS.map((m, i) => (
+                  <MetricBar key={m.label} label={m.label} value={m.value}
+                    color={m.color} delay={1.1 + i * 0.1} />
+                ))}
+              </div>
+
+              {/* Microphone / waveform strip */}
+              <motion.div
+                animate={isListening ? {
+                  background: ['rgba(245,158,11,0.08)', 'rgba(245,158,11,0.18)', 'rgba(245,158,11,0.08)']
+                } : {}}
+                transition={{ duration: 1.2, repeat: Infinity }}
+                style={{
+                  border: `1px solid ${isListening ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 10, padding: '0.5rem 0.625rem',
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  transition: 'border-color 0.5s',
+                }}
+              >
+                {/* Mic button */}
+                <motion.div
+                  animate={isListening
+                    ? { scale: [1, 1.2, 1], background: ['rgba(245,158,11,0.25)', 'rgba(245,158,11,0.5)', 'rgba(245,158,11,0.25)'] }
+                    : { scale: 1 }
+                  }
+                  transition={{ duration: 0.8, repeat: isListening ? Infinity : 0 }}
+                  style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: 'rgba(245,158,11,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#F59E0B">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#F59E0B" strokeWidth="2" fill="none"/>
+                    <line x1="12" y1="19" x2="12" y2="23" stroke="#F59E0B" strokeWidth="2"/>
+                    <line x1="8" y1="23" x2="16" y2="23" stroke="#F59E0B" strokeWidth="2"/>
+                  </svg>
+                </motion.div>
+
+                <LiveWaveform active={isListening} />
+
+                <motion.span
+                  animate={{ opacity: isListening ? [1, 0.4, 1] : 0.4 }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  style={{ fontSize: '0.5rem', color: '#F59E0B', whiteSpace: 'nowrap', fontWeight: 600 }}
+                >
+                  {isListening ? 'Đang phân tích...' : 'Nhấn để nói'}
+                </motion.span>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* ── Floating cards ─────────────────────────── */}
+
+          {/* Progress card — top left */}
+          <FloatCard delay={1.4} direction="left" style={{ top: '8%', left: -52 }}>
+            <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.45)', marginBottom: 2 }}>
+              Tuần này
+            </div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#4ADE80', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <motion.span
+                animate={{ rotate: [0, 10, 0, -10, 0] }}
+                transition={{ duration: 1.5, delay: 2, repeat: Infinity }}
+              >📈</motion.span>
+              +23% tiến bộ
+            </div>
+          </FloatCard>
+
+          {/* Achievement card — cycling bottom right */}
+          <div style={{ position: 'absolute', bottom: '24%', right: -50 }}>
+            <motion.div
+              key={cycle}
+              initial={{ opacity: 0, y: 8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: 'backOut' }}
+              style={{
+                background: 'rgba(14,24,45,0.75)',
+                backdropFilter: 'blur(14px)',
+                border: `1px solid ${currentAch.color}40`,
+                borderRadius: 12,
+                padding: '0.45rem 0.75rem',
+                whiteSpace: 'nowrap',
+                boxShadow: `0 6px 20px ${currentAch.color}20`,
+              }}
+            >
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: currentAch.color, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span>{currentAch.icon}</span> {currentAch.text}
               </div>
             </motion.div>
+          </div>
+
+          {/* Streak card — bottom left */}
+          <FloatCard delay={2.0} direction="left" style={{ bottom: '8%', left: -44 }}>
+            <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.45)', marginBottom: 2 }}>Chuỗi học</div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#F97316', display: 'flex', alignItems: 'center', gap: 4 }}>
+              🔥 7 ngày liên tiếp
+            </div>
+          </FloatCard>
+        </motion.div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App Store buttons
+function AppStoreBtn({ type, reduced }) {
+  const apple = type === 'apple'
+  return (
+    <motion.a
+      href="#download"
+      id={`hero-${apple ? 'appstore' : 'googleplay'}`}
+      whileHover={reduced ? {} : { scale: 1.04, y: -2 }}
+      whileTap={reduced ? {} : { scale: 0.97 }}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '0.625rem',
+        padding: '0.75rem 1.25rem',
+        background: apple ? 'white' : 'transparent',
+        border: apple ? 'none' : '1.5px solid rgba(255,255,255,0.25)',
+        borderRadius: 12,
+        color: apple ? '#0F1F35' : 'white',
+        textDecoration: 'none',
+        boxShadow: apple ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+      }}
+    >
+      {apple ? (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#0F1F35">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M3.18 23.76c.31.17.66.24 1.01.18l11.49-6.63-2.46-2.47-10.04 8.92zM.43 1.27C.16 1.57 0 2.02 0 2.59v18.82c0 .57.16 1.02.43 1.32l.07.07 10.54-10.54v-.25L.5 1.2l-.07.07zM20.64 10.17l-3.01-1.73-2.74 2.74 2.74 2.74 3.04-1.75c.87-.5.87-1.32-.03-2zM4.19.18L15.68 6.81l-2.46 2.46L3.18.35C3.49.08 3.89.01 4.19.18z"/>
+        </svg>
+      )}
+      <div>
+        <div style={{ fontSize: '0.58rem', opacity: 0.65, lineHeight: 1 }}>
+          {apple ? 'Download on the' : 'GET IT ON'}
+        </div>
+        <div style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.2 }}>
+          {apple ? 'App Store' : 'Google Play'}
+        </div>
+      </div>
+    </motion.a>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN HERO EXPORT
+export default function HeroSection() {
+  const shouldReduce = useReducedMotion()
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: shouldReduce ? 0 : 0.1, delayChildren: 0.2 },
+    },
+  }
+  const itemVariants = {
+    hidden: { y: shouldReduce ? 0 : 28, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+  }
+
+  return (
+    <section
+      id="hero"
+      style={{
+        position: 'relative',
+        minHeight: '100svh',
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+        background: '#0A1628',
+      }}
+    >
+      {/* GPU Aurora canvas */}
+      <AuroraBackground reduced={shouldReduce} />
+
+      {/* Noise texture for depth */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E")`,
+        backgroundSize: '200px',
+        opacity: 0.4,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Content */}
+      <div style={{
+        position: 'relative', zIndex: 1,
+        maxWidth: 1200, margin: '0 auto', padding: '6rem 2rem 4rem',
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem',
+        alignItems: 'center',
+      }} className="se-hero-grid">
+
+        {/* ── LEFT: Copy ─────────────────────────── */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          style={{ maxWidth: 520 }}
+        >
+          {/* Badge */}
+          <motion.div variants={itemVariants}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              background: 'rgba(245,158,11,0.12)',
+              border: '1px solid rgba(245,158,11,0.25)',
+              color: '#F59E0B',
+              fontSize: '0.78rem', fontWeight: 700,
+              padding: '0.35rem 0.875rem',
+              borderRadius: 999, marginBottom: '1.25rem',
+            }}>
+              🦊 Loxera English — AI Pronunciation Coach
+            </span>
           </motion.div>
 
-          {/* ── Right: Lesson Card ── */}
-          <motion.div
-            initial={{ opacity: 0, x: 50, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative hidden lg:block"
-          >
-            <LessonCardIllustration />
+          {/* H1 */}
+          <motion.h1 variants={itemVariants} style={{
+            fontFamily: "'Merriweather', Georgia, serif",
+            fontWeight: 900,
+            fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
+            color: 'white',
+            lineHeight: 1.15,
+            margin: '0 0 1.25rem',
+            letterSpacing: '-0.015em',
+          }}>
+            Speak English{' '}
+            <span style={{
+              color: '#F59E0B',
+              textShadow: '0 0 30px rgba(245,158,11,0.4)',
+            }}>
+              with Confidence
+            </span>
+          </motion.h1>
+
+          {/* Body */}
+          <motion.p variants={itemVariants} style={{
+            fontSize: '1.0625rem',
+            color: 'rgba(255,255,255,0.65)',
+            lineHeight: 1.75,
+            margin: '0 0 2rem',
+          }}>
+            Gia sư AI chấm điểm phát âm tức thì, xây dựng lộ trình học cá nhân
+            và luyện nói theo tình huống thực tế — giúp bạn tự tin giao tiếp.
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div variants={itemVariants}
+            style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+            <AppStoreBtn type="apple" reduced={shouldReduce} />
+            <AppStoreBtn type="android" reduced={shouldReduce} />
           </motion.div>
+
+          {/* Trust signals */}
+          <motion.div variants={itemVariants}
+            style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {[
+              { icon: '⭐', text: '[Rating] · App Store', color: '#F59E0B' },
+              { icon: '👥', text: '[Số học viên] đang học', color: 'rgba(255,255,255,0.7)' },
+              { icon: '🤖', text: 'Real-time AI scoring', color: 'rgba(255,255,255,0.7)' },
+            ].map((b, i) => (
+              <span key={i} style={{
+                fontSize: '0.8rem', color: b.color,
+                display: 'flex', alignItems: 'center', gap: '0.3rem',
+              }}>
+                {b.icon} {b.text}
+              </span>
+            ))}
+          </motion.div>
+        </motion.div>
+
+        {/* ── RIGHT: Animated Phone ─────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          <CinematicPhone reduced={shouldReduce} />
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0F0F1A] to-transparent pointer-events-none" />
+      {/* Scroll indicator */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ delay: 2.8 }}
+        style={{
+          position: 'absolute', bottom: '1.75rem', left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          color: 'rgba(255,255,255,0.25)',
+        }}
+        aria-hidden="true"
+      >
+        <span style={{ fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          Cuộn xuống
+        </span>
+        <motion.div
+          animate={shouldReduce ? {} : { y: [0, 7, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </motion.div>
+      </motion.div>
+
+      <style>{`
+        @media (max-width: 800px) {
+          .se-hero-grid {
+            grid-template-columns: 1fr !important;
+            text-align: center;
+          }
+          .se-hero-grid > div:last-child { margin-top: 2rem; }
+        }
+      `}</style>
     </section>
   )
 }
