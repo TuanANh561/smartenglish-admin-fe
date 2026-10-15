@@ -1,253 +1,343 @@
-import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { useState, useRef } from 'react'
-import { Check, Star, Zap, Crown, ArrowRight } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Check, Zap, Download, Phone } from 'lucide-react'
 
-const plans = [
+const PLANS = [
   {
-    name: 'Starter',
-    icon: '🌱',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    description: 'Perfect for exploring. No credit card needed.',
+    id: 'plan-free',
+    name: 'Miễn Phí',
+    nameEN: 'Free',
+    badge: null,
+    price: '0đ',
+    period: 'mãi mãi',
+    desc: 'Bắt đầu học với những tính năng cơ bản',
     features: [
-      '5 AI conversations / month',
-      'Basic vocabulary lessons',
-      'Progress tracking',
-      'Mobile app access',
-      'Community forum access',
+      '5 bài học miễn phí mỗi ngày',
+      'Kiểm tra trình độ (1 lần)',
+      'Phát âm AI cơ bản',
+      'Theo dõi tiến trình đơn giản',
     ],
-    notIncluded: ['Unlimited conversations', 'Advanced pronunciation', 'Live tutoring sessions'],
-    cta: 'Get Started Free',
-    ctaHref: '/dang-nhap',
-    popular: false,
-    gradient: 'from-slate-800 to-slate-900',
-    border: 'border-white/10',
-    ctaStyle: 'bg-white/10 hover:bg-white/15 text-white border border-white/20',
+    cta: 'Tải App Miễn Phí',
+    ctaId: 'plan-free-cta',
+    ctaHref: '#download',
+    highlight: false,
   },
   {
+    id: 'plan-pro',
     name: 'Pro',
-    icon: '⚡',
-    monthlyPrice: 12,
-    yearlyPrice: 8,
-    description: 'Everything you need to reach fluency fast.',
+    nameEN: 'Pro',
+    badge: 'Phổ biến nhất',
+    price: '[GIÁ]',
+    period: '/ tháng',
+    desc: 'Học không giới hạn với AI cá nhân hóa',
     features: [
-      'Unlimited AI conversations',
-      'Advanced pronunciation coach',
-      'Personalized roadmap',
-      'All skill levels & topics',
-      'Progress analytics',
-      'Priority support',
-      'Offline mode',
+      'Học không giới hạn bài học',
+      'AI Pronunciation Scoring đầy đủ',
+      'Lộ trình cá nhân hoá 100%',
+      'Luyện nói theo tình huống thực tế',
+      'Phân tích tiến trình chi tiết',
+      'Luyện thi IELTS / TOEIC',
+      'Ôn tập thông minh (spaced repetition)',
     ],
-    notIncluded: ['Live tutoring sessions'],
-    cta: 'Start 7-Day Free Trial',
-    ctaHref: '/dang-nhap',
-    popular: true,
-    gradient: 'from-violet-900/60 to-indigo-900/60',
-    border: 'border-violet-500/40',
-    ctaStyle: 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-500/30',
+    cta: 'Bắt Đầu Dùng Thử',
+    ctaId: 'plan-pro-cta',
+    ctaHref: '#download',
+    highlight: true,
   },
   {
-    name: 'Premium',
-    icon: '👑',
-    monthlyPrice: 29,
-    yearlyPrice: 19,
-    description: 'For serious learners who want the very best.',
+    id: 'plan-business',
+    name: 'Doanh Nghiệp',
+    nameEN: 'Business',
+    badge: null,
+    price: 'Liên hệ',
+    period: '',
+    desc: 'Đào tạo tiếng Anh cho đội nhóm',
     features: [
-      'Everything in Pro',
-      '4x live human tutoring / month',
-      'IELTS/TOEFL prep program',
-      'Resume & cover letter review',
-      'Business English modules',
-      'Certificate of completion',
-      'Dedicated account manager',
+      'Tất cả tính năng Pro',
+      'Quản lý nhóm học viên',
+      'Dashboard quản trị viên',
+      'Báo cáo tiến trình nhóm',
+      'Business English chuyên biệt',
+      'Hỗ trợ ưu tiên 24/7',
     ],
-    notIncluded: [],
-    cta: 'Start 7-Day Free Trial',
-    ctaHref: '/dang-nhap',
-    popular: false,
-    gradient: 'from-amber-900/40 to-orange-900/30',
-    border: 'border-amber-500/30',
-    ctaStyle: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/30',
+    cta: 'Liên Hệ Ngay',
+    ctaId: 'plan-business-cta',
+    ctaHref: '#footer',
+    highlight: false,
   },
 ]
 
-const cardVariants = {
-  hidden: { y: 40, opacity: 0 },
-  visible: (i) => ({
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.5, delay: i * 0.15, ease: 'easeOut' },
-  }),
+function PricingCard({ plan, index }) {
+  const shouldReduce = useReducedMotion()
+
+  return (
+    <motion.div
+      initial={shouldReduce ? {} : { opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: shouldReduce ? 0 : index * 0.1, duration: 0.55 }}
+      style={{
+        position: 'relative',
+        borderRadius: 18,
+        padding: plan.highlight ? '2rem 1.75rem' : '1.75rem',
+        border: plan.highlight ? 'none' : '1px solid #E2EAF2',
+        background: plan.highlight ? '#1B3A57' : 'white',
+        color: plan.highlight ? 'white' : '#334155',
+        boxShadow: plan.highlight
+          ? '0 16px 48px rgba(27,58,87,0.3), 0 4px 12px rgba(27,58,87,0.15)'
+          : '0 2px 8px rgba(15,58,92,0.06)',
+        transform: plan.highlight ? 'scale(1.04)' : 'scale(1)',
+        zIndex: plan.highlight ? 1 : 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Badge */}
+      {plan.badge && (
+        <div
+          style={{
+            position: 'absolute',
+            top: -12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#F59E0B',
+            color: '#1B3A57',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            padding: '0.3rem 1rem',
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(245,158,11,0.4)',
+          }}
+        >
+          ⭐ {plan.badge}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          {plan.highlight && <Zap size={16} color="#F59E0B" fill="#F59E0B" />}
+          <span
+            style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 700,
+              fontSize: '1.0625rem',
+              color: plan.highlight ? 'white' : '#1B3A57',
+            }}
+          >
+            {plan.name}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.5rem' }}>
+          <span
+            style={{
+              fontFamily: "'Merriweather', serif",
+              fontWeight: 900,
+              fontSize: plan.price === 'Liên hệ' ? '1.5rem' : '2rem',
+              color: plan.highlight ? '#F59E0B' : '#1B3A57',
+            }}
+          >
+            {plan.price}
+          </span>
+          {plan.period && (
+            <span style={{ fontSize: '0.875rem', color: plan.highlight ? 'rgba(255,255,255,0.65)' : '#64748B' }}>
+              {plan.period}
+            </span>
+          )}
+        </div>
+        <p
+          style={{
+            fontSize: '0.875rem',
+            color: plan.highlight ? 'rgba(255,255,255,0.7)' : '#64748B',
+            margin: 0,
+          }}
+        >
+          {plan.desc}
+        </p>
+      </div>
+
+      {/* Divider */}
+      <div
+        style={{
+          height: 1,
+          background: plan.highlight ? 'rgba(255,255,255,0.12)' : '#E2EAF2',
+          margin: '0 0 1.25rem',
+        }}
+      />
+
+      {/* Features */}
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', flex: 1 }}>
+        {plan.features.map((f, i) => (
+          <li
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem',
+              marginBottom: '0.625rem',
+              fontSize: '0.875rem',
+              color: plan.highlight ? 'rgba(255,255,255,0.9)' : '#334155',
+            }}
+          >
+            <Check
+              size={15}
+              color={plan.highlight ? '#F59E0B' : '#1B3A57'}
+              style={{ flexShrink: 0, marginTop: 2 }}
+              strokeWidth={2.5}
+            />
+            {f}
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA */}
+      <a
+        href={plan.ctaHref}
+        id={plan.ctaId}
+        data-cta={`pricing-${plan.id}`}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          marginTop: '1.5rem',
+          padding: '0.875rem',
+          borderRadius: 10,
+          fontWeight: 700,
+          fontSize: '0.9375rem',
+          textDecoration: 'none',
+          transition: 'all 0.2s',
+          background: plan.highlight
+            ? '#F59E0B'
+            : 'transparent',
+          color: plan.highlight ? '#1B3A57' : '#1B3A57',
+          border: plan.highlight ? 'none' : '1.5px solid #1B3A57',
+          boxShadow: plan.highlight ? '0 4px 14px rgba(245,158,11,0.4)' : 'none',
+        }}
+        onMouseEnter={(e) => {
+          if (plan.highlight) {
+            e.currentTarget.style.background = '#D97706'
+          } else {
+            e.currentTarget.style.background = '#1B3A57'
+            e.currentTarget.style.color = 'white'
+          }
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        onMouseLeave={(e) => {
+          if (plan.highlight) {
+            e.currentTarget.style.background = '#F59E0B'
+          } else {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = '#1B3A57'
+          }
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
+      >
+        {plan.id === 'plan-free' ? <Download size={16} /> : plan.id === 'plan-business' ? <Phone size={16} /> : <Zap size={16} />}
+        {plan.cta}
+      </a>
+    </motion.div>
+  )
 }
 
 export default function PricingSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-80px' })
-  const [yearly, setYearly] = useState(false)
+  const shouldReduce = useReducedMotion()
 
   return (
-    <section id="pricing" className="py-24 lg:py-32 bg-[#0F0F1A]" ref={ref}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pricing" style={{ background: '#F0F4F8', padding: '5rem 0' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem' }}>
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          initial={shouldReduce ? {} : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          style={{ textAlign: 'center', marginBottom: '3.5rem' }}
         >
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-              Pricing
-            </span>
-          </div>
+          <div
+            style={{
+              display: 'inline-block',
+              width: '2.5rem',
+              height: 3,
+              background: '#F59E0B',
+              borderRadius: 999,
+              marginBottom: '1rem',
+            }}
+          />
           <h2
-            className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-5"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{
+              fontFamily: "'Merriweather', Georgia, serif",
+              fontWeight: 900,
+              fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+              color: '#1B3A57',
+              margin: '0 0 1rem',
+            }}
           >
-            Simple,{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
-              transparent pricing
-            </span>
+            Simple, Transparent{' '}
+            <span style={{ color: '#F59E0B' }}>Pricing</span>
           </h2>
-          <p className="text-base text-white/50 max-w-xl mx-auto mb-10" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Start free. Upgrade when you&apos;re ready. Cancel anytime. No hidden fees ever.
+          <p style={{ fontSize: '1rem', color: '#64748B', maxWidth: 440, margin: '0 auto' }}>
+            Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Không phí ẩn, huỷ bất cứ lúc nào.
           </p>
 
-          {/* Toggle */}
-          <div className="inline-flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-1.5">
-            <button
-              onClick={() => setYearly(false)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                !yearly ? 'bg-white text-[#0F0F1A] shadow-sm' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setYearly(true)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${
-                yearly ? 'bg-white text-[#0F0F1A] shadow-sm' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Yearly
-              <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                -33%
-              </span>
-            </button>
+          {/* Price guarantee */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              marginTop: '1rem',
+              background: '#EEF4FA',
+              border: '1px solid #D6E8F5',
+              borderRadius: 8,
+              padding: '0.4rem 0.875rem',
+              fontSize: '0.8rem',
+              color: '#1B3A57',
+              fontWeight: 600,
+            }}
+          >
+            🛡️ Cam kết hoàn tiền 100% trong 7 ngày đầu nếu không hài lòng
           </div>
         </motion.div>
 
-        {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-          {plans.map((plan, i) => (
-            <motion.div
-              key={plan.name}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              animate={isInView ? 'visible' : 'hidden'}
-              whileHover={{ y: -8, transition: { duration: 0.2 } }}
-              className={`relative flex flex-col rounded-3xl border ${plan.border} bg-gradient-to-b ${plan.gradient} backdrop-blur-sm p-7 ${plan.popular ? 'ring-2 ring-violet-500/50' : ''}`}
-            >
-              {/* Popular badge */}
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg shadow-violet-500/40">
-                    <Star className="w-3 h-3 fill-current" />
-                    Most Popular
-                  </div>
-                </div>
-              )}
-
-              {/* Plan header */}
-              <div className="mb-6 pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{plan.icon}</span>
-                  <h3
-                    className="text-lg font-bold text-white"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    {plan.name}
-                  </h3>
-                </div>
-                <p className="text-xs text-white/50" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  {plan.description}
-                </p>
-              </div>
-
-              {/* Price */}
-              <div className="mb-6">
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={yearly ? 'yearly' : 'monthly'}
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -10, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="inline-block"
-                      >
-                        ${yearly ? plan.yearlyPrice : plan.monthlyPrice}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
-                  {(plan.monthlyPrice > 0) && (
-                    <span className="text-white/40 text-sm mb-1.5">/month</span>
-                  )}
-                </div>
-                {yearly && plan.monthlyPrice > 0 && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-emerald-400 mt-1"
-                  >
-                    Billed ${plan.yearlyPrice * 12}/year (save ${(plan.monthlyPrice - plan.yearlyPrice) * 12})
-                  </motion.p>
-                )}
-                {plan.monthlyPrice === 0 && (
-                  <p className="text-xs text-white/40 mt-1">Free forever</p>
-                )}
-              </div>
-
-              {/* CTA */}
-              <a
-                href={plan.ctaHref}
-                className={`flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-xl text-sm font-semibold transition-all duration-300 mb-7 ${plan.ctaStyle}`}
-              >
-                {plan.cta}
-                <ArrowRight className="w-4 h-4" />
-              </a>
-
-              {/* Features */}
-              <div className="space-y-3 flex-1">
-                {plan.features.map((feat) => (
-                  <div key={feat} className="flex items-start gap-2.5">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 text-emerald-400" strokeWidth={2.5} />
-                    </div>
-                    <span className="text-sm text-white/65" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                      {feat}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+        {/* Cards */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '1.5rem',
+            alignItems: 'center',
+          }}
+          className="se-pricing-grid"
+        >
+          {PLANS.map((plan, i) => (
+            <PricingCard key={plan.id} plan={plan} index={i} />
           ))}
         </div>
 
-        {/* Money back */}
+        {/* Trust note */}
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.8 }}
-          className="text-center text-sm text-white/35 mt-10"
-          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          initial={shouldReduce ? {} : { opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          style={{
+            textAlign: 'center',
+            fontSize: '0.8rem',
+            color: '#94A3B8',
+            marginTop: '2rem',
+          }}
         >
-          🔒 30-day money-back guarantee · No questions asked · Cancel anytime
+          🔒 Thanh toán bảo mật · Huỷ bất kỳ lúc nào · Không charge tự động khi dùng thử
         </motion.p>
       </div>
+
+      {/* Responsive */}
+      <style>{`
+        @media (max-width: 900px) {
+          .se-pricing-grid { grid-template-columns: 1fr !important; max-width: 400px; margin: 0 auto; }
+        }
+      `}</style>
     </section>
   )
 }
