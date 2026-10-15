@@ -1,0 +1,184 @@
+/* ─── Google Fonts ─────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
+.landing-root {
+  /* Màu chủ đạo */
+  --se-navy-900: #0F3A5C;
+  --se-navy-800: #17456B;
+  --se-navy-700: #1B3A57;
+  --se-navy-600: #1D5A8A;
+  --se-brand:    #1D8FE1;
+  --se-brand-l:  #E8F4FD;
+
+  /* Màu nhấn */
+  --se-amber:    #F59E0B;
+  --se-amber-h:  #D97706;
+  --se-amber-l:  #FEF3C7;
+
+  /* Nền + bề mặt */
+  --se-bg:       #FAFBFC;
+  --se-bg-alt:   #F0F4F8;
+  --se-white:    #FFFFFF;
+  --se-border:   #E2EAF2;
+
+  /* Chữ */
+  --se-text:     #334155;
+  --se-muted:    #64748B;
+  --se-heading:  #1B3A57;
+
+  /* Font */
+  --se-font-heading: 'Merriweather', Georgia, serif;
+  --se-font-body:    'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --se-section-py: 5rem;
+  --se-section-py-sm: 3rem;
+
+  /* Radius */
+  --se-radius-sm:  0.5rem;
+  --se-radius-md:  0.75rem;
+  --se-radius-lg:  1rem;
+  --se-radius-xl:  1.5rem;
+
+  /* Shadow */
+  --se-shadow-sm:  0 1px 3px rgba(15, 58, 92, 0.06), 0 1px 2px rgba(15, 58, 92, 0.04);
+  --se-shadow-md:  0 4px 12px rgba(15, 58, 92, 0.10), 0 2px 4px rgba(15, 58, 92, 0.06);
+  --se-shadow-lg:  0 10px 30px rgba(15, 58, 92, 0.14), 0 4px 8px rgba(15, 58, 92, 0.08);
+
+  font-family: var(--se-font-body);
+  color: var(--se-text);
+  background: var(--se-bg);
+  overflow-x: hidden;
+}
+
+/* ─── Reset cục bộ ─────────────────────────────────────────────────────── */
+.landing-root *, .landing-root *::before, .landing-root *::after {
+  box-sizing: border-box;
+}
+
+/* ─── Typography helpers ────────────────────────────────────────────────── */
+.se-heading {
+  font-family: var(--se-font-heading);
+  color: var(--se-heading);
+  line-height: 1.2;
+}
+
+.se-h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); font-weight: 900; }
+.se-h2 { font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 700; }
+.se-h3 { font-size: clamp(1.125rem, 2vw, 1.375rem); font-weight: 700; }
+
+.se-body    { font-size: 1rem; line-height: 1.7; color: var(--se-text); }
+.se-body-sm { font-size: 0.875rem; line-height: 1.6; color: var(--se-muted); }
+
+/* ─── Section layout ─────────────────────────────────────────────────────── */
+.se-section {
+  padding: var(--se-section-py) 0;
+}
+.se-section-alt {
+  background: var(--se-bg-alt);
+}
+.se-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.se-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--se-font-body);
+  font-weight: 600;
+  border-radius: var(--se-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  outline: none;
+}
+.se-btn:focus-visible {
+  outline: 3px solid var(--se-amber);
+  outline-offset: 2px;
+}
+
+/* Primary amber */
+.se-btn-primary {
+  background: var(--se-amber);
+  color: var(--se-navy-900);
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+.se-btn-primary:hover {
+  background: var(--se-amber-h);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45);
+}
+.se-btn-primary:active { transform: translateY(0); }
+
+/* Dark navy */
+.se-btn-dark {
+  background: var(--se-navy-700);
+  color: white;
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+}
+.se-btn-dark:hover {
+  background: var(--se-navy-900);
+  transform: translateY(-1px);
+}
+
+/* Outline */
+.se-btn-outline {
+  background: transparent;
+  color: var(--se-navy-700);
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  border: 1.5px solid var(--se-navy-700);
+}
+.se-btn-outline:hover {
+  background: var(--se-navy-700);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ─── Cards ─────────────────────────────────────────────────────────────── */
+.se-card {
+  background: var(--se-white);
+  border: 1px solid var(--se-border);
+  border-radius: var(--se-radius-lg);
+  box-shadow: var(--se-shadow-sm);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.se-card:hover {
+  box-shadow: var(--se-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ─── Amber accent line ─────────────────────────────────────────────────── */
+.se-accent-line {
+  display: inline-block;
+  width: 3rem;
+  height: 3px;
+  background: var(--se-amber);
+  border-radius: 9999px;
+  margin-bottom: 1rem;
+}
+
+/* ─── Prefers Reduced Motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .landing-root *, .landing-root *::before, .landing-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Responsive helpers ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .se-section { padding: var(--se-section-py-sm) 0; }
+}
