@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, FileText } from 'lucide-react'
+import { Search, FileText, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import CreateGroupModal from './CreateGroupModal'
 import PostComposer from './components/PostComposer'
@@ -13,6 +13,7 @@ import FindFriendsModal from './components/FindFriendsModal'
 import PostCommentModal from './components/PostCommentModal'
 import PostImageViewerModal from './components/PostImageViewerModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Drawer from '@/components/ui/Drawer'
 import { sanitizeAvatarUrl } from '@/components/ui/Avatar'
 import { useAuthStore, TEST_USERS } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
@@ -141,6 +142,7 @@ function CommunityPage() {
   }, [realUsers, myId])
 
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
   // Share post modal state
   const [sharingPost, setSharingPost] = useState(null)
@@ -151,6 +153,16 @@ function CommunityPage() {
   const [pendingRequests, setPendingRequests] = useState([])
   const [sentRequestUserIds, setSentRequestUserIds] = useState(new Set())
   const [isFindFriendsOpen, setIsFindFriendsOpen] = useState(false)
+
+  // Chat and Conversation state
+  const [conversationSearch, setConversationSearch] = useState('')
+  const [activeConversationId, setActiveConversationId] = useState(null)
+  const [openConversationIds, setOpenConversationIds] = useState([])
+  const openConversationIdsRef = useRef(openConversationIds)
+  useEffect(() => {
+    openConversationIdsRef.current = openConversationIds
+  }, [openConversationIds])
+  const [messageDraft, setMessageDraft] = useState('')
 
   // Helper to convert internal role string to Vietnamese display label
   const getRoleLabel = useCallback((role) => {
@@ -529,16 +541,6 @@ function CommunityPage() {
     }
   }, [isFindFriendsOpen, fetchFriends, fetchFriendRequests, fetchSentRequests])
 
-  const [conversationSearch, setConversationSearch] = useState('')
-  const [activeConversationId, setActiveConversationId] = useState(null)
-  const [openConversationIds, setOpenConversationIds] = useState([])
-  const openConversationIdsRef = useRef(openConversationIds)
-  useEffect(() => {
-    openConversationIdsRef.current = openConversationIds
-  }, [openConversationIds])
-
-  const [messageDraft, setMessageDraft] = useState('')
-
   // Real-time personal channel for instant friend events & incoming messages
   useEffect(() => {
     if (!myId) return
@@ -775,6 +777,7 @@ function CommunityPage() {
   }, [realUsers, getRoleLabel])
 
   const handleOpenConversation = async (conversationId) => {
+    setIsMobileChatOpen(false)
     setActiveConversationId(conversationId)
     setOpenConversationIds((prev) =>
       [...prev.filter((id) => id !== conversationId), conversationId].slice(-3),
@@ -851,6 +854,7 @@ function CommunityPage() {
               time: incomingMsg.createdAt
                 ? new Date(incomingMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 : 'Vừa xong',
+              createdAt: incomingMsg.createdAt || new Date().toISOString(),
             }
 
             if (existsIndex >= 0) {
@@ -1033,6 +1037,7 @@ function CommunityPage() {
               from: 'me',
               text,
               time: 'Vừa xong',
+              createdAt: savedMsg?.createdAt || savedMsg?.data?.createdAt || new Date().toISOString(),
             },
           ],
         }
@@ -1156,6 +1161,7 @@ function CommunityPage() {
               from: 'me',
               text: payload.content,
               time: 'Vừa xong',
+              createdAt: savedMsg?.createdAt || savedMsg?.data?.createdAt || new Date().toISOString(),
             },
           ],
         }
@@ -1247,6 +1253,7 @@ function CommunityPage() {
               from: 'me',
               text: '[Chia sẻ bài viết]',
               time: 'Vừa xong',
+              createdAt: savedMsg?.createdAt || savedMsg?.data?.createdAt || new Date().toISOString(),
             },
           ],
         }
@@ -1553,8 +1560,8 @@ function CommunityPage() {
     <div className="space-y-4">
       {/* ─── MAIN 2-COLUMN LAYOUT ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS - THU GỌN VÀ TẠO KHOẢNG TRỐNG 2 BÊN) ──────────────────── */}
-        <div className="lg:col-span-8 flex justify-center px-0 sm:px-4 xl:px-8">
+        {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS ON DESKTOP, FULL ON MOBILE) ──────────────────── */}
+        <div className="col-span-1 lg:col-span-8 flex justify-center px-0 sm:px-4 xl:px-8">
           <div className="w-full max-w-[600px] space-y-4">
             <PostComposer
               isAdmin={isAdmin}
@@ -1683,8 +1690,8 @@ function CommunityPage() {
           </div>
         </div>
 
-        {/* ─── RIGHT COLUMN: TOPICS & FEATURED TEACHERS (4 COLS) ───────── */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* ─── RIGHT COLUMN: TOPICS & FEATURED TEACHERS (4 COLS - HIDDEN ON MOBILE/TABLET) ───────── */}
+        <div className="hidden lg:block lg:col-span-4 space-y-4">
           <ChatConversationSidebar
             conversations={conversations}
             filteredConversations={filteredConversations}
@@ -1740,6 +1747,79 @@ function CommunityPage() {
         onLoadOlderMessages={handleLoadOlderMessages}
         loadingOlderMap={loadingOlderMap}
       />
+
+      {/* ─── NÚT NỔI CHAT & CỘNG ĐỒNG DÀNH CHO MOBILE (< LG) ─── */}
+      {openConversationIds.length === 0 && (
+        <button
+          type="button"
+          onClick={() => setIsMobileChatOpen(true)}
+          className="fixed bottom-24 right-6 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:from-brand-700 hover:to-indigo-700 active:scale-95 transition-all lg:hidden cursor-pointer group border-2 border-white"
+          title="Mở tin nhắn & cộng đồng"
+          aria-label="Mở tin nhắn & cộng đồng"
+        >
+          <MessageCircle size={24} className="group-hover:scale-110 transition-transform" />
+          {totalUnreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-black text-white shadow-md border-2 border-white animate-pulse">
+              {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* ─── DRAWER TIỆN ÍCH TRÒ CHUYỆN & CHỦ ĐỀ TRÊN MOBILE (< LG) ─── */}
+      <Drawer
+        open={isMobileChatOpen}
+        onClose={() => setIsMobileChatOpen(false)}
+        title="Trò chuyện & Tiện ích"
+        size="default"
+      >
+        <div className="space-y-4 pb-6">
+          <ChatConversationSidebar
+            conversations={conversations}
+            filteredConversations={filteredConversations}
+            contacts={contacts}
+            conversationSearch={conversationSearch}
+            setConversationSearch={setConversationSearch}
+            getConversationAvatar={getConversationAvatar}
+            onOpenConversation={(id) => {
+              setIsMobileChatOpen(false)
+              handleOpenConversation(id)
+            }}
+            onOpenCreateGroup={() => {
+              setIsMobileChatOpen(false)
+              setIsCreateGroupOpen(true)
+            }}
+            onOpenFindFriends={() => {
+              setIsMobileChatOpen(false)
+              setIsFindFriendsOpen(true)
+            }}
+            pendingRequestsCount={pendingRequests.length}
+            myId={myId}
+          />
+
+          {/* Ô tìm kiếm trong Drawer */}
+          <div className="relative w-full">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm bài viết, giáo viên..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-2xs"
+            />
+          </div>
+
+          {/* Chủ đề thảo luận */}
+          <TrendingTopicsCard
+            topics={trendingTopics}
+            selectedTag={selectedTag}
+            onSelectTag={(tag) => {
+              setSelectedTag(tag)
+              setIsMobileChatOpen(false)
+            }}
+          />
+        </div>
+      </Drawer>
 
       {/* Modal tạo nhóm mới */}
       <CreateGroupModal

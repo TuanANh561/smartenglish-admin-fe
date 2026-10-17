@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, Fragment } from 'react'
 import {
   Send,
   X,
@@ -16,6 +16,52 @@ import {
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
+
+// Helper phân tích thời gian tin nhắn
+function parseMessageDate(m) {
+  if (!m) return null
+  if (m.createdAt) {
+    const d = new Date(m.createdAt)
+    if (!isNaN(d.getTime())) return d
+  }
+  if (m.timestamp) {
+    const d = new Date(m.timestamp)
+    if (!isNaN(d.getTime())) return d
+  }
+  return null
+}
+
+// Helper định dạng dòng thời gian phân cách ngày chuẩn Messenger & Zalo
+function formatChatDateDivider(date) {
+  if (!date || isNaN(date.getTime())) return null
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const diffTime = today.getTime() - msgDay.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`
+
+  if (diffDays <= 0) {
+    return `Hôm nay, ${timeStr}`
+  }
+  if (diffDays === 1) {
+    return `Hôm qua, ${timeStr}`
+  }
+  if (diffDays > 1 && diffDays < 7) {
+    const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+    const dayName = daysOfWeek[date.getDay()]
+    return `${dayName}, ${pad(date.getDate())}/${pad(date.getMonth() + 1)} lúc ${timeStr}`
+  }
+
+  if (date.getFullYear() === now.getFullYear()) {
+    return `${pad(date.getDate())} tháng ${pad(date.getMonth() + 1)} lúc ${timeStr}`
+  }
+
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} lúc ${timeStr}`
+}
 
 const REACTIONS = [
   { type: 'LIKE', icon: '👍' },
@@ -358,8 +404,12 @@ function FloatingChatWindowItem({
 
   return (
     <div
-      className="fixed bottom-6 z-40 flex h-[min(580px,calc(100vh-4rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all"
-      style={{ right: `calc(6rem + ${(totalWindows - index - 1) * 412}px)` }}
+      className="fixed bottom-4 sm:bottom-6 z-[55] flex h-[min(580px,calc(100vh-4rem))] w-[calc(100vw-2rem)] sm:w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all"
+      style={{
+        right: typeof window !== 'undefined' && window.innerWidth < 640
+          ? '1rem'
+          : `calc(6rem + ${(totalWindows - index - 1) * 412}px)`,
+      }}
     >
       {/* Window Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-line bg-white px-4 py-3">
@@ -459,8 +509,40 @@ function FloatingChatWindowItem({
             const isReactionOpen = reactionPickerMessageId === message.id
             const isMenuOpen = menuMessageId === message.id
 
-            // Check previous message (to show sender name on FIRST message of a sequence)
+            // Check previous and next messages for dates and sequences
             const prevMessage = idx > 0 ? conversation.messages[idx - 1] : null
+            const nextMessage =
+              idx < conversation.messages.length - 1 ? conversation.messages[idx + 1] : null
+
+            const currDate = parseMessageDate(message)
+            const prevDate = parseMessageDate(prevMessage)
+            const nextDate = parseMessageDate(nextMessage)
+
+            let shouldShowDateDivider = false
+            let dateDividerText = ''
+
+            if (currDate) {
+              if (!prevDate) {
+                // Tin nhắn đầu tiên của cuộc trò chuyện
+                shouldShowDateDivider = true
+                dateDividerText = formatChatDateDivider(currDate)
+              } else {
+                const isDifferentDay =
+                  currDate.getFullYear() !== prevDate.getFullYear() ||
+                  currDate.getMonth() !== prevDate.getMonth() ||
+                  currDate.getDate() !== prevDate.getDate()
+
+                // Khác ngày hoặc khoảng cách giữa 2 tin nhắn lớn (> 4 giờ)
+                const isLargeGap = Math.abs(currDate.getTime() - prevDate.getTime()) >= 4 * 60 * 60 * 1000
+
+                if (isDifferentDay || isLargeGap) {
+                  shouldShowDateDivider = true
+                  dateDividerText = formatChatDateDivider(currDate)
+                }
+              }
+            }
+
+            // Check previous message
             const isSameSenderAsPrev = Boolean(
               prevMessage &&
                 ((message.senderId != null &&
@@ -473,22 +555,14 @@ function FloatingChatWindowItem({
             )
 
             let isPrevWithin30Mins = false
-            if (isSameSenderAsPrev && prevMessage) {
-              const prevTime = prevMessage.createdAt
-                ? new Date(prevMessage.createdAt).getTime()
-                : null
-              const currTime = message.createdAt ? new Date(message.createdAt).getTime() : null
-              if (prevTime && currTime && !isNaN(prevTime) && !isNaN(currTime)) {
-                isPrevWithin30Mins = currTime - prevTime < 30 * 60 * 1000
-              } else {
-                isPrevWithin30Mins = true
-              }
+            if (isSameSenderAsPrev && prevDate && currDate) {
+              isPrevWithin30Mins = currDate.getTime() - prevDate.getTime() < 30 * 60 * 1000
+            } else if (isSameSenderAsPrev && !prevDate && !currDate) {
+              isPrevWithin30Mins = true
             }
-            const isFirstOfSequence = !isSameSenderAsPrev || !isPrevWithin30Mins
+            const isFirstOfSequence = !isSameSenderAsPrev || !isPrevWithin30Mins || shouldShowDateDivider
 
-            // Check next message (to show avatar on LAST/MOST RECENT message of a sequence)
-            const nextMessage =
-              idx < conversation.messages.length - 1 ? conversation.messages[idx + 1] : null
+            // Check next message
             const isSameSenderAsNext = Boolean(
               nextMessage &&
                 ((message.senderId != null &&
@@ -501,18 +575,22 @@ function FloatingChatWindowItem({
             )
 
             let isNextWithin30Mins = false
-            if (isSameSenderAsNext && nextMessage) {
-              const currTime = message.createdAt ? new Date(message.createdAt).getTime() : null
-              const nextTime = nextMessage.createdAt
-                ? new Date(nextMessage.createdAt).getTime()
-                : null
-              if (currTime && nextTime && !isNaN(currTime) && !isNaN(nextTime)) {
-                isNextWithin30Mins = nextTime - currTime < 30 * 60 * 1000
-              } else {
-                isNextWithin30Mins = true
-              }
+            let nextHasDivider = false
+            if (nextDate && currDate) {
+              const nextDiffDay =
+                nextDate.getFullYear() !== currDate.getFullYear() ||
+                nextDate.getMonth() !== currDate.getMonth() ||
+                nextDate.getDate() !== currDate.getDate()
+              const nextLargeGap = Math.abs(nextDate.getTime() - currDate.getTime()) >= 4 * 60 * 60 * 1000
+              nextHasDivider = nextDiffDay || nextLargeGap
             }
-            const isLastOfSequence = !isSameSenderAsNext || !isNextWithin30Mins
+
+            if (isSameSenderAsNext && currDate && nextDate && !nextHasDivider) {
+              isNextWithin30Mins = nextDate.getTime() - currDate.getTime() < 30 * 60 * 1000
+            } else if (isSameSenderAsNext && !currDate && !nextDate) {
+              isNextWithin30Mins = true
+            }
+            const isLastOfSequence = !isSameSenderAsNext || !isNextWithin30Mins || nextHasDivider
 
             // Aggregate reactions count
             const reactionCounts = {}
@@ -523,18 +601,29 @@ function FloatingChatWindowItem({
             }
 
             return (
-              <div
-                key={message.id || idx}
-                onMouseEnter={() => setHoveredMessageId(message.id)}
-                onMouseLeave={() => {
-                  setHoveredMessageId(null)
-                  if (reactionPickerMessageId === message.id) setReactionPickerMessageId(null)
-                  if (menuMessageId === message.id) setMenuMessageId(null)
-                }}
-                className={`relative flex items-end gap-2 group ${
-                  isLastOfSequence ? 'mb-2.5 mt-0.5' : 'my-0.5'
-                } ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
-              >
+              <Fragment key={message.id || idx}>
+                {/* Dòng phân cách mốc thời gian ngày tháng (chuẩn Messenger / Zalo) */}
+                {shouldShowDateDivider && dateDividerText && (
+                  <div className="flex items-center justify-center my-3.5 select-none">
+                    <div className="h-px bg-slate-200/80 flex-1 max-w-[50px]" />
+                    <span className="mx-2.5 rounded-full bg-slate-100/90 px-3 py-1 text-[11px] font-semibold text-slate-500 shadow-2xs border border-slate-200/60">
+                      {dateDividerText}
+                    </span>
+                    <div className="h-px bg-slate-200/80 flex-1 max-w-[50px]" />
+                  </div>
+                )}
+
+                <div
+                  onMouseEnter={() => setHoveredMessageId(message.id)}
+                  onMouseLeave={() => {
+                    setHoveredMessageId(null)
+                    if (reactionPickerMessageId === message.id) setReactionPickerMessageId(null)
+                    if (menuMessageId === message.id) setMenuMessageId(null)
+                  }}
+                  className={`relative flex items-end gap-2 group ${
+                    isLastOfSequence ? 'mb-2.5 mt-0.5' : 'my-0.5'
+                  } ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                >
                 {/* Sender Avatar */}
                 {!isMe ? (
                   isLastOfSequence ? (
@@ -818,8 +907,9 @@ function FloatingChatWindowItem({
                   </div>
                 )}
               </div>
-            )
-          })}
+            </Fragment>
+          )
+        })}
 
           {/* Typing Indicator */}
           {typingMap?.[conversation.id]?.isTyping &&
