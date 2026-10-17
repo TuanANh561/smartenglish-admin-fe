@@ -54,6 +54,11 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
+function stripEmojis(str) {
+  if (!str) return ''
+  return String(str).replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()
+}
+
 function isWithinDateRange(timestampMs, dateRange) {
   if (dateRange === 'all') return true
   const now = Date.now()
@@ -65,7 +70,7 @@ function isWithinDateRange(timestampMs, dateRange) {
 
 function AuditLogPage() {
   const user = useAuthStore((s) => s.user)
-  const isTeacher = user?.role === 'TEACHER' || user?.role === 'teacher'
+  const isTeacher = (user?.role || '').toUpperCase().includes('TEACHER')
 
   const [logs, setLogs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -107,7 +112,7 @@ function AuditLogPage() {
           .filter((o) => o.status === 'completed' || o.status === 'SUCCESS' || o.status === 'paid')
           .forEach((o) => {
             const d = o.createdAt ? new Date(o.createdAt) : new Date()
-            const planTitle = o.planName || 'Gói Giảng Viên Pro'
+            const planTitle = stripEmojis(o.planName || 'Gói Giảng Viên Pro')
             const amountStr = o.amount ? `${Number(o.amount).toLocaleString('vi-VN')}đ` : '20.000đ'
             const orderCode = o.orderCode || `ORD-${o.id}`
 
@@ -125,7 +130,7 @@ function AuditLogPage() {
               actionType: 'payment',
               action: `Nâng cấp ${planTitle}`,
               actionLabel: `Đã nâng cấp thành công ${planTitle} (${amountStr})`,
-              targetService: 'payment-service',
+              targetService: isTeacher ? undefined : 'payment-service',
               targetType: 'Giao dịch',
               targetId: orderCode,
               reason: `Thanh toán VietQR Napas thành công cho ${planTitle}. Mã đơn: ${orderCode}`,
@@ -168,6 +173,15 @@ function AuditLogPage() {
             else if (act.metadata) metaObj = act.metadata
           } catch {}
 
+          let targetTypeLabel = act.activityType || 'HOẠT ĐỘNG'
+          if (typeLower === 'payment_receipt') targetTypeLabel = 'Biên lai'
+          else if (typeLower === 'subscription_success') targetTypeLabel = 'Gói dịch vụ'
+          else if (typeLower === 'exam_created') targetTypeLabel = 'Đề thi'
+          else if (typeLower === 'assignment_submitted') targetTypeLabel = 'Bài nộp'
+
+          const cleanTitle = stripEmojis(act.title || 'Hoạt động cá nhân')
+          const cleanDesc = stripEmojis(act.description || '')
+
           teacherLogs.push({
             id: `act-${act.id}`,
             logCode: `LOG-${act.id}`,
@@ -180,12 +194,12 @@ function AuditLogPage() {
             userRoleLabel: 'Giáo viên',
             avatarColor: actType === 'payment' ? '#10B981' : '#3B82F6',
             actionType: actType,
-            action: act.title || 'Hoạt động cá nhân',
-            actionLabel: act.title || 'Hoạt động cá nhân',
-            targetService: 'notification-service',
-            targetType: act.activityType || 'HOẠT ĐỘNG',
+            action: cleanTitle,
+            actionLabel: cleanTitle,
+            targetService: isTeacher ? undefined : 'notification-service',
+            targetType: targetTypeLabel,
             targetId: metaObj.invoiceNo || metaObj.orderCode || `#${act.id}`,
-            reason: act.description || '',
+            reason: cleanDesc,
             ipAddress: act.ipAddress || '127.0.0.1',
             device: act.deviceInfo || 'Web Teacher Console',
             severity: 'normal',
@@ -210,7 +224,7 @@ function AuditLogPage() {
             actionType: 'auth',
             action: 'Đăng nhập hệ thống giảng dạy',
             actionLabel: 'Đăng nhập hệ thống quản lý giảng dạy thành công',
-            targetService: 'auth-service',
+            targetService: isTeacher ? undefined : 'auth-service',
             targetType: 'PHIÊN LÀM VIỆC',
             targetId: `#${user?.id || 1}`,
             reason: 'Khởi tạo phiên làm việc giảng viên trên Web Console',
@@ -340,12 +354,16 @@ function AuditLogPage() {
   }
 
   const handleExportPdf = () => {
+    if (!logs.length) {
+      toast.error('Không có dữ liệu nhật ký để xuất')
+      return
+    }
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       doc.setFontSize(15)
       doc.text('NHAT KY HOAT DONG HE THONG SMARTENGLISH AI', 14, 18)
       doc.setFontSize(9)
-      doc.text(`Ngay xuat: ${new Date().toLocaleString('vi-VN')} | Tong so: ${filteredLogs.length} ban ghi`, 14, 25)
+      doc.text(`Ngay xuat: ${new Date().toLocaleString('vi-VN')} | Tong so: ${logs.length} ban ghi`, 14, 25)
       doc.line(14, 28, 196, 28)
 
       let y = 35
@@ -357,7 +375,7 @@ function AuditLogPage() {
       doc.line(14, y + 2, 196, y + 2)
       y += 8
 
-      const logsToExport = filteredLogs.slice(0, 35)
+      const logsToExport = logs.slice(0, 35)
       logsToExport.forEach((log) => {
         if (y > 275) {
           doc.addPage()
@@ -691,16 +709,13 @@ function AuditLogPage() {
 
                     {/* Cột 3: Hành động & Đối tượng */}
                     <td className="px-6 py-4">
-                      <div className="flex items-start gap-2.5 max-w-md">
-                        <div className="mt-0.5 rounded-lg bg-slate-100 p-1.5 shrink-0 group-hover:bg-white transition-colors border border-slate-200/60">
-                          {renderActionIcon(log)}
-                        </div>
+                      <div className="flex items-start max-w-md">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
-                            {log.actionLabel || log.action}
+                            {stripEmojis(log.actionLabel || log.action)}
                           </p>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                            {log.targetService && (
+                            {!isTeacher && log.targetService && (
                               <span className="rounded bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 text-xs font-mono text-indigo-700 font-semibold">
                                 {log.targetService}
                               </span>
@@ -790,7 +805,7 @@ function AuditLogPage() {
                   {activeLog.logCode ? `#${activeLog.logCode}` : `ID: ${activeLog.id}`}
                 </p>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                  {activeLog.actionLabel || activeLog.action}
+                  {stripEmojis(activeLog.actionLabel || activeLog.action)}
                 </h3>
               </div>
               <div>{renderSeverityBadge(activeLog.severity)}</div>
@@ -834,13 +849,13 @@ function AuditLogPage() {
             </div>
 
             {/* Dịch vụ & Đối tượng tác động */}
-            {(activeLog.targetService || activeLog.targetType) && (
+            {((!isTeacher && activeLog.targetService) || activeLog.targetType) && (
               <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5">
                 <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
-                  Dịch vụ & Đối tượng tác động:
+                  {!isTeacher && activeLog.targetService ? 'Dịch vụ & Đối tượng tác động:' : 'Đối tượng tác động:'}
                 </span>
                 <div className="flex items-center gap-2">
-                  {activeLog.targetService && (
+                  {!isTeacher && activeLog.targetService && (
                     <span className="rounded bg-indigo-50 border border-indigo-100 px-2 py-0.5 font-mono text-xs text-indigo-700 font-bold">
                       {activeLog.targetService}
                     </span>
@@ -861,7 +876,7 @@ function AuditLogPage() {
                   Lý do / Giải trình
                 </h4>
                 <p className="rounded-xl border border-slate-200 p-3 text-sm text-slate-700 bg-slate-50/50 leading-relaxed">
-                  {activeLog.reason}
+                  {stripEmojis(activeLog.reason)}
                 </p>
               </div>
             )}
@@ -876,8 +891,8 @@ function AuditLogPage() {
               </p>
             </div>
 
-            {/* Dữ liệu chi tiết Payload */}
-            {activeLog.details && Object.keys(activeLog.details).length > 0 && (
+            {/* Dữ liệu chi tiết Payload (Chỉ hiển thị cho Quản trị viên kỹ thuật, không hiển thị cho Giáo viên) */}
+            {!isTeacher && activeLog.details && Object.keys(activeLog.details).length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 uppercase tracking-wider text-xs mb-1">
                   Dữ liệu thay đổi (Payload)

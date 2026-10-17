@@ -4,30 +4,24 @@
  * Không có side effects, không gọi API, không dùng state.
  */
 
-import {
-  MOCK_PARSED_VOCABULARY,
-  MOCK_PARSED_VOCAB_TECH,
-  MOCK_PARSED_VOCAB_HEALTH,
-  MOCK_PARSED_GRAMMAR,
-  MOCK_PARSED_READING,
-  MOCK_PARSED_QUIZ,
-} from '@/mocks/data/pdfImportSamples'
-
 /**
- * Trả về bộ dữ liệu mock tương ứng với loại import và preset đang chọn.
- * @param {'vocabulary'|'grammar'|'reading'|'quiz'} type
- * @param {{ id: string } | null} preset
+ * Tải và parse dữ liệu từ tệp mẫu thật (public/samples/)
+ * @param {{ id: string, url: string, name: string } | null} preset
  */
-export function getMockDataForType(type, preset) {
-  if (preset?.id === 'pdf-vocab-02') return MOCK_PARSED_VOCAB_TECH
-  if (preset?.id === 'pdf-vocab-03') return MOCK_PARSED_VOCAB_HEALTH
-  switch (type) {
-    case 'grammar':  return MOCK_PARSED_GRAMMAR
-    case 'reading':  return MOCK_PARSED_READING
-    case 'quiz':     return MOCK_PARSED_QUIZ
-    case 'vocabulary':
-    default:         return MOCK_PARSED_VOCABULARY
+export async function loadSamplePresetData(preset) {
+  if (!preset?.url) return []
+  try {
+    const res = await fetch(preset.url)
+    if (!res.ok) throw new Error(`Không thể tải tệp mẫu ${preset.name}`)
+    if (preset.name.endsWith('.json')) {
+      const json = await res.json()
+      const arr = Array.isArray(json) ? json : [json]
+      return parseJsonItems(arr)
+    }
+  } catch (err) {
+    console.warn('Lỗi tải file mẫu:', err)
   }
+  return []
 }
 
 /**

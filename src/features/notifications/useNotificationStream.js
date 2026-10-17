@@ -80,6 +80,7 @@ export function useNotificationStream({ onNotification, soundEnabled = true, des
   const eventSourceRef = useRef(null)
   const reconnectTimeoutRef = useRef(null)
   const retryCountRef = useRef(0)
+  const connectStreamRef = useRef(null)
 
   const requestDesktopPermission = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported'
@@ -151,13 +152,15 @@ export function useNotificationStream({ onNotification, soundEnabled = true, des
 
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = setTimeout(() => {
-          connectStream()
+          connectStreamRef.current?.()
         }, delay)
       }
     } catch (err) {
       console.warn('Không thể khởi tạo EventSource SSE:', err)
     }
   }, [token, user, soundEnabled, desktopEnabled, onNotification])
+
+  connectStreamRef.current = connectStream
 
   useEffect(() => {
     connectStream()

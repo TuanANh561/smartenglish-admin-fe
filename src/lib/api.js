@@ -142,6 +142,8 @@ async function request(method, endpoint, options = {}, isRetry = false) {
     const isReadyBackend =
       endpoint.startsWith('/auth') ||
       endpoint.startsWith('/api/v1/auth') ||
+      endpoint.startsWith('/users') ||
+      endpoint.startsWith('/api/v1/users') ||
       endpoint.startsWith('/admin/words') ||
       endpoint.startsWith('/admin/users') ||
       endpoint.startsWith('/admin/audit-logs') ||
@@ -219,9 +221,39 @@ async function request(method, endpoint, options = {}, isRetry = false) {
 
 export const api = {
   get: (endpoint, options) => request('GET', endpoint, options),
-  post: (endpoint, options) => request('POST', endpoint, options),
-  put: (endpoint, options) => request('PUT', endpoint, options),
-  patch: (endpoint, options) => request('PATCH', endpoint, options),
+  post: (endpoint, dataOrOptions, options = {}) => {
+    if (
+      dataOrOptions &&
+      typeof dataOrOptions === 'object' &&
+      !Array.isArray(dataOrOptions) &&
+      !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
+    ) {
+      return request('POST', endpoint, { data: dataOrOptions, ...options })
+    }
+    return request('POST', endpoint, { ...dataOrOptions, ...options })
+  },
+  put: (endpoint, dataOrOptions, options = {}) => {
+    if (
+      dataOrOptions &&
+      typeof dataOrOptions === 'object' &&
+      !Array.isArray(dataOrOptions) &&
+      !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
+    ) {
+      return request('PUT', endpoint, { data: dataOrOptions, ...options })
+    }
+    return request('PUT', endpoint, { ...dataOrOptions, ...options })
+  },
+  patch: (endpoint, dataOrOptions, options = {}) => {
+    if (
+      dataOrOptions &&
+      typeof dataOrOptions === 'object' &&
+      !Array.isArray(dataOrOptions) &&
+      !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
+    ) {
+      return request('PATCH', endpoint, { data: dataOrOptions, ...options })
+    }
+    return request('PATCH', endpoint, { ...dataOrOptions, ...options })
+  },
   del: (endpoint, options) => request('DELETE', endpoint, options),
 }
 

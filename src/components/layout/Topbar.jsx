@@ -53,12 +53,19 @@ function Topbar({ actions }) {
       setHasNewPulse(true)
       setTimeout(() => setHasNewPulse(false), 2500)
 
+      const cleanTitle = (notif.title || 'Thông báo mới')
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .trim()
+      const cleanBody = (notif.body || notif.message || '')
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .trim()
+
       toast((t) => (
         <div className="flex items-start gap-2.5">
-          <span className="text-xl">🔔</span>
+          <Bell size={18} className="text-slate-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="font-semibold text-sm text-slate-900">{notif.title || 'Thông báo mới'}</p>
-            <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{notif.body || notif.message}</p>
+            <p className="font-semibold text-sm text-slate-900">{cleanTitle}</p>
+            {cleanBody && <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{cleanBody}</p>}
           </div>
         </div>
       ), {

@@ -14,7 +14,7 @@ import {
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Drawer from '@/components/ui/Drawer'
-import { SHORT_TEST_TYPE_META } from '@/mocks/data/shortTests'
+import { SHORT_TEST_TYPE_META } from '../examConstants'
 
 export default function ShortTestDetailDrawer({
   test,

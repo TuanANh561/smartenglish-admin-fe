@@ -281,8 +281,12 @@ function TeacherDashboardPage() {
           id: `act-${act.id}`,
           type,
           actor: 'Bạn',
-          action: act.title || 'Hoạt động cá nhân',
-          target: act.description || '',
+          action: (act.title || 'Hoạt động cá nhân')
+            .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .trim(),
+          target: (act.description || '')
+            .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .trim(),
           timestamp: actDate.getTime(),
           time:
             actDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +

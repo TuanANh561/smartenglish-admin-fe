@@ -66,6 +66,7 @@ export default function QuizBankPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [permanentTarget, setPermanentTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isSeeding, setIsSeeding] = useState(false)
 
   useEffect(() => {
     setAuthorFilter(defaultAuthorFilter)
