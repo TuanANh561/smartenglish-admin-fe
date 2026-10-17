@@ -1,132 +1,21 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  Award,
-  BookOpen,
-  Check,
-  ChevronRight,
   Copy,
-  Crown,
   Gift,
-  HelpCircle,
-  Percent,
-  Radio,
-  ShieldCheck,
   Users,
-  Zap,
-  Loader2,
-  FileCheck2,
-  Receipt,
-  Calendar,
-  RefreshCw,
-  QrCode,
-  RotateCcw,
-  X,
-  AlertTriangle,
-  Building2,
+  Lock,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { getTeacherQuotaStatus } from '../classes/classApi'
 import { getAdminPlans } from './api/premiumApi'
-import TransactionInvoiceModal from '@/features/transactions/components/TransactionInvoiceModal'
 import SepayVietQrPaymentModal from './components/SepayVietQrPaymentModal'
-
-// Danh sách các gói dành cho giáo viên
-const TEACHER_PLANS = [
-  {
-    id: 'plan_basic',
-    name: 'Teacher Starter',
-    subtitle: 'Dành cho giáo viên mới bắt đầu thử nghiệm',
-    priceMonthly: 0,
-    priceYearly: 0,
-    isCurrent: false,
-    badge: null,
-    features: [
-      { text: 'Quản lý tối đa 2 lớp học', included: true },
-      { text: 'Tối đa 50 học viên', included: true },
-      { text: 'Tạo 20 bài đọc/bài kiểm tra AI mỗi tháng', included: true },
-      { text: 'Theo dõi điểm số cơ bản', included: true },
-      { text: 'Chấm điểm Speaking & Writing chuyên sâu', included: false },
-      { text: 'Xuất báo cáo PDF/Excel chi tiết', included: false },
-      { text: 'Hỗ trợ kỹ thuật ưu tiên 24/7', included: false },
-    ],
-  },
-  {
-    id: 'plan_pro',
-    name: 'Teacher Pro',
-    subtitle: 'Ưu đãi trải nghiệm độc quyền dành cho Giáo viên',
-    priceMonthly: 20000,
-    priceYearly: 20000, // Ưu đãi test 20.000đ
-    isCurrent: true,
-    badge: 'Đang sử dụng',
-    isPopular: true,
-    features: [
-      { text: 'Quản lý tối đa 15 lớp học', included: true },
-      { text: 'Tối đa 400 học viên', included: true },
-      { text: 'Sinh bài đọc & trắc nghiệm AI không giới hạn', included: true },
-      { text: 'Phân tích bảng điểm & tiến độ học viên chuyên sâu', included: true },
-      { text: 'AI hỗ trợ gợi ý chữa bài Speaking & Writing', included: true },
-      { text: 'Xuất báo cáo PDF/Excel danh sách & kết quả', included: true },
-      { text: 'Hỗ trợ ưu tiên qua Zalo/Email', included: true },
-    ],
-  },
-  {
-    id: 'plan_center',
-    name: 'School & Center',
-    subtitle: 'Dành cho trung tâm ngoại ngữ & nhóm giáo viên',
-    priceMonthly: 799000,
-    priceYearly: 6990000,
-    isCurrent: false,
-    badge: 'Doanh nghiệp',
-    features: [
-      { text: 'Không giới hạn số lớp học & học viên', included: true },
-      { text: 'Phân quyền nhiều giáo viên & trợ giảng', included: true },
-      { text: 'Toàn bộ tính năng AI Pro không giới hạn', included: true },
-      { text: 'Tích hợp kho đề & học liệu độc quyền của trường', included: true },
-      { text: 'Tùy chỉnh thương hiệu & logo riêng', included: true },
-      { text: 'Chăm sóc & đào tạo triển khai 1-1', included: true },
-      { text: 'Hỗ trợ kỹ thuật 24/7 VIP', included: true },
-    ],
-  },
-]
-
-// Các gói mua sỉ theo lớp cho học viên
-const CLASS_BUNDLE_PASSES = [
-  {
-    id: 'bundle-20',
-    title: 'Gói Lớp Học Nhỏ (20 Học viên)',
-    discount: '30%',
-    originalPrice: 199000 * 20,
-    discountedPrice: 2790000,
-    duration: '6 tháng',
-    idealFor: 'Lớp IELTS / TOEIC cấp tốc',
-  },
-  {
-    id: 'bundle-40',
-    title: 'Gói Lớp Học Tiêu Chuẩn (40 Học viên)',
-    discount: '45%',
-    originalPrice: 199000 * 40,
-    discountedPrice: 4390000,
-    duration: '6 tháng',
-    idealFor: 'Lớp phổ thông & trung tâm',
-  },
-  {
-    id: 'bundle-100',
-    title: 'Gói Khối / Khóa Học (100 Học viên)',
-    discount: '60%',
-    originalPrice: 199000 * 100,
-    discountedPrice: 7990000,
-    duration: '1 năm',
-    idealFor: 'Trường học & Trung tâm lớn',
-  },
-]
+import TeacherPlanCard from './components/TeacherPlanCard'
 
 function TeacherPackagesPage() {
   const user = useAuthStore((s) => s.user)
@@ -136,23 +25,13 @@ function TeacherPackagesPage() {
   const [copiedCode, setCopiedCode] = useState(false)
   const [quota, setQuota] = useState(null)
   const [plans, setPlans] = useState([])
+  const [classBundles, setClassBundles] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [subscribingId, setSubscribingId] = useState(null)
   const [cancellingRenewal, setCancellingRenewal] = useState(false)
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
-  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null)
   const [isSepayModalOpen, setIsSepayModalOpen] = useState(false)
   const [sepayOrder, setSepayOrder] = useState(null)
-  const [myOrders, setMyOrders] = useState([])
-  const [loadingOrders, setLoadingOrders] = useState(false)
-  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false)
-  const [selectedRefundOrder, setSelectedRefundOrder] = useState(null)
-  const [refundReason, setRefundReason] = useState('')
-  const [refundBank, setRefundBank] = useState('')
-  const [refundAcc, setRefundAcc] = useState('')
-  const [refundName, setRefundName] = useState('')
-  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false)
 
   const referralCode = 'TEACHER-MAI20'
 
@@ -175,7 +54,6 @@ function TeacherPackagesPage() {
       if (quotaRes.status === 'fulfilled' && quotaRes.value) {
         setQuota(quotaRes.value)
       } else {
-        // Fallback gói Starter mặc định nếu chưa có bản ghi quota trong DB
         setQuota({
           teacherId,
           planId: 1,
@@ -212,47 +90,19 @@ function TeacherPackagesPage() {
               ],
         }))
         setPlans(bePlans)
+
+        if (Array.isArray(plansRes.value.classBundles) && plansRes.value.classBundles.length > 0) {
+          setClassBundles(plansRes.value.classBundles)
+        }
       } else {
-        // Fallback sang danh sách gói giáo viên tiêu chuẩn TEACHER_PLANS
-        setPlans(TEACHER_PLANS)
+        setPlans([])
+        setLoadError('Không thể tải danh sách gói từ máy chủ. Vui lòng thử lại.')
       }
     } catch (err) {
-      console.warn('Lỗi tải dữ liệu gói giáo viên, dùng cấu hình mặc định:', err)
-      setQuota({
-        teacherId,
-        planId: 1,
-        planCode: 'T-PLAN-STARTER',
-        planName: 'Teacher Starter',
-        isPremium: false,
-        status: 'ACTIVE',
-        maxClasses: 3,
-        maxStudents: 40,
-        aiQuotaMonthly: 20,
-      })
-      setPlans(TEACHER_PLANS)
+      console.error('Lỗi tải dữ liệu gói giáo viên:', err)
+      setLoadError('Đã có lỗi xảy ra khi kết nối máy chủ dịch vụ thanh toán.')
     } finally {
       setLoading(false)
-    }
-    // Tải song song danh sách đơn hàng & hóa đơn của giáo viên
-    fetchMyOrders()
-  }
-
-  const fetchMyOrders = async () => {
-    if (!teacherId) return
-    setLoadingOrders(true)
-    try {
-      const res = await api.get(`/payment/user/orders?userId=${teacherId}`)
-      const ordersList = Array.isArray(res)
-        ? res
-        : Array.isArray(res?.data)
-          ? res.data
-          : []
-      setMyOrders(ordersList)
-    } catch (err) {
-      console.warn('Lỗi lấy lịch sử đơn hàng giáo viên:', err)
-      setMyOrders([])
-    } finally {
-      setLoadingOrders(false)
     }
   }
 
@@ -261,7 +111,20 @@ function TeacherPackagesPage() {
   }, [teacherId])
 
   const handleSubscribe = async (plan) => {
-    // 1. Kiểm tra nhanh: Nếu đang có đơn hàng PENDING còn hiệu lực (< 10 phút) cho cùng gói/tiền -> Tái sử dụng ngay
+    if (!teacherId) {
+      toast.error('Vui lòng đăng nhập để thực hiện')
+      return
+    }
+
+    if (plan.id === 'plan_center') {
+      toast(
+        'Đội ngũ Chăm sóc Đối tác SmartEnglish sẽ liên hệ trực tiếp với Thầy/Cô trong vòng 24 giờ để tư vấn triển khai!',
+        { icon: '🏫', duration: 5000 },
+      )
+      return
+    }
+
+    // Kiểm tra nhanh: Nếu đang có đơn hàng PENDING còn hiệu lực (< 10 phút) cho cùng gói/tiền -> Tái sử dụng
     const targetPrice = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly
     if (sepayOrder && (sepayOrder.status || '').toUpperCase() === 'PENDING') {
       const orderExpires = sepayOrder.expiresAt
@@ -277,7 +140,7 @@ function TeacherPackagesPage() {
 
     setSubscribingId(plan.id)
     try {
-      const planId = plan.numericId || (plan.id.includes('pro') ? 2 : plan.id.includes('center') ? 3 : 1)
+      const planId = Number(plan.numericId || (plan.id.includes('pro') ? 2 : plan.id.includes('center') ? 3 : 1))
       const res = await api.post(`/payment/subscriptions/subscribe?userId=${teacherId}`, {
         data: {
           planId,
@@ -307,6 +170,7 @@ function TeacherPackagesPage() {
 
       setSepayOrder(latestOrder)
       setIsSepayModalOpen(true)
+      await loadData()
     } catch (err) {
       console.error(err)
       toast.error('Khởi tạo thanh toán VietQR thất bại: ' + (err?.message || 'Lỗi server'))
@@ -315,61 +179,22 @@ function TeacherPackagesPage() {
     }
   }
 
-  const handlePaymentSuccess = async (completedOrder) => {
+  const handlePaymentSuccess = async () => {
+    toast.success('🎉 Kích hoạt gói thành công! Quota giáo viên đã được nâng cấp.')
     setIsSepayModalOpen(false)
     await loadData()
-    setSelectedInvoiceOrder(completedOrder || sepayOrder)
-    setIsInvoiceModalOpen(true)
-  }
-
-  const handleOpenLatestInvoice = async () => {
-    try {
-      const res = await api.get(`/payment/user/orders?userId=${teacherId}`)
-      const orders = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-      if (orders.length > 0) {
-        setSelectedInvoiceOrder(orders[0])
-        setIsInvoiceModalOpen(true)
-      } else {
-        setSelectedInvoiceOrder({
-          id: 101,
-          orderCode: `INV-202610-00${teacherId || 101}`,
-          planName: quota?.planName || 'Teacher Starter',
-          amount: quota?.isPremium ? 3990000 : 0,
-          customerName: user?.name || 'Thầy John Smith',
-          customerEmail: user?.email || 'teacher.john@smartenglish.com',
-          customerRole: 'Giáo viên (Teacher)',
-          status: 'completed',
-          gateway: 'stripe',
-          createdAt: quota?.currentPeriodStart || new Date().toISOString(),
-        })
-        setIsInvoiceModalOpen(true)
-      }
-    } catch (err) {
-      setSelectedInvoiceOrder({
-        id: 101,
-        orderCode: `INV-202610-00${teacherId || 101}`,
-        planName: quota?.planName || 'Teacher Starter',
-        amount: quota?.isPremium ? 3990000 : 0,
-        customerName: user?.name || 'Thầy John Smith',
-        customerEmail: user?.email || 'teacher.john@smartenglish.com',
-        customerRole: 'Giáo viên (Teacher)',
-        status: 'completed',
-        gateway: 'stripe',
-        createdAt: quota?.currentPeriodStart || new Date().toISOString(),
-      })
-      setIsInvoiceModalOpen(true)
-    }
   }
 
   const handleCancelRenewal = async () => {
+    if (!confirm('Thầy/Cô có chắc chắn muốn tắt tự động gia hạn? Sau khi hết chu kỳ, tài khoản sẽ về gói Starter.')) return
     setCancellingRenewal(true)
     try {
       await api.post(`/payment/subscriptions/cancel-renewal?userId=${teacherId}`, {})
-      toast.success('Đã tắt tự động gia hạn. Gói hiện tại vẫn dùng được đến hết kỳ.')
+      toast.success('Đã tắt tự động gia hạn.')
       await loadData()
     } catch (err) {
       console.error(err)
-      toast.error('Không thể tắt gia hạn: ' + (err?.message || 'Lỗi server'))
+      toast.error('Không thể hủy gia hạn: ' + (err?.message || 'Lỗi server'))
     } finally {
       setCancellingRenewal(false)
     }
@@ -386,43 +211,6 @@ function TeacherPackagesPage() {
       toast.error('Không thể bật lại gia hạn: ' + (err?.message || 'Lỗi server'))
     } finally {
       setCancellingRenewal(false)
-    }
-  }
-
-  const handleOpenRefundModal = (order) => {
-    setSelectedRefundOrder(order)
-    setRefundReason('')
-    setRefundBank('')
-    setRefundAcc('')
-    setRefundName(user?.displayName || user?.name || user?.fullName || 'Thầy/Cô')
-    setIsRefundModalOpen(true)
-  }
-
-  const handleSubmitRefund = async () => {
-    if (!selectedRefundOrder) return
-    if (!refundReason.trim()) {
-      toast.error('Vui lòng nhập lý do yêu cầu hoàn tiền')
-      return
-    }
-    if (!refundBank.trim() || !refundAcc.trim() || !refundName.trim()) {
-      toast.error('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng nhận tiền hoàn')
-      return
-    }
-    setIsSubmittingRefund(true)
-    try {
-      await api.post(`/payment/orders/${selectedRefundOrder.id}/request-refund?userId=${teacherId}`, {
-        reason: refundReason,
-        bankName: refundBank,
-        accountNumber: refundAcc,
-        accountHolderName: refundName,
-      })
-      toast.success('Đã gửi yêu cầu hoàn tiền thành công! Admin sẽ đối soát và xử lý.')
-      setIsRefundModalOpen(false)
-      await fetchMyOrders()
-    } catch (err) {
-      toast.error(err?.message || 'Không thể gửi yêu cầu hoàn tiền')
-    } finally {
-      setIsSubmittingRefund(false)
     }
   }
 
@@ -450,6 +238,17 @@ function TeacherPackagesPage() {
 
   const currentPlanId = resolveCurrentPlanId() || 1
 
+  const resolveCurrentBillingCycle = () => {
+    if (quota?.billingCycle) return quota.billingCycle.toLowerCase()
+    if (quota?.currentPeriodStart && quota?.currentPeriodEnd) {
+      const diffDays = (new Date(quota.currentPeriodEnd) - new Date(quota.currentPeriodStart)) / (1000 * 60 * 60 * 24)
+      return diffDays > 60 ? 'yearly' : 'monthly'
+    }
+    return 'monthly'
+  }
+
+  const currentBillingCycle = resolveCurrentBillingCycle()
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(referralCode).catch(() => {})
     setCopiedCode(true)
@@ -460,7 +259,7 @@ function TeacherPackagesPage() {
   if (loading) {
     return (
       <div className="flex h-80 items-center justify-center">
-        <LoadingSpinner text="Đang tải dữ liệu gói dịch vụ giáo viên..." size="lg" />
+        <LoadingSpinner text="Đang tải dữ liệu gói dịch vụ giáo viên từ hệ thống..." size="lg" />
       </div>
     )
   }
@@ -606,147 +405,22 @@ function TeacherPackagesPage() {
 
       {/* Grid Các Gói Giảng Dạy */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {plans.map((plan, pIdx) => {
-          const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly
-          const planId = plan.numericId || pIdx + 1
-          const isCurrentPlan = planId === currentPlanId
-          const isStarterFallback = planId === 1 && currentPlanId > 1
-          const isLowerPaidPlan = planId > 1 && planId < currentPlanId
-
-          return (
-            <div
-              key={plan.id}
-              className={[
-                'relative flex flex-col rounded-2xl border bg-white p-6 shadow-xs transition-all hover:shadow-md',
-                isCurrentPlan ? 'border-2 border-brand-500 ring-2 ring-brand-500/10' : 'border-line',
-              ].join(' ')}
-            >
-              {/* Badge trên cùng */}
-              {(plan.badge || (isCurrentPlan && 'Đang sử dụng')) && (
-                <span
-                  className={[
-                    'absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-bold shadow-xs',
-                    isCurrentPlan ? 'bg-brand-500 text-white' : 'bg-navy-700 text-white',
-                  ].join(' ')}
-                >
-                  {isCurrentPlan ? 'Đang sử dụng' : plan.badge}
-                </span>
-              )}
-
-              {/* Mác ưu đãi nổi bật góc trên bên phải */}
-              {(plan.id.includes('pro') || plan.name.includes('Pro') || price === 20000) && (
-                <span className="absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-200/90 px-2.5 py-0.5 text-[11px] font-extrabold text-rose-600 shadow-2xs">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                  </span>
-                  Ưu đãi 20k
-                </span>
-              )}
-
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-navy-700">{plan.name}</h3>
-                <p className="mt-1 text-sm text-ink-muted min-h-[36px]">{plan.subtitle}</p>
-              </div>
-
-              {/* Price */}
-              <div className="mb-6 border-b border-line pb-5">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-3xl font-black text-navy-700">
-                    {price === 0 ? 'Miễn phí' : formatCurrency(price)}
-                  </span>
-                  {(plan.id.includes('pro') || plan.name.includes('Pro') || price === 20000) && (
-                    <>
-                      <span className="text-sm font-semibold text-slate-400 line-through">
-                        {formatCurrency(billingCycle === 'yearly' ? 1990000 : 199000)}
-                      </span>
-                      <span className="rounded-md bg-rose-100 text-rose-700 font-extrabold text-[10px] px-1.5 py-0.5 border border-rose-200">
-                        GIẢM 90%
-                      </span>
-                    </>
-                  )}
-                  {price > 0 && (
-                    <span className="text-sm text-ink-muted">
-                      / {billingCycle === 'yearly' ? 'năm' : 'tháng'}
-                    </span>
-                  )}
-                </div>
-                {billingCycle === 'yearly' && price > 0 && !(plan.id.includes('pro') || plan.name.includes('Pro')) && (
-                  <p className="mt-1 text-sm text-emerald-600 font-medium">
-                    Tương đương {formatCurrency(Math.round(price / 12))}/tháng
-                  </p>
-                )}
-              </div>
-
-              {/* Feature List */}
-              <div className="flex-1 space-y-3 mb-6">
-                <p className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                  Tính năng bao gồm:
-                </p>
-                {plan.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-sm">
-                    {feat.included ? (
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mt-0.5">
-                        <Check size={13} strokeWidth={2.5} />
-                      </span>
-                    ) : (
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 mt-0.5">
-                        –
-                      </span>
-                    )}
-                    <span className={feat.included ? 'text-navy-700 font-medium' : 'text-slate-400'}>
-                      {feat.text}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Button */}
-              {isCurrentPlan ? (
-                <button
-                  disabled
-                  className="w-full rounded-xl bg-slate-100 py-2.5 text-center text-sm font-bold text-navy-700 cursor-default"
-                >
-                  ✓ Gói đang sử dụng
-                </button>
-              ) : isStarterFallback ? (
-                <button
-                  disabled
-                  className="w-full cursor-default rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-center text-sm font-semibold text-slate-500"
-                >
-                  Tự động áp dụng khi hết hạn
-                </button>
-              ) : isLowerPaidPlan ? (
-                <button
-                  disabled
-                  className="w-full cursor-default rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-center text-sm font-semibold text-slate-500"
-                >
-                  Không thể hạ gói giữa kỳ
-                </button>
-              ) : (
-                <Button
-                  variant={plan.id === 'plan_center' || pIdx === 2 ? 'primary' : 'secondary'}
-                  fullWidth
-                  disabled={subscribingId === plan.id}
-                  onClick={() => handleSubscribe(plan)}
-                >
-                  {subscribingId === plan.id ? (
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" /> Đang kích hoạt...
-                    </span>
-                  ) : (
-                    'Nâng cấp ngay'
-                  )}
-                </Button>
-              )}
-            </div>
-          )
-        })}
+        {plans.map((plan, pIdx) => (
+          <TeacherPlanCard
+            key={plan.id}
+            plan={plan}
+            pIdx={pIdx}
+            billingCycle={billingCycle}
+            currentPlanId={currentPlanId}
+            currentBillingCycle={currentBillingCycle}
+            subscribingId={subscribingId}
+            onSubscribe={handleSubscribe}
+          />
+        ))}
       </div>
 
-      {/* Phần 2: Mã Giảm Giá Độc Quyền cho Học Sinh của Giáo Viên */}
+      {/* Ưu Đãi Giới Thiệu & Mua Sỉ */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Card Mã giới thiệu */}
         <div className="rounded-2xl border border-line bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
@@ -782,23 +456,22 @@ function TeacherPackagesPage() {
           </div>
         </div>
 
-        {/* Card Gói Mua Theo Lớp (Bulk Class Pass) — TẠM KHÓA */}
+        {/* Card Gói Mua Theo Lớp (Bulk Class Pass) */}
         <div className="lg:col-span-2 relative rounded-2xl border border-line bg-white p-6 shadow-sm space-y-4 overflow-hidden">
           {/* Overlay "Sắp ra mắt" */}
-          <div className="absolute inset-0 z-10 backdrop-blur-[2px] bg-white/60 flex flex-col items-center justify-center rounded-2xl gap-3">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div className="absolute inset-0 z-10 backdrop-blur-[2px] bg-white/70 flex flex-col items-center justify-center rounded-2xl gap-3">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 shadow-2xs">
+              <Lock size={26} strokeWidth={2} />
             </span>
-            <div className="text-center">
-              <p className="text-sm font-bold text-slate-700">Sắp ra mắt</p>
-              <p className="text-xs text-slate-500 mt-0.5 max-w-[220px]">Tính năng mua sỉ gói lớp học đang được phát triển và sẽ ra mắt sớm</p>
+            <div className="text-center px-4">
+              <p className="text-sm font-bold text-slate-800">Sắp ra mắt</p>
+              <p className="text-xs text-slate-500 mt-0.5 max-w-[280px]">Tính năng ưu đãi mua sỉ bản quyền cho lớp học đang được phát triển và sẽ ra mắt sớm</p>
             </div>
-            <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600">
+            <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600">
               Coming Soon
             </span>
           </div>
 
-          {/* Nội dung gốc — bị mờ phía sau overlay */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500">
@@ -814,41 +487,44 @@ function TeacherPackagesPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2">
-            {CLASS_BUNDLE_PASSES.map((bundle) => (
-              <div
-                key={bundle.id}
-                className="flex flex-col justify-between rounded-xl border border-line bg-canvas p-4"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                      Giảm {bundle.discount}
-                    </span>
-                    <span className="text-[10px] text-ink-muted">{bundle.duration}</span>
+          {classBundles.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2">
+              {classBundles.map((bundle) => (
+                <div
+                  key={bundle.id}
+                  className="flex flex-col justify-between rounded-xl border border-line bg-canvas p-4"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                        {bundle.badge || 'Ưu đãi'}
+                      </span>
+                      <span className="text-[10px] text-ink-muted">{bundle.durationMonths ? `${bundle.durationMonths} tháng` : ''}</span>
+                    </div>
+                    <h4 className="mt-2 text-xs font-bold text-navy-700">{bundle.name}</h4>
+                    <p className="mt-1 text-[11px] text-ink-muted">{bundle.description || ''}</p>
                   </div>
-                  <h4 className="mt-2 text-xs font-bold text-navy-700">{bundle.title}</h4>
-                  <p className="mt-1 text-[11px] text-ink-muted">{bundle.idealFor}</p>
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-line">
-                  <p className="text-sm font-black text-navy-700">
-                    {formatCurrency(bundle.discountedPrice)}
-                  </p>
-                  <p className="text-[10px] text-ink-muted line-through">
-                    {formatCurrency(bundle.originalPrice)}
-                  </p>
-                  <button
-                    type="button"
-                    disabled
-                    className="mt-2.5 w-full rounded-lg bg-white border border-line py-1.5 text-xs font-semibold text-navy-700 shadow-sm cursor-not-allowed opacity-60"
-                  >
-                    Đăng ký gói
-                  </button>
+                  <div className="mt-4 pt-3 border-t border-line">
+                    <p className="text-sm font-black text-navy-700">
+                      {formatCurrency(bundle.priceYearly || bundle.priceMonthly || 0)}
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-2.5 w-full rounded-lg bg-white border border-line py-1.5 text-xs font-semibold text-navy-700 shadow-sm cursor-not-allowed opacity-60"
+                    >
+                      Đăng ký gói
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">
+              Tính năng mua sỉ gói lớp học đang được chuẩn bị để tích hợp trực tiếp.
+            </div>
+          )}
         </div>
       </div>
 
@@ -859,108 +535,6 @@ function TeacherPackagesPage() {
         order={sepayOrder}
         onSuccess={handlePaymentSuccess}
       />
-
-      {/* Modal Chi tiết Giao dịch & Hóa đơn Điện tử */}
-      <TransactionInvoiceModal
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
-        order={selectedInvoiceOrder}
-      />
-
-      {/* Modal Yêu cầu hoàn tiền (Refund Guarantee 7 ngày) */}
-      {isRefundModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-line overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-line bg-slate-50">
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
-                  <RotateCcw size={18} />
-                </span>
-                <div>
-                  <h3 className="text-sm font-bold text-navy-800">Yêu cầu hoàn tiền (7 ngày)</h3>
-                  <p className="text-[11px] text-ink-muted">Mã đơn: {selectedRefundOrder?.orderCode || selectedRefundOrder?.id}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRefundModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-3.5">
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
-                <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                <span>
-                  Chính sách cam kết hoàn tiền 7 ngày. Số tiền hoàn: <strong>{formatCurrency(selectedRefundOrder?.amount || 0)}</strong>. Sau khi hoàn tất đối soát, quyền lợi gói Pro sẽ được tự động thu hồi.
-                </span>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-navy-700 block mb-1">
-                  Lý do yêu cầu hoàn tiền <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  placeholder="Ví dụ: Đăng ký nhầm gói hoặc chuyển lớp..."
-                  className="w-full text-xs p-2.5 rounded-xl border border-line focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-hidden"
-                />
-              </div>
-
-              <div className="space-y-2 pt-1 border-t border-line">
-                <p className="text-xs font-bold text-navy-800">Tài khoản nhận tiền hoàn (Napas 24/7):</p>
-                <div>
-                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Tên Ngân hàng:</label>
-                  <input
-                    type="text"
-                    value={refundBank}
-                    onChange={(e) => setRefundBank(e.target.value)}
-                    placeholder="VD: Vietcombank, MB Bank, Techcombank..."
-                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line"
-                  />
-                </div>
-                <div>
-                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Số tài khoản nhận hoàn:</label>
-                  <input
-                    type="text"
-                    value={refundAcc}
-                    onChange={(e) => setRefundAcc(e.target.value)}
-                    placeholder="VD: 1029384756"
-                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Tên chủ tài khoản (Viết hoa không dấu):</label>
-                  <input
-                    type="text"
-                    value={refundName}
-                    onChange={(e) => setRefundName(e.target.value)}
-                    placeholder="VD: NGUYEN VAN HUNG"
-                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-line uppercase"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-line flex items-center justify-end gap-2">
-              <Button variant="secondary" onClick={() => setIsRefundModalOpen(false)}>
-                Hủy
-              </Button>
-              <Button
-                variant="danger"
-                loading={isSubmittingRefund}
-                onClick={handleSubmitRefund}
-              >
-                Gửi yêu cầu hoàn tiền
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
