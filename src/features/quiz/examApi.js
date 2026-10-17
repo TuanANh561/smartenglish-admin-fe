@@ -180,8 +180,8 @@ export async function getExamTrashCount() {
 
 export async function seedToeic200ExamApi() {
   return createExam({
-    title: 'ETS TOEIC Full 200 Questions Simulation Test',
-    description: 'Đề thi thử TOEIC chuẩn format quốc tế 200 câu với 2 phần Listening (Part 1-4) và Reading (Part 5-7).',
+    title: 'TOEIC Test 1',
+    description: 'Đề thi thử TOEIC 200 câu chuẩn format quốc tế.',
     category: 'TOEIC_FULL',
     cefrLevel: 'B2',
     durationMinutes: 120,

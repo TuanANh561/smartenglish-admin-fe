@@ -27,6 +27,29 @@ export const TYPE_CONFIG = {
   },
 }
 
+export const REAL_SAMPLE_FILES = [
+  {
+    id: 'sample-vocab-audio',
+    name: 'vocabulary_audio_sample.json',
+    type: 'vocabulary',
+    typeLabel: 'Từ Vựng Audio Chuẩn (JSON)',
+    size: '5.0 KB',
+    itemCount: 10,
+    sampleTitle: 'Từ Vựng Tiếng Anh Học Thuật Kèm Audio & Phát Âm IPA Chuẩn',
+    url: '/samples/vocabulary_audio_sample.json',
+  },
+  {
+    id: 'sample-vocab-pdf',
+    name: 'English_Vocabulary_With_Audio.pdf',
+    type: 'vocabulary',
+    typeLabel: 'Tài Liệu PDF Từ Vựng (PDF)',
+    size: '12.2 KB',
+    itemCount: 15,
+    sampleTitle: 'Tài Liệu Từ Vựng & Luyện Phát Âm Trích Xuất AI',
+    url: '/samples/English_Vocabulary_With_Audio.pdf',
+  },
+]
+
 export const SAMPLE_AI_JSON = `[
   {
     "word": "algorithm",

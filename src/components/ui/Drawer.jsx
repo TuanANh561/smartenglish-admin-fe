@@ -34,7 +34,7 @@ function Drawer({ open, onClose, title, children, className, size = 'default', a
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-[1px] transition-opacity duration-200"
+      className="fixed inset-0 z-[60] flex justify-end bg-black/45 backdrop-blur-[1px] transition-opacity duration-200"
       onClick={() => onClose?.()}
     >
       <div

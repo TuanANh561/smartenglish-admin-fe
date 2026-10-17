@@ -259,7 +259,7 @@ export default function PronunciationPage() {
     const prevStatus = item.status || 'published'
     const newStatus = prevStatus === 'published' ? 'draft' : 'published'
 
-    setIpaLessons((prev) =>
+    setLessons((prev) =>
       prev.map((l) => (l.id === item.id ? { ...l, status: newStatus } : l))
     )
 
@@ -267,7 +267,7 @@ export default function PronunciationPage() {
       await togglePublishPronunciationLesson(item.id)
       toast.success(newStatus === 'published' ? `Đã xuất bản "${item.title}"` : `Đã chuyển về nháp "${item.title}"`)
     } catch (err) {
-      setIpaLessons((prev) =>
+      setLessons((prev) =>
         prev.map((l) => (l.id === item.id ? { ...l, status: prevStatus } : l))
       )
       toast.error('Lỗi khi đổi trạng thái: ' + err.message)

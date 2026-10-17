@@ -17,7 +17,7 @@ import {
   User,
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import { SHORT_TEST_TYPE_META } from '@/mocks/data/shortTests'
+import { SHORT_TEST_TYPE_META } from './examConstants'
 
 export const QUESTION_TYPE_META = {
   multiple_choice: { label: 'Trắc nghiệm', Icon: CheckSquare },

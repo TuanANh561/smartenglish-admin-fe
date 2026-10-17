@@ -172,7 +172,7 @@ export const ROUTE_META = {
   '/app/hoc-vien': { title: 'Người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
   '/app/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
-  '/app/giao-dich': { title: 'Quản lý Giao dịch & Hóa đơn', description: 'Tra cứu lịch sử thanh toán, xuất hóa đơn điện tử và hoàn ứng' },
+  '/app/giao-dich': { title: 'Quản lý Giao dịch & Hóa đơn', description: 'Tra cứu lịch sử thanh toán và xuất hóa đơn điện tử' },
   '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/app/hoc-lieu/ngu-phap': {
     title: 'Quản lý Bài học Ngữ pháp',

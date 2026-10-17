@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import LandingPage from '@/pages/landing/LandingPage'
 import AppShellLayout from '@/components/layout/AppShellLayout'
-import PlaceholderPage from '@/components/layout/PlaceholderPage'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import AiContentPage from '@/features/aiContent/AiContentPage'
 import AiConfigPage from '@/features/aiConfig/AiConfigPage'

@@ -28,18 +28,12 @@ export default function TransactionInvoiceModal({
   const [invoiceData, setInvoiceData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [isExportingPdf, setIsExportingPdf] = useState(false)
-  const [isEditingTax, setIsEditingTax] = useState(false)
-  const [taxCodeInput, setTaxCodeInput] = useState('')
-  const [companyNameInput, setCompanyNameInput] = useState('')
-  const [addressInput, setAddressInput] = useState('')
-  const [isSavingTax, setIsSavingTax] = useState(false)
   const printRef = useRef(null)
 
   // Fetch full invoice detail if orderId is provided or to enrich order
   useEffect(() => {
     if (!isOpen) {
       setInvoiceData(null)
-      setIsEditingTax(false)
       return
     }
 
@@ -51,9 +45,6 @@ export default function TransactionInvoiceModal({
         .then((res) => {
           const data = res?.data !== undefined ? res.data : res
           setInvoiceData(data)
-          if (data?.customerTaxCode) setTaxCodeInput(data.customerTaxCode)
-          if (data?.companyName) setCompanyNameInput(data.companyName)
-          if (data?.customerAddress) setAddressInput(data.customerAddress)
         })
         .catch((err) => {
           console.warn('Lỗi nạp hóa đơn chi tiết, sử dụng dữ liệu đơn hàng sẵn có:', err)
@@ -62,31 +53,6 @@ export default function TransactionInvoiceModal({
         .finally(() => setLoading(false))
     }
   }, [isOpen, orderId, order?.id])
-
-  const handleSaveTaxInfo = async () => {
-    const targetId = orderId || order?.id || order?.orderId
-    if (!targetId) return
-    setIsSavingTax(true)
-    try {
-      await api.put(`/payment/orders/${targetId}/invoice-info`, {
-        customerTaxCode: taxCodeInput,
-        companyName: companyNameInput,
-        customerAddress: addressInput,
-      })
-      toast.success('Đã lưu thông tin cơ quan phục vụ hoàn ứng!')
-      setIsEditingTax(false)
-      setInvoiceData((prev) => ({
-        ...prev,
-        customerTaxCode: taxCodeInput,
-        companyName: companyNameInput,
-        customerAddress: addressInput,
-      }))
-    } catch (err) {
-      toast.error('Không thể lưu thông tin cơ quan')
-    } finally {
-      setIsSavingTax(false)
-    }
-  }
 
   // Lắng nghe phím ESC để đóng modal tức thì
   useEffect(() => {
@@ -141,17 +107,24 @@ export default function TransactionInvoiceModal({
       Date.now() + (billingCycle.toLowerCase().includes('năm') ? 365 : 30) * 24 * 3600 * 1000,
     ).toISOString()
 
-  // Xác định vai trò chuẩn xác dựa trên email, tên hoặc tên gói
+  // Xác định vai trò chuẩn xác dựa trên email, tên, mã gói hoặc dữ liệu từ backend
   const isTeacher =
     customerEmail.toLowerCase().includes('teacher') ||
     customerName.toLowerCase().includes('thầy') ||
     customerName.toLowerCase().includes('cô') ||
+    customerName.toLowerCase().includes('mai phương') ||
     planName.toLowerCase().includes('giảng viên') ||
     planName.toLowerCase().includes('teacher') ||
-    rawOrder.customerRole?.toLowerCase().includes('giáo')
+    (inv.items?.[0]?.planName || '').toLowerCase().includes('giảng viên') ||
+    (inv.items?.[0]?.planName || '').toLowerCase().includes('teacher') ||
+    (rawOrder.customerRole || '').toLowerCase().includes('giáo') ||
+    (rawOrder.customerRole || '').toLowerCase().includes('teacher') ||
+    (inv.customerRole || '').toLowerCase().includes('giáo') ||
+    (inv.customerRole || '').toLowerCase().includes('teacher')
 
-  const customerRole =
-    inv.customerRole || (isTeacher ? 'Giảng viên (Teacher Pro)' : 'Học viên (Student)')
+  const customerRole = isTeacher
+    ? 'Giáo viên (Teacher Pro)'
+    : 'Học viên (Student)'
 
   const amountFinal =
     inv.amountFinal !== undefined
@@ -203,17 +176,6 @@ export default function TransactionInvoiceModal({
   const qrValue = `[HÓA ĐƠN ĐIỆN TỬ SMARTENGLISH AI]\nSố HĐ: ${invoiceNo} | Ký hiệu: ${serial}\nĐơn vị bán: HỆ THỐNG GIÁO DỤC CÔNG NGHỆ SMARTENGLISH AI\nMST: 010988XXXX | TP. Hồ Chí Minh\nNgười mua: ${customerName}\nEmail: ${customerEmail}\nGói: ${planName}\nTổng tiền: ${formatCurrency(amountFinal)}\nTrạng thái: ĐÃ THANH TOÁN (KÝ SỐ CA HỢP LỆ)\nTra cứu: https://smartenglish.vn/invoice`
 
   const getCleanInvoiceHtml = (qrDataUrl = '') => {
-    const taxSection = (inv.customerTaxCode || rawOrder.customerTaxCode)
-      ? `
-        <div style="margin-top: 8px; padding: 8px 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 11px; color: #065f46;">
-          <div style="font-weight: bold; margin-bottom: 2px;">✓ Hồ sơ hoàn ứng cơ quan:</div>
-          <div>MST Cơ quan: <strong style="font-family: monospace; color: #064e3b;">${inv.customerTaxCode || rawOrder.customerTaxCode}</strong></div>
-          ${(inv.companyName || rawOrder.companyName) ? `<div>Đơn vị: <strong>${inv.companyName || rawOrder.companyName}</strong></div>` : ''}
-          ${(inv.customerAddress || rawOrder.customerAddress) ? `<div style="color: #4b5563;">Đ/c: ${inv.customerAddress || rawOrder.customerAddress}</div>` : ''}
-        </div>
-      `
-      : ''
-
     return `
       <div style="width: 794px; min-height: 1050px; margin: 0 auto; padding: 36px 40px; background: #ffffff; color: #0f172a; font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; line-height: 1.45;">
         <!-- Header: Đơn vị bán hàng & Khung HĐĐT -->
@@ -261,11 +223,10 @@ export default function TransactionInvoiceModal({
               Thông tin khách hàng (Người mua)
             </div>
             <div style="font-size: 13px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">
-              ${inv.companyName || customerName}
+              ${customerName}
             </div>
             <div style="color: #475569; margin-bottom: 3px;">Email: <strong style="color: #0f172a;">${customerEmail}</strong></div>
-            <div style="color: #475569;">Vai trò: <span style="display: inline-block; padding: 1px 6px; background: #f1f5f9; color: #0369a1; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600;">${customerRole}</span></div>
-            ${taxSection}
+            <div style="color: #475569; line-height: 22px;">Vai trò: <span style="display: inline-block; vertical-align: middle; padding: 2px 8px; line-height: 14px; background: #f1f5f9; color: #0369a1; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; font-size: 11px;">${customerRole}</span></div>
           </div>
 
           <!-- Thẻ Thanh Toán -->
@@ -275,8 +236,8 @@ export default function TransactionInvoiceModal({
             </div>
             <div style="color: #475569; margin-bottom: 4px;">Mã đối soát: <strong style="font-family: monospace; color: #0f172a;">${txnId}</strong></div>
             <div style="color: #475569; margin-bottom: 4px;">Phương thức: <strong style="color: #0f172a;">${paymentMethod}</strong></div>
-            <div style="color: #475569; margin-bottom: 4px;">
-              Trạng thái: <span style="display: inline-block; padding: 2px 7px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 10px; font-weight: bold; font-size: 10px;">✓ ĐÃ THANH TOÁN THÀNH CÔNG</span>
+            <div style="color: #475569; margin-bottom: 4px; line-height: 22px;">
+              Trạng thái: <span style="display: inline-block; vertical-align: middle; padding: 2px 8px; line-height: 14px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 10px; font-weight: bold; font-size: 10px;">✓ ĐÃ THANH TOÁN THÀNH CÔNG</span>
             </div>
             <div style="color: #475569;">Kỳ hạn: <strong>${billingCycle}</strong> (Hiệu lực đến ${formatDate(periodEnd, 'dd/MM/yyyy')})</div>
           </div>
@@ -356,18 +317,30 @@ export default function TransactionInvoiceModal({
             <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase;">
               ĐƠN VỊ BÁN HÀNG
             </div>
-            <div style="font-size: 9px; color: #64748b; font-style: italic; margin-bottom: 4px;">
+            <div style="font-size: 9px; color: #64748b; font-style: italic; margin-bottom: 6px;">
               (Ký điện tử bởi SmartEnglish AI CA)
             </div>
-            <div style="display: inline-block; padding: 4px 10px; border: 2px solid #10b981; background: #ecfdf5; border-radius: 8px; text-align: left; margin-bottom: 4px;">
-              <div style="font-size: 9px; font-weight: 900; color: #064e3b; letter-spacing: 0.05em; text-transform: uppercase;">
-                ✓ ĐÃ THANH TOÁN • PAID
-              </div>
-              <div style="font-size: 9px; font-family: monospace; color: #047857;">
-                ${formatDate(issuedDate, 'dd/MM/yyyy HH:mm')}
-              </div>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+              <table cellpadding="0" cellspacing="0" style="border: 2px solid #10b981; background-color: #ecfdf5; border-radius: 10px; border-collapse: separate; margin-left: auto;">
+                <tr>
+                  <td style="padding: 6px 4px 6px 10px; vertical-align: middle;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                      <circle cx="12" cy="12" r="10" stroke="#059669" stroke-width="2.2" fill="#ecfdf5" />
+                      <path d="m9 12 2 2 4-4" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </td>
+                  <td style="padding: 6px 12px 6px 6px; vertical-align: middle; text-align: left;">
+                    <div style="font-size: 11px; font-weight: 900; color: #064e3b; line-height: 14px; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;">
+                      ĐÃ THANH TOÁN • PAID
+                    </div>
+                    <div style="font-size: 10px; font-family: monospace, Courier, sans-serif; color: #047857; line-height: 13px; margin-top: 2px;">
+                      ${formatDate(issuedDate, 'dd/MM/yyyy HH:mm')}
+                    </div>
+                  </td>
+                </tr>
+              </table>
             </div>
-            <div style="font-size: 9px; color: #94a3b8;">
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">
               Chữ ký số điện tử hợp lệ
             </div>
           </div>
@@ -407,6 +380,9 @@ export default function TransactionInvoiceModal({
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        windowWidth: 794,
+        scrollX: 0,
+        scrollY: 0,
       })
 
       const imgData = canvas.toDataURL('image/png')
@@ -602,20 +578,11 @@ export default function TransactionInvoiceModal({
             <div className="py-5 border-b border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               {/* Thẻ người mua */}
               <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-                    Thông tin khách hàng (Người mua)
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingTax(!isEditingTax)}
-                    className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 transition-colors cursor-pointer no-print"
-                  >
-                    {isEditingTax ? 'Đóng form' : '✎ Bổ sung MST / Hoàn ứng'}
-                  </button>
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                  Thông tin khách hàng (Người mua)
                 </div>
                 <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                  <span>{inv.companyName || customerName}</span>
+                  <span>{customerName}</span>
                   <BadgeCheck size={16} className="text-brand-500 fill-brand-500/10" />
                 </div>
                 <div className="text-slate-600">
@@ -624,57 +591,6 @@ export default function TransactionInvoiceModal({
                 <div className="text-slate-600">
                   Vai trò: <span className="font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-100">{customerRole}</span>
                 </div>
-
-                {/* Thông tin MST / Đơn vị phục vụ hoàn ứng */}
-                {(inv.customerTaxCode || rawOrder.customerTaxCode) && (
-                  <div className="text-xs text-emerald-800 bg-emerald-50/80 p-2 rounded-lg border border-emerald-200/70 space-y-0.5">
-                    <p className="font-bold">✓ Hồ sơ hoàn ứng cơ quan:</p>
-                    <p>MST Cơ quan: <span className="font-mono font-bold text-emerald-900">{inv.customerTaxCode || rawOrder.customerTaxCode}</span></p>
-                    {inv.companyName && <p>Đơn vị: <span className="font-semibold">{inv.companyName}</span></p>}
-                    {inv.customerAddress && <p className="text-2xs text-slate-500">Đ/c: {inv.customerAddress}</p>}
-                  </div>
-                )}
-
-                {/* Form cập nhật hoàn ứng (Chỉ hiện khi bấm nút) */}
-                {isEditingTax && (
-                  <div className="mt-2 p-3 rounded-xl border border-brand-200 bg-brand-50/50 space-y-2 no-print">
-                    <p className="font-bold text-navy-800 text-xs">Thông tin cơ quan phục vụ hoàn ứng:</p>
-                    <div>
-                      <label className="text-2xs font-semibold text-slate-600 block mb-0.5">Tên Trường / Đơn vị công tác:</label>
-                      <input
-                        type="text"
-                        value={companyNameInput}
-                        onChange={(e) => setCompanyNameInput(e.target.value)}
-                        placeholder="VD: Trường THPT Lê Hồng Phong / Trung tâm ABC"
-                        className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-2xs font-semibold text-slate-600 block mb-0.5">Mã số thuế (MST) Cơ quan:</label>
-                      <input
-                        type="text"
-                        value={taxCodeInput}
-                        onChange={(e) => setTaxCodeInput(e.target.value)}
-                        placeholder="VD: 010988XXXX"
-                        className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-2xs font-semibold text-slate-600 block mb-0.5">Địa chỉ cơ quan:</label>
-                      <input
-                        type="text"
-                        value={addressInput}
-                        onChange={(e) => setAddressInput(e.target.value)}
-                        placeholder="VD: TP. Hồ Chí Minh"
-                        className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2 pt-1">
-                      <Button size="xs" variant="secondary" onClick={() => setIsEditingTax(false)}>Hủy</Button>
-                      <Button size="xs" variant="primary" loading={isSavingTax} onClick={handleSaveTaxInfo}>Lưu thông tin</Button>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Thẻ thanh toán */}

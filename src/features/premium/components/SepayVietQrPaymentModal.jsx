@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
+  AlertTriangle,
   CheckCircle2,
   Copy,
   Download,
@@ -83,6 +84,19 @@ export default function SepayVietQrPaymentModal({
     }
   }
 
+  const handlePaymentSuccess = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    setPaymentSuccess(true)
+    playSuccessChime()
+    toast.success('🎉 Đã nhận thanh toán thành công qua SePay!')
+    try {
+      window.dispatchEvent(new Event('smartenglish:notification_update'))
+    } catch {}
+    if (onSuccess) {
+      onSuccess(order)
+    }
+  }
+
   // Polling tự động kiểm tra trạng thái đơn hàng qua API
   useEffect(() => {
     if (!isOpen || !orderCode || paymentSuccess) {
@@ -121,19 +135,6 @@ export default function SepayVietQrPaymentModal({
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [isOpen, orderCode, paymentSuccess])
-
-  const handlePaymentSuccess = () => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
-    setPaymentSuccess(true)
-    playSuccessChime()
-    toast.success('🎉 Đã nhận thanh toán thành công qua SePay!')
-    try {
-      window.dispatchEvent(new Event('smartenglish:notification_update'))
-    } catch {}
-    if (onSuccess) {
-      onSuccess(order)
-    }
-  }
 
   const handleCopy = (text, fieldName) => {
     navigator.clipboard.writeText(text)

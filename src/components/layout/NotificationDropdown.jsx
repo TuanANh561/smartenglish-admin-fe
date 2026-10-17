@@ -69,8 +69,12 @@ export default function NotificationDropdown({
       if (Array.isArray(list)) {
         const mapped = list.map((item) => ({
           id: item.id,
-          title: item.title,
-          content: item.content,
+          title: (item.title || '')
+            .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .trim(),
+          content: (item.content || '')
+            .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .trim(),
           time: formatTimeVi(item.createdAt),
           isRead: Boolean(item.isRead),
           type: (item.type || 'SYSTEM').toLowerCase(),

@@ -43,17 +43,10 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false)
 
-  // Fetch members and assignments
-  useEffect(() => {
-    if (!cls?.id) return
-    loadMembers()
-    loadAssignments()
-  }, [cls?.id])
-
   const loadMembers = async () => {
     setLoadingMembers(true)
     try {
-      const data = await getClassMembers(cls.id)
+      const data = await getClassMembers(cls?.id)
       setMembers(Array.isArray(data) ? data : [])
     } catch (err) {
       console.warn('Lỗi khi tải danh sách học viên:', err)
@@ -66,7 +59,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   const loadAssignments = async () => {
     setLoadingAssignments(true)
     try {
-      const data = await getClassAssignments(cls.id)
+      const data = await getClassAssignments(cls?.id)
       setAssignments(Array.isArray(data) ? data : [])
     } catch (err) {
       console.warn('Lỗi khi tải danh sách bài tập:', err)
@@ -75,6 +68,13 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
       setLoadingAssignments(false)
     }
   }
+
+  // Fetch members and assignments
+  useEffect(() => {
+    if (!cls?.id) return
+    loadMembers()
+    loadAssignments()
+  }, [cls?.id])
 
   const handleCopyCode = () => {
     if (!cls.joinCode) return

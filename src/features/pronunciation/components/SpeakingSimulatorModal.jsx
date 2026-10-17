@@ -28,8 +28,6 @@ export default function SpeakingSimulatorModal({
   onClose,
   scenario,
 }) {
-  if (!isOpen || !scenario) return null
-
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -45,6 +43,22 @@ export default function SpeakingSimulatorModal({
   const recognitionRef = useRef(null)
   const isRecordingRef = useRef(false)
   const finalTranscriptRef = useRef('')
+
+  // Web Speech API for TTS
+  const speakText = (text, rateMultiplier = 1.0) => {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    // Lọc bỏ phần góp ý tiếng Việt nếu có khi đọc phát âm tiếng Anh
+    const cleanEn = String(text || '').split(/💡/)[0].trim()
+    const utterance = new SpeechSynthesisUtterance(cleanEn || text)
+    utterance.lang = 'en-US'
+    const baseSpeed = scenario?.defaultSpeed === 'slow' ? 0.8 : scenario?.defaultSpeed === 'fast' ? 1.2 : 1.0
+    utterance.rate = baseSpeed * rateMultiplier
+    utterance.onstart = () => setIsSpeakingTts(true)
+    utterance.onend = () => setIsSpeakingTts(false)
+    utterance.onerror = () => setIsSpeakingTts(false)
+    window.speechSynthesis.speak(utterance)
+  }
 
   // Dừng mọi âm thanh và thu âm khi đóng modal
   const handleClose = () => {
@@ -77,6 +91,8 @@ export default function SpeakingSimulatorModal({
 
   // Initialize conversation with Opening Line
   useEffect(() => {
+    if (!isOpen || !scenario) return
+
     const opening = scenario.openingLine || 'Hello! How are you today?'
     setMessages([
       {
@@ -105,28 +121,12 @@ export default function SpeakingSimulatorModal({
         try { recognitionRef.current.stop() } catch (_) {}
       }
     }
-  }, [scenario])
+  }, [isOpen, scenario])
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isAiReplying])
-
-  // Web Speech API for TTS
-  const speakText = (text, rateMultiplier = 1.0) => {
-    if (!('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
-    // Lọc bỏ phần góp ý tiếng Việt nếu có khi đọc phát âm tiếng Anh
-    const cleanEn = String(text || '').split(/💡/)[0].trim()
-    const utterance = new SpeechSynthesisUtterance(cleanEn || text)
-    utterance.lang = 'en-US'
-    const baseSpeed = scenario.defaultSpeed === 'slow' ? 0.8 : scenario.defaultSpeed === 'fast' ? 1.2 : 1.0
-    utterance.rate = baseSpeed * rateMultiplier
-    utterance.onstart = () => setIsSpeakingTts(true)
-    utterance.onend = () => setIsSpeakingTts(false)
-    utterance.onerror = () => setIsSpeakingTts(false)
-    window.speechSynthesis.speak(utterance)
-  }
 
   // Web Speech API for STT:
   // Cho phép người dùng bấm vào để nói, bấm lại lần nữa để kết thúc
@@ -333,6 +333,8 @@ export default function SpeakingSimulatorModal({
       toast.error('Không thể sao chép văn bản')
     }
   }
+
+  if (!isOpen || !scenario) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-2 sm:p-4 overflow-hidden">

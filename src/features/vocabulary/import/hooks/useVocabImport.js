@@ -7,8 +7,8 @@
 import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { api, http } from '@/lib/api'
-import { PDF_SAMPLE_FILES } from '@/mocks/data/pdfImportSamples'
-import { getMockDataForType, parseJsonItems } from '../vocabImportUtils'
+import { REAL_SAMPLE_FILES } from '../vocabImportConstants'
+import { loadSamplePresetData, parseJsonItems } from '../vocabImportUtils'
 
 /**
  * @param {{ open: boolean, defaultType: string, onClose: function, onImportSuccess: function }} params
@@ -48,8 +48,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
   useEffect(() => {
     if (open) {
       setImportType(defaultType)
-      const matched = PDF_SAMPLE_FILES.find((f) => f.type === defaultType)
-      setSelectedPreset(matched || PDF_SAMPLE_FILES[0])
+      const matched = REAL_SAMPLE_FILES.find((f) => f.type === defaultType)
+      setSelectedPreset(matched || REAL_SAMPLE_FILES[0])
       setStep(1)
       setProgress(0)
       setLogs([])
@@ -150,7 +150,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
         toast.error('Vui lòng chọn một tệp mẫu thử nghiệm!')
         return
       }
-      dataset = getMockDataForType(importType, selectedPreset)
+      dataset = await loadSamplePresetData(selectedPreset)
     }
 
     const isPdfUpload = uploadMode === 'file' && customFile && !customFile.name.endsWith('.json')

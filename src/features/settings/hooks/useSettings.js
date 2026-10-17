@@ -12,6 +12,10 @@ import {
   saveTeacherSettings,
   syncUserSettingsWithBackend,
   fetchUserDetail,
+  fetchLearningSettings,
+  updateLearningSettings,
+  fetchNotificationPreferences,
+  updateNotificationPreferences,
 } from '../settingsApi'
 
 export function useSettings() {
@@ -38,40 +42,53 @@ export function useSettings() {
     }
   })
 
-  // Đồng bộ cài đặt từ backend chi tiết người dùng
+  // Đồng bộ cài đặt từ backend chi tiết người dùng, learning settings và notification preferences
   useEffect(() => {
     if (!currentUser?.id) return
     let isMounted = true
 
-    fetchUserDetail(currentUser.id)
-      .then((res) => {
-        if (!isMounted) return
-        const u = res?.data || res
-        if (u) {
-          if (isTeacher) {
-            setTeacherSettings((prev) => ({
-              ...prev,
-              preferences: {
-                ...prev.preferences,
-                uiLanguage: u.uiLanguage || prev.preferences.uiLanguage,
-                timezone: u.timezone || prev.preferences.timezone,
-              },
-            }))
-          } else {
-            setAdminSettings((prev) => ({
-              ...prev,
-              general: {
-                ...prev.general,
-                defaultLanguage: u.uiLanguage || prev.general.defaultLanguage,
-                timezone: u.timezone || prev.general.timezone,
-              },
-            }))
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn('Lấy thông tin người dùng từ server thất bại:', err)
-      })
+    Promise.allSettled([
+      fetchUserDetail(currentUser.id),
+      fetchLearningSettings(currentUser.id),
+      fetchNotificationPreferences(),
+    ]).then(([userRes, learningRes, notifRes]) => {
+      if (!isMounted) return
+
+      const u = userRes.status === 'fulfilled' ? (userRes.value?.data || userRes.value) : null
+      const learning = learningRes.status === 'fulfilled' ? (learningRes.value?.data || learningRes.value) : null
+      const notif = notifRes.status === 'fulfilled' ? (notifRes.value?.data || notifRes.value) : null
+
+      const effectiveLang = learning?.uiLanguage || u?.uiLanguage
+      const effectiveTimezone = learning?.timezone || u?.timezone
+
+      if (isTeacher) {
+        setTeacherSettings((prev) => ({
+          ...prev,
+          preferences: {
+            ...prev.preferences,
+            ...(effectiveLang ? { uiLanguage: effectiveLang } : {}),
+            ...(effectiveTimezone ? { timezone: effectiveTimezone } : {}),
+          },
+          notifications: {
+            ...prev.notifications,
+            ...(typeof notif?.soundEnabled === 'boolean' ? { playNotificationSound: notif.soundEnabled } : {}),
+          },
+        }))
+      } else {
+        setAdminSettings((prev) => ({
+          ...prev,
+          general: {
+            ...prev.general,
+            ...(effectiveLang ? { defaultLanguage: effectiveLang } : {}),
+            ...(effectiveTimezone ? { timezone: effectiveTimezone } : {}),
+          },
+          email: {
+            ...prev.email,
+            ...(typeof notif?.emailEnabled === 'boolean' ? { notifyPaymentSuccess: notif.emailEnabled } : {}),
+          },
+        }))
+      }
+    })
 
     return () => {
       isMounted = false
@@ -99,39 +116,55 @@ export function useSettings() {
     setIsSaving(true)
     try {
       if (isTeacher) {
-        // 1. Lưu localStorage
+        // 1. Lưu localStorage dự phòng offline
         saveTeacherSettings(currentUser?.id, teacherSettings)
 
-        // 2. Đồng bộ lên backend CSDL
+        // 2. Đồng bộ lên các dịch vụ backend thật (auth-service, notification-service)
         if (currentUser?.id) {
-          await syncUserSettingsWithBackend(currentUser.id, {
-            uiLanguage: teacherSettings.preferences.uiLanguage,
-            timezone: teacherSettings.preferences.timezone,
-          })
+          const uiLang = teacherSettings.preferences.uiLanguage
+          const tz = teacherSettings.preferences.timezone
+
+          await Promise.allSettled([
+            syncUserSettingsWithBackend(currentUser.id, { uiLanguage: uiLang, timezone: tz }),
+            updateLearningSettings(currentUser.id, { uiLanguage: uiLang, timezone: tz }),
+            updateNotificationPreferences({
+              soundEnabled: teacherSettings.notifications?.playNotificationSound,
+              timezone: tz,
+              locale: uiLang,
+            }),
+          ])
 
           setUser({
             ...currentUser,
-            uiLanguage: teacherSettings.preferences.uiLanguage,
-            timezone: teacherSettings.preferences.timezone,
+            uiLanguage: uiLang,
+            timezone: tz,
           })
         }
 
         toast.success('Đã lưu cấu hình giảng dạy thành công!')
       } else {
-        // 1. Lưu localStorage
+        // 1. Lưu localStorage dự phòng offline
         saveAdminSettings(adminSettings)
 
-        // 2. Đồng bộ lên backend CSDL
+        // 2. Đồng bộ lên các dịch vụ backend thật (auth-service, notification-service)
         if (currentUser?.id) {
-          await syncUserSettingsWithBackend(currentUser.id, {
-            uiLanguage: adminSettings.general.defaultLanguage,
-            timezone: adminSettings.general.timezone,
-          })
+          const defaultLang = adminSettings.general.defaultLanguage
+          const tz = adminSettings.general.timezone
+
+          await Promise.allSettled([
+            syncUserSettingsWithBackend(currentUser.id, { uiLanguage: defaultLang, timezone: tz }),
+            updateLearningSettings(currentUser.id, { uiLanguage: defaultLang, timezone: tz }),
+            updateNotificationPreferences({
+              emailEnabled: true,
+              timezone: tz,
+              locale: defaultLang,
+            }),
+          ])
 
           setUser({
             ...currentUser,
-            uiLanguage: adminSettings.general.defaultLanguage,
-            timezone: adminSettings.general.timezone,
+            uiLanguage: defaultLang,
+            timezone: tz,
           })
         }
 
@@ -139,7 +172,7 @@ export function useSettings() {
       }
     } catch (err) {
       console.warn('Lỗi khi lưu cài đặt backend:', err)
-      toast.success('Đã lưu cài đặt vào bộ nhớ cục bộ!')
+      toast.error('Lỗi khi lưu cài đặt lên máy chủ. Vui lòng thử lại!')
     } finally {
       setIsSaving(false)
     }

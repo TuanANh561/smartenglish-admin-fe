@@ -7,8 +7,7 @@ import { useRef } from 'react'
 import { Upload, FileCode, Sparkles, Check, Trash2, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
-import { PDF_SAMPLE_FILES } from '@/mocks/data/pdfImportSamples'
-import { SAMPLE_AI_JSON } from '../vocabImportConstants'
+import { REAL_SAMPLE_FILES, SAMPLE_AI_JSON } from '../vocabImportConstants'
 
 export default function ImportStepUpload({
   importType,
@@ -44,8 +43,8 @@ export default function ImportStepUpload({
           active={uploadMode === 'preset'}
           onClick={() => {
             setUploadMode('preset')
-            if (!selectedPreset && PDF_SAMPLE_FILES.length > 0) {
-              const matched = PDF_SAMPLE_FILES.find((f) => f.type === importType) || PDF_SAMPLE_FILES[0]
+            if (!selectedPreset && REAL_SAMPLE_FILES.length > 0) {
+              const matched = REAL_SAMPLE_FILES.find((f) => f.type === importType) || REAL_SAMPLE_FILES[0]
               setSelectedPreset(matched)
             }
           }}
@@ -266,7 +265,7 @@ function PasteJsonTab({ customJsonText, setCustomJsonText, setSelectedPreset }) 
 }
 
 function PresetSampleTab({ importType, selectedPreset, setSelectedPreset }) {
-  const sampleFiles = PDF_SAMPLE_FILES.filter((f) => f.type === importType)
+  const sampleFiles = REAL_SAMPLE_FILES.filter((f) => f.type === importType)
 
   const getBadgeColor = (fileId) => {
     if (fileId === 'pdf-vocab-02') return 'bg-blue-50 text-blue-700 border-blue-200'

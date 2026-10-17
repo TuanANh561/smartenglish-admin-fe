@@ -35,6 +35,7 @@ import Select from '@/components/ui/Select'
 import Tabs from '@/components/ui/Tabs'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { getUsers } from '@/features/users/api'
 import {
   getNotifications,
   createNotification,
@@ -94,12 +95,26 @@ function NotificationsPage() {
   const [type, setType] = useState('info')
   const [channel, setChannel] = useState('ALL') // 'ALL' | 'IN_APP' | 'EMAIL' | 'PUSH'
   const [userEmail, setUserEmail] = useState('hocvien@smartenglish.edu.vn')
-  const [targetGroup, setTargetGroup] = useState('All Users')
+  const [targetGroup, setTargetGroup] = useState('All Users') // 'All Users' | 'Students' | 'Teachers' | 'Specific'
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [userList, setUserList] = useState([])
   const [isScheduled, setIsScheduled] = useState(false)
   const [scheduleTime, setScheduleTime] = useState('')
 
   // Modal test activity log
   const [isTestLogOpen, setIsTestLogOpen] = useState(false)
+
+  // Nạp danh sách người dùng khi mở drawer
+  useEffect(() => {
+    if (isCreateOpen && userList.length === 0) {
+      getUsers({ size: 100 })
+        .then((res) => {
+          const list = res?.data?.content || res?.content || (Array.isArray(res) ? res : [])
+          setUserList(list)
+        })
+        .catch(() => {})
+    }
+  }, [isCreateOpen, userList.length])
 
   // Nạp dữ liệu thật 100% từ backend notification-service
   const loadData = async () => {
@@ -268,18 +283,54 @@ function NotificationsPage() {
         setNotifications((prev) => [newNoti, ...prev])
         toast.success(`Đã lên lịch phát thông báo qua kênh [${channel}] thành công!`)
       } else {
-        // Gửi ngay lập tức (In-App + Tự động gửi Email nếu có)
-        await createNotification({
-          userId: currentUserId,
+        // Gửi ngay lập tức
+        let targetUserIds = []
+        let singleUserId = null
+        let resolvedLabel = 'Toàn bộ người dùng'
+
+        if (targetGroup === 'Specific') {
+          if (!selectedUserId) {
+            toast.error('Vui lòng chọn người nhận cụ thể')
+            return
+          }
+          singleUserId = Number(selectedUserId)
+          const found = userList.find((u) => u.id === singleUserId)
+          resolvedLabel = found ? `${found.displayName || found.username} (#${found.id})` : `User #${singleUserId}`
+        } else {
+          const roleFilter = targetGroup === 'Students' ? 'student' : targetGroup === 'Teachers' ? 'teacher' : undefined
+          resolvedLabel = targetGroup === 'Students' ? 'Học viên' : targetGroup === 'Teachers' ? 'Giáo viên' : 'Toàn bộ người dùng'
+
+          try {
+            const res = await getUsers({ size: 200, role: roleFilter })
+            const fetched = res?.data?.content || res?.content || (Array.isArray(res) ? res : [])
+            targetUserIds = fetched.map((u) => u.id).filter(Boolean)
+          } catch (err) {
+            console.warn('Không thể lấy danh sách người dùng:', err)
+          }
+
+          if (targetUserIds.length === 0) {
+            targetUserIds = [currentUserId]
+          }
+        }
+
+        const payload = {
           title: title.trim(),
           content: content.trim(),
           type: type.toUpperCase(),
           channel,
-          userEmail: channel === 'EMAIL' || channel === 'ALL' ? userEmail : undefined,
+          userEmail: (channel === 'EMAIL' || channel === 'ALL') ? userEmail : undefined,
           targetLink: '/app/thong-bao',
           senderId: currentUserId,
           senderName: user?.displayName || 'Ban Quản trị Hệ thống',
-        })
+        }
+
+        if (targetGroup === 'Specific') {
+          payload.userId = singleUserId
+        } else {
+          payload.userIds = targetUserIds
+        }
+
+        await createNotification(payload)
 
         const newNoti = {
           id: `NOTI-${Date.now()}`,
@@ -290,12 +341,7 @@ function NotificationsPage() {
           isRead: false,
           sender: user?.displayName || 'Ban Quản trị',
           targetGroup,
-          targetGroupLabel:
-            targetGroup === 'All Users'
-              ? 'Toàn bộ người dùng'
-              : targetGroup === 'Students'
-                ? 'Học viên'
-                : 'Giáo viên',
+          targetGroupLabel: resolvedLabel,
           status: 'sent',
           channel,
           sentAt: 'Vừa xong',
@@ -308,14 +354,14 @@ function NotificationsPage() {
           userId: currentUserId,
           activityType: 'CREATE_NOTIFICATION',
           title: 'Phát thông báo hệ thống',
-          description: `Đã phát thông báo "${title.trim()}" qua kênh ${channel}.`,
+          description: `Đã phát thông báo "${title.trim()}" tới ${resolvedLabel} qua kênh ${channel}.`,
           status: 'SUCCESS',
         }).catch(() => {})
 
         toast.success(
-          channel === 'EMAIL'
-            ? 'Đã phát email thông báo HTML theo mẫu thành công!'
-            : `Đã phát thông báo tức thì qua kênh [${channel}]!`,
+          targetGroup === 'Specific'
+            ? `Đã phát thông báo tới ${resolvedLabel} thành công!`
+            : `Đã phát thông báo tới ${targetUserIds.length} người dùng thành công!`
         )
       }
 
@@ -537,7 +583,9 @@ function NotificationsPage() {
                       {/* Thông tin hoạt động */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h4 className="text-sm font-bold text-navy-800">{act.title}</h4>
+                          <h4 className="text-sm font-bold text-navy-800">
+                            {(act.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
+                          </h4>
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wide">
                             {act.activityType}
                           </span>
@@ -547,7 +595,7 @@ function NotificationsPage() {
                         </div>
 
                         <p className="text-xs text-slate-600 leading-relaxed">
-                          {act.description}
+                          {(act.description || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-3 text-[11px] text-ink-muted pt-1">
@@ -623,7 +671,7 @@ function NotificationsPage() {
                       <div className="flex-1 space-y-1.5 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-sm font-bold text-navy-700 group-hover:text-brand-600 transition-colors">
-                            {item.title}
+                            {(item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
                           </h3>
                           {item.isImportant && (
                             <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-red-600">
@@ -636,7 +684,7 @@ function NotificationsPage() {
                         </div>
 
                         <p className="text-sm text-ink-muted leading-relaxed">
-                          {item.content}
+                          {(item.content || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
                         </p>
 
                         {/* Metadata line */}
@@ -814,11 +862,44 @@ function NotificationsPage() {
                 className="mt-1 text-sm font-medium"
               >
                 <option value="All Users">Toàn bộ người dùng</option>
-                <option value="Students">Học viên</option>
-                <option value="Teachers">Giáo viên</option>
+                <option value="Students">Tất cả Học viên</option>
+                <option value="Teachers">Tất cả Giáo viên</option>
+                <option value="Specific">Người dùng cụ thể (Đích danh)</option>
               </Select>
             </div>
           </div>
+
+          {targetGroup === 'Specific' && (
+            <div className="rounded-xl border border-line p-3 bg-slate-50/70 space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-700 flex items-center gap-1.5">
+                <User size={13} className="text-brand-600" />
+                Chọn người nhận cụ thể *
+              </label>
+              <select
+                value={selectedUserId}
+                onChange={(e) => {
+                  const uid = e.target.value ? Number(e.target.value) : ''
+                  setSelectedUserId(uid)
+                  const found = userList.find((u) => u.id === uid)
+                  if (found?.email) {
+                    setUserEmail(found.email)
+                  }
+                }}
+                className="w-full rounded-lg border border-line bg-white p-2.5 text-xs font-medium text-slate-800 focus:border-brand-500 focus:outline-none"
+                required={targetGroup === 'Specific'}
+              >
+                <option value="">-- Chọn học viên hoặc giáo viên --</option>
+                {userList.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayName || u.username || 'User'} ({u.email}) - #{u.id} [{u.role?.toUpperCase()}]
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500">
+                Thông báo sẽ gửi đích danh tới tài khoản này (kèm email nếu chọn kênh Email/Đa kênh).
+              </p>
+            </div>
+          )}
 
           {/* Lên lịch gửi trong lịch */}
           <div className="rounded-xl border border-line p-3 space-y-2 bg-slate-50/50">

@@ -19,53 +19,62 @@ import { createExam } from '../examApi'
 
 const PRESET_LIST = [
   {
-    id: 'ets-2024-06',
-    title: 'ETS TOEIC 2024 - Test 06',
-    fileName: 'toeic_ets_2024_test_06.json',
-    badge: 'Mới nhất 2024',
+    id: 'ets-2024-07',
+    title: 'TOEIC Test 7',
+    fileName: 'toeic_ets_2024_test_07.json',
+    badge: 'Độc lập 200 câu',
     questionsCount: 200,
     duration: 120,
-    desc: 'Đề thi chuẩn ETS 200 câu số 06 đầy đủ Audio, hình ảnh, bài đọc và đáp án chi tiết',
+    desc: 'Đề thi 200 câu Test 7 hoàn toàn mới, 0 trùng lặp, gom nhóm chuẩn hội thoại & bài đọc, giải thích chi tiết tiếng Việt',
+  },
+  {
+    id: 'ets-2024-06',
+    title: 'TOEIC Test 6',
+    fileName: 'toeic_ets_2024_test_06.json',
+    badge: '200 câu',
+    questionsCount: 200,
+    duration: 120,
+    desc: 'Đề thi 200 câu số 6 đầy đủ Audio, hình ảnh, bài đọc và đáp án chi tiết',
   },
   {
     id: 'ets-2024-05',
-    title: 'ETS TOEIC 2024 - Test 05',
+    title: 'TOEIC Test 5',
     fileName: 'toeic_ets_2024_test_05.json',
-    badge: 'Chuẩn ETS',
+    badge: '200 câu',
     questionsCount: 200,
     duration: 120,
-    desc: 'Đề thi chuẩn ETS 200 câu số 05 với đầy đủ Audio, lời thoại đa giọng Nam - Nữ và giải thích chi tiết',
+    desc: 'Đề thi 200 câu số 5 với đầy đủ Audio, lời thoại đa giọng Nam - Nữ và giải thích chi tiết',
   },
   {
     id: 'ets-2024-04',
-    title: 'ETS TOEIC 2024 - Test 04',
+    title: 'TOEIC Test 4',
     fileName: 'toeic_ets_2024_test_04.json',
-    badge: 'Chuẩn ETS',
+    badge: '200 câu',
     questionsCount: 200,
     duration: 120,
-    desc: 'Đề thi chuẩn ETS 200 câu số 04 đầy đủ Audio, hình ảnh, bài đọc và giải thích chi tiết',
+    desc: 'Đề thi 200 câu số 4 đầy đủ Audio, hình ảnh, bài đọc và giải thích chi tiết',
   },
   {
     id: 'ets-2024-03',
-    title: 'ETS TOEIC 2024 - Test 03',
+    title: 'TOEIC Test 3',
     fileName: 'toeic_ets_2024_test_03.json',
-    badge: 'Chuẩn ETS',
+    badge: '200 câu',
     questionsCount: 200,
     duration: 120,
-    desc: 'Đề thi chuẩn ETS 200 câu mới nhất kèm âm thanh, hình ảnh và lời thoại chi tiết',
+    desc: 'Đề thi 200 câu mới nhất kèm âm thanh, hình ảnh và lời thoại chi tiết',
   },
   {
     id: 'ets-2024-02',
-    title: 'ETS TOEIC 2024 - Test 02',
+    title: 'TOEIC Test 2',
     fileName: 'toeic_ets_2024_test_02.json',
-    badge: 'Chuẩn ETS',
+    badge: '200 câu',
     questionsCount: 200,
     duration: 120,
     desc: 'Bộ đề thi chuẩn 200 câu đầy đủ hình ảnh Part 1 và giải thích đáp án',
   },
   {
     id: 'ets-mini-01',
-    title: 'TOEIC Mini Test 01',
+    title: 'TOEIC Mini Test 1',
     fileName: 'toeic_mini_test_01.json',
     badge: 'Rút gọn',
     questionsCount: 50,
@@ -81,8 +90,8 @@ export default function ExamImportModal({ isOpen, onClose, onSuccess }) {
   const [parseError, setParseError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [selectedPresetId, setSelectedPresetId] = useState('ets-2024-06')
-  const [customExamTitle, setCustomExamTitle] = useState('ETS TOEIC 2024 - Test 06')
+  const [selectedPresetId, setSelectedPresetId] = useState('ets-2024-07')
+  const [customExamTitle, setCustomExamTitle] = useState('TOEIC Test 7')
 
   const handleSelectPreset = (preset) => {
     setSelectedPresetId(preset.id)
@@ -288,7 +297,7 @@ export default function ExamImportModal({ isOpen, onClose, onSuccess }) {
                   value={customExamTitle}
                   onChange={(e) => setCustomExamTitle(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs"
-                  placeholder="Ví dụ: ETS TOEIC 2024 - Test 06"
+                  placeholder="Ví dụ: TOEIC Test 1"
                 />
               </div>
             </div>
@@ -378,7 +387,7 @@ export default function ExamImportModal({ isOpen, onClose, onSuccess }) {
                         value={parsedData.title || ''}
                         onChange={(e) => setParsedData({ ...parsedData, title: e.target.value })}
                         className="w-full text-xs font-bold text-slate-900 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-brand-500 shadow-2xs"
-                        placeholder="Ví dụ: ETS TOEIC 2024 - Test 06"
+                        placeholder="Ví dụ: TOEIC Test 1"
                       />
                     </div>
                     <p className="text-xs text-slate-500 line-clamp-2">{parsedData.description}</p>

@@ -256,6 +256,37 @@ function AiChatWidget() {
     setShowHistory(false)
   }, [userId])
 
+  // Xử lý mở một cuộc trò chuyện từ danh sách
+  const openConversation = async (convId) => {
+    setActiveConversationId(convId)
+    setShowHistory(false)
+    setLoadingMessages(true)
+    try {
+      const res = await fetchChatMessages(convId, { page: 0, size: 30 })
+      const items = res?.items || []
+      if (items.length > 0) {
+        setMessages(
+          items.map((m) => ({
+            id: m.id,
+            role: m.role?.toLowerCase() || 'assistant',
+            content: m.content,
+            timestamp: m.createdAt,
+          })),
+        )
+      } else {
+        setMessages(INITIAL_MESSAGES)
+      }
+      setMessagePage(0)
+      setHasMoreMessages(Boolean(res?.hasMore))
+    } catch (err) {
+      console.warn('Lỗi tải tin nhắn cuộc trò chuyện:', err)
+      toast.error('Không thể tải nội dung tin nhắn cuộc trò chuyện')
+      setMessages(INITIAL_MESSAGES)
+    } finally {
+      setLoadingMessages(false)
+    }
+  }
+
   // Tải danh sách cuộc trò chuyện và hạn mức khi mở widget
   useEffect(() => {
     if (!isOpen || !userId) return
@@ -317,36 +348,6 @@ function AiChatWidget() {
       textareaRef.current.style.height = `${newHeight}px`
     }
   }, [input, isOpen])
-
-  // Xử lý mở một cuộc trò chuyện từ danh sách
-  const openConversation = async (convId) => {
-    setActiveConversationId(convId)
-    setShowHistory(false)
-    setLoadingMessages(true)
-    try {
-      const res = await fetchChatMessages(convId, { page: 0, size: 30 })
-      const items = res?.items || []
-      if (items.length > 0) {
-        setMessages(
-          items.map((m) => ({
-            id: m.id,
-            role: m.role?.toLowerCase() || 'assistant',
-            content: m.content,
-            timestamp: m.createdAt,
-          })),
-        )
-      } else {
-        setMessages(INITIAL_MESSAGES)
-      }
-      setMessagePage(0)
-      setHasMoreMessages(Boolean(res?.hasMore))
-    } catch (err) {
-      toast.error('Không thể tải nội dung tin nhắn cuộc trò chuyện')
-      setMessages(INITIAL_MESSAGES)
-    } finally {
-      setLoadingMessages(false)
-    }
-  }
 
   // Tải thêm tin nhắn cũ hơn
   const handleLoadMoreMessages = async () => {

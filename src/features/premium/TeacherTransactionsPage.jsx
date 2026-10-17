@@ -8,7 +8,6 @@ import {
   QrCode,
   Sparkles,
   ShieldCheck,
-  ArrowLeft,
   CheckCircle2,
   Clock,
   XCircle,
@@ -202,44 +201,24 @@ export default function TeacherTransactionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb & Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-ink-muted mb-1">
-            <Link to="/app/goi-dich-vu" className="hover:text-brand-600 transition-colors flex items-center gap-1">
-              <ArrowLeft size={13} />
-              Gói dịch vụ giảng dạy
-            </Link>
-            <span>/</span>
-            <span className="text-navy-700 font-semibold">Quản lý giao dịch & Hóa đơn</span>
-          </div>
-          <h1 className="text-2xl font-black text-navy-800 tracking-tight flex items-center gap-2">
-            <Receipt className="text-brand-600" size={26} />
-            Quản Lý Giao Dịch & Hóa Đơn Điện Tử
-          </h1>
-          <p className="text-xs sm:text-sm text-ink-muted mt-0.5">
-            Theo dõi dòng tiền mua gói, tra cứu mã đối soát VietQR Napas 24/7 và tải hóa đơn điện tử hợp lệ (NĐ 123/2020/NĐ-CP).
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link
-            to="/app/goi-dich-vu"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-100 transition shadow-2xs"
-          >
-            <Sparkles size={14} />
-            Nâng cấp / Xem các gói
-          </Link>
-          <button
-            type="button"
-            onClick={loadData}
-            disabled={loadingOrders}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-navy-700 shadow-2xs hover:bg-slate-50 transition disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loadingOrders ? 'animate-spin text-brand-600' : 'text-slate-500'} />
-            Làm mới
-          </button>
-        </div>
+      {/* Top Actions */}
+      <div className="flex items-center justify-end gap-2.5">
+        <Link
+          to="/app/goi-dich-vu"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-100 transition shadow-2xs"
+        >
+          <Sparkles size={14} />
+          Nâng cấp / Xem các gói
+        </Link>
+        <button
+          type="button"
+          onClick={loadData}
+          disabled={loadingOrders}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-semibold text-navy-700 shadow-2xs hover:bg-slate-50 transition disabled:opacity-50 cursor-pointer"
+        >
+          <RefreshCw size={14} className={loadingOrders ? 'animate-spin text-brand-600' : 'text-slate-500'} />
+          Làm mới
+        </button>
       </div>
 
       {/* 4 Thẻ Thống kê nhanh */}
@@ -471,7 +450,7 @@ export default function TeacherTransactionsPage() {
 
                       <td className="py-3.5 px-4 sm:px-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Nút Xem Hóa Đơn & Hoàn Ứng */}
+                          {/* Nút Xem Hóa Đơn */}
                           {isSuccess && (
                             <button
                               type="button"
@@ -480,7 +459,7 @@ export default function TeacherTransactionsPage() {
                                 setIsInvoiceModalOpen(true)
                               }}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100 transition shadow-2xs"
-                              title="Tải hóa đơn điện tử PDF & MST hoàn ứng"
+                              title="Xem & Tải hóa đơn điện tử (PDF)"
                             >
                               <FileCheck2 size={13} />
                               <span>Hóa đơn</span>
