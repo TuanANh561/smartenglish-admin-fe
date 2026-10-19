@@ -33,7 +33,7 @@ export default function TeacherBankingTab({
               Thông tin Tài khoản nhận tiền & Thẻ ngân hàng
             </h3>
             <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 border border-amber-300">
-              Sắp ra mắt (Coming Soon)
+              Sắp ra mắt
             </span>
           </div>
           <p className="text-xs text-ink-muted mt-0.5">
@@ -42,7 +42,7 @@ export default function TeacherBankingTab({
         </div>
       </div>
 
-      {/* BANNER THÔNG BÁO TÍNH NĂNG COMING SOON */}
+      {/* BANNER THÔNG BÁO TÍNH NĂNG ĐANG PHÁT TRIỂN */}
       <div className="rounded-2xl border-2 border-amber-300/80 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-yellow-50/80 p-5 shadow-xs relative overflow-hidden">
         <div className="flex items-start gap-3.5">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-md shrink-0">
@@ -81,14 +81,14 @@ export default function TeacherBankingTab({
         </div>
       </div>
 
-      {/* FORM GIAO DIỆN TÀI KHOẢN NGÂN HÀNG (ĐƯỢC THIẾT KẾ ĐẦY ĐỦ NHƯNG KHÓA / DISABLED) */}
+      {/* FORM GIAO DIỆN TÀI KHOẢN NGÂN HÀNG (DISABLED) */}
       <div className="relative rounded-2xl border border-slate-200 p-6 bg-slate-50/40 opacity-75 select-none pointer-events-none">
-        {/* Watermark Coming Soon mờ */}
+        {/* Watermark mờ */}
         <div className="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-[0.5px] rounded-2xl z-10">
           <div className="rounded-2xl bg-navy-900/85 text-white px-5 py-3 shadow-2xl flex items-center gap-2.5 border border-white/20">
             <Lock size={18} className="text-amber-400" />
             <span className="text-xs font-bold tracking-wide">
-              GIAO DIỆN XEM TRƯỚC — ĐANG TẠM KHÓA
+              TÍNH NĂNG ĐANG PHÁT TRIỂN
             </span>
           </div>
         </div>

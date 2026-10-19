@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Switch from '@/components/ui/Switch'
@@ -15,7 +16,7 @@ export default function AdminGeneralTab({ settings, onUpdateField }) {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-            Tên hệ thống (Platform Name)
+            Tên hệ thống
           </label>
           <Input
             value={settings.general.appName}
@@ -65,7 +66,7 @@ export default function AdminGeneralTab({ settings, onUpdateField }) {
 
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-            Email hỗ trợ kỹ thuật
+            Email hỗ trợ
           </label>
           <Input
             type="email"
@@ -86,31 +87,45 @@ export default function AdminGeneralTab({ settings, onUpdateField }) {
       </div>
 
       <div className="space-y-4 pt-2">
-        <div className="flex items-center justify-between rounded-xl border border-line p-4 bg-slate-50/50">
-          <div>
-            <p className="text-xs font-bold text-navy-800">Chế độ bảo trì hệ thống</p>
-            <p className="text-[11px] text-ink-muted mt-0.5">
-              Tạm ngưng truy cập của học viên để nâng cấp máy chủ backend.
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4 bg-slate-50/70 opacity-80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-navy-800">Chế độ bảo trì hệ thống</p>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 border border-amber-300">
+                <Lock size={10} />
+                Sắp ra mắt
+              </span>
+            </div>
+            <p className="text-[11px] text-ink-muted">
+              Tạm ngưng truy cập của học viên khi hệ thống nâng cấp hoặc bảo trì định kỳ.
             </p>
           </div>
           <Switch
-            checked={settings.general.maintenanceMode}
-            onChange={(checked) => onUpdateField('general', 'maintenanceMode', checked)}
+            checked={false}
+            disabled
+            onChange={() => {}}
           />
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-line p-4 bg-slate-50/50">
-          <div>
-            <p className="text-xs font-bold text-navy-800">
-              Cho phép đăng ký tài khoản tự do
-            </p>
-            <p className="text-[11px] text-ink-muted mt-0.5">
-              Mở cổng cho học viên mới tự tạo tài khoản trên web/app.
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4 bg-slate-50/70 opacity-80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-navy-800">
+                Cho phép đăng ký tài khoản tự do
+              </p>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 border border-amber-300">
+                <Lock size={10} />
+                Sắp ra mắt
+              </span>
+            </div>
+            <p className="text-[11px] text-ink-muted">
+              Mở hoặc khóa cổng cho học viên mới tự do tạo tài khoản trên ứng dụng.
             </p>
           </div>
           <Switch
-            checked={settings.general.allowRegistration}
-            onChange={(checked) => onUpdateField('general', 'allowRegistration', checked)}
+            checked={true}
+            disabled
+            onChange={() => {}}
           />
         </div>
       </div>

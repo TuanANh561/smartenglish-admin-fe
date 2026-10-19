@@ -40,6 +40,16 @@ export const DEFAULT_ADMIN_SETTINGS = {
     notifyPaymentSuccess: true,
     notifyAssignmentSubmission: true,
   },
+  ai: {
+    activeProvider: 'gemini',
+    geminiApiKey: '',
+    groqApiKey: '',
+    openrouterApiKey: '',
+    openaiApiKey: '',
+    primaryModel: 'gemini-2.5-flash',
+    creativityLevel: 'balanced',
+    autoFallbackEnabled: true,
+  },
 }
 
 /**
