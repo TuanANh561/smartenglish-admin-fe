@@ -10,6 +10,7 @@ import {
   Sliders,
   Wallet,
   Info,
+  Sparkles,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -20,6 +21,7 @@ import TeacherNotificationsTab from './components/TeacherNotificationsTab'
 import TeacherPreferencesTab from './components/TeacherPreferencesTab'
 import TeacherBankingTab from './components/TeacherBankingTab'
 import AdminGeneralTab from './components/AdminGeneralTab'
+import AdminAiTab from './components/AdminAiTab'
 import AdminSecurityTab from './components/AdminSecurityTab'
 import AdminPaymentTab from './components/AdminPaymentTab'
 import AdminEmailTab from './components/AdminEmailTab'
@@ -42,9 +44,15 @@ export default function SettingsPage() {
   // Tabs cho Admin
   const adminTabs = [
     { id: 'general', label: 'Cài đặt chung', icon: Sliders },
-    { id: 'security', label: 'Bảo mật hệ thống', icon: Lock },
-    { id: 'payment', label: 'Cổng thanh toán & Webhook', icon: CreditCard },
-    { id: 'email', label: 'Email & Thông báo đẩy', icon: Mail },
+    { id: 'ai', label: 'Trí tuệ nhân tạo (AI)', icon: Sparkles },
+    {
+      id: 'security',
+      label: 'Bảo mật & Phiên làm việc',
+      icon: Lock,
+      badge: 'Sắp ra mắt',
+    },
+    { id: 'payment', label: 'Cổng thanh toán', icon: CreditCard },
+    { id: 'email', label: 'Email & Thông báo', icon: Mail },
   ]
 
   // Tabs cho Giáo viên
@@ -54,7 +62,7 @@ export default function SettingsPage() {
     { id: 'preferences', label: 'Ngôn ngữ & Múi giờ', icon: Globe },
     {
       id: 'banking',
-      label: 'Tài khoản nhận tiền (Coming Soon)',
+      label: 'Tài khoản nhận tiền',
       icon: Wallet,
       badge: 'Sắp ra mắt',
     },
@@ -160,6 +168,13 @@ export default function SettingsPage() {
               />
             )}
 
+            {!isTeacher && activeTab === 'ai' && (
+              <AdminAiTab
+                settings={adminSettings}
+                onUpdateField={updateAdminField}
+              />
+            )}
+
             {!isTeacher && activeTab === 'security' && (
               <AdminSecurityTab
                 settings={adminSettings}
@@ -182,8 +197,8 @@ export default function SettingsPage() {
             )}
 
             {/* ── BOTTOM ACTIONS ──────────────────────────────────────── */}
-            {/* Ẩn nút lưu khi ở tab banking coming soon của teacher */}
-            {!(isTeacher && activeTab === 'banking') && (
+            {/* Ẩn nút lưu khi ở tab coming soon (banking của teacher hoặc security của admin) */}
+            {!((isTeacher && activeTab === 'banking') || (!isTeacher && activeTab === 'security')) && (
               <div className="flex items-center justify-end gap-3 pt-5 border-t border-line">
                 <Button variant="secondary" icon={RefreshCw} onClick={handleReset}>
                   Khôi phục mặc định

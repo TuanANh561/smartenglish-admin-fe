@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Check,
@@ -9,6 +9,7 @@ import {
   Loader2,
   Plus,
   Save,
+  Sparkles,
   Trash2,
   Volume2,
   X,
@@ -20,9 +21,11 @@ import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
+import { speakWord, speakWithWebSpeech, stopAudio } from '@/lib/ipaHelper'
+import { cleanDisplayMeaning } from './columns'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const PARTS_OF_SPEECH = [
@@ -144,11 +147,13 @@ function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove })
 function VocabularyFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialWordFromUrl = searchParams.get('word') || ''
   const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
 
   const [form, setForm] = useState({
-    word: '',
+    word: initialWordFromUrl,
     pronunciation: '',
     partOfSpeech: 'Noun',
     cefrLevel: 'B1',
@@ -159,6 +164,7 @@ function VocabularyFormPage() {
     exampleVi: '',
     synonyms: '',
     antonyms: '',
+    audioUrl: '',
   })
 
   const [questions, setQuestions] = useState([])
@@ -186,16 +192,17 @@ function VocabularyFormPage() {
           if (data) {
             setForm({
               word: data.word || '',
-              pronunciation: data.pronunciation || '',
+              pronunciation: data.pronunciation || data.ipaUs || data.ipaUk || '',
               partOfSpeech: data.partOfSpeech || 'Noun',
               cefrLevel: data.cefrLevel || 'B1',
-              vietnameseMeaning: data.vietnameseMeaning || '',
-              englishMeaning: data.englishMeaning || '',
+              vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning) || '',
+              englishMeaning: cleanDisplayMeaning(data.englishMeaning) || '',
               topic: data.topic || '',
               exampleEn: data.exampleEn || '',
-              exampleVi: data.exampleVi || '',
+              exampleVi: cleanDisplayMeaning(data.exampleVi) || '',
               synonyms: data.synonyms || '',
               antonyms: data.antonyms || '',
+              audioUrl: data.audioUrl || data.audioUsUrl || data.audioUkUrl || '',
             })
             if (data.exercises && Array.isArray(data.exercises)) {
               setQuestions(data.exercises)
@@ -212,7 +219,105 @@ function VocabularyFormPage() {
     }
   }, [id, isEditing])
 
+  // Tự động kích hoạt tra cứu từ điển nếu mở trang tạo từ vựng qua query param ?word=
+  useEffect(() => {
+    if (!isEditing && initialWordFromUrl.trim()) {
+      handleAutoLookup(initialWordFromUrl.trim())
+    }
+  }, [initialWordFromUrl, isEditing])
+
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  const [isPlayingExample, setIsPlayingExample] = useState(false)
+
+  // Tắt âm thanh khi rời khỏi màn hình form từ vựng hoặc khi audio khác phát
+  useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setIsPlayingAudio(false)
+      setIsPlayingExample(false)
+    })
+    return () => {
+      unregister()
+      stopAudio()
+    }
+  }, [])
+
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
+
+  const playAudio = () => {
+    const rawWord = (form.word || '').trim()
+    if (!rawWord) {
+      toast.error('Vui lòng nhập từ vựng trước khi nghe phát âm')
+      return
+    }
+    if (isPlayingAudio) {
+      stopAudio()
+      setIsPlayingAudio(false)
+      return
+    }
+    setIsPlayingAudio(true)
+    speakWithWebSpeech(rawWord, () => {
+      setIsPlayingAudio(false)
+    })
+  }
+
+  const playExampleAudio = () => {
+    const example = (form.exampleEn || '').trim()
+    if (!example) {
+      toast.error('Chưa có câu ví dụ tiếng Anh để phát âm')
+      return
+    }
+    if (isPlayingExample) {
+      stopAudio()
+      setIsPlayingExample(false)
+      return
+    }
+    setIsPlayingExample(true)
+    speakWithWebSpeech(example, () => {
+      setIsPlayingExample(false)
+    })
+  }
+
+  const [isLookingUp, setIsLookingUp] = useState(false)
+
+  const handleAutoLookup = async (overrideWord = null) => {
+    const rawWord = (typeof overrideWord === 'string' ? overrideWord : form.word || '').trim()
+    if (!rawWord) {
+      toast.error('Vui lòng nhập từ vựng trước khi bấm tra cứu')
+      return
+    }
+
+    setIsLookingUp(true)
+    const tId = toast.loading(`Đang tra cứu từ điển online & AI cho "${rawWord}"...`)
+    try {
+      const res = await api.get(ENDPOINTS.words.autoLookup, {
+        params: { word: rawWord }
+      })
+      const data = res?.data || res
+      if (data && data.word) {
+        setForm((prev) => ({
+          ...prev,
+          word: data.word,
+          pronunciation: data.pronunciation || prev.pronunciation,
+          partOfSpeech: data.partOfSpeech || prev.partOfSpeech,
+          cefrLevel: data.cefrLevel || prev.cefrLevel,
+          vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning) || prev.vietnameseMeaning,
+          englishMeaning: cleanDisplayMeaning(data.englishMeaning) || prev.englishMeaning,
+          topic: data.topic || prev.topic,
+          exampleEn: data.exampleEn || prev.exampleEn,
+          exampleVi: cleanDisplayMeaning(data.exampleVi) || prev.exampleVi,
+          audioUrl: data.audioUrl || prev.audioUrl,
+        }))
+        toast.success(`✨ Đã tra cứu & điền đầy đủ dữ liệu cho "${data.word}"!`, { id: tId })
+      } else {
+        toast.error('Không tìm thấy dữ liệu từ điển cho từ này', { id: tId })
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error(err?.message || 'Lỗi khi tra cứu từ điển online', { id: tId })
+    } finally {
+      setIsLookingUp(false)
+    }
+  }
 
   const addQuestion = () => {
     if (questions.length >= 10) { toast.error('Tối đa 10 câu hỏi bài tập'); return }
@@ -307,17 +412,69 @@ function VocabularyFormPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ vựng *</label>
-                    <Input value={form.word} onChange={set('word')} placeholder="VD: serendipity" required />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-600">Từ vựng *</label>
+                      <button
+                        type="button"
+                        onClick={handleAutoLookup}
+                        disabled={isLookingUp || !form.word.trim()}
+                        className="flex items-center gap-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Tự động tra cứu phiên âm IPA, nghĩa tiếng Việt, CEFR, ví dụ và phát âm audio"
+                      >
+                        {isLookingUp ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin" />
+                            <span>Đang tra cứu AI...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={12} className="text-indigo-600" />
+                            <span>✨ Tra từ điển & Tự động điền</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <Input
+                      value={form.word}
+                      onChange={set('word')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAutoLookup()
+                        }
+                      }}
+                      placeholder="VD: serendipity, resilience, sustainable..."
+                      required
+                    />
                   </div>
-                  <IpaInputField
-                    value={form.pronunciation}
-                    onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
-                    sourceWord={form.word}
-                    onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
-                    placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
-                  />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-600">Phiên âm IPA</label>
+                      {form.word.trim() && (
+                        <button
+                          type="button"
+                          onClick={playAudio}
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
+                            isPlayingAudio
+                              ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-300 animate-pulse'
+                              : 'text-slate-500 hover:text-brand-600 hover:bg-slate-50'
+                          }`}
+                          title="Phát âm từ vựng bằng Web Speech API"
+                        >
+                          <Volume2 size={13} className={isPlayingAudio ? 'text-brand-600' : 'text-slate-500'} />
+                          <span>{isPlayingAudio ? 'Đang đọc...' : 'Phát âm (Web Speech)'}</span>
+                        </button>
+                      )}
+                    </div>
+                    <IpaInputField
+                      value={form.pronunciation}
+                      onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
+                      sourceWord={form.word}
+                      onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
+                      placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ loại</label>
@@ -370,7 +527,24 @@ function VocabularyFormPage() {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Câu ví dụ (Tiếng Anh)</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-600">Câu ví dụ (Tiếng Anh)</label>
+                    {form.exampleEn.trim() && (
+                      <button
+                        type="button"
+                        onClick={playExampleAudio}
+                        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
+                          isPlayingExample
+                            ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-300 animate-pulse'
+                            : 'text-slate-500 hover:text-brand-600 hover:bg-slate-50'
+                        }`}
+                        title="Nghe câu ví dụ bằng Web Speech API"
+                      >
+                        <Volume2 size={13} className={isPlayingExample ? 'text-brand-600' : 'text-slate-500'} />
+                        <span>{isPlayingExample ? 'Đang đọc...' : 'Đọc ví dụ (Web Speech)'}</span>
+                      </button>
+                    )}
+                  </div>
                   <Input value={form.exampleEn} onChange={set('exampleEn')} placeholder="VD: Finding that job was pure serendipity." />
                 </div>
                 <div>

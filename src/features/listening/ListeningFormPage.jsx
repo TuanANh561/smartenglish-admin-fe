@@ -176,6 +176,13 @@ function ListeningFormPage() {
   const [questions, setQuestions] = useState([])
   const [openQuestionIdx, setOpenQuestionIdx] = useState(0)
 
+  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi form bài nghe
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
+
   // Load existing lesson on edit
   useEffect(() => {
     if (!isEditing) return
@@ -399,7 +406,7 @@ function ListeningFormPage() {
                   {isEditing ? `Chỉnh sửa: "${form.title}"` : 'Tạo bài nghe mới'}
                 </h1>
                 <span className="rounded-full bg-brand-50 border border-brand-200 px-2 py-0.5 text-[10px] font-bold text-brand-700">
-                  {form.level ? `Cấp độ ${form.level}` : 'Draft'}
+                  {form.level ? `Cấp độ ${form.level}` : 'Bản nháp'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">

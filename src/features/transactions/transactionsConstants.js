@@ -27,5 +27,6 @@ export const TXN_STATUS_META = {
   unmatched: { label: 'Chưa khớp', tone: 'warning' },
   manual_matched: { label: 'Khớp thủ công', tone: 'info' },
   partially_paid: { label: 'Thiếu tiền', tone: 'warning' },
+  expired: { label: 'Đã hết hạn', tone: 'neutral' },
 }
 

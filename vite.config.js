@@ -64,6 +64,38 @@ export default defineConfig({
         target: 'http://127.0.0.1:8082',
         changeOrigin: true,
       },
+      '/admin/users': {
+        target: 'http://127.0.0.1:8081',
+        changeOrigin: true,
+      },
+      '/admin/teacher-registrations': {
+        target: 'http://127.0.0.1:8081',
+        changeOrigin: true,
+      },
+      '/admin/transactions': {
+        target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+      },
+      '/admin/sepay-transactions': {
+        target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+      },
+      '/admin/revenue': {
+        target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+      },
+      '/payment': {
+        target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+      },
+      '/api/v1/notifications': {
+        target: 'http://127.0.0.1:8086',
+        changeOrigin: true,
+      },
+      '/api/v1/teacher': {
+        target: 'http://127.0.0.1:8087',
+        changeOrigin: true,
+      },
     },
   },
 })

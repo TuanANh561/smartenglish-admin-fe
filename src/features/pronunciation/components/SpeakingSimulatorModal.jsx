@@ -18,9 +18,9 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import { stopAudio } from '@/lib/ipaHelper'
+import { claimAppAudio, releaseAppAudio } from '@/lib/appAudioCoordinator'
 import { chatRoleplayTurn } from '../speakingScenarioApi'
 
 export default function SpeakingSimulatorModal({
@@ -48,6 +48,10 @@ export default function SpeakingSimulatorModal({
   const speakText = (text, rateMultiplier = 1.0) => {
     if (!('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
+    claimAppAudio('speaking-simulator', () => {
+      try { window.speechSynthesis.cancel() } catch (_) {}
+      setIsSpeakingTts(false)
+    })
     // Lọc bỏ phần góp ý tiếng Việt nếu có khi đọc phát âm tiếng Anh
     const cleanEn = String(text || '').split(/💡/)[0].trim()
     const utterance = new SpeechSynthesisUtterance(cleanEn || text)
@@ -55,13 +59,20 @@ export default function SpeakingSimulatorModal({
     const baseSpeed = scenario?.defaultSpeed === 'slow' ? 0.8 : scenario?.defaultSpeed === 'fast' ? 1.2 : 1.0
     utterance.rate = baseSpeed * rateMultiplier
     utterance.onstart = () => setIsSpeakingTts(true)
-    utterance.onend = () => setIsSpeakingTts(false)
-    utterance.onerror = () => setIsSpeakingTts(false)
+    utterance.onend = () => {
+      setIsSpeakingTts(false)
+      releaseAppAudio('speaking-simulator')
+    }
+    utterance.onerror = () => {
+      setIsSpeakingTts(false)
+      releaseAppAudio('speaking-simulator')
+    }
     window.speechSynthesis.speak(utterance)
   }
 
   // Dừng mọi âm thanh và thu âm khi đóng modal
   const handleClose = () => {
+    releaseAppAudio('speaking-simulator')
     if ('speechSynthesis' in window) {
       try { window.speechSynthesis.cancel() } catch (_) {}
     }
@@ -77,6 +88,7 @@ export default function SpeakingSimulatorModal({
   // Dọn dẹp âm thanh khi component unmount
   useEffect(() => {
     return () => {
+      releaseAppAudio('speaking-simulator')
       if ('speechSynthesis' in window) {
         try { window.speechSynthesis.cancel() } catch (_) {}
       }

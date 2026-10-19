@@ -77,7 +77,7 @@ export default function PronunciationTableRow({
             className="h-1.5 w-1.5 rounded-full"
             style={{ backgroundColor: isPublished ? '#10b981' : '#94a3b8' }}
           />
-          <span>{isPublished ? 'Published' : 'Draft'}</span>
+          <span>{isPublished ? 'Xuất bản' : 'Bản nháp'}</span>
         </span>
       </td>
 

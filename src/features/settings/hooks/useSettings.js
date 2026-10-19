@@ -17,6 +17,8 @@ import {
   fetchNotificationPreferences,
   updateNotificationPreferences,
 } from '../settingsApi'
+import { api } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/endpoints'
 
 export function useSettings() {
   const currentUser = useAuthStore((s) => s.user)
@@ -87,6 +89,24 @@ export function useSettings() {
             ...(typeof notif?.emailEnabled === 'boolean' ? { notifyPaymentSuccess: notif.emailEnabled } : {}),
           },
         }))
+
+        // Tải cấu hình AI từ content-service
+        api.get(ENDPOINTS.aiConfig.config).then((aiRes) => {
+          if (!isMounted) return
+          const aiData = aiRes?.data || aiRes
+          if (aiData) {
+            setAdminSettings((prev) => ({
+              ...prev,
+              ai: {
+                ...prev.ai,
+                activeProvider: aiData.activeProvider || prev.ai?.activeProvider || 'gemini',
+                primaryModel: aiData.primaryModel || prev.ai?.primaryModel || 'gemini-2.5-flash',
+                autoFallbackEnabled: typeof aiData.autoFallbackEnabled === 'boolean' ? aiData.autoFallbackEnabled : (prev.ai?.autoFallbackEnabled ?? true),
+                creativityLevel: aiData.creativityLevel || prev.ai?.creativityLevel || 'balanced',
+              },
+            }))
+          }
+        }).catch(() => {})
       }
     })
 
@@ -166,6 +186,38 @@ export function useSettings() {
             uiLanguage: defaultLang,
             timezone: tz,
           })
+        }
+
+        // 3. Đồng bộ cấu hình AI sang content-service nếu có
+        if (adminSettings.ai) {
+          try {
+            await api.put(ENDPOINTS.aiConfig.updateConfig, {
+              activeProvider: adminSettings.ai.activeProvider,
+              primaryModel: adminSettings.ai.primaryModel,
+              autoFallbackEnabled: adminSettings.ai.autoFallbackEnabled,
+              creativityLevel: adminSettings.ai.creativityLevel,
+            })
+
+            const keyMappings = [
+              { provider: 'groq', key: adminSettings.ai.groqApiKey, label: 'Khóa Groq' },
+              { provider: 'openrouter', key: adminSettings.ai.openrouterApiKey, label: 'Khóa OpenRouter' },
+              { provider: 'gemini', key: adminSettings.ai.geminiApiKey, label: 'Khóa Google Gemini' },
+              { provider: 'openai', key: adminSettings.ai.openaiApiKey, label: 'Khóa OpenAI' },
+            ]
+
+            for (const item of keyMappings) {
+              if (item.key && item.key.trim() && !item.key.includes('••••')) {
+                await api.post(ENDPOINTS.aiConfig.keys, {
+                  provider: item.provider,
+                  label: item.label,
+                  apiKey: item.key.trim(),
+                  isActive: adminSettings.ai.activeProvider === item.provider,
+                }).catch(() => {})
+              }
+            }
+          } catch (aiErr) {
+            console.warn('Lỗi đồng bộ AI config:', aiErr)
+          }
         }
 
         toast.success('Đã lưu cấu hình hệ thống thành công!')

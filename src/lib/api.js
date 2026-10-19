@@ -29,7 +29,7 @@ const safeBaseURL = rawBaseURL.replace('localhost', '127.0.0.1')
 
 export const http = axios.create({
   baseURL: safeBaseURL,
-  timeout: 15000, // 15 giây timeout chống treo request vô hạn
+  timeout: 30000, // 30 giây timeout chống treo request vô hạn
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -173,8 +173,6 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/orders') ||
       endpoint.startsWith('/admin/revenue') ||
       endpoint.startsWith('/admin/transactions') ||
-      endpoint.startsWith('/admin/roles') ||
-      endpoint.startsWith('/admin/permissions') ||
       endpoint.startsWith('/admin/stats') ||
       endpoint.startsWith('/api/v1/notifications') ||
       endpoint.startsWith('/notifications') ||

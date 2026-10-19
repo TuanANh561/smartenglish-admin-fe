@@ -23,8 +23,8 @@ const CATEGORY_MAP = {
 }
 
 const STATUS_BADGE = {
-  published: { label: 'Published', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  draft:     { label: 'Draft',     bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
+  published: { label: 'Xuất bản', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  draft:     { label: 'Bản nháp',  bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
 }
 
 export default function ExamCard({

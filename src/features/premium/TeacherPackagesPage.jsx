@@ -341,11 +341,6 @@ function TeacherPackagesPage() {
             <h2 className="text-2xl font-black">
               {quota?.planName || 'Gói Khởi Đầu (Teacher Starter)'}
             </h2>
-            <p className="text-sm text-white/80 max-w-xl">
-              {quota?.isPremium
-                ? `Tài khoản của bạn được cấp quyền giảng dạy Premium: tối đa ${quota.maxClasses} lớp học và ${quota.maxStudents ?? quota.maxStudentsPerClass} học viên mỗi lớp.`
-                : 'Bạn đang sử dụng gói trải nghiệm miễn phí. Nâng cấp lên Teacher Pro để mở khóa 15 lớp học, 100 học viên/lớp và AI không giới hạn!'}
-            </p>
             <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
               <span>
                 {quota?.isPremium

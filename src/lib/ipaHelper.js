@@ -1,4 +1,4 @@
-import { claimAppAudio, releaseAppAudio } from '@/lib/appAudioCoordinator'
+import { claimAppAudio, releaseAppAudio, registerAudioStopHandler, registerAudioElement } from '@/lib/appAudioCoordinator'
 
 // Cache key for LocalStorage
 const IPA_CACHE_KEY = 'smartenglish_online_ipa_cache_v1'
@@ -96,6 +96,21 @@ export const IPA_KEYBOARD_GROUPS = [
 
 let currentAudio = null
 let activePlaySessionId = 0
+let activeUtterance = null
+
+// Kích hoạt nạp giọng đọc Web Speech API sớm ngay khi khởi chạy trình duyệt
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  try {
+    window.speechSynthesis.getVoices()
+    if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+      window.speechSynthesis.onvoiceschanged = () => {
+        try {
+          window.speechSynthesis.getVoices()
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+}
 
 /**
  * Kiểm tra xem audioUrl có phải là URL âm thanh hợp lệ hay không
@@ -109,12 +124,21 @@ export function isValidAudioUrl(url) {
   return /^https?:\/\/.+/i.test(trimmed) || trimmed.startsWith('blob:') || trimmed.startsWith('data:')
 }
 
+let activeTurnTimeoutId = null
+
 /**
  * Dừng mọi âm thanh đang phát (cả file MP3 và SpeechSynthesis)
  */
 export function stopAudio() {
   dialogueStopRequested = true
   activePlaySessionId++ // Làm mất hiệu lực mọi callback hoặc playPromise của các từ trước đó
+
+  if (activeTurnTimeoutId) {
+    try {
+      clearTimeout(activeTurnTimeoutId)
+    } catch (_) {}
+    activeTurnTimeoutId = null
+  }
 
   if (currentAudio) {
     const audioToStop = currentAudio
@@ -132,12 +156,16 @@ export function stopAudio() {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel()
+      activeUtterance = null
     } catch (e) {
       // Ignore
     }
   }
   releaseAppAudio('ipa-audio')
 }
+
+// Tự động kết nối với trung tâm điều phối âm thanh stopAllAppAudio()
+registerAudioStopHandler(stopAudio)
 
 /**
  * Phát âm ra loa (Audio Player):
@@ -162,6 +190,7 @@ export function speakWord(text, audioUrl = null, onEnd = null) {
     try {
       const audio = new Audio(validUrl)
       currentAudio = audio
+      registerAudioElement(audio)
 
       audio.onended = () => {
         if (currentAudio === audio) {
@@ -200,6 +229,41 @@ export function speakWord(text, audioUrl = null, onEnd = null) {
 
   // 2. Nếu audioUrl là null, rỗng, không hợp lệ -> Dùng ngay Web Speech API của trình duyệt
   speakWithSpeechSynthesis(cleanText, sessionId, onEnd)
+}
+
+/**
+ * Phát âm trực tiếp bằng Web Speech API (SpeechSynthesis) của trình duyệt:
+ * - Dành riêng cho giao diện Admin & Học liệu: chuẩn xác, tức thì, không phụ thuộc link mạng / CORS
+ * - Tự động chọn voice tiếng Anh tự nhiên (US/UK)
+ * - Tương thích hoàn toàn với bộ điều phối âm thanh toàn cục stopAudio()
+ * 
+ * @param {string} text - Từ vựng hoặc câu cần đọc
+ * @param {Function|Object} [onEndOrOptions] - Callback khi kết thúc hoặc object cấu hình { onEnd, lang, rate, pitch }
+ * @param {Object} [maybeOptions] - Cấu hình phụ khi đối số thứ hai là callback onEnd
+ */
+export function speakWithWebSpeech(text, onEndOrOptions = null, maybeOptions = {}) {
+  stopAudio()
+  claimAppAudio('ipa-audio', stopAudio)
+
+  let onEnd = null
+  let options = {}
+
+  if (typeof onEndOrOptions === 'function') {
+    onEnd = onEndOrOptions
+    options = maybeOptions || {}
+  } else if (onEndOrOptions && typeof onEndOrOptions === 'object') {
+    options = onEndOrOptions
+    onEnd = options.onEnd || null
+  }
+
+  const cleanText = String(text || '').replace(/[[\]/]/g, '').trim()
+  if (!cleanText) {
+    if (onEnd) onEnd()
+    return
+  }
+
+  const sessionId = activePlaySessionId
+  speakWithSpeechSynthesis(cleanText, sessionId, onEnd, options)
 }
 
 let dialogueStopRequested = false
@@ -290,7 +354,7 @@ export function parseDialogueSpeakers(text, speaker1Name = '', speaker2Name = ''
   return { speakers, turns }
 }
 
-function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null) {
+export function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null, options = {}) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     if (onEnd) onEnd()
     return
@@ -303,6 +367,8 @@ function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null) 
 
   try {
     window.speechSynthesis.cancel()
+    activeUtterance = null
+
     const clean = String(text || '').replace(/[[\]/]/g, '').trim()
     if (!clean) {
       if (onEnd) onEnd()
@@ -310,36 +376,42 @@ function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null) 
     }
 
     const utterance = new SpeechSynthesisUtterance(clean)
-    utterance.lang = 'en-US'
-    utterance.rate = 0.92
+    activeUtterance = utterance
+    utterance.lang = options.lang || 'en-US'
+    utterance.rate = options.rate || 0.92
+    if (options.pitch) {
+      utterance.pitch = options.pitch
+    }
 
     const voices = getEnglishVoices()
     const englishVoice =
       voices.find((v) => v.name.includes('Natural') || v.name.includes('Google US') || v.name.includes('Samantha') || v.name.includes('David')) ||
-      voices.find((v) => v.lang.startsWith('en-US')) ||
+      voices.find((v) => v.lang.startsWith(utterance.lang)) ||
       voices.find((v) => v.lang.startsWith('en')) ||
       voices[0]
     if (englishVoice) {
       utterance.voice = englishVoice
     }
 
-    utterance.onend = () => {
+    const handleFinish = () => {
+      activeUtterance = null
       if (expectedSessionId === null || expectedSessionId === activePlaySessionId) {
         if (onEnd) onEnd()
       }
     }
 
+    utterance.onend = handleFinish
     utterance.onerror = (e) => {
+      activeUtterance = null
       if (e?.error === 'canceled' || e?.error === 'interrupted') {
         return
       }
-      if (expectedSessionId === null || expectedSessionId === activePlaySessionId) {
-        if (onEnd) onEnd()
-      }
+      handleFinish()
     }
 
     // Double check session id trước khi speak
     if (expectedSessionId !== null && expectedSessionId !== activePlaySessionId) {
+      activeUtterance = null
       return
     }
 
@@ -350,6 +422,7 @@ function speakWithSpeechSynthesis(text, expectedSessionId = null, onEnd = null) 
     window.speechSynthesis.speak(utterance)
   } catch (err) {
     console.warn('[TTS Error]:', err)
+    activeUtterance = null
     if (onEnd) onEnd()
   }
 }
@@ -800,6 +873,7 @@ export function playListeningLessonFull(lesson, onEnd = null) {
     try {
       const audio = new Audio(validUrl)
       currentAudio = audio
+      registerAudioElement(audio)
 
       audio.onended = () => {
         if (currentAudio === audio) {

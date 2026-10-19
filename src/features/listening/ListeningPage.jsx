@@ -7,6 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import { parseDuration, playListeningLessonFull, stopAudio } from '@/lib/ipaHelper'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 import ListeningDetailDrawer from './components/ListeningDetailDrawer'
 import ListeningToolbar from './components/ListeningToolbar'
 import ListeningTableRow from './components/ListeningTableRow'
@@ -82,9 +83,19 @@ function ListeningPage() {
     return () => clearInterval(timer)
   }, [playback.playingId])
 
-  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang
+  // Ngắt âm thanh và reset tiến trình khi đổi bộ lọc, chuyển trang, hoặc đổi tab Thùng rác
   useEffect(() => {
+    stopAudio()
+    setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+  }, [page, search, category, topic, accent, trashView, ownershipFilter])
+
+  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang hoặc bộ điều phối toàn cục yêu cầu
+  useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+    })
     return () => {
+      unregister()
       stopAudio()
     }
   }, [])

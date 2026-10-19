@@ -15,9 +15,13 @@ export function formatCurrency(value, { compact = false } = {}) {
   return `${value.toLocaleString('vi-VN')}đ`
 }
 
-export function formatNumber(value) {
-  return value.toLocaleString('en-US')
+export function formatNumber(value, fallback = '—') {
+  if (value === null || value === undefined || value === '' || isNaN(Number(value))) {
+    return fallback
+  }
+  return Number(value).toLocaleString('en-US')
 }
+
 
 export function formatDate(value, pattern = 'dd/MM/yyyy') {
   if (!value) return '—'
@@ -72,10 +76,13 @@ export function maskEmail(email) {
     return `${trimmed.slice(0, 2)}*******${trimmed.slice(-3)}`
   }
   const [name, domain] = trimmed.split('@')
-  const prefix = name.length >= 2 ? name.slice(0, 2) : name.padEnd(2, '*')
-  const domainParts = domain ? domain.split('.') : []
-  const ext = domainParts.length > 1 ? domainParts[domainParts.length - 1] : (domain || 'com')
-  return `${prefix}*******${ext}`
+  if (name.length <= 1) {
+    return `${name}***@${domain}`
+  }
+  if (name.length === 2) {
+    return `${name[0]}***${name[1]}@${domain}`
+  }
+  return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`
 }
 
 export function maskIdentityCard(card) {

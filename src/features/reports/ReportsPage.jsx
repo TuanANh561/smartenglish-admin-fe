@@ -31,6 +31,7 @@ import {
   getAdminReportStats,
   resolveAdminReport,
 } from './reportApi'
+import { lockUser } from '@/features/users/api'
 
 const PAGE_SIZE = 10
 
@@ -136,11 +137,29 @@ function ReportsPage() {
     if (!activeReport) return
     setIsSubmitting(true)
     try {
+      // 1. Gọi backend social-service xử lý báo cáo (tự động phân phối cảnh cáo hoặc khóa user và bắn notification/email)
       await resolveAdminReport(activeReport.id, {
         action,
         note: adminNote.trim() || undefined,
       })
-      toast.success(`Đã xử lý: ${actionLabel}`)
+
+      // 2. Client-side guarantee: Nếu action là BAN_USER, đảm bảo khóa tài khoản qua auth-service
+      if (action === 'BAN_USER' && activeReport.reportedUser?.id) {
+        try {
+          await lockUser(activeReport.reportedUser.id)
+        } catch (e) {
+          console.warn('Frontend lockUser fallback:', e)
+        }
+      }
+
+      if (action === 'BAN_USER') {
+        toast.success(`Đã khóa tài khoản ID ${activeReport.reportedUser?.id || ''} và gửi thông báo vi phạm tới người dùng!`)
+      } else if (action === 'WARN_USER') {
+        toast.success(`Đã gửi cảnh cáo vi phạm và gửi thông báo/email tới người dùng!`)
+      } else {
+        toast.success(`Đã xử lý: ${actionLabel}`)
+      }
+
       setActiveReport(null)
       setAdminNote('')
       loadReports()

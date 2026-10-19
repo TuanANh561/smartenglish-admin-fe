@@ -1,4 +1,9 @@
-import { claimAppAudio, releaseAppAudio } from '@/lib/appAudioCoordinator'
+import {
+  claimAppAudio,
+  releaseAppAudio,
+  registerAudioElement,
+  registerAudioStopHandler,
+} from '@/lib/appAudioCoordinator'
 
 /**
  * twoLayerAudio.js
@@ -19,6 +24,7 @@ export const ENABLE_LAYER_1 = false
 
 let activeAudioElement = null
 let activeSpeechController = null
+
 
 /**
  * Phân tích kịch bản văn bản thành các phân đoạn (segments) kèm vai đọc và giới tính
@@ -260,6 +266,10 @@ export function stopAllTwoLayerAudio() {
   releaseAppAudio('two-layer-audio')
 }
 
+// Tự động đăng ký dừng âm thanh khi bộ điều phối toàn cục yêu cầu
+registerAudioStopHandler(stopAllTwoLayerAudio)
+
+
 /**
  * Phát âm thanh với cơ chế 2 tầng tự động fallback
  * 
@@ -399,6 +409,7 @@ export function playTwoLayerAudio({
     try {
       const audio = new Audio()
       activeAudioElement = audio
+      registerAudioElement(audio)
       audio.preload = 'auto'
 
       let hasFallenBack = false

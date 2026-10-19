@@ -5,8 +5,8 @@ import { PRONUNCIATION_CATEGORIES } from '../pronunciationLessonApi'
 const CEFR_LEVELS = ['Tất cả', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Xuất bản' },
+  { value: 'draft', label: 'Bản nháp' },
 ]
 
 export default function PronunciationToolbar({

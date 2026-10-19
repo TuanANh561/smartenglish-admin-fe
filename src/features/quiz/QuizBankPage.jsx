@@ -7,6 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { stopAllAppAudio } from '@/lib/appAudioCoordinator'
 import ExamToolbar from './components/ExamToolbar'
 import ExamTableRow from './components/ExamTableRow'
 import ExamCard from './components/ExamCard'
@@ -116,6 +117,18 @@ export default function QuizBankPage() {
     getExamCategories().then((c) => setCategories(c)).catch(() => {})
     refreshTrashCount()
   }, [refreshTrashCount])
+
+  // Dừng mọi âm thanh khi đổi tab đề thi/quiz, đổi tab thùng rác, chuyển trang hoặc đóng/mở chi tiết đề thi
+  useEffect(() => {
+    stopAllAppAudio()
+  }, [activeTab, trashView, page, activeExam])
+
+  useEffect(() => {
+    return () => {
+      stopAllAppAudio()
+    }
+  }, [])
+
 
   // ── Load exams (Tải toàn bộ danh sách để hỗ trợ lọc client tức thì) ─────────
   const loadExams = useCallback(async () => {

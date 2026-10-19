@@ -1,72 +1,189 @@
 /**
  * aiConfigConstants.js
- * Cấu hình tham số Hệ thống AI cho SmartEnglish
- * Đồng bộ chính xác 100% với:
- * - Backend: content-service (GeminiAiService) & ai-practice-service (SpeakingPracticeService, ImageScanController)
- * - Mobile: ai-speaking (Phoneme Scoring, TTS), ai-chatbot (Teacher Cáo), ai-scan (Vision OCR)
+ * Cấu hình Hệ thống Trí tuệ Nhân tạo (AI) cho SmartEnglish
+ * Hỗ trợ đa nhà cung cấp: Google Gemini, Groq Cloud, OpenRouter, OpenAI
  */
 
+export const AI_PROVIDERS = [
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    badge: 'Khuyên dùng',
+    color: 'emerald',
+    description: 'Tiếng Việt tự nhiên, bóc tách PDF chuẩn xác, hạn mức miễn phí cao.',
+    keyUrl: 'https://aistudio.google.com/app/apikey',
+    keyPlaceholder: 'AIzaSy...',
+    keyPrefixHint: 'Bắt đầu bằng AIza...',
+    defaultModel: 'gemini-2.5-flash',
+  },
+  {
+    id: 'groq',
+    name: 'Groq Cloud',
+    badge: 'Siêu tốc ~0.2s',
+    color: 'amber',
+    description: 'Phản hồi cực nhanh, tối ưu cho tra từ vựng và phản xạ.',
+    keyUrl: 'https://console.groq.com/keys',
+    keyPlaceholder: 'gsk_...',
+    keyPrefixHint: 'Bắt đầu bằng gsk_...',
+    defaultModel: 'llama-3.3-70b-versatile',
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    badge: 'Đa mô hình',
+    color: 'indigo',
+    description: 'Kết nối đa dạng mô hình như DeepSeek V3, Claude 3.5, Llama 3.',
+    keyUrl: 'https://openrouter.ai/keys',
+    keyPlaceholder: 'sk-or-v1-...',
+    keyPrefixHint: 'Bắt đầu bằng sk-or-...',
+    defaultModel: 'deepseek/deepseek-chat',
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    badge: 'Tiêu chuẩn',
+    color: 'cyan',
+    description: 'Phân tích ngữ pháp và dịch thuật tiếng Anh chuẩn xác, độ ổn định cao.',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    keyPlaceholder: 'sk-...',
+    keyPrefixHint: 'Bắt đầu bằng sk-...',
+    defaultModel: 'gpt-4o-mini',
+  },
+]
+
 export const AI_SERVICES_STATUS = {
-  llmGateway: { name: 'Google Gemini Gateway', status: 'OPERATIONAL', latency: 195, region: 'ap-southeast-1' },
-  speechEngine: { name: 'Pronunciation & STT Engine', status: 'OPERATIONAL', latency: 140, service: 'ai-practice-service:8084' },
-  visionEngine: { name: 'Multimodal Vision / OCR', status: 'OPERATIONAL', latency: 310, service: 'content-service:8082' },
-  roleplayChat: { name: 'Teacher Cáo Dialogue', status: 'OPERATIONAL', latency: 180, service: 'ai-practice-service:8084' },
+  llmGateway: { name: 'Cổng kết nối AI chính', status: 'OPERATIONAL', latency: 195, region: 'Đang hoạt động' },
+  speechEngine: { name: 'Động cơ Luyện nói & Chấm âm', status: 'OPERATIONAL', latency: 140, service: 'ai-practice:8084' },
+  visionEngine: { name: 'Bóc tách từ vựng từ PDF', status: 'OPERATIONAL', latency: 310, service: 'content-service:8082' },
+  roleplayChat: { name: 'Gia sư ảo Teacher Cáo', status: 'OPERATIONAL', latency: 180, service: 'content-service:8082' },
 }
 
 export const LLM_MODELS_CATALOG = [
+  // 1. Google Gemini
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
+    providerId: 'gemini',
     provider: 'Google AI',
-    tier: 'Khuyên dùng mặc định',
-    contextWindow: '1,048,576 tokens',
-    latencyAvg: '180ms',
-    costScore: '$ (Rất thấp)',
-    bestFor: 'Sinh học liệu, bài thi, hội thoại Teacher Cáo và bóc tách PDF',
+    tier: 'Khuyên dùng chính',
+    latencyAvg: '~180ms',
+    speedLabel: 'Rất nhanh',
+    costScore: 'Miễn phí / Tối ưu',
+    bestFor: 'Soạn đề thi, bóc tách tài liệu PDF và tra cứu từ vựng',
     recommended: true,
   },
   {
     id: 'gemini-2.5-flash-lite',
     name: 'Gemini 2.5 Flash Lite',
+    providerId: 'gemini',
     provider: 'Google AI',
     tier: 'Siêu tốc độ',
-    contextWindow: '1,048,576 tokens',
-    latencyAvg: '95ms',
-    costScore: '$ (Thấp nhất)',
-    bestFor: 'Chatbot phản xạ nhanh, gợi ý câu nói realtime trên Mobile',
+    latencyAvg: '~95ms',
+    speedLabel: 'Chớp mắt',
+    costScore: 'Tiết kiệm nhất',
+    bestFor: 'Phản xạ hội thoại nhanh cho học viên trên mobile',
     recommended: false,
   },
   {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
+    providerId: 'gemini',
     provider: 'Google AI',
-    tier: 'Suy luận chuyên sâu',
-    contextWindow: '2,097,152 tokens',
-    latencyAvg: '480ms',
-    costScore: '$$$ (Cao)',
-    bestFor: 'Chấm bài viết luận IELTS/CEFR, soạn giáo án khóa học phức tạp',
+    tier: 'Chuyên sâu',
+    latencyAvg: '~480ms',
+    speedLabel: 'Tiêu chuẩn',
+    costScore: 'Trung bình',
+    bestFor: 'Chấm bài viết luận IELTS/CEFR, soạn tài liệu học thuật',
     recommended: false,
   },
   {
     id: 'gemini-1.5-flash',
-    name: 'Gemini 1.5 Flash (LTS)',
+    name: 'Gemini 1.5 Flash',
+    providerId: 'gemini',
     provider: 'Google AI',
     tier: 'Dự phòng ổn định',
-    contextWindow: '1,048,576 tokens',
-    latencyAvg: '210ms',
-    costScore: '$ (Rất thấp)',
-    bestFor: 'Dự phòng khi các dòng 2.5 đạt giới hạn tải',
+    latencyAvg: '~210ms',
+    speedLabel: 'Rất nhanh',
+    costScore: 'Rất thấp',
+    bestFor: 'Dự phòng tự động khi cụm Gemini 2.5 quá tải',
+    recommended: false,
+  },
+
+  // 2. Groq Cloud
+  {
+    id: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B (Groq)',
+    providerId: 'groq',
+    provider: 'Groq Cloud',
+    tier: 'Thông minh & Siêu tốc',
+    latencyAvg: '~190ms',
+    speedLabel: 'Cực nhanh (~0.2s)',
+    costScore: 'Miễn phí',
+    bestFor: 'Tra từ vựng tức thì, giải thích ngữ pháp nhanh',
+    recommended: true,
+  },
+  {
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B (Groq)',
+    providerId: 'groq',
+    provider: 'Groq Cloud',
+    tier: 'Tốc độ vô địch',
+    latencyAvg: '~90ms',
+    speedLabel: 'Tức thì (~0.1s)',
+    costScore: 'Miễn phí',
+    bestFor: 'Tra cứu nhanh và điền form tự động',
     recommended: false,
   },
   {
+    id: 'mixtral-8x7b-32768',
+    name: 'Mixtral 8x7B (Groq)',
+    providerId: 'groq',
+    provider: 'Groq Cloud',
+    tier: 'Ngữ cảnh dài',
+    latencyAvg: '~220ms',
+    speedLabel: 'Rất nhanh',
+    costScore: 'Miễn phí',
+    bestFor: 'Đọc hiểu tài liệu dài và hội thoại đa ngôn ngữ',
+    recommended: false,
+  },
+
+  // 3. OpenRouter
+  {
+    id: 'deepseek/deepseek-chat',
+    name: 'DeepSeek V3 (OpenRouter)',
+    providerId: 'openrouter',
+    provider: 'OpenRouter',
+    tier: 'Thông minh cao',
+    latencyAvg: '~320ms',
+    speedLabel: 'Nhanh',
+    costScore: 'Rất rẻ',
+    bestFor: 'Soạn câu hỏi trắc nghiệm, giải thích ngữ pháp',
+    recommended: false,
+  },
+  {
+    id: 'anthropic/claude-3.5-sonnet',
+    name: 'Claude 3.5 Sonnet (OpenRouter)',
+    providerId: 'openrouter',
+    provider: 'OpenRouter',
+    tier: 'Học thuật cao',
+    latencyAvg: '~450ms',
+    speedLabel: 'Tiêu chuẩn',
+    costScore: 'Cao cấp',
+    bestFor: 'Viết bài luận mẫu, biên soạn nội dung chuẩn ngữ bản xứ',
+    recommended: false,
+  },
+
+  // 4. OpenAI
+  {
     id: 'gpt-4o-mini',
-    name: 'OpenAI GPT-4o Mini',
-    provider: 'OpenAI (Secondary)',
-    tier: 'Dự phòng bên thứ 3',
-    contextWindow: '128,000 tokens',
-    latencyAvg: '240ms',
-    costScore: '$$ (Trung bình)',
-    bestFor: 'Dự phòng khi cụm Google AI gặp sự cố hạ tầng',
+    name: 'GPT-4o Mini (OpenAI)',
+    providerId: 'openai',
+    provider: 'OpenAI',
+    tier: 'Tiêu chuẩn',
+    latencyAvg: '~240ms',
+    speedLabel: 'Rất nhanh',
+    costScore: 'Rất thấp',
+    bestFor: 'Dự phòng tin cậy khi các dịch vụ khác bảo trì',
     recommended: false,
   },
 ]
@@ -74,26 +191,26 @@ export const LLM_MODELS_CATALOG = [
 export const VOICE_PERSONAS_LIST = [
   {
     id: 'en-US-Standard-C',
-    name: 'Sarah (US Nữ)',
-    accent: 'Mỹ (General American)',
+    name: 'Sarah (Giọng Mỹ - Nữ)',
+    accent: 'Tiếng Anh - Mỹ (Chuẩn California)',
     gender: 'Nữ',
     wpm: 145,
     sampleText: 'Welcome to SmartEnglish. Let us practice English pronunciation together.',
-    tag: 'Giọng bản xứ chuẩn California, ngữ điệu tự nhiên và truyền cảm.',
+    tag: 'Giọng bản xứ tự nhiên, truyền cảm, thích hợp nghe hiểu giao tiếp.',
   },
   {
     id: 'en-US-Standard-D',
-    name: 'Alex (US Nam)',
-    accent: 'Mỹ (General American)',
+    name: 'Alex (Giọng Mỹ - Nam)',
+    accent: 'Tiếng Anh - Mỹ (Chuẩn)',
     gender: 'Nam',
     wpm: 140,
     sampleText: 'Good morning! Focus on ending sounds and clear sentence stress.',
-    tag: 'Giọng nam trầm ấm, phát âm rõ từng phụ âm, rất tốt cho người mới bắt đầu.',
+    tag: 'Giọng nam trầm ấm, phát âm rõ từng phụ âm cuối, rất tốt cho người mới bắt đầu.',
   },
   {
     id: 'en-GB-Standard-A',
-    name: 'Emma (UK Nữ)',
-    accent: 'Anh (Received Pronunciation - RP)',
+    name: 'Emma (Giọng Anh - Nữ)',
+    accent: 'Tiếng Anh - Anh (Chuẩn Oxford)',
     gender: 'Nữ',
     wpm: 135,
     sampleText: 'Hello there! Today we shall practice British English vowels and intonation.',
@@ -101,107 +218,91 @@ export const VOICE_PERSONAS_LIST = [
   },
   {
     id: 'en-GB-Standard-B',
-    name: 'Oliver (UK Nam)',
-    accent: 'Anh (Received Pronunciation - RP)',
+    name: 'Oliver (Giọng Anh - Nam)',
+    accent: 'Tiếng Anh - Anh (Học thuật)',
     gender: 'Nam',
     wpm: 142,
     sampleText: 'Brilliant work! Consistent daily practice will refine your British accent.',
-    tag: 'Giọng học thuật, rõ ràng, phong cách giao tiếp công sở chuyên nghiệp.',
+    tag: 'Giọng công sở học thuật, rõ ràng, phong cách giao tiếp chuyên nghiệp.',
   },
   {
     id: 'en-AU-Standard-A',
-    name: 'Liam (Úc - AU)',
-    accent: 'Úc (Australian English)',
+    name: 'Liam (Giọng Úc - Nam)',
+    accent: 'Tiếng Anh - Úc',
     gender: 'Nam',
     wpm: 148,
-    sampleText: 'G’day! Ready to improve your conversational English fluency today?',
+    sampleText: "G'day! Ready to improve your conversational English fluency today?",
     tag: 'Giọng Úc thân thiện, năng động, phù hợp giao tiếp đời thường.',
   },
 ]
 
 export const INITIAL_AI_SYSTEM_CONFIG = {
-  // 1. Quản lý LLM Provider & Key Pool (Khớp với backend .env)
-  provider: 'google-gemini',
+  provider: 'gemini',
   primaryModel: 'gemini-2.5-flash',
   fallbackModel: 'gemini-1.5-flash',
   temperature: 0.4,
   maxOutputTokens: 2048,
-  topP: 0.95,
+  autoFallbackEnabled: true,
   apiKeyPool: [
     {
-      id: 'key-prod-01',
-      label: 'Gemini Primary Production Key (.env)',
-      keyMasked: 'gemini-prod-key-configured-via-backend-env-01',
+      id: 'key-gemini-default',
+      provider: 'gemini',
+      label: 'Google Gemini Mặc Định (Hệ thống)',
+      keyMasked: 'AIza••••••••9xK1',
+      model: 'gemini-2.5-flash',
       status: 'ACTIVE',
-      usageToday: 14820,
+      usageToday: 1480,
       quotaLimit: 50000,
-      errorRate: '0.01%',
-      lastCall: '12 giây trước',
+      lastCall: 'Vừa xong',
     },
     {
-      id: 'key-prod-02',
-      label: 'Gemini Secondary Backup Key',
-      keyMasked: 'gemini-backup-standby-key-rotation-pool-02',
+      id: 'key-groq-fast',
+      provider: 'groq',
+      label: 'Groq Cloud Siêu Tốc (Dự phòng)',
+      keyMasked: 'gsk_••••••••812d',
+      model: 'llama-3.3-70b-versatile',
       status: 'STANDBY',
-      usageToday: 410,
+      usageToday: 215,
       quotaLimit: 50000,
-      errorRate: '0.00%',
-      lastCall: '2 giờ trước',
+      lastCall: '10 phút trước',
     },
   ],
 
-  // 2. Phân bổ Model theo Nghiệp vụ (Task-specific Routing)
+  // Phân bổ tính năng
   routing: {
-    // Sinh bài đọc hiểu, quiz, bài thi (content-service:8082 /admin/ai/contents)
     contentStudio: {
       model: 'gemini-2.5-flash',
       temperature: 0.4,
-      autoApproveThreshold: 90, // Tự động duyệt nếu điểm tin cậy >= 90%
+      autoApproveThreshold: 90,
       generateExplanations: true,
     },
-    // Bóc tách PDF từ vựng (content-service:8082 /admin/ai/extract-pdf)
     pdfExtractor: {
       model: 'gemini-2.5-flash',
       temperature: 0.2,
-      ocrMode: 'MULTIMODAL_HIGH_RES',
+      ocrMode: 'HIGH_RES',
       autoDetectIpa: true,
       autoGenerateExamples: true,
     },
-    // Chatbot Teacher Cáo (ai-practice-service:8084 /ai-practice/chat)
     teacherCaoChat: {
-      model: 'gemini-2.5-flash-lite',
-      temperature: 0.65,
-      contextMemoryTurns: 12, // Nhớ 12 lượt hội thoại gần nhất
-      bilingualSupport: true, // Hỗ trợ giải nghĩa song ngữ
+      model: 'gemini-2.5-flash',
+      temperature: 0.6,
+      contextMemoryTurns: 12,
+      bilingualSupport: true,
       personaPrompt:
         'Bạn là Teacher Cáo - Trợ lý gia sư tiếng Anh thông minh, vui vẻ và kiên nhẫn của SmartEnglish AI. Luôn điều chỉnh từ vựng theo đúng trình độ CEFR của học viên, khen ngợi sự tiến bộ, chỉ ra lỗi phát âm/ngữ pháp một cách tinh tế và gợi ý cách diễn đạt tự nhiên hơn.',
     },
-    // Chấm bài viết luận (ai-writing mobile)
-    writingEvaluation: {
-      model: 'gemini-2.5-pro',
-      temperature: 0.2,
-      rubricStandard: 'CEFR_IELTS', // Chấm theo tiêu chuẩn 4 tiêu chí CEFR/IELTS
-      provideDetailedCorrections: true,
-    },
   },
 
-  // 3. Động cơ Luyện nói & Chấm âm vị IPA (ai-practice-service:8084 SpeakingPracticeController)
+  // Giọng đọc và luyện nói
   speechEngine: {
     selectedVoice: 'en-US-Standard-C',
     speechRate: 1.0,
     speechPitch: 1.0,
-    // Ngưỡng điểm phát âm (khớp PronunciationResultResponseDTO)
     passingOverallThreshold: 75,
     minAccuracyScore: 70,
-    minStressScore: 65,
-    minFluencyScore: 60,
-    // Chế độ nhận dạng âm vị IPA
-    phonemeStrictness: 'BALANCED', // 'LENIENT' | 'BALANCED' | 'STRICT'
-    highlightWeakPhonemes: true, // Bôi đỏ âm vị phát âm sai trên mobile
-    nativeAudioReference: 'NEURAL_HD',
   },
 
-  // 4. Hạn mức & Kiểm soát chi phí (Quota & Cost Protection)
+  // Giới hạn sử dụng & Tiết kiệm chi phí
   quotas: {
     freeUserChatLimitPerDay: 20,
     freeUserSpeakingLimitPerDay: 8,
@@ -209,7 +310,6 @@ export const INITIAL_AI_SYSTEM_CONFIG = {
     vipUserSpeakingLimitPerDay: 200,
     teacherGenLimitPerDay: 100,
     costProtectionEnabled: true,
-    budgetThresholdAlert: 85, // Cảnh báo khi chạm 85% hạn ngạch
-    fallbackToLiteOnSpike: true, // Tự động hạ xuống model Lite khi server quá tải
+    budgetThresholdAlert: 85,
   },
 }

@@ -15,6 +15,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   Sparkles,
+  TrendingUp,
   Users,
   UserPlus,
 } from 'lucide-react'
@@ -141,6 +142,8 @@ function TeacherDashboardPage() {
   const [assignments, setAssignments] = useState([])
   const [userActivities, setUserActivities] = useState([])
   const [userOrders, setUserOrders] = useState([])
+  const [recentOrders, setRecentOrders] = useState([])
+  const [isRecentOrdersLoading, setIsRecentOrdersLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true)
 
@@ -150,6 +153,33 @@ function TeacherDashboardPage() {
       month: '2-digit',
       year: 'numeric',
     })
+  }, [])
+
+  // ── Tải giao dịch mua gói gần đây (toàn hệ thống — giáo viên + học viên) ──
+  useEffect(() => {
+    let isMounted = true
+    setIsRecentOrdersLoading(true)
+    api
+      .get('/payment/admin/orders/recent', { params: { size: 8, status: 'SUCCESS' } })
+      .catch(() => api.get('/admin/orders', { params: { size: 8, status: 'SUCCESS', sort: 'createdAt,desc' } }))
+      .then((res) => {
+        if (!isMounted) return
+        const raw = res?.data ?? res
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.content)
+            ? raw.content
+            : Array.isArray(raw?.data)
+              ? raw.data
+              : []
+        const success = list.filter(
+          (o) => ['SUCCESS', 'completed', 'paid', 'COMPLETED'].includes(o.status)
+        )
+        setRecentOrders(success.slice(0, 8))
+      })
+      .catch(() => { if (isMounted) setRecentOrders([]) })
+      .finally(() => { if (isMounted) setIsRecentOrdersLoading(false) })
+    return () => { isMounted = false }
   }, [])
 
   // ── Tải dữ liệu thực từ teacher-service, notification-service & payment-service ──
@@ -604,6 +634,127 @@ function TeacherDashboardPage() {
                 </div>
               )
             })
+          )}
+        </div>
+      </div>
+
+      {/* ── Giao dịch mua gói gần đây ─────────────────────────────────────────── */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={18} className="text-emerald-500" />
+            <h2 className="text-base font-bold text-navy-700">Giao dịch mua gói gần đây</h2>
+            <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+              Thành công
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/giao-dich')}
+            className="flex items-center gap-1 text-sm font-semibold text-brand-500 hover:text-brand-600 cursor-pointer"
+          >
+            Xem tất cả
+            <ArrowRight size={15} />
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-line bg-white shadow-sm">
+          {isRecentOrdersLoading ? (
+            <div className="divide-y divide-line/60">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-5 py-3.5 animate-pulse">
+                  <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-1/3 rounded bg-slate-100" />
+                    <div className="h-2.5 w-1/2 rounded bg-slate-100" />
+                  </div>
+                  <div className="h-3 w-20 rounded bg-slate-100" />
+                  <div className="h-6 w-16 rounded-full bg-slate-100" />
+                </div>
+              ))}
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-400 mb-3">
+                <CreditCard size={22} strokeWidth={1.5} />
+              </div>
+              <p className="text-sm font-medium text-slate-600">Chưa có giao dịch thành công</p>
+              <p className="text-xs text-slate-400 mt-1">Các giao dịch mua gói Premium sẽ xuất hiện tại đây</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-line/60">
+              {/* Header */}
+              <div className="grid grid-cols-12 gap-2 px-5 py-2.5 bg-canvas">
+                <span className="col-span-4 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Người dùng</span>
+                <span className="col-span-3 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Gói đăng ký</span>
+                <span className="col-span-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Số tiền</span>
+                <span className="col-span-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Thời gian</span>
+                <span className="col-span-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted text-right">TT</span>
+              </div>
+
+              {recentOrders.map((order) => {
+                const userName = order.userName || order.userEmail || order.userId || 'Người dùng'
+                const planName = order.planName || order.description || 'Gói Premium'
+                const amount = order.amount
+                  ? `${Number(order.amount).toLocaleString('vi-VN')}đ`
+                  : '--'
+                const orderDate = order.createdAt ? new Date(order.createdAt) : null
+                const timeStr = orderDate
+                  ? orderDate.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                  : '--'
+                const roleLabel = order.userRole === 'TEACHER' ? 'Giáo viên' : 'Học viên'
+                const roleColor = order.userRole === 'TEACHER'
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'bg-sky-50 text-sky-600'
+                const initials = (order.userName || 'U').slice(0, 2).toUpperCase()
+
+                return (
+                  <div key={order.id || order.orderCode} className="grid grid-cols-12 gap-2 items-center px-5 py-3 hover:bg-canvas/60 transition-colors">
+                    {/* Người dùng */}
+                    <div className="col-span-4 flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white text-xs font-bold">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-navy-700">{userName}</p>
+                        <span className={`inline-block mt-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${roleColor}`}>
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Gói */}
+                    <div className="col-span-3 min-w-0">
+                      <p className="truncate text-sm text-ink">{planName}</p>
+                      {order.orderCode && (
+                        <p className="text-[10px] text-ink-muted mt-0.5 font-mono truncate">{order.orderCode}</p>
+                      )}
+                    </div>
+
+                    {/* Số tiền */}
+                    <div className="col-span-2">
+                      <p className="text-sm font-bold text-emerald-600">{amount}</p>
+                    </div>
+
+                    {/* Thời gian */}
+                    <div className="col-span-2">
+                      <p className="text-[11px] text-ink-muted flex items-center gap-1">
+                        <Clock size={10} className="shrink-0" />
+                        {timeStr}
+                      </p>
+                    </div>
+
+                    {/* Trạng thái */}
+                    <div className="col-span-1 flex justify-end">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 border border-emerald-100">
+                        <CheckCircle size={9} />
+                        OK
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
       </div>
