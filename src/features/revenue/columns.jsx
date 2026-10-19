@@ -11,6 +11,7 @@ const STATUS_LABEL = {
   refunded: 'Hoàn tiền',
   cancelled: 'Đã hủy',
   canceled: 'Đã hủy',
+  expired: 'Đã hết hạn',
 }
 
 const STATUS_TONE = {
@@ -21,6 +22,7 @@ const STATUS_TONE = {
   refunded: 'info',
   cancelled: 'neutral',
   canceled: 'neutral',
+  expired: 'neutral',
 }
 
 const PLAN_LABEL = {

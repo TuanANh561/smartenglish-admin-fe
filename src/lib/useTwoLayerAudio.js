@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { playTwoLayerAudio, stopAllTwoLayerAudio } from './twoLayerAudio'
+import { registerAudioStopHandler } from './appAudioCoordinator'
 
 /**
  * Hook quản lý phát âm thanh 2 tầng (Audio link BE + Web Speech fallback)
@@ -51,10 +52,22 @@ export function useTwoLayerAudio() {
   }, [playingId, stop])
 
   useEffect(() => {
+    // Đăng ký với điều phối âm thanh toàn cục: khi màn hình đổi hoặc bị ngắt, reset trạng thái UI
+    const unregister = registerAudioStopHandler(() => {
+      if (stopRef.current) {
+        stopRef.current()
+        stopRef.current = null
+      }
+      setPlayingId(null)
+      setActiveLayer(null)
+    })
+
     return () => {
+      unregister()
       stop()
     }
   }, [stop])
+
 
   return {
     playingId,

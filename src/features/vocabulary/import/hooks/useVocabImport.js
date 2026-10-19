@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { api, http } from '@/lib/api'
+import { stopAudio } from '@/lib/ipaHelper'
 import { REAL_SAMPLE_FILES } from '../vocabImportConstants'
 import { loadSamplePresetData, parseJsonItems } from '../vocabImportUtils'
 
@@ -44,8 +45,9 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
   // ── Effects ─────────────────────────────────────────────────────────
 
-  /** Reset toàn bộ state khi modal mở lại */
+  /** Reset toàn bộ state khi modal mở lại và tắt mọi âm thanh đang phát */
   useEffect(() => {
+    stopAudio()
     if (open) {
       setImportType(defaultType)
       const matched = REAL_SAMPLE_FILES.find((f) => f.type === defaultType)
@@ -60,7 +62,16 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       setFilterStatus('all')
       setEditingRow(null)
     }
+    return () => {
+      stopAudio()
+    }
   }, [open, defaultType])
+
+  /** Tắt âm thanh khi chuyển bước trong wizard */
+  useEffect(() => {
+    stopAudio()
+  }, [step])
+
 
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose

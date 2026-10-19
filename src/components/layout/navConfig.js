@@ -202,7 +202,7 @@ export const ROUTE_META = {
     title: 'Tạo — Duyệt nội dung AI',
     description: 'Quản lý nội dung do AI sinh ra',
   },
-  '/app/voice-ai': { title: 'Cấu hình AI', description: 'Cấu hình Voice AI và các tham số liên quan' },
+  '/app/voice-ai': { title: 'Cấu hình AI', description: 'Quản lý nhà cung cấp, khóa API và mô hình AI hệ thống' },
   '/app/doanh-thu': { title: 'Doanh thu', description: 'Theo dõi doanh thu và tăng trưởng' },
   '/app/doi-soat': {
     title: 'Giao dịch & Đối soát',

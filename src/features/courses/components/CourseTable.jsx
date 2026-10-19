@@ -147,7 +147,7 @@ export default function CourseTable({
 
                   {/* Date */}
                   <td className="py-2.5 px-4 text-ink-muted text-[11px]">
-                    {course.updatedAt || '14/09/2026'}
+                    {course.updatedAt || '—'}
                   </td>
 
                   {/* Actions */}

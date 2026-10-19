@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Award, BookOpen, CheckCircle2, Clock, FileText,
   Headphones, Image as ImageIcon, Pencil, Search,
@@ -151,6 +151,11 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
   const [searchQuery, setSearchQuery] = useState('')
   const [showTranscript, setShowTranscript] = useState(false)
   const [expandedTranscripts, setExpandedTranscripts] = useState({})
+
+  // Dừng âm thanh khi đổi phần Part hoặc tìm kiếm câu hỏi
+  useEffect(() => {
+    audioEngine.stop()
+  }, [selectedPart, searchQuery])
 
   const questions = useMemo(() => exam?.questions || [], [exam])
 

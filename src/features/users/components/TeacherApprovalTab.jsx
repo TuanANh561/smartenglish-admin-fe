@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import {
-  FileCheck2,
   CheckCircle2,
   XCircle,
   Clock,
@@ -18,7 +17,6 @@ import toast from 'react-hot-toast'
 import TeacherProofModal from './TeacherProofModal'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { maskEmail, maskIdentityCard, maskPhone } from '@/lib/utils'
@@ -169,46 +167,37 @@ export default function TeacherApprovalTab({
       </div>
 
       {/* 2. Thanh tìm kiếm và bộ lọc */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <FileCheck2 size={17} className="text-brand-600" />
-              Danh Sách Hồ Sơ Đăng Ký Giáo Viên Xin Duyệt
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Kiểm tra thông tin chuyên môn và tệp minh chứng để cấp quyền tài khoản Giáo Viên (Teacher Pro).
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Bộ lọc trạng thái */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none"
-            >
-              <option value="all">Tất cả trạng thái ({stats.total})</option>
-              <option value="pending">Chờ duyệt ({stats.pending})</option>
-              <option value="approved">Đã duyệt ({stats.approved})</option>
-              <option value="rejected">Đã từ chối ({stats.rejected})</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Thanh tìm kiếm */}
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
             placeholder="Tìm theo họ tên giáo viên, email, số CCCD hoặc số điện thoại..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 text-xs"
+            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs text-slate-700 placeholder:text-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition"
           />
         </div>
 
-        {/* Bảng danh sách hồ sơ */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+        {/* Filter dropdown */}
+        <div className="relative shrink-0">
+          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appearance-none rounded-xl border border-slate-200 bg-white pl-8 pr-8 py-2 text-xs text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 cursor-pointer transition"
+          >
+            <option value="all">Tất cả trạng thái ({stats.total})</option>
+            <option value="pending">Chờ duyệt ({stats.pending})</option>
+            <option value="approved">Đã duyệt ({stats.approved})</option>
+            <option value="rejected">Đã từ chối ({stats.rejected})</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 3. Bảng danh sách hồ sơ */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase text-[11px]">
               <tr>
@@ -342,7 +331,6 @@ export default function TeacherApprovalTab({
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Modal xem tệp minh chứng */}

@@ -19,8 +19,7 @@ import {
   Sparkles,
   Volume2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatTime, parseDuration } from '@/lib/ipaHelper'
+import { formatTime, parseDuration, stopAudio } from '@/lib/ipaHelper'
 
 const CATEGORY_MAP = {
   TOEIC_PART_1: { label: 'Part 1: Mô tả tranh (Photographs)', bg: 'bg-amber-50 text-amber-800 border-amber-200' },
@@ -54,6 +53,13 @@ export default function ListeningDetailDrawer({
   useEffect(() => {
     setActiveQuestionIdx(0)
   }, [lesson?.id])
+
+  // Ngắt âm thanh khi đóng drawer hoặc unmount
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
 
   const totalDuration = useMemo(() => parseDuration(lesson?.duration), [lesson?.duration])
   const effectiveDuration = Math.max(totalDuration, currentTime || 0)

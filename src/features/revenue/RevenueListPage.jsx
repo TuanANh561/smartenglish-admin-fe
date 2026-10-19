@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Download, RefreshCw, Search, Wallet, Receipt, BarChart3, Percent, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import DataTable from '@/components/ui/DataTable/DataTable'
@@ -7,11 +9,40 @@ import { useDataTable } from '@/components/ui/DataTable/useDataTable'
 import { formatCurrency } from '@/lib/utils'
 import { useRevenueTransactions, useRevenueStats } from './hooks/useRevenue'
 import { transactionColumns, transactionCsvColumns } from '@/features/revenue/columns'
+import { useNotificationStream } from '@/features/notifications/useNotificationStream'
 
 function RevenueListPage() {
+  const [isLiveMode, setIsLiveMode] = useState(true)
   const dataTable = useDataTable()
-  const transactionsQuery = useRevenueTransactions(dataTable.params)
-  const statsQuery = useRevenueStats()
+  const transactionsQuery = useRevenueTransactions(dataTable.params, {
+    refetchInterval: isLiveMode ? 8000 : false,
+  })
+  const statsQuery = useRevenueStats({
+    refetchInterval: isLiveMode ? 8000 : false,
+  })
+
+  // Lắng nghe biến động số dư VietQR SePay theo thời gian thực (SSE)
+  useNotificationStream({
+    onNotification: (notif) => {
+      const type = notif?.type || notif?.notificationType || notif?.producer
+      if (type === 'PAYMENT_RECEIPT' || type === 'PAYMENT' || String(notif?.title || '').toLowerCase().includes('thanh toán')) {
+        transactionsQuery.refetch()
+        statsQuery.refetch()
+        toast.success(` Biến động số dư: ${notif.title || notif.body || 'Thanh toán thành công!'}`, {
+          duration: 5000,
+        })
+      }
+    },
+  })
+
+  // Chỉ hiển thị giao dịch thành công hoặc hoàn tiền (trừ tiền) trên trang doanh thu
+  // Các trạng thái khác (expired, cancelled, pending, failed) xem ở trang Giao dịch
+  const REVENUE_STATUSES = ['completed', 'SUCCESS', 'success', 'refunded', 'REFUNDED']
+
+  const rawItems = transactionsQuery.data?.items ?? []
+  const revenueItems = dataTable.filters.status
+    ? rawItems // Khi user chủ động lọc theo status cụ thể → giữ nguyên
+    : rawItems.filter((t) => REVENUE_STATUSES.includes(t.status))
 
   const hasFilters = Boolean(
     dataTable.search ||
@@ -164,11 +195,8 @@ function RevenueListPage() {
               className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
             >
               <option value="all">Trạng thái: Tất cả</option>
-              <option value="completed">Thành công</option>
-              <option value="pending">Chờ xác thực</option>
-              <option value="cancelled">Đã hủy</option>
-              <option value="failed">Thất bại</option>
-              <option value="refunded">Hoàn tiền</option>
+              <option value="completed">✅ Thành công</option>
+              <option value="refunded">↩ Hoàn tiền</option>
             </select>
 
             {/* Lọc gói dịch vụ */}
@@ -198,6 +226,21 @@ function RevenueListPage() {
 
             <div className="h-4 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
+            {/* Realtime Live Mode Badge & Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsLiveMode(!isLiveMode)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-2xs'
+                  : 'bg-slate-50 text-slate-500 border-slate-200'
+              }`}
+              title={isLiveMode ? 'Realtime SePay: Đang tự động cập nhật mỗi 8s (Bấm để tắt)' : 'Chế độ tĩnh: Bấm để bật cập nhật Realtime 24/7'}
+            >
+              <span className={`h-2 w-2 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+              <span>{isLiveMode ? 'Realtime 24/7' : 'Thủ công'}</span>
+            </button>
+
             {/* Action Buttons */}
             <div className="flex items-center gap-1.5">
               <button
@@ -226,7 +269,7 @@ function RevenueListPage() {
         {/* Bảng giao dịch */}
         <DataTable
           columns={transactionColumns}
-          data={transactionsQuery.data?.items ?? []}
+          data={revenueItems}
           isLoading={transactionsQuery.isLoading}
           loadingMessage="Đang tải dữ liệu báo cáo doanh thu từ máy chủ..."
           error={transactionsQuery.error}

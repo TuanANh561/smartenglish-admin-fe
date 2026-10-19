@@ -61,9 +61,10 @@ export const ENDPOINTS = {
     update: '/admin/words/:id',
     remove: '/admin/words/:id',
     meanings: '/admin/words/:id/meanings',
-    examples: '/admin/words/:id/examples',
     import: '/admin/words/import',
     topics: '/admin/words/topics',
+    autoLookup: '/admin/words/auto-lookup',
+    autoImport: '/admin/words/auto-import',
   },
   phrases: {
     list: '/admin/phrases',
@@ -156,6 +157,14 @@ export const ENDPOINTS = {
     quotas: '/admin/ai/quotas',
     updateQuota: '/admin/ai/quotas/:id',
     usage: '/admin/ai/usage',
+  },
+  aiConfig: {
+    config: '/admin/ai/config',
+    updateConfig: '/admin/ai/config',
+    keys: '/admin/ai/keys',
+    activateKey: '/admin/ai/keys/:id/activate',
+    deleteKey: '/admin/ai/keys/:id',
+    testConnection: '/admin/ai/test-connection',
   },
 
   // ── payment-service ─────────────────────────────────────────────

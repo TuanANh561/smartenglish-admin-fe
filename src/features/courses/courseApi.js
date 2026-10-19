@@ -58,12 +58,20 @@ export function adaptBackendCourse(bCourse) {
         ? 'teacher.john@smartenglish.com'
         : (bCourse.authorEmail || 'admin@smartenglish.edu.vn'),
     lessonCount: bCourse.totalLessons || mappedLessons.length || 0,
-    studentCount: 150 + Number(bCourse.id || 1) * 65,
-    rating: 4.9,
-    ratingCount: 35 + Number(bCourse.id || 1) * 12,
-    durationHours: `${bCourse.estimatedHours || 5} giờ`,
-    estimatedHours: bCourse.estimatedHours || 5,
-    updatedAt: '14/09/2026',
+    // Dữ liệu thực từ BE — null nếu chưa có, UI sẽ hiển thị '—'
+    studentCount: bCourse.studentCount ?? bCourse.enrollmentCount ?? null,
+    rating: bCourse.rating ?? bCourse.averageRating ?? null,
+    ratingCount: bCourse.ratingCount ?? bCourse.reviewCount ?? null,
+    durationHours: bCourse.estimatedHours != null
+      ? `${bCourse.estimatedHours} giờ`
+      : (mappedLessons.length > 0 && mappedLessons.some(l => l.estimatedMin)
+          ? (() => {
+              const totalMin = mappedLessons.reduce((sum, l) => sum + (Number(l.estimatedMin) || 0), 0)
+              return totalMin >= 60 ? `${(totalMin / 60).toFixed(1)} giờ` : `${totalMin} phút`
+            })()
+          : null),
+    estimatedHours: bCourse.estimatedHours ?? null,
+    updatedAt: bCourse.updatedAt || bCourse.lastModifiedAt || null,
     thumbnail:
       bCourse.thumbnailUrl ||
       'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600&auto=format&fit=crop&q=80',
@@ -233,11 +241,11 @@ export const TEACHER_COURSES = [
     authorName: 'Cô Hoàng Mai',
     authorEmail: 'teacher.mai@smartenglish.com',
     lessonCount: 2,
-    studentCount: 185,
-    rating: 4.9,
-    ratingCount: 42,
-    durationHours: '8 giờ',
-    estimatedHours: 8,
+    studentCount: null,
+    rating: null,
+    ratingCount: null,
+    durationHours: '30 phút',
+    estimatedHours: 0.5,
     updatedAt: '05/10/2026',
     thumbnail: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
     description: 'Khóa học cung cấp chiến lược trả lời Part 1, 2, 3 mượt mà, bộ từ vựng Collocations ăn điểm và luyện phản xạ tự nhiên.',
@@ -245,7 +253,7 @@ export const TEACHER_COURSES = [
       {
         id: 'CH-5',
         title: 'Chương 1: Chiến Thuật Đột Phá IELTS Speaking',
-        duration: '8h 00m',
+        duration: '30 phút',
         lessons: [
           {
             id: 14,
@@ -343,11 +351,11 @@ export const TEACHER_COURSES = [
     authorName: 'Cô Hoàng Mai',
     authorEmail: 'teacher.mai@smartenglish.com',
     lessonCount: 1,
-    studentCount: 230,
-    rating: 4.8,
-    ratingCount: 56,
-    durationHours: '6.5 giờ',
-    estimatedHours: 6.5,
+    studentCount: null,
+    rating: null,
+    ratingCount: null,
+    durationHours: '20 phút',
+    estimatedHours: 0.33,
     updatedAt: '05/10/2026',
     thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
     description: 'Lộ trình rèn luyện kỹ năng viết Email chuyên nghiệp, thuyết trình dự án và đàm phán trong môi trường công sở quốc tế.',
@@ -355,7 +363,7 @@ export const TEACHER_COURSES = [
       {
         id: 'CH-6',
         title: 'Chương 1: Email & Đàm Phán Nơi Công Sở',
-        duration: '6h 30m',
+        duration: '20 phút',
         lessons: [
           {
             id: 16,
@@ -421,11 +429,11 @@ export const TEACHER_COURSES = [
     authorName: 'Thầy John',
     authorEmail: 'teacher.john@smartenglish.com',
     lessonCount: 1,
-    studentCount: 140,
-    rating: 5.0,
-    ratingCount: 38,
-    durationHours: '10 giờ',
-    estimatedHours: 10,
+    studentCount: null,
+    rating: null,
+    ratingCount: null,
+    durationHours: '20 phút',
+    estimatedHours: 0.33,
     updatedAt: '05/10/2026',
     thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
     description: 'Phương pháp triển khai luận điểm mạch lạc, tư duy phản biện học thuật và nâng cấp vốn từ vựng học thuật C1/C2.',
@@ -433,7 +441,7 @@ export const TEACHER_COURSES = [
       {
         id: 'CH-7',
         title: 'Chương 1: Tư Duy & Lập Luận Task 2',
-        duration: '10h 00m',
+        duration: '20 phút',
         lessons: [
           {
             id: 17,
@@ -491,11 +499,11 @@ export const TEACHER_COURSES = [
     authorName: 'Thầy John',
     authorEmail: 'teacher.john@smartenglish.com',
     lessonCount: 1,
-    studentCount: 310,
-    rating: 4.9,
-    ratingCount: 65,
-    durationHours: '5 giờ',
-    estimatedHours: 5,
+    studentCount: null,
+    rating: null,
+    ratingCount: null,
+    durationHours: '15 phút',
+    estimatedHours: 0.25,
     updatedAt: '05/10/2026',
     thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
     description: 'Nắm vững 44 âm IPA, quy tắc nối âm, nuốt âm, ngữ điệu câu và luyện nói phản xạ chuẩn giọng Mỹ.',
@@ -503,7 +511,7 @@ export const TEACHER_COURSES = [
       {
         id: 'CH-8',
         title: 'Chương 1: Nguyên Âm & Ngữ Điệu Giọng Mỹ',
-        duration: '5h 00m',
+        duration: '15 phút',
         lessons: [
           {
             id: 18,

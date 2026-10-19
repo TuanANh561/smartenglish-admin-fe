@@ -25,9 +25,9 @@ import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
 import PronunciationToolbar from './components/PronunciationToolbar'
 import PronunciationTableRow from './components/PronunciationTableRow'
@@ -298,12 +298,36 @@ export default function PronunciationPage() {
     }
   }
 
-  // Dọn dẹp âm thanh khi component unmount
+  // Dừng âm thanh và reset playingAudioId khi chuyển tab (IPA <-> Kịch bản), chuyển trang, đổi bộ lọc, mở drawer hoặc modal
   useEffect(() => {
+    stopAudio()
+    setPlayingAudioId(null)
+  }, [
+    activeTab,
+    scenarioPage,
+    scenarioSearch,
+    scenarioLevel,
+    scenarioCategory,
+    ipaPage,
+    search,
+    selectedCategory,
+    selectedLevel,
+    selectedStatus,
+    activeLesson,
+    simulatingScenario,
+  ])
+
+  // Dọn dẹp âm thanh khi component unmount hoặc khi bộ điều phối toàn cục yêu cầu
+  useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setPlayingAudioId(null)
+    })
     return () => {
+      unregister()
       stopAudio()
     }
   }, [])
+
 
   const handlePlayAudio = (e, item) => {
     e.stopPropagation()

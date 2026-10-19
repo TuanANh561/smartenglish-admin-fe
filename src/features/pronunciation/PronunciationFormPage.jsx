@@ -23,6 +23,7 @@ import IpaInputField from '@/components/ui/IpaInputField'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
 import PronunciationQuestionCard from './components/PronunciationQuestionCard'
 import SampleWordsSection from './components/SampleWordsSection'
@@ -94,9 +95,13 @@ function PronunciationFormPage() {
       .finally(() => setIsLoading(false))
   }, [id, isEditing])
 
-  // Ngắt toàn bộ âm thanh khi người dùng rời trang
+  // Ngắt toàn bộ âm thanh khi người dùng rời trang hoặc khi bộ điều phối toàn cục yêu cầu
   useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setPlayingWordIdx(null)
+    })
     return () => {
+      unregister()
       stopAudio()
     }
   }, [])

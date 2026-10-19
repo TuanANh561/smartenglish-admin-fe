@@ -1,8 +1,9 @@
+import { useEffect } from 'react'
 import { Lock, Pencil, Play, Volume2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Badge from '@/components/ui/Badge'
 import Drawer from '@/components/ui/Drawer'
-import { speakWord } from '@/lib/ipaHelper'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 const LEVEL_TONE = {
   A1: 'info',
@@ -19,12 +20,23 @@ export default function PronunciationDetailDrawer({
   onPlayAudio,
   onEdit,
 }) {
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [])
+
   if (!activeLesson) return null
+
+  const handleClose = () => {
+    stopAudio()
+    onClose?.()
+  }
 
   return (
     <Drawer
       open={Boolean(activeLesson)}
-      onClose={onClose}
+      onClose={handleClose}
       title={activeLesson?.title}
       className="max-w-lg"
     >
@@ -39,7 +51,7 @@ export default function PronunciationDetailDrawer({
           </Badge>
           <Badge tone="neutral">{activeLesson.category}</Badge>
           <Badge tone={activeLesson.status === 'published' ? 'success' : 'neutral'}>
-            {activeLesson.status === 'published' ? 'Published' : 'Draft'}
+            {activeLesson.status === 'published' ? 'Xuất bản' : 'Bản nháp'}
           </Badge>
         </div>
 

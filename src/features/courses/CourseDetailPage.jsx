@@ -78,11 +78,26 @@ function CourseDetailPage() {
           if (lessonList) {
             cData.lessons = lessonList
             cData.lessonCount = lessonList.length
+            const totalLessonMin = lessonList.reduce((acc, l) => acc + (Number(l.estimatedMin) || 15), 0)
+            const chapterDuration = cData.estimatedHours != null
+              ? `${cData.estimatedHours}h 00m`
+              : (totalLessonMin > 0
+                  ? (totalLessonMin >= 60 ? `${(totalLessonMin / 60).toFixed(1)}h` : `${totalLessonMin} phút`)
+                  : '—')
+
+            if (!cData.durationHours) {
+              cData.durationHours = cData.estimatedHours != null
+                ? `${cData.estimatedHours} giờ`
+                : (totalLessonMin > 0
+                    ? (totalLessonMin >= 60 ? `${(totalLessonMin / 60).toFixed(1)} giờ` : `${totalLessonMin} phút`)
+                    : null)
+            }
+
             cData.chapters = [
               {
                 id: `CH-${cData.id}`,
                 title: cData.titleVi || cData.title || `Chương ${cData.id}`,
-                duration: `${cData.estimatedHours || 5}h 00m`,
+                duration: chapterDuration,
                 lessons: lessonList,
               },
             ]

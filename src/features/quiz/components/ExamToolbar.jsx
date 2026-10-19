@@ -4,8 +4,8 @@ import { CEFR_LEVELS, EXAM_CATEGORIES } from '../examApi'
 
 const STATUS_OPTIONS = [
   { value: 'all',       label: 'Tất cả trạng thái' },
-  { value: 'published', label: 'Published' },
-  { value: 'draft',     label: 'Draft' },
+  { value: 'published', label: 'Xuất bản' },
+  { value: 'draft',     label: 'Bản nháp' },
 ]
 
 export default function ExamToolbar({

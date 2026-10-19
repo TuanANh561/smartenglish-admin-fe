@@ -71,6 +71,18 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
         )
       },
     }),
+    columnHelper.accessor('isActive', {
+      header: 'Trạng thái',
+      enableSorting: true,
+      cell: (info) => {
+        const isActive = info.getValue() !== false
+        return (
+          <Badge tone={isActive ? 'success' : 'danger'}>
+            {isActive ? 'Hoạt động' : 'Đã khoá'}
+          </Badge>
+        )
+      },
+    }),
     columnHelper.accessor('createdAt', {
       header: 'Ngày tạo',
       enableSorting: true,

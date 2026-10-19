@@ -21,6 +21,28 @@ const CEFR_TONE = {
 
 const columnHelper = createColumnHelper()
 
+export const cleanDisplayMeaning = (val) => {
+  if (!val || typeof val !== 'string') return val ?? ''
+  let text = val
+  if (text.includes('%')) {
+    try {
+      text = decodeURIComponent(text.replace(/\+/g, '%2B'))
+    } catch {
+      // ignore malformed URI
+    }
+  }
+  return text
+    .replace(/%2C/gi, ',')
+    .replace(/%28/gi, '(')
+    .replace(/%29/gi, ')')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim()
+}
+
 export const vocabularyColumns = [
   columnHelper.accessor('word', {
     header: 'Từ vựng',
@@ -46,7 +68,7 @@ export const vocabularyColumns = [
   columnHelper.accessor('vietnameseMeaning', {
     header: 'Nghĩa tiếng Việt',
     enableSorting: false,
-    cell: (info) => <span className="text-sm font-medium text-slate-800">{info.getValue()}</span>,
+    cell: (info) => <span className="text-sm font-medium text-slate-800">{cleanDisplayMeaning(info.getValue())}</span>,
   }),
   columnHelper.accessor('cefrLevel', {
     header: 'Cấp độ CEFR',

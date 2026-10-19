@@ -79,17 +79,27 @@ export default function CourseDetailBanner({
             <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-line text-xs">
               <div>
                 <span className="text-[11px] text-ink-muted block">Học viên</span>
-                <strong className="text-base text-navy-700">{formatNumber(course.studentCount)}</strong>
+                <strong className="text-base text-navy-700">
+                  {formatNumber(course.studentCount)}
+                </strong>
               </div>
               <div>
                 <span className="text-[11px] text-ink-muted block">Đánh giá</span>
                 <strong className="text-base text-amber-500 flex items-center gap-1">
-                  {course.rating} <Star size={13} fill="#f59e0b" />
+                  {course.rating != null ? (
+                    <>
+                      {course.rating} <Star size={13} fill="#f59e0b" />
+                    </>
+                  ) : (
+                    <span className="text-navy-700 font-semibold">—</span>
+                  )}
                 </strong>
               </div>
               <div>
                 <span className="text-[11px] text-ink-muted block">Thời lượng</span>
-                <strong className="text-base text-navy-700">{course.durationHours}</strong>
+                <strong className="text-base text-navy-700">
+                  {course.durationHours || (course.estimatedHours != null ? `${course.estimatedHours} giờ` : '—')}
+                </strong>
               </div>
             </div>
           </div>

@@ -10,18 +10,20 @@ import {
   getStaticQr,
 } from '../transactionsApi'
 
-export function useTransactions(params = {}) {
+export function useTransactions(params = {}, options = {}) {
   return useQuery({
     queryKey: ['admin', 'transactions', params],
     queryFn: () => getTransactions(params),
     keepPreviousData: true,
+    ...options,
   })
 }
 
-export function useReconciliationStats() {
+export function useReconciliationStats(options = {}) {
   return useQuery({
     queryKey: ['admin', 'revenue', 'reconciliation-stats'],
     queryFn: () => getReconciliationStats(),
+    ...options,
   })
 }
 
@@ -57,10 +59,11 @@ export function useRejectRefund() {
   })
 }
 
-export function useSepayTransactions(matchStatus) {
+export function useSepayTransactions(matchStatus, options = {}) {
   return useQuery({
     queryKey: ['admin', 'sepay-transactions', matchStatus],
     queryFn: () => getSepayTransactions(matchStatus),
+    ...options,
   })
 }
 

@@ -49,7 +49,8 @@ function issueTokenPair(user) {
 export const handlers = {
   // ── Xác thực ────────────────────────────────────────────────────
   [`POST ${ENDPOINTS.auth.login}`]: ({ data }) => {
-    const { email, password } = data ?? {}
+    const email = data?.email || data?.emailOrUsername
+    const password = data?.password
     const user = users.find(
       (item) =>
         item.email.toLowerCase() === email?.toLowerCase() ||

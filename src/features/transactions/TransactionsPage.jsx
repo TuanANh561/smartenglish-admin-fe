@@ -20,6 +20,7 @@ import {
   transactionColumns,
   transactionCsvColumns,
 } from './columns'
+import { useNotificationStream } from '@/features/notifications/useNotificationStream'
 import {
   useTransactions,
   useReconciliationStats,
@@ -45,15 +46,37 @@ function TransactionsPage() {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
   const [isStaticQrModalOpen, setIsStaticQrModalOpen] = useState(false)
   const [revealedAccounts, setRevealedAccounts] = useState({})
+  const [isLiveMode, setIsLiveMode] = useState(true)
 
-  // API hooks
-  const statsQuery = useReconciliationStats()
-  const transactionsQuery = useTransactions({
-    page,
-    size: pageSize,
-    search,
-    status,
-    gateway,
+  // API hooks with Realtime Polling
+  const statsQuery = useReconciliationStats({
+    refetchInterval: isLiveMode ? 8000 : false,
+  })
+  const transactionsQuery = useTransactions(
+    {
+      page,
+      size: pageSize,
+      search,
+      status,
+      gateway,
+    },
+    {
+      refetchInterval: isLiveMode ? 8000 : false,
+    },
+  )
+
+  // Kết nối Realtime SSE nhận biến động số dư VietQR SePay tự động
+  useNotificationStream({
+    onNotification: (notif) => {
+      const type = notif?.type || notif?.notificationType || notif?.producer
+      if (type === 'PAYMENT_RECEIPT' || type === 'PAYMENT' || String(notif?.title || '').toLowerCase().includes('thanh toán')) {
+        transactionsQuery.refetch()
+        statsQuery.refetch()
+        toast.success(` Nhận thanh toán mới: ${notif.title || notif.body || 'Chuyển khoản SePay thành công!'}`, {
+          duration: 5000,
+        })
+      }
+    },
   })
 
   const approveRefundMutation = useApproveRefund()
@@ -282,6 +305,21 @@ function TransactionsPage() {
             )}
 
             <div className="h-4 w-px bg-slate-200 mx-0.5 hidden sm:block" />
+
+            {/* Realtime Live Mode Badge & Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsLiveMode(!isLiveMode)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-2xs'
+                  : 'bg-slate-50 text-slate-500 border-slate-200'
+              }`}
+              title={isLiveMode ? 'Realtime SePay: Đang tự động cập nhật mỗi 8s (Bấm để tắt)' : 'Chế độ tĩnh: Bấm để bật cập nhật Realtime 24/7'}
+            >
+              <span className={`h-2 w-2 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+              <span>{isLiveMode ? 'Realtime 24/7' : 'Thủ công'}</span>
+            </button>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-1.5">

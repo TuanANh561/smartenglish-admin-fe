@@ -70,6 +70,11 @@ export default function ExamFormPage() {
   const [selectedPartFilter, setSelectedPartFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Dừng âm thanh khi chuyển bộ lọc Part hoặc thay đổi tìm kiếm câu hỏi
+  useEffect(() => {
+    audioEngine.stop()
+  }, [selectedPartFilter, searchQuery])
+
   // Load existing exam if editing
   useEffect(() => {
     if (!isEditing) return
