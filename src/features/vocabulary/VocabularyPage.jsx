@@ -1,6 +1,6 @@
-import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2, ArrowUpDown, Layers, BookOpen, RotateCcw, RefreshCw, Check, X } from 'lucide-react'
+import { Download, Plus, Upload, Play, Pencil, Trash2, Search, Volume2, Loader2, ArrowUpDown, Layers, BookOpen, RotateCcw, RefreshCw, Check, X, Sparkles } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -8,7 +8,8 @@ import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import VocabImportModal from '@/features/vocabulary/import/VocabImportModal'
 import { vocabularyColumns } from './columns'
-import { speakWord, stopAudio } from '@/lib/ipaHelper'
+import { speakWord, speakWithWebSpeech, stopAudio } from '@/lib/ipaHelper'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 
@@ -156,6 +157,7 @@ function VocabularyPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [sortBy, setSortBy] = useState('created_desc')
@@ -182,6 +184,18 @@ function VocabularyPage() {
     loadTopics()
   }, [loadTopics])
 
+  // Debounce tìm kiếm: Tự động kích hoạt sau khi người dùng dừng gõ 450ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const trimmed = searchInput.trim()
+      if (trimmed !== search) {
+        setSearch(trimmed)
+        setPage(1)
+      }
+    }, 450)
+    return () => clearTimeout(handler)
+  }, [searchInput, search])
+
   const fetchWords = useCallback(async (targetPage, targetSearch, targetPos, targetTopic, targetSort) => {
     const p = targetPage !== undefined ? targetPage : page
     const s = targetSearch !== undefined ? targetSearch : search
@@ -201,14 +215,31 @@ function VocabularyPage() {
       if (tid) params.topicId = tid
 
       const res = await api.get(ENDPOINTS.words.list, { params })
-      if (res && res.items) {
-        setVocabList(res.items)
-        setTotal(res.total || 0)
-        setTotalPages(res.totalPages || 1)
-      } else if (Array.isArray(res)) {
-        setVocabList(res)
-        setTotal(res.length)
-        setTotalPages(Math.ceil(res.length / PAGE_SIZE) || 1)
+      let items = res?.items || (Array.isArray(res) ? res : [])
+      let total = res?.total ?? items.length
+
+      // TỰ ĐỘNG TÌM KIẾM TRÊN INTERNET/AI & NẠP VÀO HỆ THỐNG NẾU CSDL CHƯA CÓ
+      if (items.length === 0 && s && s.trim() && !pos && !tid) {
+        try {
+          const autoRes = await api.post(ENDPOINTS.words.autoImport, null, {
+            params: { word: s.trim() }
+          })
+          const newWord = autoRes?.data || autoRes
+          if (newWord && (newWord.id || newWord.word)) {
+            items = [newWord]
+            total = 1
+            loadTopics()
+          }
+        } catch (autoErr) {
+          console.warn('Không thể tự động nạp từ internet:', autoErr)
+        }
+      }
+
+      setVocabList(items)
+      setTotal(total)
+      setTotalPages(Math.ceil(total / PAGE_SIZE) || 1)
+      if (s && items.length > 0) {
+        loadTopics()
       }
     } catch (err) {
       console.error('Lỗi khi tải từ vựng:', err)
@@ -216,15 +247,25 @@ function VocabularyPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [search, page, partOfSpeech, topicId, sortBy])
+  }, [search, page, partOfSpeech, topicId, sortBy, loadTopics])
 
   useEffect(() => {
     fetchWords()
   }, [fetchWords])
 
-  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang
+  // Ngắt âm thanh và đặt lại trạng thái icon khi chuyển trang, đổi bộ lọc, hoặc mở modal import
   useEffect(() => {
+    stopAudio()
+    setPlayingId(null)
+  }, [page, search, partOfSpeech, topicId, sortBy, isPdfImportOpen])
+
+  // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang hoặc bộ điều phối toàn cục yêu cầu
+  useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setPlayingId(null)
+    })
     return () => {
+      unregister()
       stopAudio()
     }
   }, [])
@@ -237,6 +278,7 @@ function VocabularyPage() {
   const hasActiveFilters = Boolean(search || partOfSpeech || topicId || sortBy !== 'created_desc')
 
   const handleResetFilters = () => {
+    setSearchInput('')
     setSearch('')
     setPartOfSpeech('')
     setTopicId('')
@@ -284,7 +326,7 @@ function VocabularyPage() {
       toast('Đã dừng phát âm', { icon: '⏸️' })
     } else {
       setPlayingId(item.id)
-      speakWord(item.word, item.audioUrl, () => {
+      speakWithWebSpeech(item.word, () => {
         setPlayingId((curr) => (curr === item.id ? null : curr))
       })
       setTimeout(() => {
@@ -303,11 +345,34 @@ function VocabularyPage() {
             <Search size={18} className="shrink-0 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm từ vựng, ý nghĩa, phiên âm, chủ đề..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              placeholder="Tìm kiếm từ vựng (tự động tra online nếu chưa có)..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = searchInput.trim()
+                  if (val !== search) {
+                    setSearch(val)
+                    setPage(1)
+                  }
+                }
+              }}
               className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('')
+                  setSearch('')
+                  setPage(1)
+                }}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors"
+                title="Xóa tìm kiếm"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -404,13 +469,26 @@ function VocabularyPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={vocabularyColumns.length + 2} className="px-6 py-12 text-center">
-                    <LoadingSpinner text="Đang tải danh sách từ vựng từ máy chủ..." />
+                    <LoadingSpinner
+                      text={
+                        search
+                          ? `Đang tìm kiếm từ "${search}"...`
+                          : "Đang tải danh sách từ vựng..."
+                      }
+                    />
                   </td>
                 </tr>
               ) : pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-8 text-center text-sm text-slate-400">
-                    Chưa có từ vựng nào khớp với tìm kiếm
+                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-12 text-center">
+                    <div className="max-w-sm mx-auto text-center space-y-2">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                        <BookOpen size={24} />
+                      </div>
+                      <p className="text-sm font-bold text-slate-700">
+                        {search ? `Không tìm thấy từ vựng nào cho "${search}"` : 'Kho từ vựng hiện đang trống'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -430,7 +508,7 @@ function VocabularyPage() {
                             ? 'bg-brand-500 text-white animate-pulse'
                             : 'text-slate-400 hover:bg-brand-50 hover:text-brand-600'
                         }`}
-                        title="Phát âm thanh"
+                        title="Phát âm từ vựng (Web Speech API)"
                       >
                         {playingId === vocab.id ? <Volume2 size={16} /> : <Play size={16} strokeWidth={2} />}
                       </button>

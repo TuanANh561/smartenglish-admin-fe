@@ -11,8 +11,10 @@ import toast from 'react-hot-toast'
 import {
   IPA_KEYBOARD_GROUPS,
   generateIpaWithSpellCheck,
-  speakWord,
+  speakWithWebSpeech,
+  stopAudio,
 } from '@/lib/ipaHelper'
+import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
 /**
  * Intelligent IPA Input Field with Online Dictionary Auto-Fetch & Virtual Keyboard
@@ -34,6 +36,18 @@ export default function IpaInputField({
   const inputRef = useRef(null)
   const lastAutoFetchedWordRef = useRef('')
   const lastAutoFetchedIpaRef = useRef('')
+
+  // Dọn dẹp âm thanh khi component unmount hoặc khi bộ điều phối toàn cục yêu cầu
+  useEffect(() => {
+    const unregister = registerAudioStopHandler(() => {
+      setIsPlayingAudio(false)
+    })
+    return () => {
+      unregister()
+      stopAudio()
+    }
+  }, [])
+
 
   // Trigger AI generate and spellcheck
   const handleAiGenerate = async (isManual = false) => {
@@ -121,9 +135,13 @@ export default function IpaInputField({
       toast.error('Chưa có từ để phát âm')
       return
     }
+    if (isPlayingAudio) {
+      stopAudio()
+      setIsPlayingAudio(false)
+      return
+    }
     setIsPlayingAudio(true)
-    speakWord(wordToSpeak, audioUrl)
-    setTimeout(() => setIsPlayingAudio(false), 1500)
+    speakWithWebSpeech(wordToSpeak, () => setIsPlayingAudio(false))
   }
 
   // Insert IPA symbol at cursor position
