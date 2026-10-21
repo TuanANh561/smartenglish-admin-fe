@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Award, BookOpen, Search, Download, Lock, Crown, Sparkles } from 'lucide-react'
+import { Award, Search, FileSpreadsheet, Lock, Crown, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { maskEmail } from '@/lib/utils'
+import * as XLSX from 'xlsx'
 import { useAuthStore } from '@/store/authStore'
 import { getTeacherQuotaStatus } from '../../classApi'
 import { ProgressBar, ScoreBadge, StudentAvatar } from '../ClassSharedComponents'
@@ -14,16 +14,23 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
   const [isPremium, setIsPremium] = useState(false)
   const [showPaywallModal, setShowPaywallModal] = useState(false)
 
+  const userRole = (user?.role || '').toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
+  const canExport = isAdmin || isPremium
+
   useEffect(() => {
-    const teacherId = user?.role === 'teacher' ? (user?.id || 2) : 2
-    getTeacherQuotaStatus(teacherId)
+    if (isAdmin) {
+      setIsPremium(true)
+      return
+    }
+    getTeacherQuotaStatus()
       .then((res) => {
         if (res && res.isPremium) {
           setIsPremium(true)
         }
       })
       .catch(() => {})
-  }, [user?.id])
+  }, [isAdmin])
 
   const filtered = members.filter((s) => {
     const name = (s.userName || s.name || '').toLowerCase()
@@ -33,36 +40,120 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
   })
 
   const handleExport = () => {
-    if (!isPremium) {
+    if (!canExport) {
       setShowPaywallModal(true)
       return
     }
 
-    // Export CSV
+    if (!filtered || filtered.length === 0) {
+      toast.error('Không có dữ liệu học viên trong bảng điểm để xuất')
+      return
+    }
+
+    // Xuất file Microsoft Excel (.xlsx) chuẩn Unicode
     try {
-      const headers = ['Học viên', 'Email', 'Điểm trung bình', 'Tiến độ hoàn thành (%)']
-      const rows = filtered.map((s) => [
-        `"${s.userName || s.name || 'Học viên'}"`,
-        `"${s.userEmail || s.email || ''}"`,
-        s.avgScore != null ? s.avgScore : '',
-        s.progress != null ? `${s.progress}%` : '0%',
-      ])
-      const csvContent =
-        '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.setAttribute('href', url)
-      link.setAttribute(
-        'download',
-        `Bang_Diem_${(cls?.name || 'Lop_hoc').replace(/\s+/g, '_')}.csv`,
-      )
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      toast.success('Đã xuất file bảng điểm thành công!')
+      const className = cls?.name || 'Lop_hoc'
+      const totalAssignments = Math.max(assignments.length, 1)
+
+      const aoaData = [
+        ['BẢNG ĐIỂM CHI TIẾT HỌC VIÊN'],
+        ['Lớp học:', className],
+        ['Mã lớp:', cls?.code || '—'],
+        ['Thời gian xuất:', new Date().toLocaleString('vi-VN')],
+        [],
+        [
+          'STT',
+          'Họ và tên học viên',
+          'Email',
+          'Điểm trung bình',
+          'Tiến độ hoàn thành',
+          'Bài tập đã nộp',
+          'Xếp loại',
+        ],
+        ...filtered.map((s, idx) => {
+          const name = s.userName || s.name || `Học viên #${s.userId || s.id}`
+          const email = s.userEmail || s.email || ''
+          const score = s.avgScore != null ? Number(s.avgScore) : 'Chưa có'
+          const progress = s.progress != null ? `${s.progress}%` : '0%'
+          const submittedCount = Math.round(((s.progress || 0) / 100) * totalAssignments)
+          const rating =
+            s.avgScore == null
+              ? 'Chưa đánh giá'
+              : s.avgScore >= 8.5
+                ? 'Xuất sắc'
+                : s.avgScore >= 7.0
+                  ? 'Khá'
+                  : s.avgScore >= 5.0
+                    ? 'Trung bình'
+                    : 'Yếu'
+
+          return [
+            idx + 1,
+            name,
+            email,
+            score,
+            progress,
+            `${submittedCount}/${totalAssignments}`,
+            rating,
+          ]
+        }),
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(aoaData)
+
+      // Căn chỉnh độ rộng cột Excel
+      worksheet['!cols'] = [
+        { wch: 6 },  // STT
+        { wch: 28 }, // Họ tên
+        { wch: 30 }, // Email
+        { wch: 18 }, // Điểm TB
+        { wch: 20 }, // Tiến độ
+        { wch: 18 }, // Bài tập đã nộp
+        { wch: 16 }, // Xếp loại
+      ]
+
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Bang_Diem')
+
+      // Chuẩn hóa tên file sang ASCII an toàn cho hệ thống tệp tin Windows (tránh bị Chromium lưu dưới dạng UUID không đuôi)
+      const asciiName = className
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .replace(/[^a-zA-Z0-9_\-\s]/g, '')
+        .trim()
+        .replace(/\s+/g, '_') || 'Lop_hoc'
+
+      const fileName = `Bang_Diem_${asciiName}.xlsx`
+
+      // Chuyển workbook sang binary buffer và tạo Blob chuẩn Microsoft Excel (.xlsx)
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      })
+
+      // Kích hoạt tải về qua thẻ <a> được gắn tường minh vào DOM để trình duyệt nhận diện chính xác đuôi .xlsx
+      const blobUrl = window.URL.createObjectURL(blob)
+      const downloadLink = document.createElement('a')
+      downloadLink.style.display = 'none'
+      downloadLink.href = blobUrl
+      downloadLink.download = fileName
+      downloadLink.setAttribute('download', fileName)
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+
+      setTimeout(() => {
+        if (document.body.contains(downloadLink)) {
+          document.body.removeChild(downloadLink)
+        }
+        window.URL.revokeObjectURL(blobUrl)
+      }, 5000)
+
+      toast.success(`Đã xuất file Excel: ${fileName}`)
     } catch (err) {
-      toast.error('Lỗi khi xuất dữ liệu: ' + err.message)
+      console.error('Lỗi xuất Excel:', err)
+      toast.error('Lỗi khi xuất file Excel: ' + (err?.message || 'Không thể tạo file'))
     }
   }
 
@@ -85,9 +176,9 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
             onClick={handleExport}
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer"
           >
-            <Download size={14} className="text-slate-500" />
-            <span>Xuất Excel/PDF</span>
-            {!isPremium && (
+            <FileSpreadsheet size={14} className="text-emerald-600" />
+            <span>Xuất Excel</span>
+            {!canExport && (
               <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 border border-amber-200 flex items-center gap-0.5">
                 <Lock size={10} /> PRO
               </span>
@@ -109,7 +200,7 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
             </div>
             <h3 className="text-lg font-bold text-slate-900">Tính năng dành cho Teacher Pro</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Tính năng <strong>Xuất báo cáo chi tiết (Excel/PDF)</strong> và phân tích kết quả học viên chỉ có trên gói <strong>Teacher Pro</strong> và <strong>School & Center</strong>.
+              Tính năng <strong>Xuất bảng điểm chi tiết (Excel .xlsx)</strong> và phân tích kết quả học viên chỉ có trên gói <strong>Teacher Pro</strong> và <strong>School & Center</strong>.
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
@@ -195,8 +286,8 @@ export default function ClassGradebookTab({ cls, members = [], assignments = [] 
                         <StudentAvatar student={sObj} />
                         <div>
                           <p className="font-bold text-slate-800 text-sm">{sObj.name}</p>
-                          <p className="font-mono text-xs text-slate-400 mt-0.5">
-                            {maskEmail(sObj.email)}
+                          <p className="font-mono text-xs text-slate-500 mt-0.5">
+                            {sObj.email || '—'}
                           </p>
                         </div>
                       </div>
