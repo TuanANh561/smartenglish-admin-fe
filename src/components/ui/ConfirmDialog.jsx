@@ -3,29 +3,35 @@ import Button from '@/components/ui/Button'
 
 function ConfirmDialog({
   open,
+  isOpen,
   onClose,
   onCancel,
   onConfirm,
   title = 'Xác nhận',
   description,
+  message,
   confirmText,
   confirmLabel = 'Xác nhận',
   cancelText,
   cancelLabel = 'Huỷ',
-  variant = 'danger',
+  variant,
+  confirmVariant = 'danger',
   loading = false,
   isProcessing = false,
 }) {
+  const isModalOpen = open !== undefined ? open : isOpen
   const handleClose = onClose || onCancel
+  const finalDescription = description !== undefined ? description : message
+  const finalVariant = variant || confirmVariant || 'danger'
   const finalConfirmText = confirmText || confirmLabel
   const finalCancelText = cancelText || cancelLabel
   const isLoading = loading || isProcessing
 
   return (
-    <Modal open={open} onClose={handleClose} title={title}>
-      {description && (
+    <Modal open={isModalOpen} onClose={handleClose} title={title}>
+      {finalDescription && (
         <div className="text-sm text-ink leading-relaxed">
-          {typeof description === 'string' ? <p>{description}</p> : description}
+          {typeof finalDescription === 'string' ? <p>{finalDescription}</p> : finalDescription}
         </div>
       )}
       <div className="mt-5 flex justify-end gap-3">

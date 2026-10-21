@@ -22,7 +22,6 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
 import { getUserActivities } from '@/features/notifications/notificationApi'
-import { getAuditLogs } from '@/features/auditLog/auditLogApi'
 import {
   computeTeacherStats,
   getAllAssignments,
@@ -52,31 +51,6 @@ function DonutProgress({ percent }) {
   )
 }
 
-// ─── Biểu đồ cột mini — điểm trung bình theo buổi ───────────────────────────
-function ScoreBarChart({ data }) {
-  const max = Math.max(...data.map((d) => d.value), 1)
-  return (
-    <div className="flex h-20 items-end gap-1.5">
-      {data.map((d, i) => {
-        const isLast = i === data.length - 1
-        const height = Math.round((d.value / max) * 100)
-        return (
-          <div key={d.label} className="flex flex-1 flex-col items-center gap-1">
-            <div
-              className="w-full rounded-t"
-              style={{
-                height: `${height}%`,
-                background: isLast ? '#1B3A57' : '#CBD5E1',
-                minHeight: 4,
-              }}
-            />
-            <span className="text-[9px] text-slate-400">{d.label}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 // ─── Icon hoạt động theo loại ────────────────────────────────────────────────
 function ActivityIcon({ type }) {
@@ -147,13 +121,6 @@ function TeacherDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true)
 
-  const today = useMemo(() => {
-    return new Date().toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })
-  }, [])
 
   // ── Tải giao dịch mua gói gần đây (toàn hệ thống — giáo viên + học viên) ──
   useEffect(() => {
@@ -236,7 +203,7 @@ function TeacherDashboardPage() {
 
       // 2. Tải lớp học và bài tập
       try {
-        const { classes: cls } = await getMyClasses({ size: 100, teacherId: user.id })
+        const { classes: cls } = await getMyClasses({ size: 100 })
         if (!isMounted) return
         setClasses(cls)
         setIsLoading(false)

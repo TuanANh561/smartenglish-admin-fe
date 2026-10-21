@@ -37,13 +37,18 @@ export const ROLE_ACCESS = {
 }
 
 export function isRouteAllowed(pathname, role = 'admin') {
-  const normRole = String(role || 'admin').trim().toLowerCase()
+  if (!role) return false
+  const normRole = String(role).trim().toLowerCase()
   if (normRole === 'admin') return true
   if (normRole === 'teacher') {
     if (!pathname) return false
-    return ROLE_ACCESS.teacher.some((allowed) =>
-      pathname === allowed || pathname.startsWith(`${allowed}/`),
-    )
+    const cleanPath = pathname.replace(/\/+$/, '') || '/'
+    return ROLE_ACCESS.teacher.some((allowed) => {
+      if (allowed === '/app') {
+        return cleanPath === '/app'
+      }
+      return cleanPath === allowed || cleanPath.startsWith(`${allowed}/`)
+    })
   }
   return false
 }
@@ -59,9 +64,10 @@ export const NAV_GROUPS = [
       {
         label: 'Gói & Giao dịch',
         icon: Crown,
-        roles: ['teacher'],
+        roles: ['teacher', 'admin'],
         children: [
-          { to: '/app/goi-dich-vu', label: 'Gói dịch vụ Pro', roles: ['teacher'] },
+          { to: '/app/goi-premium', label: 'Cấu hình gói Premium', roles: ['admin'] },
+          { to: '/app/goi-dich-vu', label: 'Gói dịch vụ Pro', roles: ['teacher', 'admin'] },
           { to: '/app/giao-dich', label: 'Lịch sử giao dịch', roles: ['teacher'] },
         ],
       },
@@ -171,7 +177,7 @@ export const ROUTE_META = {
   },
   '/app/hoc-vien': { title: 'Người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
-  '/app/goi-dich-vu': { title: 'Gói dịch vụ giảng dạy', description: 'Quản lý gói quyền lợi giảng dạy và ưu đãi học viên' },
+  '/app/goi-dich-vu': { title: 'Gói dịch vụ & Xem trước Paywall', description: 'Trực quan hóa gói quyền lợi giảng dạy và paywall học viên' },
   '/app/giao-dich': { title: 'Quản lý Giao dịch & Hóa đơn', description: 'Tra cứu lịch sử thanh toán và xuất hóa đơn điện tử' },
   '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/app/hoc-lieu/ngu-phap': {

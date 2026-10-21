@@ -227,9 +227,10 @@ function DataTable({
                     <th
                       key={header.id}
                       className={cn(
+                        'whitespace-nowrap',
                         isCompact
                           ? 'px-2 py-3 text-xs font-bold uppercase tracking-wider text-slate-500'
-                          : 'px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500',
+                          : 'px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500',
                         meta?.widthClass,
                         alignClass(align),
                       )}
@@ -321,7 +322,7 @@ function DataTable({
                         <td
                           key={cell.id}
                           className={cn(
-                            isCompact ? 'px-2 py-3 text-sm text-slate-800' : 'px-6 py-4.5 text-sm text-slate-800',
+                            isCompact ? 'px-2 py-3 text-sm text-slate-800' : 'px-4 py-3.5 text-sm text-slate-800',
                             meta?.widthClass,
                             alignClass(meta?.align),
                           )}

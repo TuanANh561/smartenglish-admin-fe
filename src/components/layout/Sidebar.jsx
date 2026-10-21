@@ -14,6 +14,7 @@ import {
   PanelLeftOpen,
   Crown,
   Receipt,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -26,13 +27,14 @@ import { useSidebarStore } from '@/store/sidebarStore'
 
 // Icon và màu sắc riêng biệt cho từng bài học con (tương phản cao, tươi sáng)
 const SUB_CONFIG = {
-  '/app/hoc-lieu/tu-vung':  { icon: FileText,     color: 'text-blue-600',   bg: 'bg-blue-50' },
-  '/app/hoc-lieu/ngu-phap': { icon: BookOpenText, color: 'text-purple-600', bg: 'bg-purple-50' },
-  '/app/hoc-lieu/phat-am':  { icon: Mic,          color: 'text-rose-600',   bg: 'bg-rose-50' },
-  '/app/hoc-lieu/bai-doc':  { icon: BookOpen,     color: 'text-emerald-600',bg: 'bg-emerald-50' },
-  '/app/hoc-lieu/bai-nghe': { icon: Headphones,   color: 'text-amber-600',  bg: 'bg-amber-50' },
-  '/app/goi-dich-vu':       { icon: Crown,        color: 'text-amber-600',  bg: 'bg-amber-50' },
-  '/app/giao-dich':         { icon: Receipt,      color: 'text-blue-600',   bg: 'bg-blue-50' },
+  '/app/hoc-lieu/tu-vung':  { icon: FileText,          color: 'text-blue-600',   bg: 'bg-blue-50' },
+  '/app/hoc-lieu/ngu-phap': { icon: BookOpenText,      color: 'text-purple-600', bg: 'bg-purple-50' },
+  '/app/hoc-lieu/phat-am':  { icon: Mic,               color: 'text-rose-600',   bg: 'bg-rose-50' },
+  '/app/hoc-lieu/bai-doc':  { icon: BookOpen,          color: 'text-emerald-600',bg: 'bg-emerald-50' },
+  '/app/hoc-lieu/bai-nghe': { icon: Headphones,        color: 'text-amber-600',  bg: 'bg-amber-50' },
+  '/app/goi-premium':       { icon: SlidersHorizontal, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  '/app/goi-dich-vu':       { icon: Crown,             color: 'text-amber-600',  bg: 'bg-amber-50' },
+  '/app/giao-dich':         { icon: Receipt,           color: 'text-blue-600',   bg: 'bg-blue-50' },
 }
 
 /**

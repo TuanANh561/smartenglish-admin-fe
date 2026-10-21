@@ -65,7 +65,7 @@ function BarChartCard({
             <XAxis dataKey={dataKeyX} tickLine={false} axisLine={false} tick={AXIS_TICK_STYLE} />
             <YAxis hide />
             <Tooltip content={<ChartTooltip formatter={valueFormatter} />} cursor={{ fill: 'transparent' }} />
-            <Bar dataKey={dataKeyY} radius={[6, 6, 0, 0]}>
+            <Bar dataKey={dataKeyY} radius={[6, 6, 0, 0]} maxBarSize={32}>
               {data.map((_, index) => (
                 <Cell key={index} fill={index === highlightIndex ? HIGHLIGHT_COLOR : IDLE_COLOR} />
               ))}

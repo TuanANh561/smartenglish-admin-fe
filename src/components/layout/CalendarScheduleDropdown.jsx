@@ -22,6 +22,7 @@ import {
   createScheduledNotification,
   cancelScheduledNotification,
 } from '@/features/notifications/notificationApi'
+import { getTeacherClasses } from '@/features/classes/classApi'
 
 const DAYS_OF_WEEK = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
@@ -45,11 +46,47 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   const [selectedDate, setSelectedDate] = useState(todayStr)
 
   const user = useAuthStore((s) => s.user)
+  const userRole = (user?.role || '').toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
   const currentUserId = user?.id || 2
 
   // Danh sách lịch thông báo thật 100% từ backend notification-service (Không fake data)
   const [scheduledList, setScheduledList] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+
+  // Danh sách các lớp học do người dùng hiện tại tạo / phụ trách
+  const [myClasses, setMyClasses] = useState([])
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false)
+
+  const fetchMyClasses = async () => {
+    setIsLoadingClasses(true)
+    try {
+      let list = []
+      if (isAdmin) {
+        const resAdminSpecific = await getTeacherClasses({ teacherId: currentUserId }).catch(() => null)
+        const specificList = Array.isArray(resAdminSpecific) ? resAdminSpecific : resAdminSpecific?.data || []
+        if (Array.isArray(specificList) && specificList.length > 0) {
+          list = specificList
+        } else {
+          const resAll = await getTeacherClasses().catch(() => null)
+          const allList = Array.isArray(resAll) ? resAll : resAll?.data || []
+          const createdByMe = allList.filter(
+            (c) => String(c.teacherId) === String(currentUserId) || String(c.createdBy) === String(currentUserId),
+          )
+          list = createdByMe.length > 0 ? createdByMe : allList
+        }
+      } else {
+        const resTeacher = await getTeacherClasses().catch(() => null)
+        list = Array.isArray(resTeacher) ? resTeacher : resTeacher?.data || []
+      }
+      setMyClasses(list)
+    } catch (err) {
+      console.warn('Lỗi tải danh sách lớp học:', err)
+      setMyClasses([])
+    } finally {
+      setIsLoadingClasses(false)
+    }
+  }
 
   // Lấy dữ liệu thật từ notification-service
   const fetchBackendSchedules = async () => {
@@ -75,7 +112,7 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
             id: item.id,
             title: item.title,
             content: item.content || item.title,
-            target: item.targetLabel || 'Tất cả học viên',
+            target: item.targetLabel || 'Chỉ bản thân',
             date,
             time,
             type: (item.remindType || 'class').toLowerCase(),
@@ -97,6 +134,7 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   useEffect(() => {
     if (isOpen) {
       fetchBackendSchedules()
+      fetchMyClasses()
     }
   }, [isOpen, currentUserId])
 
@@ -104,8 +142,22 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
   const [noteTitle, setNoteTitle] = useState('')
   const [noteContent, setNoteContent] = useState('')
   const [noteTime, setNoteTime] = useState('09:00')
-  const [noteTarget, setNoteTarget] = useState('Lớp IELTS 6.5')
+  const [noteTarget, setNoteTarget] = useState(isAdmin ? 'Tất cả người dùng' : 'Chỉ bản thân')
   const [activeTab, setActiveTab] = useState('add') // 'add' | 'list'
+
+  // Đồng bộ noteTarget khi vai trò hoặc danh sách lớp thay đổi
+  useEffect(() => {
+    if (isAdmin) {
+      if (!noteTarget) {
+        setNoteTarget('Tất cả người dùng')
+      }
+    } else {
+      // Với giáo viên: Tuyệt đối không có các mục "Tất cả..."
+      if (!noteTarget || noteTarget.startsWith('Tất cả')) {
+        setNoteTarget(myClasses.length > 0 ? myClasses[0].name : 'Chỉ bản thân')
+      }
+    }
+  }, [isAdmin, myClasses])
 
   // Đóng dropdown khi click outside hoặc ấn Escape
   useEffect(() => {
@@ -237,6 +289,25 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
 
     const scheduledDateTime = new Date(`${selectedDate}T${noteTime}:00`).toISOString()
 
+    let targetType = 'CLASS'
+    let remindType = 'CLASS'
+    if (noteTarget === 'Tất cả người dùng') {
+      targetType = 'ALL_USERS'
+      remindType = 'GENERAL'
+    } else if (noteTarget === 'Tất cả học viên') {
+      targetType = 'ALL_STUDENTS'
+      remindType = 'STUDENT'
+    } else if (noteTarget === 'Tất cả giáo viên') {
+      targetType = 'ALL_TEACHERS'
+      remindType = 'TEACHER'
+    } else if (noteTarget === 'Chỉ bản thân' || noteTarget === 'Chỉ nhắc cá nhân tôi') {
+      targetType = 'SELF'
+      remindType = 'SELF'
+    } else {
+      targetType = 'CLASS'
+      remindType = 'CLASS'
+    }
+
     const newItem = {
       id: `sch-${Date.now()}`,
       title: noteTitle.trim(),
@@ -244,7 +315,7 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
       date: selectedDate,
       time: noteTime,
       target: noteTarget,
-      type: 'class',
+      type: remindType.toLowerCase(),
       status: 'pending',
     }
 
@@ -259,10 +330,10 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
         creatorId: currentUserId,
         title: newItem.title,
         content: newItem.content,
-        targetType: 'CLASS',
+        targetType,
         targetLabel: noteTarget,
         scheduledAt: scheduledDateTime,
-        remindType: 'CLASS',
+        remindType,
         repeatType: 'NONE',
         channels: 'IN_APP,WEB',
       })
@@ -496,11 +567,31 @@ export default function CalendarScheduleDropdown({ isOpen, onClose, anchorRef })
                 onChange={(e) => setNoteTarget(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-navy-700 focus:border-brand-500 focus:outline-none"
               >
-                <option value="Tất cả học viên">Tất cả học viên</option>
-                <option value="Lớp IELTS 6.5">Lớp IELTS 6.5</option>
-                <option value="Lớp TOEIC 600+">Lớp TOEIC 600+</option>
-                <option value="Lớp Giao tiếp B1">Lớp Giao tiếp B1</option>
-                <option value="Chỉ nhắc cá nhân tôi">Chỉ nhắc cá nhân tôi</option>
+                {isAdmin && (
+                  <>
+                    <option value="Tất cả người dùng">Tất cả người dùng</option>
+                    <option value="Tất cả học viên">Tất cả học viên</option>
+                    <option value="Tất cả giáo viên">Tất cả giáo viên</option>
+                  </>
+                )}
+
+                {myClasses.length > 0 ? (
+                  <optgroup label={isAdmin ? 'Các lớp học do bạn tạo / quản lý' : 'Các lớp học do bạn tạo'}>
+                    {myClasses.map((c) => (
+                      <option key={c.id || c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  !isAdmin && (
+                    <option disabled value="">
+                      (Chưa có lớp học nào)
+                    </option>
+                  )
+                )}
+
+                <option value="Chỉ bản thân">Chỉ bản thân</option>
               </select>
             </div>
           </div>

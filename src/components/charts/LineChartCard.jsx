@@ -27,6 +27,8 @@ function LineChartCard({
   error = null,
   onRetry,
   className,
+  legendDirection = 'row',
+  legendClassName,
 }) {
   const legendItems = series.map((item, index) => ({
     label: item.label,
@@ -35,7 +37,17 @@ function LineChartCard({
 
   return (
     <Card className={className}>
-      <CardHeader title={title} description={description} action={<ChartLegend items={legendItems} />} />
+      <CardHeader
+        title={title}
+        description={description}
+        action={
+          <ChartLegend
+            items={legendItems}
+            direction={legendDirection}
+            className={legendClassName}
+          />
+        }
+      />
 
       {isLoading ? (
         <Skeleton className="h-[260px] w-full" />
