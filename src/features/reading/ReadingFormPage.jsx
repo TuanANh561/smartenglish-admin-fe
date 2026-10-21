@@ -18,6 +18,7 @@ import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import {
   createReadingPassage,
   getReadingPassageById,
@@ -172,6 +173,41 @@ function ReadingFormPage() {
   const [keyVocabulary, setKeyVocabulary] = useState([])
   const [questions, setQuestions] = useState([])
   const [openQuestionIdx, setOpenQuestionIdx] = useState(0)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/bai-doc',
+      backText: 'Quay lại Bài đọc',
+      title: isEditing ? `Chỉnh sửa: "${form.titleEn || 'Bài đọc'}"` : 'Thêm bài đọc hiểu mới',
+      subtitle: `Học liệu / Bài đọc hiểu / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/bai-doc"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            form="reading-form"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+          >
+            <Save size={14} />
+            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài đọc'}
+          </button>
+        </div>
+      ),
+    })
+
+    return () => {
+      clearCustomHeader()
+    }
+  }, [isEditing, form.titleEn, isSaving, setCustomHeader, clearCustomHeader])
 
   // Fetch topics
   useEffect(() => {
@@ -353,46 +389,10 @@ function ReadingFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-12">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-xs">
-        <div className="mx-auto max-w-6xl flex items-center gap-4 px-6 py-3.5">
-          <Link
-            to="/app/hoc-lieu/bai-doc"
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft size={16} /> Quay lại Bài đọc
-          </Link>
-          <div className="h-5 w-px bg-slate-200" />
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa: "${form.titleEn || 'Bài đọc'}"` : 'Thêm bài đọc hiểu mới'}
-            </h1>
-            <p className="text-xs text-slate-500">Học liệu / Bài đọc hiểu / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/app/hoc-lieu/bai-doc"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              Hủy bỏ
-            </Link>
-            <button
-              type="submit"
-              form="reading-form"
-              disabled={isSaving}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-4 py-2 text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer"
-            >
-              <Save size={15} />
-              {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài đọc'}
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-50/50 pb-12 pt-2">
       {/* Body */}
       <form id="reading-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-[1440px] px-6 py-4 space-y-6">
 
           {/* TOP ROW: Card 1 (Thông tin bài đọc) & Card 2 (Nội dung bài đọc) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

@@ -36,29 +36,31 @@ export default function ReadingTableRow({
       className={`group transition-colors hover:bg-slate-50/60 ${!isTrash ? 'cursor-pointer' : ''}`}
     >
       {/* Tiêu đề */}
-      <td className="px-5 py-3">
-        <div className="flex items-center gap-2.5">
+      <td className="px-4 py-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-brand-600">
             <BookOpen size={16} strokeWidth={1.75} />
           </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors" title={item.titleEn}>
               {item.titleEn}
             </p>
-            <p className="text-xs text-slate-400 truncate mt-0.5">
-              {item.titleVi}
-            </p>
+            {item.titleVi && (
+              <p className="text-xs text-slate-400 truncate mt-0.5" title={item.titleVi}>
+                {item.titleVi}
+              </p>
+            )}
           </div>
         </div>
       </td>
 
       {/* Chủ đề */}
-      <td className="px-3 py-3 text-xs text-slate-600">
+      <td className="px-3 py-3 text-xs text-slate-600 truncate" title={item.topic || ''}>
         {item.topic || '—'}
       </td>
 
       {/* Cấp độ */}
-      <td className="px-3 py-3 text-center">
+      <td className="px-2 py-3 text-center whitespace-nowrap">
         <span
           className="inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
@@ -68,7 +70,7 @@ export default function ReadingTableRow({
       </td>
 
       {/* Trạng thái */}
-      <td className="px-3 py-3 text-center">
+      <td className="px-3 py-3 text-center whitespace-nowrap">
         {!isTrash ? (
           <button
             type="button"
@@ -85,23 +87,23 @@ export default function ReadingTableRow({
       </td>
 
       {/* Độ dài */}
-      <td className="px-3 py-3 text-center">
+      <td className="px-3 py-3 text-center whitespace-nowrap">
         <span className="font-semibold text-slate-800 text-xs block">{item.wordCount ?? 0} từ</span>
         <span className="text-xs text-slate-400 block">~{item.estimatedMin ?? 5} phút</span>
       </td>
 
       {/* Câu hỏi */}
-      <td className="px-3 py-3 text-center font-semibold text-slate-700 text-xs">
+      <td className="px-2 py-3 text-center font-semibold text-slate-700 text-xs whitespace-nowrap">
         {item.questionCount ?? item.questions?.length ?? 0} câu
       </td>
 
       {/* Ngày tạo */}
-      <td className="px-3 py-3 text-xs text-slate-500">
+      <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">
         {formatDate(item.createdAt)}
       </td>
 
       {/* Thao tác */}
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 whitespace-nowrap text-right">
         <div
           className="flex items-center justify-end gap-0.5 text-slate-400"
           onClick={(e) => e.stopPropagation()}
