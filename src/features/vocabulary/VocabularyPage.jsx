@@ -165,7 +165,10 @@ function VocabularyPage() {
   const [topicId, setTopicId] = useState('')
   const [topics, setTopics] = useState([])
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
+  const [trashView, setTrashView] = useState(false)
+  const [trashCount, setTrashCount] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [permanentTarget, setPermanentTarget] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
 
@@ -180,9 +183,21 @@ function VocabularyPage() {
     }
   }, [])
 
+  // Tải số lượng từ trong thùng rác
+  const refreshTrashCount = useCallback(async () => {
+    try {
+      const res = await api.get(ENDPOINTS.words.trashCount)
+      const count = typeof res === 'number' ? res : (res?.data ?? 0)
+      setTrashCount(Number(count) || 0)
+    } catch (err) {
+      console.warn('Lỗi khi tải số lượng từ trong thùng rác:', err)
+    }
+  }, [])
+
   useEffect(() => {
     loadTopics()
-  }, [loadTopics])
+    refreshTrashCount()
+  }, [loadTopics, refreshTrashCount])
 
   // Debounce tìm kiếm: Tự động kích hoạt sau khi người dùng dừng gõ 450ms
   useEffect(() => {
@@ -196,12 +211,13 @@ function VocabularyPage() {
     return () => clearTimeout(handler)
   }, [searchInput, search])
 
-  const fetchWords = useCallback(async (targetPage, targetSearch, targetPos, targetTopic, targetSort) => {
+  const fetchWords = useCallback(async (targetPage, targetSearch, targetPos, targetTopic, targetSort, targetTrash) => {
     const p = targetPage !== undefined ? targetPage : page
     const s = targetSearch !== undefined ? targetSearch : search
     const pos = targetPos !== undefined ? targetPos : partOfSpeech
     const tid = targetTopic !== undefined ? targetTopic : topicId
     const sby = targetSort !== undefined ? targetSort : sortBy
+    const isTrash = targetTrash !== undefined ? targetTrash : trashView
 
     setIsLoading(true)
     try {
@@ -209,6 +225,7 @@ function VocabularyPage() {
         page: p,
         size: PAGE_SIZE,
         sortBy: sby,
+        trash: isTrash,
       }
       if (s && s.trim()) params.search = s.trim()
       if (pos) params.partOfSpeech = pos
@@ -218,8 +235,8 @@ function VocabularyPage() {
       let items = res?.items || (Array.isArray(res) ? res : [])
       let total = res?.total ?? items.length
 
-      // TỰ ĐỘNG TÌM KIẾM TRÊN INTERNET/AI & NẠP VÀO HỆ THỐNG NẾU CSDL CHƯA CÓ
-      if (items.length === 0 && s && s.trim() && !pos && !tid) {
+      // TỰ ĐỘNG TÌM KIẾM TRÊN INTERNET/AI & NẠP VÀO HỆ THỐNG NẾU CSDL CHƯA CÓ (chỉ khi không ở chế độ thùng rác)
+      if (!isTrash && items.length === 0 && s && s.trim() && !pos && !tid) {
         try {
           const autoRes = await api.post(ENDPOINTS.words.autoImport, null, {
             params: { word: s.trim() }
@@ -229,6 +246,7 @@ function VocabularyPage() {
             items = [newWord]
             total = 1
             loadTopics()
+            refreshTrashCount()
           }
         } catch (autoErr) {
           console.warn('Không thể tự động nạp từ internet:', autoErr)
@@ -247,7 +265,7 @@ function VocabularyPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [search, page, partOfSpeech, topicId, sortBy, loadTopics])
+  }, [search, page, partOfSpeech, topicId, sortBy, trashView, loadTopics, refreshTrashCount])
 
   useEffect(() => {
     fetchWords()
@@ -257,7 +275,7 @@ function VocabularyPage() {
   useEffect(() => {
     stopAudio()
     setPlayingId(null)
-  }, [page, search, partOfSpeech, topicId, sortBy, isPdfImportOpen])
+  }, [page, search, partOfSpeech, topicId, sortBy, isPdfImportOpen, trashView])
 
   // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang hoặc bộ điều phối toàn cục yêu cầu
   useEffect(() => {
@@ -273,7 +291,16 @@ function VocabularyPage() {
   const loadWords = useCallback(() => {
     fetchWords()
     loadTopics()
-  }, [fetchWords, loadTopics])
+    refreshTrashCount()
+  }, [fetchWords, loadTopics, refreshTrashCount])
+
+  const handleToggleTrash = (nextTrash) => {
+    setTrashView(nextTrash)
+    setPage(1)
+    setSearchInput('')
+    setSearch('')
+    fetchWords(1, '', partOfSpeech, topicId, sortBy, nextTrash)
+  }
 
   const hasActiveFilters = Boolean(search || partOfSpeech || topicId || sortBy !== 'created_desc')
 
@@ -284,7 +311,7 @@ function VocabularyPage() {
     setTopicId('')
     setSortBy('created_desc')
     setPage(1)
-    fetchWords(1, '', '', '', 'created_desc')
+    fetchWords(1, '', '', '', 'created_desc', trashView)
   }
 
   const start = (page - 1) * PAGE_SIZE
@@ -297,6 +324,7 @@ function VocabularyPage() {
     navigate(`/app/hoc-lieu/tu-vung/${item.id}/chinh-sua`)
   }
 
+  // Xóa mềm vào thùng rác
   const handleDelete = async () => {
     if (!deleteTarget || isDeleting) return
     setIsDeleting(true)
@@ -307,12 +335,53 @@ function VocabularyPage() {
       // Xóa thành công: Cập nhật trực tiếp danh sách và đóng popup
       setVocabList((prev) => prev.filter((v) => v.id !== target.id))
       setTotal((prev) => Math.max(0, prev - 1))
+      setTrashCount((prev) => prev + 1)
       setDeleteTarget(null)
       loadTopics()
-      toast.success(`Đã xóa từ "${target.word}" thành công!`)
+      refreshTrashCount()
+      toast.success(`Đã chuyển từ "${target.word}" vào thùng rác`)
     } catch (err) {
       console.error('Lỗi khi xóa từ vựng:', err)
       toast.error(`Lỗi khi xóa từ "${target.word}". Vui lòng thử lại!`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Khôi phục từ thùng rác
+  const handleRestore = async (vocab) => {
+    try {
+      await api.patch(ENDPOINTS.words.restore, null, { path: { id: vocab.id } })
+      setVocabList((prev) => prev.filter((v) => v.id !== vocab.id))
+      setTotal((prev) => Math.max(0, prev - 1))
+      setTrashCount((prev) => Math.max(0, prev - 1))
+      loadTopics()
+      refreshTrashCount()
+      toast.success(`Đã khôi phục từ "${vocab.word}" thành công!`)
+    } catch (err) {
+      console.error('Lỗi khi khôi phục từ vựng:', err)
+      toast.error(`Không thể khôi phục từ "${vocab.word}"`)
+    }
+  }
+
+  // Xóa vĩnh viễn
+  const handleConfirmPermanentDelete = async () => {
+    if (!permanentTarget || isDeleting) return
+    setIsDeleting(true)
+    const target = permanentTarget
+
+    try {
+      await api.del(ENDPOINTS.words.permanentRemove, { path: { id: target.id } })
+      setVocabList((prev) => prev.filter((v) => v.id !== target.id))
+      setTotal((prev) => Math.max(0, prev - 1))
+      setTrashCount((prev) => Math.max(0, prev - 1))
+      setPermanentTarget(null)
+      loadTopics()
+      refreshTrashCount()
+      toast.success(`Đã xóa vĩnh viễn từ "${target.word}"`)
+    } catch (err) {
+      console.error('Lỗi khi xóa vĩnh viễn từ vựng:', err)
+      toast.error(`Xóa vĩnh viễn thất bại: ${err?.message || ''}`)
     } finally {
       setIsDeleting(false)
     }
@@ -339,13 +408,30 @@ function VocabularyPage() {
     <div className="space-y-4">
       {/* Table card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Banner thông báo khi ở chế độ thùng rác */}
+        {trashView && (
+          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Trash2 size={14} className="text-amber-600 shrink-0" />
+              Bạn đang xem các từ vựng trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+            </span>
+            <button
+              type="button"
+              onClick={() => handleToggleTrash(false)}
+              className="font-semibold text-amber-900 hover:underline cursor-pointer"
+            >
+              Quay lại danh sách
+            </button>
+          </div>
+        )}
+
         {/* Toolbar (Đồng bộ chuẩn Benchmark) */}
         <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
             <Search size={18} className="shrink-0 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm từ vựng (tự động tra online nếu chưa có)..."
+              placeholder={trashView ? 'Tìm kiếm trong thùng rác...' : 'Tìm kiếm từ vựng...'}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -426,41 +512,81 @@ function VocabularyPage() {
               title="Tải lại danh sách"
             />
 
-            {/* Nút Import */}
-            <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
-              Import
-            </Button>
+            {/* Nút Import (Chỉ hiển thị khi không ở thùng rác) */}
+            {!trashView && (
+              <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
+                Import
+              </Button>
+            )}
 
-            {/* Nút Thêm mới (Icon-only) */}
+            {/* Nút Thêm mới (Chỉ hiển thị khi không ở thùng rác) */}
+            {!trashView && (
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                title="Thêm từ mới"
+                aria-label="Thêm từ mới"
+              >
+                <Plus size={18} strokeWidth={2.5} />
+              </button>
+            )}
+
+            {/* Nút Thùng rác (Icon-only với Badge số lượng, ở cuối row) */}
             <button
               type="button"
-              onClick={handleOpenCreate}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-              title="Thêm từ mới"
-              aria-label="Thêm từ mới"
+              onClick={() => handleToggleTrash(!trashView)}
+              className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs cursor-pointer border ${
+                trashView
+                  ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+              }`}
+              title={trashView ? 'Quay lại kho từ vựng' : `Thùng rác (${trashCount || 0})`}
+              aria-label={trashView ? 'Quay lại kho từ vựng' : `Thùng rác (${trashCount || 0})`}
             >
-              <Plus size={18} strokeWidth={2.5} />
+              {trashView ? (
+                <RotateCcw size={16} />
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  {trashCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
+                      {trashCount}
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="w-full">
+          <table className="w-full text-left text-sm table-fixed">
             <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                {vocabularyColumns.map((col) => (
-                  <th
-                    key={col.accessorKey}
-                    className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500"
-                  >
-                    {typeof col.header === 'function' ? col.header() : col.header}
-                  </th>
-                ))}
-                <th className="px-6 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                {vocabularyColumns.map((col) => {
+                  let widthClass = 'w-[12%]'
+                  if (col.accessorKey === 'word') widthClass = 'w-[16%]'
+                  else if (col.accessorKey === 'pronunciation') widthClass = 'w-[14%]'
+                  else if (col.accessorKey === 'partOfSpeech') widthClass = 'w-[11%] text-center'
+                  else if (col.accessorKey === 'vietnameseMeaning') widthClass = 'w-[27%]'
+                  else if (col.accessorKey === 'cefrLevel') widthClass = 'w-[10%] text-center'
+                  else if (col.accessorKey === 'topic') widthClass = 'w-[12%]'
+
+                  return (
+                    <th
+                      key={col.accessorKey}
+                      className={`px-3.5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap ${widthClass}`}
+                    >
+                      {typeof col.header === 'function' ? col.header() : col.header}
+                    </th>
+                  )
+                })}
+                <th className="px-1.5 py-3 text-center text-xs font-bold uppercase tracking-wider text-slate-500 w-[4%] whitespace-nowrap">
                   Audio
                 </th>
-                <th className="px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-500 w-[6%] whitespace-nowrap">
                   Thao tác
                 </th>
               </tr>
@@ -468,11 +594,11 @@ function VocabularyPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-12 text-center">
+                  <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
                     <LoadingSpinner
                       text={
                         search
-                          ? `Đang tìm kiếm từ "${search}"...`
+                           ? `Đang tìm kiếm từ "${search}"...`
                           : "Đang tải danh sách từ vựng..."
                       }
                     />
@@ -480,14 +606,21 @@ function VocabularyPage() {
                 </tr>
               ) : pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={vocabularyColumns.length + 2} className="px-6 py-12 text-center">
+                  <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
                     <div className="max-w-sm mx-auto text-center space-y-2">
                       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                        <BookOpen size={24} />
+                        {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
                       </div>
                       <p className="text-sm font-bold text-slate-700">
-                        {search ? `Không tìm thấy từ vựng nào cho "${search}"` : 'Kho từ vựng hiện đang trống'}
+                        {trashView
+                          ? (search ? `Không tìm thấy từ vựng nào trong thùng rác cho "${search}"` : 'Thùng rác đang trống')
+                          : (search ? `Không tìm thấy từ vựng nào cho "${search}"` : 'Kho từ vựng hiện đang trống')}
                       </p>
+                      {trashView && (
+                        <p className="text-xs text-slate-400">
+                          Chưa có từ vựng nào bị chuyển vào thùng rác
+                        </p>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -495,12 +628,19 @@ function VocabularyPage() {
                 pageData.map((vocab) => (
                   <tr key={vocab.id} className="hover:bg-slate-50/50 transition-colors group">
                     {vocabularyColumns.map((col) => (
-                      <td key={`${vocab.id}-${col.accessorKey}`} className="px-6 py-4 text-sm">
+                      <td
+                        key={`${vocab.id}-${col.accessorKey}`}
+                        className={`px-3.5 py-3 text-sm overflow-hidden ${
+                          col.accessorKey === 'partOfSpeech' || col.accessorKey === 'cefrLevel'
+                            ? 'text-center'
+                            : ''
+                        }`}
+                      >
                         {col.cell({ getValue: () => vocab[col.accessorKey], row: { original: vocab } })}
                       </td>
                     ))}
                     {/* Audio */}
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-1.5 py-3 text-center">
                       <button
                         onClick={(e) => handlePlayAudio(e, vocab)}
                         className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors cursor-pointer ${
@@ -514,23 +654,55 @@ function VocabularyPage() {
                       </button>
                     </td>
                     {/* Thao tác */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1 text-slate-400">
-                        <button
-                          onClick={(e) => handleOpenEdit(e, vocab)}
-                          className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-                          title="Sửa từ vựng"
-                        >
-                          <Pencil size={16} strokeWidth={1.75} />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(vocab) }}
-                          className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                          title="Xóa từ vựng"
-                        >
-                          <Trash2 size={16} strokeWidth={1.75} />
-                        </button>
-                      </div>
+                    <td className="px-2 py-3 text-right whitespace-nowrap">
+                      {trashView ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRestore(vocab)
+                            }}
+                            className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer"
+                            title="Khôi phục từ vựng"
+                          >
+                            <RotateCcw size={16} strokeWidth={1.75} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPermanentTarget(vocab)
+                            }}
+                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                            title="Xóa vĩnh viễn"
+                          >
+                            <Trash2 size={16} strokeWidth={1.75} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1 text-slate-400">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEdit(e, vocab)}
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Sửa từ vựng"
+                          >
+                            <Pencil size={16} strokeWidth={1.75} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteTarget(vocab)
+                            }}
+                            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                            title="Chuyển vào thùng rác"
+                          >
+                            <Trash2 size={16} strokeWidth={1.75} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -551,17 +723,30 @@ function VocabularyPage() {
 
       {/* Form hiện ở trang riêng: /hoc-lieu/tu-vung/tao-moi hoặc /:id/chinh-sua */}
 
-      {/* ─── Confirm Xóa ─── */}
+      {/* ─── Confirm Xóa mềm (Thùng rác) ─── */}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Xóa từ vựng"
-        description={`Bạn có chắc muốn xóa từ "${deleteTarget?.word}"? Thao tác này không thể hoàn tác.`}
-        confirmLabel={isDeleting ? 'Đang xóa...' : 'Xóa từ'}
+        title="Chuyển từ vựng vào thùng rác"
+        description={`Bạn có chắc muốn chuyển từ "${deleteTarget?.word}" vào thùng rác? Bạn có thể khôi phục lại bất kỳ lúc nào.`}
+        confirmLabel={isDeleting ? 'Đang chuyển...' : 'Chuyển vào thùng rác'}
         cancelLabel="Hủy"
-        variant="danger"
+        variant="warning"
         loading={isDeleting}
         onConfirm={handleDelete}
         onCancel={() => !isDeleting && setDeleteTarget(null)}
+      />
+
+      {/* ─── Confirm Xóa vĩnh viễn ─── */}
+      <ConfirmDialog
+        open={Boolean(permanentTarget)}
+        title="Xóa vĩnh viễn từ vựng"
+        description={`Bạn có chắc muốn xóa vĩnh viễn từ "${permanentTarget?.word}" khỏi cơ sở dữ liệu? Thao tác này không thể hoàn tác.`}
+        confirmLabel={isDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
+        cancelLabel="Hủy"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleConfirmPermanentDelete}
+        onCancel={() => !isDeleting && setPermanentTarget(null)}
       />
 
       {/* Modal Import PDF AI */}

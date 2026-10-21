@@ -17,6 +17,7 @@ import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import GrammarQuestionCard from './components/GrammarQuestionCard'
 import {
   getGrammarLessonById,
@@ -121,6 +122,41 @@ function GrammarFormPage() {
       .finally(() => setIsLoading(false))
   }, [id, isEditing])
 
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/ngu-phap',
+      backText: 'Quay lại Ngữ pháp',
+      title: isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài học ngữ pháp mới',
+      subtitle: `Quản lý học liệu / Ngữ pháp / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/ngu-phap"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            form="grammar-form"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+          >
+            <Save size={14} />
+            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
+          </button>
+        </div>
+      ),
+    })
+
+    return () => {
+      clearCustomHeader()
+    }
+  }, [isEditing, editTitle, form.title, isSaving, setCustomHeader, clearCustomHeader])
+
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
   const handleAddExample = () => {
@@ -212,49 +248,10 @@ function GrammarFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-12">
-      {/* ── Header bar ── */}
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-xs">
-        <div className="mx-auto max-w-6xl flex items-center gap-4 px-6 py-3.5">
-          <Link
-            to="/app/hoc-lieu/ngu-phap"
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Quay lại Ngữ pháp
-          </Link>
-          <div className="h-5 w-px bg-slate-200" />
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài học ngữ pháp mới'}
-            </h1>
-            <p className="text-xs text-slate-500">
-              Quản lý học liệu / Ngữ pháp / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/app/hoc-lieu/ngu-phap"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              Hủy bỏ
-            </Link>
-            <button
-              type="submit"
-              form="grammar-form"
-              disabled={isSaving}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-4 py-2 text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer"
-            >
-              <Save size={15} />
-              {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-50/50 pb-12 pt-2">
       {/* ── Body Form ── */}
       <form id="grammar-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-[1440px] px-6 py-4 space-y-6">
           {/* ── TOP: Lý thuyết ngữ pháp (Card 1 & Card 2, 3) ── */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Card 1: Thông tin cơ bản (6 cols) */}
