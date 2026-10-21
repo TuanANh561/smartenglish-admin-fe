@@ -9,6 +9,7 @@ import {
   Calendar,
   Clock,
   ExternalLink,
+  Eye,
   History,
   Info,
   Layers,
@@ -40,6 +41,7 @@ import {
   getNotifications,
   createNotification,
   deleteNotification,
+  markNotificationAsRead,
   getScheduledNotifications,
   createScheduledNotification,
   cancelScheduledNotification,
@@ -47,6 +49,7 @@ import {
   logUserActivity,
   sendDirectEmail,
 } from '@/features/notifications/notificationApi'
+import NotificationDetailModal from './components/NotificationDetailModal'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -86,7 +89,8 @@ function NotificationsPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const PAGE_SIZE = 5
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const PAGE_SIZE = 10
 
   // Drawer tạo thông báo mới
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -124,22 +128,39 @@ function NotificationsPage() {
       const resNotif = await getNotifications({ userId: currentUserId, size: 50 }).catch(() => null)
       const listNotif = resNotif?.content || (Array.isArray(resNotif) ? resNotif : resNotif?.data?.content || [])
       const mappedNotif = Array.isArray(listNotif)
-        ? listNotif.map((n) => ({
-            id: String(n.id),
-            rawId: n.id,
-            title: n.title,
-            content: n.content,
-            type: (n.type || 'info').toLowerCase(),
-            isImportant: n.type === 'CRITICAL' || n.type === 'critical',
-            isRead: Boolean(n.isRead),
-            sender: n.senderName || 'Hệ thống',
-            targetGroup: 'All Users',
-            targetGroupLabel: 'Toàn bộ người dùng',
-            channel: n.channel || 'IN_APP',
-            status: 'sent',
-            sentAt: formatTimeVi(n.createdAt),
-            createdAt: n.createdAt,
-          }))
+        ? listNotif.map((n) => {
+            let meta = {}
+            if (n.metadata) {
+              try {
+                meta = typeof n.metadata === 'string' ? JSON.parse(n.metadata) : n.metadata
+              } catch {}
+            }
+            const targetGroupLabel =
+              meta?.targetLabel ||
+              meta?.targetGroupLabel ||
+              n.targetLabel ||
+              (n.type?.toLowerCase() === 'reminder' || n.senderName === 'Nhắc nhở theo lịch'
+                ? 'Chỉ bản thân'
+                : 'Toàn bộ người dùng')
+
+            return {
+              id: String(n.id),
+              rawId: n.id,
+              title: n.title,
+              content: n.content,
+              type: (n.type || 'info').toLowerCase(),
+              isImportant: n.type === 'CRITICAL' || n.type === 'critical',
+              isRead: Boolean(n.isRead),
+              sender: n.senderName || 'Hệ thống',
+              targetGroup: meta?.targetType || n.targetType || 'All Users',
+              targetGroupLabel,
+              channel: n.channel || 'IN_APP',
+              status: 'sent',
+              sentAt: formatTimeVi(n.createdAt),
+              createdAt: n.createdAt,
+              metadata: meta,
+            }
+          })
         : []
 
       // 2. Lấy danh sách lịch gửi từ notification-service
@@ -322,6 +343,7 @@ function NotificationsPage() {
           targetLink: '/app/thong-bao',
           senderId: currentUserId,
           senderName: user?.displayName || 'Ban Quản trị Hệ thống',
+          metadata: JSON.stringify({ targetLabel: resolvedLabel, targetType: targetGroup }),
         }
 
         if (targetGroup === 'Specific') {
@@ -380,20 +402,41 @@ function NotificationsPage() {
 
   // Xóa thông báo (In-App hoặc Lịch hẹn)
   const handleDelete = async (id) => {
-    const item = notifications.find((n) => n.id === id)
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    const item = notifications.find((n) => n.id === id || n.rawId === id)
+    setNotifications((prev) => prev.filter((n) => n.id !== id && n.rawId !== id))
+    if (selectedNotification?.id === id || selectedNotification?.rawId === id) {
+      setSelectedNotification(null)
+    }
     toast.success('Đã xoá thông báo')
     try {
       if (item?.status === 'scheduled' && item?.rawId) {
         await cancelScheduledNotification(item.rawId, currentUserId)
       } else {
-        const numId = Number(id)
+        const numId = Number(item?.rawId || id)
         if (!isNaN(numId)) {
           await deleteNotification(numId, currentUserId)
         }
       }
     } catch {
       // retain optimistic deletion
+    }
+  }
+
+  // Xem chi tiết thông báo trong Modal
+  const handleViewDetail = async (item) => {
+    setSelectedNotification(item)
+    if (!item.isRead) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
+      )
+      try {
+        const numId = Number(item.rawId || item.id)
+        if (!isNaN(numId)) {
+          await markNotificationAsRead(numId, currentUserId)
+        }
+      } catch {
+        // retain optimistic update
+      }
     }
   }
 
@@ -670,7 +713,11 @@ function NotificationsPage() {
                       {/* Center Content */}
                       <div className="flex-1 space-y-1.5 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-bold text-navy-700 group-hover:text-brand-600 transition-colors">
+                          <h3
+                            onClick={() => handleViewDetail(item)}
+                            className="text-sm font-bold text-navy-700 hover:text-brand-600 transition-colors cursor-pointer"
+                            title="Bấm để xem chi tiết thông báo"
+                          >
                             {(item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
                           </h3>
                           {item.isImportant && (
@@ -683,7 +730,10 @@ function NotificationsPage() {
                           </span>
                         </div>
 
-                        <p className="text-sm text-ink-muted leading-relaxed">
+                        <p
+                          onClick={() => handleViewDetail(item)}
+                          className="text-sm text-ink-muted leading-relaxed cursor-pointer hover:text-slate-800 transition-colors"
+                        >
                           {(item.content || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()}
                         </p>
 
@@ -707,7 +757,7 @@ function NotificationsPage() {
                           {isScheduledItem ? item.scheduledFor : item.sentAt}
                         </span>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           {isScheduledItem ? (
                             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 flex items-center gap-1">
                               <Clock size={12} /> Lịch gửi
@@ -720,11 +770,20 @@ function NotificationsPage() {
 
                           <button
                             type="button"
+                            onClick={() => handleViewDetail(item)}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                            title="Xem chi tiết thông báo"
+                          >
+                            <Eye size={16} />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleDelete(item.id)}
-                            className="rounded p-1 text-slate-300 hover:bg-red-50 hover:text-red-500 cursor-pointer"
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
                             title="Xoá thông báo"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
@@ -944,6 +1003,14 @@ function NotificationsPage() {
           </div>
         </form>
       </Drawer>
+
+      {/* Modal xem chi tiết thông báo */}
+      <NotificationDetailModal
+        isOpen={Boolean(selectedNotification)}
+        notification={selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }
