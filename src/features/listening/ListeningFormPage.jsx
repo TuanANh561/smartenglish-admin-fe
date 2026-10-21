@@ -19,6 +19,7 @@ import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { LISTENING_ACCENTS, LISTENING_TOPICS } from './listeningConstants'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { parseDuration, speakWord, stopAudio } from '@/lib/ipaHelper'
 import ListeningQuestionCard from './components/ListeningQuestionCard'
 import ListeningVoiceConfigCard from './components/ListeningVoiceConfigCard'
@@ -379,6 +380,41 @@ function ListeningFormPage() {
     }
   }
 
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/bai-nghe',
+      backText: 'Quay lại Bài nghe',
+      title: isEditing ? `Chỉnh sửa: "${form.title}"` : 'Tạo bài nghe mới',
+      subtitle: `Quản lý học liệu / Bài luyện nghe hiểu tiếng Anh / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/bai-nghe"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            form="listening-editor-form"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+          >
+            <Save size={14} />
+            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Lưu bài nghe'}
+          </button>
+        </div>
+      ),
+    })
+
+    return () => {
+      clearCustomHeader()
+    }
+  }, [isEditing, form.title, isSaving, setCustomHeader, clearCustomHeader])
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50/60">
@@ -388,57 +424,10 @@ function ListeningFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-16">
-      {/* Top Sticky Header */}
-      <div className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 backdrop-blur-md shadow-2xs">
-        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-3 px-6 py-3.5">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/app/hoc-lieu/bai-nghe"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
-            >
-              <ArrowLeft size={15} /> Bài nghe
-            </Link>
-            <div className="h-5 w-px bg-slate-200" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm md:text-base font-bold text-slate-900 truncate max-w-md">
-                  {isEditing ? `Chỉnh sửa: "${form.title}"` : 'Tạo bài nghe mới'}
-                </h1>
-                <span className="rounded-full bg-brand-50 border border-brand-200 px-2 py-0.5 text-[10px] font-bold text-brand-700">
-                  {form.level ? `Cấp độ ${form.level}` : 'Bản nháp'}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Quản lý học liệu / Bài luyện nghe hiểu tiếng Anh
-              </p>
-            </div>
-          </div>
-
-          {/* Top Actions */}
-          <div className="flex items-center gap-2.5">
-            <Link
-              to="/app/hoc-lieu/bai-nghe"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              Hủy bỏ
-            </Link>
-            <button
-              type="submit"
-              form="listening-editor-form"
-              disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-4.5 py-2 text-xs font-bold text-white transition-all shadow-xs cursor-pointer hover:shadow-sm"
-            >
-              <Save size={14} />
-              {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Lưu bài nghe'}
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-50/60 pb-16 pt-2">
       {/* Main Grid Content */}
       <form id="listening-editor-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-7xl px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-[1440px] px-6 py-4 space-y-6">
 
           {/* Nút nạp nhanh mẫu bài nghe chuẩn TOEIC */}
           <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
