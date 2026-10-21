@@ -69,9 +69,8 @@ export const fetchUserDetail = async (userId) => {
  * Lấy thiết lập học tập / giảng dạy từ backend auth-service (/users/me/learning-settings)
  */
 export const fetchLearningSettings = async (userId) => {
-  if (!userId) return null
   try {
-    const res = await api.get('/users/me/learning-settings', { params: { userId } })
+    const res = await api.get('/users/me/learning-settings')
     return res?.data || res
   } catch (err) {
     console.warn('Lỗi tải learning settings từ backend:', err)
@@ -83,8 +82,9 @@ export const fetchLearningSettings = async (userId) => {
  * Cập nhật thiết lập học tập / giảng dạy lên backend auth-service (/users/me/learning-settings)
  */
 export const updateLearningSettings = async (userId, data) => {
-  if (!userId) return null
-  return api.put('/users/me/learning-settings', { params: { userId }, data })
+  // Support both (userId, data) and (data) signatures while omitting userId query param
+  const payload = data !== undefined ? data : userId
+  return api.put('/users/me/learning-settings', payload)
 }
 
 /**

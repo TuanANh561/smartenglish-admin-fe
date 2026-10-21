@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, Calendar, CheckCircle2, GraduationCap, Loader2, Send, X } from 'lucide-react'
+import { Calendar, CheckCircle2, Loader2, Send, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import { createAssignment } from '@/features/classes/classApi'
@@ -41,7 +41,7 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
     const fetchClasses = async () => {
       setLoadingClasses(true)
       try {
-        const res = await getMyClasses({ teacherId: user?.id })
+        const res = await getMyClasses()
         const classList = res?.classes || []
         // Lọc cách ly: Giáo viên chỉ được giao bài cho lớp do mình phụ trách
         const myClassesOnly = classList.filter((c) => {
@@ -87,7 +87,7 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
         isGraded: true,
       }
 
-      await createAssignment(selectedClassId, payload, { teacherId: user?.id })
+      await createAssignment(selectedClassId, payload)
       const targetClass = classes.find((c) => String(c.id) === String(selectedClassId))
       toast.success(
         `Đã giao bài thi "${exam.title}" cho lớp "${targetClass?.name || 'đã chọn'}" thành công!`

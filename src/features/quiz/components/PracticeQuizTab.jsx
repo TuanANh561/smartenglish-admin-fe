@@ -282,17 +282,17 @@ export default function PracticeQuizTab() {
         </div>
 
         {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="w-full">
+          <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-5 py-3 w-[15%]">Mã Quiz</th>
-                <th className="px-4 py-3 w-[20%]">Loại Quiz</th>
-                <th className="px-4 py-3 w-[25%]">Nhãn phân loại (Tags)</th>
-                <th className="px-3 py-3 text-center w-[12%]">Số câu hỏi</th>
-                <th className="px-3 py-3 text-center w-[12%]">Điểm đạt</th>
-                <th className="px-3 py-3 text-center w-[8%]">Số lần thi</th>
-                <th className="px-4 py-3 text-right w-[8%]">Thao tác</th>
+                <th className="px-4 py-3 w-[15%] whitespace-nowrap">Mã Quiz</th>
+                <th className="px-3 py-3 w-[20%] whitespace-nowrap">Loại Quiz</th>
+                <th className="px-3 py-3 w-[25%] whitespace-nowrap">Nhãn phân loại (Tags)</th>
+                <th className="px-2 py-3 text-center w-[12%] whitespace-nowrap">Số câu hỏi</th>
+                <th className="px-2 py-3 text-center w-[12%] whitespace-nowrap">Điểm đạt</th>
+                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Số lần thi</th>
+                <th className="px-4 py-3 text-right w-[8%] whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -323,7 +323,7 @@ export default function PracticeQuizTab() {
                   onClick={() => handleOpenDetail(q)}
                   className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
                 >
-                  <td className="px-5 py-3.5 font-semibold text-slate-800">
+                  <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">
                     <span className="text-brand-600">#{q.id}</span>
                     {q.isTemplate && (
                       <span className="ml-2 text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
@@ -331,16 +331,17 @@ export default function PracticeQuizTab() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 text-slate-700 font-medium text-xs">
+                  <td className="px-3 py-3 text-slate-700 font-medium text-xs whitespace-nowrap">
                     {q.quizType || 'DYNAMIC'}
                   </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex flex-wrap gap-1">
+                  <td className="px-3 py-3 overflow-hidden">
+                    <div className="flex flex-wrap gap-1 max-h-12 overflow-hidden">
                       {q.tags && q.tags.length > 0 ? (
                         q.tags.map((t, idx) => (
                           <span
                             key={idx}
-                            className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md"
+                            className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md truncate max-w-[120px]"
+                            title={`#${t}`}
                           >
                             #{t}
                           </span>
@@ -350,16 +351,16 @@ export default function PracticeQuizTab() {
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-3.5 text-center font-bold text-slate-800">
+                  <td className="px-2 py-3 text-center font-bold text-slate-800 whitespace-nowrap">
                     {(q.questions && q.questions.length > 0) ? q.questions.length : (q.questionCount || 0)} câu
                   </td>
-                  <td className="px-3 py-3.5 text-center text-xs text-slate-600 font-medium">
+                  <td className="px-2 py-3 text-center text-xs text-slate-600 font-medium whitespace-nowrap">
                     {q.passingScore ? `${q.passingScore}%` : '—'}
                   </td>
-                  <td className="px-3 py-3.5 text-center text-xs text-slate-600">
+                  <td className="px-2 py-3 text-center text-xs text-slate-600 whitespace-nowrap">
                     {q.maxAttempts || 'Không giới hạn'}
                   </td>
-                  <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"

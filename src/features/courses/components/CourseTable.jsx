@@ -15,19 +15,19 @@ export default function CourseTable({
   isAdmin,
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-xs">
-      <table className="w-full text-left text-xs text-ink-base border-collapse">
+    <div className="w-full rounded-xl border border-line bg-white shadow-xs">
+      <table className="w-full text-left text-xs text-ink-base border-collapse table-fixed">
         <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-ink-muted border-b border-line">
           <tr>
-            <th className="py-3 px-4 w-16">Ảnh</th>
-            <th className="py-3 px-4 min-w-[240px]">Tên chương / Khóa học</th>
-            <th className="py-3 px-4 w-28">Thể loại</th>
-            <th className="py-3 px-4 w-28 min-w-[110px] text-center">Cấp độ CEFR</th>
-            <th className="py-3 px-4 w-20 text-center">Số bài</th>
-            <th className="py-3 px-4 min-w-[140px]">Người tạo</th>
-            <th className="py-3 px-4 w-28 text-center">Trạng thái</th>
-            <th className="py-3 px-4 w-28">Cập nhật</th>
-            <th className="py-3 px-4 w-28 text-right">Thao tác</th>
+            <th className="py-3 px-2 w-[6%] text-center whitespace-nowrap">Ảnh</th>
+            <th className="py-3 px-3.5 w-[28%] whitespace-nowrap">Tên chương / Khóa học</th>
+            <th className="py-3 px-3 w-[11%] whitespace-nowrap">Thể loại</th>
+            <th className="py-3 px-3 w-[11%] text-center whitespace-nowrap">Cấp độ CEFR</th>
+            <th className="py-3 px-2 w-[7%] text-center whitespace-nowrap">Số bài</th>
+            <th className="py-3 px-3 w-[12%] whitespace-nowrap">Người tạo</th>
+            <th className="py-3 px-3 w-[10%] text-center whitespace-nowrap">Trạng thái</th>
+            <th className="py-3 px-3 w-[7%] whitespace-nowrap">Cập nhật</th>
+            <th className="py-3 px-3.5 w-[8%] text-right whitespace-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
@@ -53,12 +53,12 @@ export default function CourseTable({
                   onClick={() => onEdit && onEdit(course.id, 'view')}
                 >
                   {/* Thumbnail */}
-                  <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-2.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/app/hoc-lieu/khoa-hoc/${course.id}`}>
                       <img
                         src={course.thumbnail}
                         alt={course.title}
-                        className="w-11 h-11 rounded-lg object-cover border border-line group-hover:scale-105 transition-transform"
+                        className="w-10 h-10 rounded-lg object-cover border border-line group-hover:scale-105 transition-transform mx-auto"
                         onError={(e) => {
                           e.target.src =
                             'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846'
@@ -68,17 +68,18 @@ export default function CourseTable({
                   </td>
 
                   {/* Title */}
-                  <td className="py-2.5 px-4">
-                    <div className="space-y-0.5">
+                  <td className="py-2.5 px-3.5 overflow-hidden">
+                    <div className="space-y-0.5 min-w-0">
                       <Link
                         to={`/app/hoc-lieu/khoa-hoc/${course.id}`}
-                        className="font-bold text-navy-800 text-xs hover:text-brand-600 transition-colors block line-clamp-1"
+                        className="font-bold text-navy-800 text-xs hover:text-brand-600 transition-colors truncate block w-full"
+                        title={course.title || course.titleVi}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {course.title || course.titleVi}
                       </Link>
                       {course.titleEn && (
-                        <p className="text-[11px] text-ink-muted line-clamp-1 italic">
+                        <p className="text-[11px] text-ink-muted truncate italic" title={course.titleEn}>
                           {course.titleEn}
                         </p>
                       )}
@@ -91,40 +92,40 @@ export default function CourseTable({
                   </td>
 
                   {/* Category */}
-                  <td className="py-2.5 px-4 text-ink-muted">
-                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-[11px] font-medium text-slate-700">
+                  <td className="py-2.5 px-3 text-ink-muted whitespace-nowrap">
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-[11px] font-medium text-slate-700 truncate max-w-full">
                       {course.category || course.courseType || 'Tiếng Anh'}
                     </span>
                   </td>
 
                   {/* CEFR */}
-                  <td className="py-2.5 px-4 text-center">
-                    <span className="inline-block font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-md text-xs border border-brand-100 whitespace-nowrap shadow-2xs">
+                  <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                    <span className="inline-block font-bold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-md text-xs border border-brand-100 shadow-2xs">
                       {course.level || 'A1 - A2'}
                     </span>
                   </td>
 
                   {/* Lesson Count */}
-                  <td className="py-2.5 px-4 text-center font-semibold text-navy-800">
+                  <td className="py-2.5 px-2 text-center font-semibold text-navy-800 whitespace-nowrap">
                     {course.lessonCount || course.totalLessons || 0}
                   </td>
 
                   {/* Author */}
-                  <td className="py-2.5 px-4">
+                  <td className="py-2.5 px-3 whitespace-nowrap">
                     {isSystemCourse ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         <ShieldCheck size={13} className="text-blue-600" />
                         Hệ thống
                       </span>
                     ) : (
-                      <span className="text-[11px] font-medium text-slate-700">
+                      <span className="text-[11px] font-medium text-slate-700 truncate block max-w-full" title={course.authorName || 'Giảng viên'}>
                         {course.authorName || 'Giảng viên'}
                       </span>
                     )}
                   </td>
 
                   {/* Status */}
-                  <td className="py-2.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-2.5 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => onTogglePublish && onTogglePublish(course)}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-transform active:scale-95 ${
@@ -146,12 +147,12 @@ export default function CourseTable({
                   </td>
 
                   {/* Date */}
-                  <td className="py-2.5 px-4 text-ink-muted text-[11px]">
+                  <td className="py-2.5 px-3 text-ink-muted text-[11px] whitespace-nowrap">
                     {course.updatedAt || '—'}
                   </td>
 
                   {/* Actions */}
-                  <td className="py-2.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-2.5 px-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {/* View */}
                       <Link

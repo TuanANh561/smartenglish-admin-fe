@@ -55,18 +55,18 @@ export default function CouponsTab({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-line">
-        <table className="w-full text-left text-xs">
+      <div className="w-full rounded-xl border border-line">
+        <table className="w-full text-left text-xs table-fixed">
           <thead className="bg-slate-50 font-bold text-ink-muted uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3">Mã Code</th>
-              <th className="px-4 py-3">Mô tả</th>
-              <th className="px-4 py-3 text-center">Giảm (%)</th>
-              <th className="px-4 py-3">Đối tượng</th>
-              <th className="px-4 py-3 text-center">Lượt dùng / Hạn mức</th>
-              <th className="px-4 py-3">Hạn dùng</th>
-              <th className="px-4 py-3 text-center">Trạng thái</th>
-              <th className="px-4 py-3 text-right">Xoá</th>
+              <th className="px-3 py-3 w-[15%] whitespace-nowrap">Mã Code</th>
+              <th className="px-3 py-3 w-[25%] whitespace-nowrap">Mô tả</th>
+              <th className="px-2 py-3 text-center w-[10%] whitespace-nowrap">Giảm (%)</th>
+              <th className="px-3 py-3 w-[11%] whitespace-nowrap">Đối tượng</th>
+              <th className="px-2 py-3 text-center w-[15%] whitespace-nowrap">Lượt dùng / Hạn mức</th>
+              <th className="px-3 py-3 w-[10%] whitespace-nowrap">Hạn dùng</th>
+              <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Trạng thái</th>
+              <th className="px-3 py-3 text-right w-[6%] whitespace-nowrap">Xoá</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line bg-white">

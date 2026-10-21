@@ -3,6 +3,23 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import { getProfile, updateProfile, uploadAvatar, changePassword } from '../profileApi'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080'
+
+export function cleanAvatarUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  // Bỏ URL placeholder ảo cũ bị 404
+  if (trimmed.includes('/uploads/avatars/admin_avatar.png')) {
+    return ''
+  }
+  // Nếu là relative path /uploads/... -> nối với API_BASE_URL
+  if (trimmed.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${trimmed}`
+  }
+  return trimmed
+}
+
 export function useProfile() {
   const currentUser = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
@@ -18,7 +35,7 @@ export function useProfile() {
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
     bio: currentUser?.bio || '',
-    avatarUrl: currentUser?.avatarUrl || '',
+    avatarUrl: cleanAvatarUrl(currentUser?.avatarUrl),
     cefrLevel: currentUser?.cefrLevel || 'B2',
     targetGoal: currentUser?.targetGoal || 'TOEIC & Giao tiếp',
     uiLanguage: currentUser?.uiLanguage || 'vi',
@@ -42,7 +59,7 @@ export function useProfile() {
             email: u.email || currentUser?.email || '',
             phone: u.phone || currentUser?.phone || '',
             bio: u.bio || currentUser?.bio || '',
-            avatarUrl: u.avatarUrl || currentUser?.avatarUrl || '',
+            avatarUrl: cleanAvatarUrl(u.avatarUrl || currentUser?.avatarUrl),
             cefrLevel: u.cefrLevel || currentUser?.cefrLevel || 'B2',
             targetGoal: u.targetGoal || currentUser?.targetGoal || 'TOEIC & Giao tiếp',
             uiLanguage: u.uiLanguage || currentUser?.uiLanguage || 'vi',
@@ -78,20 +95,21 @@ export function useProfile() {
 
     setIsUploadingAvatar(true)
     try {
-      // 1. Gọi API upload
+      // 1. Gọi API upload AWS S3
       const uploadedUrl = await uploadAvatar(file)
 
       if (uploadedUrl) {
-        setProfileData((prev) => ({ ...prev, avatarUrl: uploadedUrl }))
-        toast.success('Đã tải ảnh đại diện lên máy chủ!')
+        const fullUrl = cleanAvatarUrl(uploadedUrl)
+        setProfileData((prev) => ({ ...prev, avatarUrl: fullUrl }))
+        toast.success('Đã tải ảnh đại diện lên máy chủ AWS S3!')
       } else {
-        // Fallback đọc FileReader
+        // Fallback đọc FileReader sang Data URL
         const reader = new FileReader()
-        reader.onload = () => {
-          setProfileData((prev) => ({ ...prev, avatarUrl: reader.result }))
-          toast.success('Đã chọn ảnh đại diện mới!')
+        reader.onload = (e) => {
+          setProfileData((prev) => ({ ...prev, avatarUrl: e.target?.result }))
         }
         reader.readAsDataURL(file)
+        toast.success('Đã chọn ảnh đại diện!')
       }
     } catch (err) {
       toast.error('Tải ảnh thất bại: ' + (err.message || 'Lỗi không xác định'))
@@ -108,11 +126,12 @@ export function useProfile() {
     }
 
     setIsSaving(true)
+    const cleanedAvatar = cleanAvatarUrl(updatedFields.avatarUrl)
     const payload = {
       displayName: updatedFields.displayName.trim(),
       phone: (updatedFields.phone || '').trim(),
       bio: (updatedFields.bio || '').trim(),
-      avatarUrl: updatedFields.avatarUrl,
+      avatarUrl: cleanedAvatar,
       cefrLevel: updatedFields.cefrLevel,
       targetGoal: updatedFields.targetGoal,
       uiLanguage: updatedFields.uiLanguage,
@@ -147,6 +166,7 @@ export function useProfile() {
         bio: payload.bio,
         avatarUrl: payload.avatarUrl,
       })
+      setProfileData((prev) => ({ ...prev, ...payload }))
       toast.success('Đã lưu thông tin hồ sơ!')
       return true
     } finally {

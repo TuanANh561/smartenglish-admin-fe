@@ -40,10 +40,14 @@ export const uploadAvatar = async (file) => {
   formData.append('folder', 'avatars')
 
   try {
-    const res = await api.post('/admin/upload/image', { data: formData })
-    return res?.url || res?.data?.url || null
+    const res = await api.post('/admin/upload/image', {
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const uploadedUrl = res?.url || res?.data?.url || res?.data?.data?.url
+    return uploadedUrl || null
   } catch (err) {
-    console.warn('Upload ảnh qua backend thất bại, sẽ fallback sang FileReader:', err)
+    console.warn('Upload ảnh qua backend thất bại:', err)
     return null
   }
 }

@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import { useLogin } from '@/features/auth/hooks/useAuth'
-import { useAuthStore, TEST_USERS } from '@/store/authStore'
 
 const schema = z.object({
   email: z.string().min(1, 'Vui lòng nhập email').email('Email không hợp lệ'),
@@ -26,7 +25,6 @@ function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     setError,
     clearErrors,
     formState: { errors, isSubmitting },
@@ -46,12 +44,6 @@ function LoginPage() {
         setError('root', { message: error.message || 'Đăng nhập không thành công. Vui lòng thử lại.' })
       },
     })
-  }
-
-  const handleFillCredentials = (email, password) => {
-    setValue('email', email, { shouldValidate: true })
-    setValue('password', password, { shouldValidate: true })
-    clearErrors('root')
   }
 
   return (
@@ -128,64 +120,6 @@ function LoginPage() {
           <Button type="submit" fullWidth loading={isSubmitting || login.isPending}>
             Đăng nhập
           </Button>
-
-          {/* Quick test credentials */}
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-3 space-y-2">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">
-              Tài khoản mẫu (Nhấp để điền nhanh)
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFillCredentials('teacher.john@smartenglish.com', 'Password123@')}
-                className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-2 text-left hover:border-indigo-500 hover:bg-indigo-50 transition-all cursor-pointer shadow-2xs"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-950">GV Premium</span>
-                  <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
-                    PRO
-                  </span>
-                </div>
-                <div className="text-[10px] text-indigo-600 truncate mt-0.5">teacher.john@...</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleFillCredentials('teacher.mai@smartenglish.com', 'Password123@')}
-                className="rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800">GV Miễn Phí</span>
-                  <span className="text-[9px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded border border-slate-200">
-                    FREE
-                  </span>
-                </div>
-                <div className="text-[10px] text-slate-400 truncate mt-0.5">teacher.mai@...</div>
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleFillCredentials('admin@smartenglish.com', 'Password123@')}
-              className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left hover:border-brand-500 transition-all cursor-pointer shadow-2xs flex items-center justify-between"
-            >
-              <div>
-                <div className="text-xs font-bold text-slate-800">👑 Quản trị viên (Admin)</div>
-                <div className="text-[10px] text-slate-400">admin@smartenglish.com</div>
-              </div>
-              <span className="text-[10px] font-semibold text-brand-600">Điền ngay →</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleFillCredentials('student.theanh@gmail.com', 'Password123@')}
-              className="w-full rounded-lg border border-amber-200 bg-amber-50/60 p-1.5 text-center hover:bg-amber-100/60 transition-all cursor-pointer"
-            >
-              <span className="text-[11px] font-medium text-amber-800">
-                Thử đăng nhập Học viên (Kiểm tra chặn 403)
-              </span>
-            </button>
-          </div>
 
           <div className="text-center text-xs pt-1 border-t border-line">
             <span className="text-ink-muted">Bạn là Giáo viên mới? </span>

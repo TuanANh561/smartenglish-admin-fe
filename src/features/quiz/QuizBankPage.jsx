@@ -440,17 +440,17 @@ export default function QuizBankPage() {
         {/* Chế độ hiển thị: Dạng Bảng (List) hoặc Dạng Thẻ (Grid) */}
         {viewMode === 'list' ? (
           /* Table — co dãn 100% width, không cuộn ngang */
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-5 py-3 w-[38%]">Bài thi / Đề kiểm tra</th>
-                <th className="px-3 py-3 w-[12%]">Thể loại</th>
-                <th className="px-3 py-3 text-center w-[8%]">Cấp độ</th>
-                <th className="px-3 py-3 text-center w-[11%]">Trạng thái</th>
-                <th className="px-3 py-3 text-center w-[9%]">Thời lượng</th>
-                <th className="px-3 py-3 text-center w-[8%]">Số câu</th>
-                <th className="px-3 py-3 text-center w-[6%]">Ngày tạo</th>
-                <th className="px-4 py-3 text-right w-[8%]">Thao tác</th>
+                <th className="px-4 py-3 w-[26%] whitespace-nowrap">Bài thi / Đề kiểm tra</th>
+                <th className="px-3 py-3 w-[11%] whitespace-nowrap">Thể loại</th>
+                <th className="px-2 py-3 text-center w-[6%] whitespace-nowrap">Cấp độ</th>
+                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Trạng thái</th>
+                <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">Thời lượng</th>
+                <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Số câu</th>
+                <th className="px-3 py-3 text-center w-[13%] whitespace-nowrap">Ngày tạo</th>
+                <th className="px-4 py-3 text-right w-[19%] whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

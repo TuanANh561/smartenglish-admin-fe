@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import {
   Receipt,
   RefreshCw,
@@ -53,6 +53,15 @@ function formatDate(dateStr) {
 
 export default function TeacherTransactionsPage() {
   const user = useAuthStore((s) => s.user)
+  const userRole = (user?.role || '').toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
+
+  // Trang này chỉ dành riêng cho Giáo viên xem lịch sử mua gói cá nhân.
+  // Quản trị viên (Admin) được tự động điều hướng sang trang Quản lý Giao dịch & Đối soát toàn hệ thống.
+  if (isAdmin) {
+    return <Navigate to="/app/doi-soat" replace />
+  }
+
   const teacherId = user?.id ?? null
 
   const PAGE_SIZE = 10
@@ -86,8 +95,8 @@ export default function TeacherTransactionsPage() {
     setLoadingOrders(true)
     try {
       const [quotaRes, ordersRes] = await Promise.allSettled([
-        getTeacherQuotaStatus(teacherId),
-        api.get(`/payment/user/orders?userId=${teacherId}`),
+        getTeacherQuotaStatus(),
+        api.get('/payment/user/orders'),
       ])
 
       if (quotaRes.status === 'fulfilled' && quotaRes.value) {
@@ -138,7 +147,7 @@ export default function TeacherTransactionsPage() {
 
     setIsSubmittingRefund(true)
     try {
-      await api.post(`/payment/orders/${selectedRefundOrder.id}/request-refund?userId=${teacherId}`, {
+      await api.post(`/payment/orders/${selectedRefundOrder.id}/request-refund`, {
         reason: refundReason,
         bankName: refundBank,
         accountNumber: refundAcc,

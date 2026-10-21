@@ -24,7 +24,7 @@ export default function ProfilePage() {
   const isTeacher = currentUser?.role === 'teacher'
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-4 sm:space-y-5 max-w-5xl mx-auto pb-8">
       {/* ── HEADER & BANNER PROFILE ─────────────────────────────────── */}
       <ProfileHeader
         currentUser={currentUser}
