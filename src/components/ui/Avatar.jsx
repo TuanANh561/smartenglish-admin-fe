@@ -12,6 +12,7 @@ const SIZE_CLASSES = {
 export function sanitizeAvatarUrl(url) {
   if (!url || typeof url !== 'string') return null
   let s = url.trim()
+  if (s.includes('/uploads/avatars/admin_avatar.png')) return null
   // Strip markdown [url](url) format
   const mdMatch = s.match(/\((https?:\/\/[^\s)]+)\)/) || s.match(/(https?:\/\/[^\s\])]+)/)
   if (mdMatch) s = mdMatch[1]

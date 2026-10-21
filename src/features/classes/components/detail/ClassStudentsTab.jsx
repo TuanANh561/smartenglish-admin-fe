@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Eye, Plus, Search, Trash2, UserPlus } from 'lucide-react'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { maskEmail } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 import { ProgressBar, ScoreBadge, StudentAvatar } from '../ClassSharedComponents'
 
@@ -102,9 +101,8 @@ export default function ClassStudentsTab({
                         <StudentAvatar student={sObj} />
                         <div>
                           <p className="font-bold text-slate-800 text-sm">{sObj.name}</p>
-                          {/* Yêu cầu bảo mật: Email hiển thị dạng ẩn ki*******com */}
-                          <p className="font-mono text-xs text-slate-400 mt-0.5">
-                            {maskEmail(sObj.email)}
+                          <p className="font-mono text-xs text-slate-500 mt-0.5">
+                            {sObj.email || '—'}
                           </p>
                         </div>
                       </div>

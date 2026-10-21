@@ -357,17 +357,17 @@ function GrammarPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="w-full">
+          <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-6 py-3.5 w-[36%] min-w-[260px]">BÀI HỌC NGỮ PHÁP</th>
-                <th className="px-4 py-3.5 w-[14%] min-w-[120px]">CHỦ ĐIỂM</th>
-                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
-                <th className="px-4 py-3.5 text-center w-[11%] min-w-[90px]">SỐ BÀI TẬP</th>
-                <th className="px-4 py-3.5 w-[14%] min-w-[130px]">TRẠNG THÁI</th>
-                <th className="px-4 py-3.5 w-[11%] min-w-[100px]">{activeTab === 'trash' ? 'NGÀY XÓA' : 'CẬP NHẬT'}</th>
-                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
+                <th className="px-3.5 py-3 w-[34%] whitespace-nowrap">BÀI HỌC NGỮ PHÁP</th>
+                <th className="px-3 py-3 w-[14%] whitespace-nowrap">CHỦ ĐIỂM</th>
+                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">CẤP ĐỘ</th>
+                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">SỐ BÀI TẬP</th>
+                <th className="px-3 py-3 w-[12%] whitespace-nowrap">TRẠNG THÁI</th>
+                <th className="px-3 py-3 w-[11%] whitespace-nowrap">{activeTab === 'trash' ? 'NGÀY XÓA' : 'CẬP NHẬT'}</th>
+                <th className="px-4 py-3 text-right w-[11%] whitespace-nowrap">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

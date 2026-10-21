@@ -16,7 +16,7 @@ export const ENDPOINTS = {
     login: '/auth/admin/login',
     logout: '/auth/logout',
     refresh: '/auth/refresh',
-    me: '/auth/me',
+    me: '/users/me',
 
     updateProfile: '/auth/me',
     changePassword: '/auth/me/password',
@@ -56,10 +56,13 @@ export const ENDPOINTS = {
   },
   words: {
     list: '/admin/words',
+    trashCount: '/admin/words/trash/count',
     detail: '/admin/words/:id',
     create: '/admin/words',
     update: '/admin/words/:id',
     remove: '/admin/words/:id',
+    restore: '/admin/words/:id/restore',
+    permanentRemove: '/admin/words/:id/permanent',
     meanings: '/admin/words/:id/meanings',
     import: '/admin/words/import',
     topics: '/admin/words/topics',

@@ -329,17 +329,17 @@ function ListeningPage() {
 
 
         {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="w-full">
+          <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-6 py-3.5 w-[36%] min-w-[280px]">BÀI NGHE AUDIO</th>
-                <th className="px-4 py-3.5 w-[14%] min-w-[110px]">CHỦ ĐỀ</th>
-                <th className="px-4 py-3.5 text-center w-[10%] min-w-[80px]">CẤP ĐỘ</th>
-                <th className="px-4 py-3.5 text-center w-[11%] min-w-[90px]">THỜI LƯỢNG</th>
-                <th className="px-4 py-3.5 w-[13%] min-w-[120px]">NGUỒN / TÁC GIẢ</th>
-                <th className="px-4 py-3.5 w-[14%] min-w-[140px]">BẢN CHÉP & CÂU HỎI</th>
-                <th className="px-6 py-3.5 text-right w-[14%] min-w-[130px]">THAO TÁC</th>
+                <th className="px-3.5 py-3 w-[32%] whitespace-nowrap">BÀI NGHE AUDIO</th>
+                <th className="px-3 py-3 w-[13%] whitespace-nowrap">CHỦ ĐỀ</th>
+                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">CẤP ĐỘ</th>
+                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">THỜI LƯỢNG</th>
+                <th className="px-3 py-3 w-[12%] whitespace-nowrap">NGUỒN / TÁC GIẢ</th>
+                <th className="px-3 py-3 w-[13%] whitespace-nowrap">BẢN CHÉP & CÂU HỎI</th>
+                <th className="px-4 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

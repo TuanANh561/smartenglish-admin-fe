@@ -269,19 +269,20 @@ function ReadingPage() {
         />
 
         {/* Table — no overflow-x-auto */}
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <th className="px-5 py-3 w-[40%]">Bài đọc hiểu</th>
-              <th className="px-3 py-3 w-[10%]">Chủ đề</th>
-              <th className="px-3 py-3 text-center w-[7%]">Cấp độ</th>
-              <th className="px-3 py-3 text-center w-[11%]">Trạng thái</th>
-              <th className="px-3 py-3 text-center w-[10%]">Độ dài</th>
-              <th className="px-3 py-3 text-center w-[7%]">Câu hỏi</th>
-              <th className="px-3 py-3 w-[9%]">Ngày tạo</th>
-              <th className="px-4 py-3 text-right w-[11%]">Thao tác</th>
-            </tr>
-          </thead>
+        <div className="w-full">
+          <table className="w-full text-left text-sm table-fixed">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 w-[36%] whitespace-nowrap">Bài đọc hiểu</th>
+                <th className="px-3 py-3 w-[11%] whitespace-nowrap">Chủ đề</th>
+                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Cấp độ</th>
+                <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">Trạng thái</th>
+                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Độ dài</th>
+                <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Câu hỏi</th>
+                <th className="px-3 py-3 w-[8%] whitespace-nowrap">Ngày tạo</th>
+                <th className="px-4 py-3 text-right w-[9%] whitespace-nowrap">Thao tác</th>
+              </tr>
+            </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
@@ -328,6 +329,7 @@ function ReadingPage() {
             )}
           </tbody>
         </table>
+      </div>
 
         {/* Pagination */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">

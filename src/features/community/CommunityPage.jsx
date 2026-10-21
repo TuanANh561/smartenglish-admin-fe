@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Search, FileText, MessageCircle } from 'lucide-react'
+import { Search, FileText, MessageCircle, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import CreateGroupModal from './CreateGroupModal'
 import PostComposer from './components/PostComposer'
@@ -12,11 +11,13 @@ import SharePostModal from './components/SharePostModal'
 import FindFriendsModal from './components/FindFriendsModal'
 import PostCommentModal from './components/PostCommentModal'
 import PostImageViewerModal from './components/PostImageViewerModal'
+import CommunitySearchResults from './components/CommunitySearchResults'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Drawer from '@/components/ui/Drawer'
 import { sanitizeAvatarUrl } from '@/components/ui/Avatar'
-import { useAuthStore, TEST_USERS } from '@/store/authStore'
+import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
+import { useCommunitySearchStore } from '@/store/communitySearchStore'
 import { http } from '@/lib/api'
 import { formatRelativeTime, cn } from '@/lib/utils'
 import {
@@ -34,52 +35,13 @@ import {
 
 function CommunityPage() {
   const user = useAuthStore((s) => s.user)
-  const [searchParams] = useSearchParams()
-  const asUserParam = searchParams.get('asUser') || searchParams.get('userId') || searchParams.get('as')
   const [realUsers, setRealUsers] = useState([])
 
-  const currentDbUser = useMemo(() => {
-    if (asUserParam) {
-      const targetId =
-        Number(asUserParam) ||
-        (asUserParam.toLowerCase() === 'teacher'
-          ? 2
-          : asUserParam.toLowerCase() === 'student'
-          ? 3
-          : 1)
-      const found = realUsers.find((u) => Number(u.id) === targetId)
-      return (
-        found ||
-        TEST_USERS[targetId] || {
-          id: targetId,
-          displayName: targetId === 2 ? 'Thầy John Smith' : 'Người dùng',
-          role: targetId === 2 ? 'teacher' : 'student',
-        }
-      )
-    }
-    if (user && user.id) return user
-    return (
-      realUsers.find((u) => u.role === 'admin' || Number(u.id) === 1) || {
-        id: 1,
-        displayName: 'Quản trị viên',
-        email: 'admin@smartenglish.com',
-        role: 'admin',
-        avatarUrl: '',
-      }
-    )
-  }, [asUserParam, user, realUsers])
-
-  const myId = Number(currentDbUser?.id) || 1
-  const isAdmin = currentDbUser?.role === 'admin'
-  const myName = currentDbUser?.displayName || currentDbUser?.name || 'Quản trị viên Hệ thống'
+  const myId = Number(user?.id) || 0
+  const isAdmin = user?.role === 'admin' || user?.role === 'ADMIN'
+  const myName = user?.displayName || user?.name || 'Người dùng'
   const myAvatar =
-    sanitizeAvatarUrl(currentDbUser?.avatarUrl || currentDbUser?.avatar || user?.avatarUrl || user?.avatar) || ''
-
-  useEffect(() => {
-    if (asUserParam && currentDbUser && user?.id !== currentDbUser.id) {
-      useAuthStore.getState().setUser(currentDbUser)
-    }
-  }, [asUserParam, currentDbUser, user?.id])
+    sanitizeAvatarUrl(user?.avatarUrl || user?.avatar) || ''
 
   const [posts, setPosts] = useState([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(true)
@@ -87,7 +49,19 @@ function CommunityPage() {
   const [hasMorePosts, setHasMorePosts] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [selectedTag, setSelectedTag] = useState(null)
-  const [searchQuery, setSearchQuery] = useState('')
+  const searchQuery = useCommunitySearchStore((s) => s.searchQuery)
+  const setSearchQuery = useCommunitySearchStore((s) => s.setSearchQuery)
+  const resetSearchQuery = useCommunitySearchStore((s) => s.resetSearchQuery)
+  const isSearchingMode = useCommunitySearchStore((s) => s.isSearchingMode)
+  const setIsSearchingMode = useCommunitySearchStore((s) => s.setIsSearchingMode)
+  const storeSelectedTag = useCommunitySearchStore((s) => s.selectedTag)
+  const setStoreSelectedTag = useCommunitySearchStore((s) => s.setSelectedTag)
+
+  useEffect(() => {
+    return () => {
+      resetSearchQuery()
+    }
+  }, [resetSearchQuery])
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState(new Set())
   const [conversations, setConversations] = useState([])
   const [onlineUserIds, setOnlineUserIds] = useState(new Set())
@@ -340,7 +314,7 @@ function CommunityPage() {
   // Load real conversations from MongoDB Atlas
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await http.get(`/api/v1/social/conversations?userId=${myId}`)
+      const res = await http.get('/api/v1/social/conversations')
       const data = res?.data || res
       if (Array.isArray(data)) {
         const total = data.reduce((sum, c) => sum + (Number(c.unreadCount) || 0), 0)
@@ -410,27 +384,27 @@ function CommunityPage() {
   // Load friends and pending requests from MongoDB Atlas
   const fetchFriends = useCallback(async () => {
     try {
-      const res = await http.get(`/api/v1/social/friends?userId=${myId}`)
+      const res = await http.get('/api/v1/social/friends')
       const list = res?.data || res
       if (Array.isArray(list)) setFriends(list)
     } catch (err) {
       console.warn('Cannot fetch friends:', err)
     }
-  }, [myId])
+  }, [])
 
   const fetchFriendRequests = useCallback(async () => {
     try {
-      const res = await http.get(`/api/v1/social/friends/requests?userId=${myId}`)
+      const res = await http.get('/api/v1/social/friends/requests')
       const list = res?.data || res
       if (Array.isArray(list)) setPendingRequests(list)
     } catch (err) {
       console.warn('Cannot fetch friend requests:', err)
     }
-  }, [myId])
+  }, [])
 
   const fetchSentRequests = useCallback(async () => {
     try {
-      const res = await http.get(`/api/v1/social/friends/sent-requests?userId=${myId}`)
+      const res = await http.get('/api/v1/social/friends/sent-requests')
       const list = res?.data || res
       if (Array.isArray(list)) {
         setSentRequestUserIds(new Set(list.map((r) => Number(r.addresseeId))))
@@ -565,7 +539,7 @@ function CommunityPage() {
 
         if (isOpen) {
           // If the user is currently watching this conversation, mark as read immediately!
-          http.post(`/api/v1/social/conversations/${convId}/read?userId=${myId}`).catch(() => {})
+          http.post(`/api/v1/social/conversations/${convId}/read`).catch(() => {})
         } else {
           toast.info(
             `${event.senderName || 'Tin nhắn mới'}: ${displayPreview}`,
@@ -790,7 +764,7 @@ function CommunityPage() {
 
     // Mark as read in backend and update store
     http
-      .post(`/api/v1/social/conversations/${conversationId}/read?userId=${myId}`)
+      .post(`/api/v1/social/conversations/${conversationId}/read`)
       .then((res) => {
         const remaining = res?.data?.unreadCount ?? res?.unreadCount
         if (remaining !== undefined) {
@@ -879,7 +853,7 @@ function CommunityPage() {
       )
 
       if (incomingMsg.senderId !== myId) {
-        http.post(`/api/v1/social/conversations/${conversationId}/read?userId=${myId}`).catch(() => {})
+        http.post(`/api/v1/social/conversations/${conversationId}/read`).catch(() => {})
       }
     })
   }
@@ -1053,7 +1027,7 @@ function CommunityPage() {
   const handleReactMessage = async (conversationId, messageId, reactionType) => {
     try {
       const res = await http.post(
-        `/api/v1/social/conversations/${conversationId}/messages/${messageId}/reactions?userId=${myId}&reactionType=${reactionType}`,
+        `/api/v1/social/conversations/${conversationId}/messages/${messageId}/reactions?reactionType=${reactionType}`,
       )
       const updated = res?.data || res
 
@@ -1077,7 +1051,7 @@ function CommunityPage() {
   const handleRecallMessage = async (conversationId, messageId) => {
     try {
       await http.post(
-        `/api/v1/social/conversations/${conversationId}/messages/${messageId}/recall?userId=${myId}`,
+        `/api/v1/social/conversations/${conversationId}/messages/${messageId}/recall`,
       )
       setConversations((prev) =>
         prev.map((c) => {
@@ -1192,7 +1166,7 @@ function CommunityPage() {
     setSelectedPostForImage((prev) => (prev && prev.id === postId ? updatePostLike(prev) : prev))
 
     try {
-      await http.post(`/api/v1/social/posts/${postId}/like?userId=${myId}`)
+      await http.post(`/api/v1/social/posts/${postId}/like`)
     } catch (err) {
       console.error('Error liking post:', err)
     }
@@ -1228,7 +1202,7 @@ function CommunityPage() {
       }
 
       const res = await http.post(
-        `/api/v1/social/conversations/${targetConversationId}/share-post?senderId=${myId}&senderName=${encodeURIComponent(myName)}&senderAvatar=${encodeURIComponent(myAvatar)}`,
+        `/api/v1/social/conversations/${targetConversationId}/share-post?senderAvatar=${encodeURIComponent(myAvatar)}`,
         postInfo,
       )
       const savedMsg = res?.data || res
@@ -1324,7 +1298,7 @@ function CommunityPage() {
         targetUser.name || targetUser.displayName || targetUser.username || targetUser.email
       const targetAvatar = targetUser.avatarUrl || targetUser.avatar || ''
       const res = await http.post(
-        `/api/v1/social/conversations/direct?myId=${myId}&myName=${encodeURIComponent(myName)}&myAvatar=${encodeURIComponent(myAvatar || '')}&friendId=${targetUserId}&friendName=${encodeURIComponent(targetName)}&friendAvatar=${encodeURIComponent(targetAvatar)}`,
+        `/api/v1/social/conversations/direct?friendId=${targetUserId}&friendName=${encodeURIComponent(targetName)}&friendAvatar=${encodeURIComponent(targetAvatar)}`,
       )
       const conv = res?.data || res
       if (conv?.id) {
@@ -1337,11 +1311,56 @@ function CommunityPage() {
     }
   }
 
+  // Đồng bộ dữ liệu sang useCommunitySearchStore để Topbar Dropdown & SearchResults sử dụng chung
+  useEffect(() => {
+    useCommunitySearchStore.getState().setTrendingTopics(trendingTopics)
+  }, [trendingTopics])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().setUsers(availableUsersForGroup)
+  }, [availableUsersForGroup])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().setFriends(friends)
+  }, [friends])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().setPendingRequests(pendingRequests)
+  }, [pendingRequests])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().setSentRequestUserIds(sentRequestUserIds)
+  }, [sentRequestUserIds])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().setOnlineUserIds(onlineUserIds)
+  }, [onlineUserIds])
+
+  useEffect(() => {
+    if (storeSelectedTag !== undefined && storeSelectedTag !== selectedTag) {
+      setSelectedTag(storeSelectedTag)
+    }
+  }, [storeSelectedTag, selectedTag])
+
+  useEffect(() => {
+    useCommunitySearchStore.getState().registerActions({
+      onSendFriendRequest: handleSendFriendRequest,
+      onRespondFriendRequest: handleRespondFriendRequest,
+      onStartChatWithUser: handleStartChatWithUser,
+    })
+  }, [handleSendFriendRequest, handleRespondFriendRequest, handleStartChatWithUser])
+
+  useEffect(() => {
+    if (!searchQuery?.trim() && isSearchingMode) {
+      setIsSearchingMode(false)
+    }
+  }, [searchQuery, isSearchingMode, setIsSearchingMode])
+
   // Delete Post in MongoDB Atlas
   const handleDeletePost = async (postId, e) => {
     e?.stopPropagation()
     try {
-      await http.delete(`/api/v1/social/posts/${postId}?userId=${myId}&isAdmin=${isAdmin}`)
+      await http.delete(`/api/v1/social/posts/${postId}`)
       setPosts((prev) => prev.filter((p) => p.id !== postId))
       setActiveMenuPostId(null)
       toast.success('Đã xoá bài viết thành công')
@@ -1532,7 +1551,7 @@ function CommunityPage() {
   // Delete Comment in MongoDB Atlas
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      await http.delete(`/api/v1/social/posts/${postId}/comments/${commentId}?userId=${myId}&isAdmin=${isAdmin}`)
+      await http.delete(`/api/v1/social/posts/${postId}/comments/${commentId}`)
 
       const removeComment = (p) => {
         const nextComments = (p.comments || []).filter(
@@ -1563,130 +1582,161 @@ function CommunityPage() {
         {/* ─── LEFT COLUMN: COMPOSER & FEED (8 COLS ON DESKTOP, FULL ON MOBILE) ──────────────────── */}
         <div className="col-span-1 lg:col-span-8 flex justify-center px-0 sm:px-4 xl:px-8">
           <div className="w-full max-w-[600px] space-y-4">
-            <PostComposer
-              isAdmin={isAdmin}
-              myAvatar={myAvatar}
-              myName={myName}
-              postContent={postContent}
-              setPostContent={setPostContent}
-              attachedImage={attachedImage}
-              setAttachedImage={setAttachedImage}
-              imageFile={imageFile}
-              setImageFile={setImageFile}
-              attachedDoc={attachedDoc}
-              setAttachedDoc={setAttachedDoc}
-              docFile={docFile}
-              setDocFile={setDocFile}
-              isPosting={isPosting}
-              isAiGenerating={isAiGenerating}
-              handleAiSuggest={handleAiSuggest}
-              handleCreatePost={handleCreatePost}
-            />
-
-          {/* ─── POSTS FEED LIST ────────────────────────────────────────── */}
-          <div className="space-y-4">
-            {isLoadingPosts ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((skeletonId) => (
-                  <div
-                    key={skeletonId}
-                    className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs animate-pulse space-y-4"
-                  >
-                    {/* Author header skeleton */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-200" />
-                        <div className="space-y-1.5">
-                          <div className="h-3.5 w-32 rounded bg-slate-200" />
-                          <div className="h-2.5 w-20 rounded bg-slate-100" />
-                        </div>
-                      </div>
-                      <div className="h-4 w-6 rounded bg-slate-100" />
-                    </div>
-
-                    {/* Content text lines skeleton */}
-                    <div className="space-y-2 pt-1">
-                      <div className="h-3 w-full rounded bg-slate-200" />
-                      <div className="h-3 w-5/6 rounded bg-slate-200" />
-                      <div className="h-3 w-3/5 rounded bg-slate-100" />
-                    </div>
-
-                    {/* Media placeholder skeleton (first card) */}
-                    {skeletonId === 1 && (
-                      <div className="h-44 w-full rounded-xl bg-slate-100 flex items-center justify-center text-slate-300">
-                        <div className="h-8 w-8 rounded-full bg-slate-200" />
-                      </div>
-                    )}
-
-                    {/* Tags skeleton */}
-                    <div className="flex gap-2">
-                      <div className="h-5 w-16 rounded-md bg-slate-100" />
-                      <div className="h-5 w-20 rounded-md bg-slate-100" />
-                    </div>
-
-                    {/* Footer buttons skeleton */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                      <div className="flex items-center gap-5">
-                        <div className="h-6 w-14 rounded-lg bg-slate-100" />
-                        <div className="h-6 w-14 rounded-lg bg-slate-100" />
-                        <div className="h-6 w-14 rounded-lg bg-slate-100" />
-                      </div>
-                      <div className="h-6 w-6 rounded-lg bg-slate-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-12 text-center text-slate-400 shadow-2xs">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                  <FileText size={22} />
-                </div>
-                <p className="text-sm font-semibold text-slate-700">Chưa có bài viết nào</p>
-                <p className="text-xs text-slate-400 mt-1">Hãy là người đầu tiên chia sẻ kiến thức hoặc kinh nghiệm học tiếng Anh!</p>
-              </div>
+            {isSearchingMode ? (
+              <CommunitySearchResults
+                posts={posts}
+                users={availableUsersForGroup}
+                friends={friends}
+                pendingRequests={pendingRequests}
+                sentRequestUserIds={sentRequestUserIds}
+                onlineUserIds={onlineUserIds}
+                bookmarkedPostIds={bookmarkedPostIds}
+                activeMenuPostId={activeMenuPostId}
+                setActiveMenuPostId={setActiveMenuPostId}
+                checkPostOwnership={checkPostOwnership}
+                handleLikePost={handleLikePost}
+                handleBookmarkPost={handleBookmarkPost}
+                handleSharePost={handleSharePost}
+                handleDeletePost={handleDeletePost}
+                setSelectedPostForComment={setSelectedPostForComment}
+                setSelectedPostForImage={setSelectedPostForImage}
+                setSelectedTag={(tag) => {
+                  setSelectedTag(tag)
+                  setStoreSelectedTag(tag)
+                  setIsSearchingMode(false)
+                }}
+                onSendFriendRequest={handleSendFriendRequest}
+                onRespondFriendRequest={handleRespondFriendRequest}
+                onStartChatWithUser={handleStartChatWithUser}
+              />
             ) : (
               <>
-                {filteredPosts.map((post, index) => {
-                  const triggerIndex = filteredPosts.length >= 8 ? filteredPosts.length - 3 : filteredPosts.length - 1
-                  const isTrigger = index === triggerIndex && hasMorePosts
-                  return (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      cardRef={isTrigger ? triggerPostRef : null}
-                      isOwner={checkPostOwnership(post)}
-                      isBookmarked={bookmarkedPostIds.has(post.id)}
-                      isMenuOpen={activeMenuPostId === post.id}
-                      onToggleMenu={() =>
-                        setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
-                      }
-                      onCloseMenu={() => setActiveMenuPostId(null)}
-                      onEditPost={() => toast.success('Mở trình chỉnh sửa bài viết')}
-                      onDeletePost={handleDeletePost}
-                      onSelectTag={setSelectedTag}
-                      onLikePost={handleLikePost}
-                      onOpenCommentModal={(targetPost) => setSelectedPostForComment(targetPost)}
-                      onViewFullImage={(targetPost) => setSelectedPostForImage(targetPost)}
-                      onBookmarkPost={handleBookmarkPost}
-                      onSharePost={handleSharePost}
-                    />
-                  )
-                })}
+                <PostComposer
+                  isAdmin={isAdmin}
+                  myAvatar={myAvatar}
+                  myName={myName}
+                  postContent={postContent}
+                  setPostContent={setPostContent}
+                  attachedImage={attachedImage}
+                  setAttachedImage={setAttachedImage}
+                  imageFile={imageFile}
+                  setImageFile={setImageFile}
+                  attachedDoc={attachedDoc}
+                  setAttachedDoc={setAttachedDoc}
+                  docFile={docFile}
+                  setDocFile={setDocFile}
+                  isPosting={isPosting}
+                  isAiGenerating={isAiGenerating}
+                  handleAiSuggest={handleAiSuggest}
+                  handleCreatePost={handleCreatePost}
+                />
 
-                {/* Loading indicator when fetching next batch */}
-                {isLoadingMore && (
-                  <LoadingSpinner text="Đang tải thêm bài viết..." className="py-6" size={24} />
-                )}
+                {/* ─── POSTS FEED LIST ────────────────────────────────────────── */}
+                <div className="space-y-4">
+                  {isLoadingPosts ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((skeletonId) => (
+                        <div
+                          key={skeletonId}
+                          className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs animate-pulse space-y-4"
+                        >
+                          {/* Author header skeleton */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-slate-200" />
+                              <div className="space-y-1.5">
+                                <div className="h-3.5 w-32 rounded bg-slate-200" />
+                                <div className="h-2.5 w-20 rounded bg-slate-100" />
+                              </div>
+                            </div>
+                            <div className="h-4 w-6 rounded bg-slate-100" />
+                          </div>
 
-                {/* All caught up footer */}
-                {!hasMorePosts && filteredPosts.length >= 8 && (
-                  <div className="py-6 text-center text-xs text-slate-400 font-medium">
-                    ✨ Bạn đã xem hết tất cả các bài viết trong cộng đồng
-                  </div>
-                )}
+                          {/* Content text lines skeleton */}
+                          <div className="space-y-2 pt-1">
+                            <div className="h-3 w-full rounded bg-slate-200" />
+                            <div className="h-3 w-5/6 rounded bg-slate-200" />
+                            <div className="h-3 w-3/5 rounded bg-slate-100" />
+                          </div>
+
+                          {/* Media placeholder skeleton (first card) */}
+                          {skeletonId === 1 && (
+                            <div className="h-44 w-full rounded-xl bg-slate-100 flex items-center justify-center text-slate-300">
+                              <div className="h-8 w-8 rounded-full bg-slate-200" />
+                            </div>
+                          )}
+
+                          {/* Tags skeleton */}
+                          <div className="flex gap-2">
+                            <div className="h-5 w-16 rounded-md bg-slate-100" />
+                            <div className="h-5 w-20 rounded-md bg-slate-100" />
+                          </div>
+
+                          {/* Footer buttons skeleton */}
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                            <div className="flex items-center gap-5">
+                              <div className="h-6 w-14 rounded-lg bg-slate-100" />
+                              <div className="h-6 w-14 rounded-lg bg-slate-100" />
+                              <div className="h-6 w-14 rounded-lg bg-slate-100" />
+                            </div>
+                            <div className="h-6 w-6 rounded-lg bg-slate-100" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredPosts.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200/90 bg-white p-12 text-center text-slate-400 shadow-2xs">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <FileText size={22} />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">Chưa có bài viết nào</p>
+                      <p className="text-xs text-slate-400 mt-1">Hãy là người đầu tiên chia sẻ kiến thức hoặc kinh nghiệm học tiếng Anh!</p>
+                    </div>
+                  ) : (
+                    <>
+                      {filteredPosts.map((post, index) => {
+                        const triggerIndex = filteredPosts.length >= 8 ? filteredPosts.length - 3 : filteredPosts.length - 1
+                        const isTrigger = index === triggerIndex && hasMorePosts
+                        return (
+                          <PostCard
+                            key={post.id}
+                            post={post}
+                            cardRef={isTrigger ? triggerPostRef : null}
+                            isOwner={checkPostOwnership(post)}
+                            isBookmarked={bookmarkedPostIds.has(post.id)}
+                            isMenuOpen={activeMenuPostId === post.id}
+                            onToggleMenu={() =>
+                              setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
+                            }
+                            onCloseMenu={() => setActiveMenuPostId(null)}
+                            onEditPost={() => toast.success('Mở trình chỉnh sửa bài viết')}
+                            onDeletePost={handleDeletePost}
+                            onSelectTag={setSelectedTag}
+                            onLikePost={handleLikePost}
+                            onOpenCommentModal={(targetPost) => setSelectedPostForComment(targetPost)}
+                            onViewFullImage={(targetPost) => setSelectedPostForImage(targetPost)}
+                            onBookmarkPost={handleBookmarkPost}
+                            onSharePost={handleSharePost}
+                          />
+                        )
+                      })}
+
+                      {/* Loading indicator when fetching next batch */}
+                      {isLoadingMore && (
+                        <LoadingSpinner text="Đang tải thêm bài viết..." className="py-6" size={24} />
+                      )}
+
+                      {/* All caught up footer */}
+                      {!hasMorePosts && filteredPosts.length >= 8 && (
+                        <div className="py-6 text-center text-xs text-slate-400 font-medium">
+                          ✨ Bạn đã xem hết tất cả các bài viết trong cộng đồng
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </>
             )}
-          </div>
           </div>
         </div>
 
@@ -1706,22 +1756,14 @@ function CommunityPage() {
             myId={myId}
           />
 
-          {/* Search Input Bar */}
-          <div className="relative w-full">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm bài viết, giáo viên..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-2xs"
-            />
-          </div>
-
           <TrendingTopicsCard
             topics={trendingTopics}
             selectedTag={selectedTag}
-            onSelectTag={setSelectedTag}
+            onSelectTag={(tag) => {
+              setSelectedTag(tag)
+              setStoreSelectedTag(tag)
+              setIsSearchingMode(false)
+            }}
           />
         </div>
       </div>
@@ -1799,14 +1841,25 @@ function CommunityPage() {
 
           {/* Ô tìm kiếm trong Drawer */}
           <div className="relative w-full">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Tìm bài viết, giáo viên..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none shadow-2xs"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-9 text-sm text-slate-800 placeholder:text-slate-400 placeholder:text-sm focus:bg-white focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 shadow-2xs transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-full hover:bg-slate-200 transition-colors"
+                title="Xóa nội dung tìm kiếm"
+                aria-label="Xóa nội dung tìm kiếm"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           {/* Chủ đề thảo luận */}
@@ -1861,7 +1914,7 @@ function CommunityPage() {
         isOpen={Boolean(selectedPostForComment)}
         onClose={() => setSelectedPostForComment(null)}
         post={selectedPostForComment}
-        myUser={currentDbUser}
+        myUser={user}
         onLikePost={handleLikePost}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
@@ -1877,7 +1930,7 @@ function CommunityPage() {
         isOpen={Boolean(selectedPostForImage)}
         onClose={() => setSelectedPostForImage(null)}
         post={selectedPostForImage}
-        myUser={currentDbUser}
+        myUser={user}
         onLikePost={handleLikePost}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}

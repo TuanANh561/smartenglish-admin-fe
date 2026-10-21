@@ -22,6 +22,7 @@ import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
@@ -124,6 +125,41 @@ function PronunciationFormPage() {
   const [openQuestionIdx, setOpenQuestionIdx] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [playingWordIdx, setPlayingWordIdx] = useState(null)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/phat-am',
+      backText: 'Quay lại Phát âm',
+      title: isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài phát âm mới',
+      subtitle: `Quản lý học liệu / Phát âm / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/phat-am"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            form="pronunciation-form"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+          >
+            <Save size={14} />
+            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
+          </button>
+        </div>
+      ),
+    })
+
+    return () => {
+      clearCustomHeader()
+    }
+  }, [isEditing, editTitle, form.title, isSaving, setCustomHeader, clearCustomHeader])
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
@@ -237,49 +273,10 @@ function PronunciationFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-12">
-      {/* ── Header bar ── */}
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-100 shadow-xs">
-        <div className="mx-auto max-w-6xl flex items-center gap-4 px-6 py-3.5">
-          <Link
-            to="/hoc-lieu/phat-am"
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Quay lại Phát âm
-          </Link>
-          <div className="h-5 w-px bg-slate-200" />
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-slate-900">
-              {isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài phát âm mới'}
-            </h1>
-            <p className="text-xs text-slate-500">
-              Quản lý học liệu / Phát âm / {isEditing ? 'Chỉnh sửa' : 'Thêm mới'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/hoc-lieu/phat-am"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              Hủy bỏ
-            </Link>
-            <button
-              type="submit"
-              form="pronunciation-form"
-              disabled={isSaving}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-4 py-2 text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer"
-            >
-              <Save size={15} />
-              {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-slate-50/50 pb-12 pt-2">
       {/* ── Body Form ── */}
       <form id="pronunciation-form" onSubmit={handleSave}>
-        <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-[1440px] px-6 py-4 space-y-6">
 
           {/* ── TOP: Lý thuyết phát âm (Card 1 & 2 bên trái, Card 3 bên phải) ── */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -294,66 +291,68 @@ function PronunciationFormPage() {
                   Thông tin bài học & Ký hiệu âm
                 </h3>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2">
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                      Tên bài học phát âm *
-                    </label>
-                    <Input
-                      value={form.title}
-                      onChange={set('title')}
-                      placeholder="VD: Mastering the Schwa Sound /ə/..."
-                      required
-                    />
-                  </div>
-                  <div>
+                {/* Tên bài học phát âm - Full width để hiển thị đầy đủ tiêu đề dài */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                    Tên bài học phát âm *
+                  </label>
+                  <Input
+                    value={form.title}
+                    onChange={set('title')}
+                    placeholder="VD: Mastering the Schwa Sound /ə/..."
+                    required
+                  />
+                </div>
+
+                {/* Ký hiệu IPA & Thông số phân loại */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-start">
+                  <div className="sm:col-span-6">
                     <IpaInputField
                       value={form.ipaSymbol}
                       onChange={(newVal) => setForm((prev) => ({ ...prev, ipaSymbol: newVal }))}
                       sourceWord={form.title}
                       label="Ký hiệu IPA"
-                      placeholder="VD: /ə/, /iː/, /θ/..."
+                      placeholder="VD: /ə/, /iː/, /θ/, /ɾ/..."
                       required
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                      Phân loại âm
-                    </label>
-                    <Select value={form.category} onChange={set('category')}>
-                      {CATEGORY_LIST.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                      Cấp độ CEFR
-                    </label>
-                    <Select value={form.level} onChange={set('level')}>
-                      {CEFR_LEVELS.map((lvl) => (
-                        <option key={lvl} value={lvl}>
-                          Cấp độ {lvl}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                      Ngưỡng đạt AI (%)
-                    </label>
-                    <Input
-                      type="number"
-                      min={50}
-                      max={100}
-                      value={form.aiMinScoreThreshold}
-                      onChange={set('aiMinScoreThreshold')}
-                    />
+                  <div className="sm:col-span-6 grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                        Phân loại âm
+                      </label>
+                      <Select value={form.category} onChange={set('category')}>
+                        {CATEGORY_LIST.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                        Cấp độ CEFR
+                      </label>
+                      <Select value={form.level} onChange={set('level')}>
+                        {CEFR_LEVELS.map((lvl) => (
+                          <option key={lvl} value={lvl}>
+                            Cấp độ {lvl}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                        Ngưỡng AI (%)
+                      </label>
+                      <Input
+                        type="number"
+                        min={50}
+                        max={100}
+                        value={form.aiMinScoreThreshold}
+                        onChange={set('aiMinScoreThreshold')}
+                      />
+                    </div>
                   </div>
                 </div>
 

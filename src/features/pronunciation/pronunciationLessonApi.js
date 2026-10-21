@@ -67,6 +67,9 @@ export async function getPronunciationLessons(params = {}) {
   if (params.status && params.status !== 'all') {
     p.status = params.status
   }
+  if (params.trash !== undefined) {
+    p.trash = params.trash
+  }
 
   const res = await callContentApi('get', BASE, { params: p })
   return res?.data !== undefined ? res.data : res
@@ -78,6 +81,15 @@ export async function getPronunciationLessons(params = {}) {
 export async function getPronunciationLessonById(id) {
   const res = await callContentApi('get', `${BASE}/${id}`)
   return res?.data !== undefined ? res.data : res
+}
+
+/**
+ * Lấy số lượng bài phát âm trong thùng rác
+ */
+export async function getPronunciationTrashCount() {
+  const res = await callContentApi('get', `${BASE}/trash/count`)
+  const count = res?.data !== undefined ? res.data : res
+  return typeof count === 'number' ? count : Number(count) || 0
 }
 
 /**
@@ -108,9 +120,26 @@ export async function togglePublishPronunciationLesson(id) {
 }
 
 /**
- * Xóa bài phát âm
+ * Xóa mềm bài phát âm (chuyển vào thùng rác)
  */
 export async function deletePronunciationLesson(id) {
   const res = await callContentApi('delete', `${BASE}/${id}`)
   return res?.data !== undefined ? res.data : res
 }
+
+/**
+ * Khôi phục bài phát âm từ thùng rác
+ */
+export async function restorePronunciationLesson(id) {
+  const res = await callContentApi('patch', `${BASE}/${id}/restore`)
+  return res?.data !== undefined ? res.data : res
+}
+
+/**
+ * Xóa vĩnh viễn bài phát âm khỏi CSDL
+ */
+export async function permanentDeletePronunciationLesson(id) {
+  const res = await callContentApi('delete', `${BASE}/${id}/permanent`)
+  return res?.data !== undefined ? res.data : res
+}
+

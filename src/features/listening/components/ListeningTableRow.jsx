@@ -40,14 +40,14 @@ export default function ListeningTableRow({
       className="group transition-colors hover:bg-slate-50/60 cursor-pointer"
     >
       {/* Tiêu đề + Nút Play Audio (Tinh gọn, chuẩn Data Table) */}
-      <td className="px-6 py-3.5">
-        <div className="flex items-center gap-3">
+      <td className="px-3.5 py-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
           {/* Audio Play Button */}
           <button
             type="button"
             onClick={(e) => onPlayToggle(e, item)}
             className={cn(
-              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all cursor-pointer shadow-2xs',
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all cursor-pointer shadow-2xs',
               isPlaying
                 ? 'bg-brand-500 text-white animate-pulse'
                 : 'bg-blue-50 text-brand-600 hover:bg-brand-500 hover:text-white',
@@ -55,15 +55,15 @@ export default function ListeningTableRow({
             title={isPlaying ? 'Dừng phát' : 'Nghe bài học'}
           >
             {isPlaying ? (
-              <Volume2 size={16} />
+              <Volume2 size={15} />
             ) : (
-              <Play size={16} className="ml-0.5" />
+              <Play size={15} className="ml-0.5" />
             )}
           </button>
 
           {/* Photo thumbnail nếu là TOEIC Part 1 có ảnh */}
           {item.imageUrl ? (
-            <div className="relative h-9 w-9 shrink-0 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+            <div className="relative h-8 w-8 shrink-0 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
               <img
                 src={item.imageUrl}
                 alt={item.title}
@@ -76,14 +76,17 @@ export default function ListeningTableRow({
             </div>
           ) : null}
 
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
             {/* Category / Part Badge */}
             <span className={cn('inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-xs font-semibold border shadow-2xs', cat.bg)}>
               {cat.label}
             </span>
 
             {/* Tiêu đề chính */}
-            <span className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors">
+            <span
+              className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors"
+              title={item.title}
+            >
               {item.title}
             </span>
           </div>
@@ -91,12 +94,12 @@ export default function ListeningTableRow({
       </td>
 
       {/* Chủ đề */}
-      <td className="px-4 py-4 text-sm font-medium text-slate-700 whitespace-nowrap">
+      <td className="px-3 py-3 text-sm font-medium text-slate-700 truncate" title={item.topic || 'Tổng hợp'}>
         {item.topic || 'Tổng hợp'}
       </td>
 
       {/* Cấp độ */}
-      <td className="px-4 py-4 text-center whitespace-nowrap">
+      <td className="px-2 py-3 text-center whitespace-nowrap">
         <span
           className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
           style={{ backgroundColor: cefr.bg, color: cefr.text }}
@@ -106,24 +109,24 @@ export default function ListeningTableRow({
       </td>
 
       {/* Thời lượng */}
-      <td className="px-4 py-4 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
+      <td className="px-3 py-3 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
         {item.duration || '01:00'}
       </td>
 
       {/* Tác giả / Nguồn */}
-      <td className="px-4 py-4 whitespace-nowrap">
+      <td className="px-3 py-3 whitespace-nowrap">
         {isTeacher && isOwned ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-100">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Của tôi
           </span>
         ) : isSystem ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
             SmartEnglish
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-100">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 border border-amber-100">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
             {item.authorName || 'Giáo viên'}
           </span>
@@ -131,11 +134,11 @@ export default function ListeningTableRow({
       </td>
 
       {/* Bản chép lời & Câu hỏi */}
-      <td className="px-4 py-4 whitespace-nowrap">
-        <div className="flex flex-col gap-1">
+      <td className="px-3 py-3 whitespace-nowrap">
+        <div className="flex flex-col gap-0.5">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium w-fit',
+              'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium w-fit',
               isReady
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                 : 'bg-amber-50 text-amber-800 border border-amber-100',
@@ -150,7 +153,7 @@ export default function ListeningTableRow({
             {isReady ? `${item.syncedTranscripts.length} câu đồng bộ` : 'Bản chép đầy đủ'}
           </span>
           {item.questions && item.questions.length > 0 && (
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-[11px] text-slate-500 font-medium">
               {item.questions.length} câu hỏi bài tập
             </span>
           )}
@@ -158,7 +161,7 @@ export default function ListeningTableRow({
       </td>
 
       {/* Thao tác */}
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-3 whitespace-nowrap text-right">
         <div
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}

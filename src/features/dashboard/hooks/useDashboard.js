@@ -29,9 +29,30 @@ export function useRevenueByMonth(range) {
   })
 }
 
-export function useRecentActivity(limit = 4) {
+export function useRecentActivity(limit = 10) {
   return useQuery({
     queryKey: ['dashboard', 'recent-activity', limit],
     queryFn: () => dashboardApi.getRecentActivity(limit),
+  })
+}
+
+export function useRevenueStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'revenue-stats'],
+    queryFn: () => dashboardApi.getRevenueStats(),
+  })
+}
+
+export function useRecentTransactions(size = 10) {
+  return useQuery({
+    queryKey: ['dashboard', 'recent-transactions', size],
+    queryFn: () => dashboardApi.getRecentTransactions(size),
+  })
+}
+
+export function useAiUsage(range) {
+  return useQuery({
+    queryKey: ['dashboard', 'ai-usage', range],
+    queryFn: () => dashboardApi.getAiUsage(range),
   })
 }

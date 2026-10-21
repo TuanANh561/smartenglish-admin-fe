@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Calendar, CheckCircle2, Copy, ExternalLink, GraduationCap, Shield, Users } from 'lucide-react'
-import { LEVEL_COLOR } from '../../classConstants'
+import { LEVEL_COLOR, formatTeacherName } from '../../classConstants'
 
 export default function ClassOverviewTab({ cls, members = [], assignments = [], copied, onCopyCode }) {
   const navigate = useNavigate()
@@ -108,7 +108,7 @@ export default function ClassOverviewTab({ cls, members = [], assignments = [], 
             <span className="text-xs font-medium text-slate-400 block mb-1">Giáo viên phụ trách</span>
             <div className="flex items-center gap-2 text-slate-800 font-semibold">
               <Shield size={16} className="text-brand-500" />
-              <span>{cls.teacherName || 'Thầy John Smith'}</span>
+              <span>{formatTeacherName(cls.teacherName, cls.teacherId) || 'Thầy John Smith'}</span>
             </div>
           </div>
 

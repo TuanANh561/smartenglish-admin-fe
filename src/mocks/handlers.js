@@ -90,6 +90,16 @@ export const handlers = {
     return structuredClone(user)
   },
 
+  'GET /auth/me': ({ token }) => {
+    const payload = decodeMockToken(token)
+    if (!payload || payload.type !== 'access' || isTokenExpired(payload)) {
+      throw sessionExpired
+    }
+    const user = users.find((item) => item.id === payload.sub)
+    if (!user) throw sessionExpired
+    return structuredClone(user)
+  },
+
   [`POST ${ENDPOINTS.auth.logout}`]: () => ({ success: true }),
 
   // ── Thống kê / Dashboard ────────────────────────────────────────

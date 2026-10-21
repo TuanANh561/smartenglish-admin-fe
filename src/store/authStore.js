@@ -1,90 +1,11 @@
 import { create } from 'zustand'
-import { setTokens, clearTokens } from '@/lib/api'
+import { setTokens, clearTokens, TOKEN_KEY } from '@/lib/api'
 
 /**
- * Chỉ giữ `user` trong bộ nhớ — access/refresh token nằm trong localStorage
- * (xem lib/api.js). Sau F5, `useInitAuth` sẽ nạp lại `user` bằng token đang có.
+ * Quản lý phiên làm việc của Quản trị viên / Giáo viên.
+ * Thông tin user được lưu trong localStorage ('se_admin_user') và đồng bộ từ auth-service (/users/me).
+ * Token (access + refresh) do lib/api.js quản lý.
  */
-export const TEST_USERS = {
-  1: {
-    id: 1,
-    displayName: 'Quản trị viên Hệ thống',
-    email: 'admin@smartenglish.com',
-    role: 'admin',
-    avatarUrl: '',
-    plan: 'lifetime',
-  },
-  2: {
-    id: 2,
-    displayName: 'Thầy John Smith (Teacher Pro)',
-    email: 'teacher.john@smartenglish.com',
-    role: 'teacher',
-    avatarUrl: '',
-    plan: 'premium_yearly',
-  },
-  3: {
-    id: 3,
-    displayName: 'Nguyễn Thế Anh',
-    email: 'student.theanh@gmail.com',
-    role: 'student',
-    avatarUrl: '',
-    plan: 'premium_monthly',
-  },
-  8: {
-    id: 8,
-    displayName: 'Thầy Vũ Đức Thắng (Teacher Free)',
-    email: 'thang.vd@gmail.com',
-    role: 'teacher',
-    avatarUrl: '',
-    plan: 'free',
-  },
-  43: {
-    id: 43,
-    displayName: 'Thầy Nguyễn Tuấn Anh',
-    email: 'anhn07929@gmail.com',
-    role: 'teacher',
-    avatarUrl: '',
-    plan: 'teacher_pro',
-  },
-}
-
-export const getInitialUser = () => {
-  if (typeof window === 'undefined') return null
-  try {
-    const params = new URLSearchParams(window.location.search)
-    const queryUser = params.get('asUser') || params.get('userId') || params.get('as')
-    if (queryUser) {
-      const id =
-        Number(queryUser) ||
-        (queryUser.toLowerCase() === 'teacher' || queryUser.toLowerCase() === 'teacher-pro'
-          ? 2
-          : queryUser.toLowerCase() === 'teacher-free'
-          ? 8
-          : queryUser.toLowerCase() === 'student'
-          ? 3
-          : 1)
-      sessionStorage.setItem('se_test_user_id', String(id))
-      try {
-        localStorage.setItem('se_admin_token', `mock-jwt-token-${id}`)
-        localStorage.setItem('se_admin_refresh_token', `mock-refresh-token-${id}`)
-      } catch {}
-      return TEST_USERS[id] || null
-    }
-    const savedId = sessionStorage.getItem('se_test_user_id')
-    if (savedId && TEST_USERS[savedId]) {
-      try {
-        if (!localStorage.getItem('se_admin_token')) {
-          localStorage.setItem('se_admin_token', `mock-jwt-token-${savedId}`)
-        }
-      } catch {}
-      return TEST_USERS[savedId]
-    }
-  } catch {
-    // ignore storage errors
-  }
-  return null
-}
-
 const getStoredUser = () => {
   if (typeof window === 'undefined') return null
   try {
@@ -95,11 +16,23 @@ const getStoredUser = () => {
   }
 }
 
+const hasStoredToken = () => {
+  if (typeof window === 'undefined') return false
+  try {
+    return Boolean(localStorage.getItem(TOKEN_KEY))
+  } catch {
+    return false
+  }
+}
+
 const initialSavedUser = getStoredUser()
+const hasToken = hasStoredToken()
 
 export const useAuthStore = create((set) => ({
   user: initialSavedUser,
-  initialized: Boolean(initialSavedUser && (typeof window !== 'undefined' && localStorage.getItem('se_admin_token'))),
+  // Nếu không có token, chắc chắn chưa đăng nhập -> initialized: true, user: null
+  // Nếu có token, giữ initialized: false để useInitAuth xác thực với /users/me trước khi hiển thị dashboard
+  initialized: !hasToken,
 
   setSession: ({ user, accessToken, refreshToken }) => {
     setTokens({ accessToken, refreshToken })
@@ -118,17 +51,20 @@ export const useAuthStore = create((set) => ({
   clearSession: () => {
     clearTokens()
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('se_test_user_id')
       localStorage.removeItem('se_admin_user')
+      sessionStorage.removeItem('se_test_user_id')
     }
     set({ user: null, initialized: true })
   },
 }))
 
-// Refresh token cũng hết hạn giữa lúc dùng app → api.js phát sự kiện này,
-// authStore tự xoá phiên để ProtectedRoute đưa người dùng về /dang-nhap.
-if (typeof window !== 'undefined') {
-  window.addEventListener('se-admin:unauthorized', () => {
-    useAuthStore.getState().clearSession()
-  })
+export const initAuthEventListener = () => {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('se-admin:unauthorized', () => {
+      useAuthStore.getState().clearSession()
+    })
+  }
 }
+
+initAuthEventListener()
+

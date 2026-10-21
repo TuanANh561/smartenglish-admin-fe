@@ -1,9 +1,12 @@
 import { useRef } from 'react'
-import { Save, Upload } from 'lucide-react'
+import { Save, Upload, RotateCcw, CheckCircle2, Image as ImageIcon } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Avatar from '@/components/ui/Avatar'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080'
 
 export default function ProfileInfoTab({
   currentUser,
@@ -17,9 +20,14 @@ export default function ProfileInfoTab({
 }) {
   const manualFileInputRef = useRef(null)
 
+  const displayAvatarUrl = formData.avatarUrl || ''
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave(formData)
+    onSave({
+      ...formData,
+      avatarUrl: formData.avatarUrl || '',
+    })
   }
 
   return (
@@ -162,18 +170,51 @@ export default function ProfileInfoTab({
           </div>
         </div>
 
-        {/* Link ảnh đại diện URL thủ công */}
+        {/* Đường dẫn ảnh đại diện chuẩn xác */}
         <div className="pt-2 border-t border-line">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-            Đường dẫn ảnh đại diện (Avatar URL)
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              value={formData.avatarUrl}
-              onChange={(e) => setFormData((prev) => ({ ...prev, avatarUrl: e.target.value }))}
-              placeholder="https://example.com/avatar.jpg..."
-              className="font-mono text-xs flex-1"
-            />
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
+              Đường dẫn ảnh đại diện (Avatar URL)
+            </label>
+            {formData.avatarUrl && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                <CheckCircle2 size={12} />
+                Đường dẫn tệp ảnh hợp lệ
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {/* Thumbnail ảnh đại diện thu nhỏ */}
+            <div className="shrink-0">
+              <Avatar
+                src={formData.avatarUrl}
+                name={formData.displayName}
+                className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-200 shadow-2xs"
+              />
+            </div>
+
+            {/* Input URL chính xác đến nơi lưu ảnh */}
+            <div className="relative flex-1">
+              <Input
+                value={displayAvatarUrl}
+                onChange={(e) => setFormData((prev) => ({ ...prev, avatarUrl: e.target.value }))}
+                placeholder="https://... hoặc /uploads/avatars/..."
+                className="font-mono text-xs pr-8"
+              />
+              {formData.avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, avatarUrl: '' }))}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-0.5 rounded cursor-pointer"
+                  title="Xóa đường dẫn ảnh để dùng avatar mặc định"
+                >
+                  <RotateCcw size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Nút bấm chọn ảnh từ máy */}
             <Button
               type="button"
               variant="secondary"
@@ -181,6 +222,7 @@ export default function ProfileInfoTab({
               icon={Upload}
               onClick={() => manualFileInputRef.current?.click()}
               loading={isUploadingAvatar}
+              className="shrink-0 whitespace-nowrap"
             >
               Chọn ảnh từ máy
             </Button>
@@ -196,8 +238,9 @@ export default function ProfileInfoTab({
               className="hidden"
             />
           </div>
-          <p className="text-[11px] text-ink-muted mt-1">
-            Bạn có thể chọn ảnh trực tiếp từ máy tính hoặc dán đường dẫn hình ảnh có sẵn trên internet.
+
+          <p className="text-[11px] text-ink-muted mt-1.5">
+            Đường dẫn tệp ảnh lưu trữ trực tiếp trên máy chủ (/uploads/avatars) hoặc đường dẫn hình ảnh có sẵn trên internet.
           </p>
         </div>
 

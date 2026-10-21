@@ -20,9 +20,9 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 const TOKEN_KEY = 'se_admin_token'
 const REFRESH_TOKEN_KEY = 'se_admin_refresh_token'
 
-// localStorage không tồn tại khi chạy test dưới Node — bọc lại để không vỡ.
-const storage = typeof window !== 'undefined' ? window.localStorage : null
-const getStoredToken = (key) => storage?.getItem(key) ?? null
+// localStorage được truy cập động để hỗ trợ môi trường trình duyệt và test runner
+const getStorage = () => (typeof window !== 'undefined' ? window.localStorage : null)
+const getStoredToken = (key) => getStorage()?.getItem(key) ?? null
 
 const rawBaseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080'
 const safeBaseURL = rawBaseURL.replace('localhost', '127.0.0.1')
@@ -92,13 +92,15 @@ function buildPath(template, path = {}) {
 }
 
 function setTokens({ accessToken, refreshToken } = {}) {
-  if (accessToken) storage?.setItem(TOKEN_KEY, accessToken)
-  if (refreshToken) storage?.setItem(REFRESH_TOKEN_KEY, refreshToken)
+  const s = getStorage()
+  if (accessToken) s?.setItem(TOKEN_KEY, accessToken)
+  if (refreshToken) s?.setItem(REFRESH_TOKEN_KEY, refreshToken)
 }
 
 function clearTokens() {
-  storage?.removeItem(TOKEN_KEY)
-  storage?.removeItem(REFRESH_TOKEN_KEY)
+  const s = getStorage()
+  s?.removeItem(TOKEN_KEY)
+  s?.removeItem(REFRESH_TOKEN_KEY)
 }
 
 // Endpoint xác thực tự thân — không được thử refresh khi chính chúng báo 401,

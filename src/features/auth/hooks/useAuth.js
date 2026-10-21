@@ -1,16 +1,22 @@
 import { useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { useAuthStore, TEST_USERS, getInitialUser } from '@/store/authStore'
+import { useAuthStore } from '@/store/authStore'
 import { TOKEN_KEY } from '@/lib/api'
 import * as authApi from '../api'
 
 export function useLogin() {
   const setSession = useAuthStore((state) => state.setSession)
+  const clearSession = useAuthStore((state) => state.clearSession)
 
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
+      const role = String(data?.user?.role || '').trim().toLowerCase()
+      if (role === 'student') {
+        clearSession()
+        throw new Error('Tài khoản học viên không thể truy cập trang quản trị.')
+      }
       setSession(data)
       toast.success('Đăng nhập thành công')
     },
@@ -36,7 +42,6 @@ export function useLogout() {
  * báo 401 và lib/api.js tự thử làm mới bằng refresh token trước khi thất bại hẳn.
  */
 export function useInitAuth() {
-  const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
   const setInitialized = useAuthStore((state) => state.setInitialized)
   const clearSession = useAuthStore((state) => state.clearSession)
@@ -47,11 +52,6 @@ export function useInitAuth() {
       clearSession()
       setInitialized(true)
       return
-    }
-
-    // Nếu đã có user hợp lệ từ localStorage, kích hoạt hiển thị app ngay lập tức
-    if (user) {
-      setInitialized(true)
     }
 
     authApi

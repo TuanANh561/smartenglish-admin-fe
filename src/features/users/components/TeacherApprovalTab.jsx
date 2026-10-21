@@ -197,17 +197,17 @@ export default function TeacherApprovalTab({
       </div>
 
       {/* 3. Bảng danh sách hồ sơ */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-          <table className="w-full text-left text-xs">
+      <div className="w-full rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <table className="w-full text-left text-xs table-fixed">
             <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase text-[11px]">
               <tr>
-                <th className="p-3">Giáo viên ứng tuyển</th>
-                <th className="p-3">Học vấn & Bằng cấp</th>
-                <th className="p-3">Chứng chỉ Tiếng Anh</th>
-                <th className="p-3">Kinh nghiệm & Chuyên môn</th>
-                <th className="p-3 text-center">Tệp minh chứng</th>
-                <th className="p-3 text-center">Trạng thái</th>
-                <th className="p-3 text-right">Thao tác</th>
+                <th className="p-3 w-[22%] whitespace-nowrap">Giáo viên ứng tuyển</th>
+                <th className="p-3 w-[16%] whitespace-nowrap">Học vấn & Bằng cấp</th>
+                <th className="p-3 w-[14%] whitespace-nowrap">Chứng chỉ Tiếng Anh</th>
+                <th className="p-3 w-[20%] whitespace-nowrap">Kinh nghiệm & Chuyên môn</th>
+                <th className="p-3 text-center w-[10%] whitespace-nowrap">Tệp minh chứng</th>
+                <th className="p-3 text-center w-[9%] whitespace-nowrap">Trạng thái</th>
+                <th className="p-3 text-right w-[9%] whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">

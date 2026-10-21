@@ -30,17 +30,20 @@ export default function GrammarTableRow({
       className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
     >
       {/* Tên bài học */}
-      <td className="px-6 py-4.5">
-        <div className="flex items-center gap-3">
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${isTrash ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand-600'}`}>
-            <BookOpen size={18} strokeWidth={1.75} />
+      <td className="px-3.5 py-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${isTrash ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand-600'}`}>
+            <BookOpen size={16} strokeWidth={1.75} />
           </div>
-          <div className="min-w-0">
-            <span className="font-bold text-slate-900 text-sm tracking-tight block group-hover:text-brand-600 transition-colors">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <span
+              className="font-bold text-slate-900 text-sm tracking-tight truncate block group-hover:text-brand-600 transition-colors"
+              title={item.title}
+            >
               {item.title}
             </span>
             {item.formula && (
-              <span className="font-mono text-xs text-slate-500 line-clamp-1 mt-0.5">
+              <span className="font-mono text-xs text-slate-500 truncate block mt-0.5" title={item.formula}>
                 {item.formula}
               </span>
             )}
@@ -49,12 +52,12 @@ export default function GrammarTableRow({
       </td>
 
       {/* Chủ điểm */}
-      <td className="px-4 py-4.5 text-sm font-medium text-slate-700 whitespace-nowrap">
+      <td className="px-3 py-3 text-sm font-medium text-slate-700 truncate" title={item.topic || ''}>
         {item.topic}
       </td>
 
       {/* Cấp độ */}
-      <td className="px-4 py-4.5 text-center whitespace-nowrap">
+      <td className="px-2 py-3 text-center whitespace-nowrap">
         <span
           className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold shadow-2xs"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
@@ -64,14 +67,14 @@ export default function GrammarTableRow({
       </td>
 
       {/* Số bài tập */}
-      <td className="px-4 py-4.5 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
+      <td className="px-3 py-3 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
         {item.exerciseCount || item.sampleExercises?.length || 0} bài
       </td>
 
       {/* Trạng thái */}
-      <td className="px-4 py-4.5 whitespace-nowrap">
+      <td className="px-3 py-3 whitespace-nowrap">
         {isTrash ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Trong thùng rác
           </span>
@@ -79,7 +82,7 @@ export default function GrammarTableRow({
           <button
             type="button"
             onClick={(e) => onTogglePublish(e, item)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
             style={{
               backgroundColor: isPublished ? '#ecfdf5' : '#f1f5f9',
               color: isPublished ? '#059669' : '#475569',
@@ -96,12 +99,12 @@ export default function GrammarTableRow({
       </td>
 
       {/* Cập nhật */}
-      <td className="px-4 py-4.5 text-sm text-slate-500 whitespace-nowrap">
+      <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">
         {formatRelativeTime(item.deletedAt || item.updatedAt)}
       </td>
 
       {/* Thao tác */}
-      <td className="px-6 py-4.5 whitespace-nowrap">
+      <td className="px-4 py-3 whitespace-nowrap text-right">
         <div
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}

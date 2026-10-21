@@ -51,28 +51,28 @@ export default function ExamTableRow({
       className={`group transition-colors hover:bg-slate-50/60 ${!isTrash ? 'cursor-pointer' : ''}`}
     >
       {/* Tên đề thi & mô tả */}
-      <td className="px-5 py-3.5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-            <Award size={18} strokeWidth={1.75} />
+      <td className="px-4 py-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+            <Award size={16} strokeWidth={1.75} />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className="font-semibold text-slate-900 text-sm truncate group-hover:text-brand-600 transition-colors" title={item.title}>
                 {item.title}
               </p>
               {canManage ? (
-                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-xs font-semibold text-amber-700 shrink-0">
+                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.2 text-[10px] font-semibold text-amber-700 shrink-0">
                   Của bạn
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-600 shrink-0">
+                <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 shrink-0">
                   Hệ thống
                 </span>
               )}
             </div>
             {item.description && (
-              <p className="text-xs text-slate-400 truncate mt-0.5 max-w-md">
+              <p className="text-xs text-slate-400 truncate mt-0.5" title={item.description}>
                 {item.description}
               </p>
             )}
@@ -81,14 +81,14 @@ export default function ExamTableRow({
       </td>
 
       {/* Thể loại */}
-      <td className="px-3 py-3.5">
-        <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${categoryCfg.bg}`}>
+      <td className="px-3 py-3 whitespace-nowrap">
+        <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold truncate max-w-full ${categoryCfg.bg}`}>
           {categoryCfg.label}
         </span>
       </td>
 
       {/* Cấp độ */}
-      <td className="px-3 py-3.5 text-center">
+      <td className="px-2 py-3 text-center whitespace-nowrap">
         <span
           className="inline-flex items-center justify-center rounded-lg px-2.5 py-0.5 text-xs font-bold"
           style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
@@ -98,12 +98,12 @@ export default function ExamTableRow({
       </td>
 
       {/* Trạng thái */}
-      <td className="px-3 py-3.5 text-center">
+      <td className="px-3 py-3 text-center whitespace-nowrap">
         {!isTrash ? (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); canManage && onTogglePublish(item) }}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${statusBadge.bg} ${statusBadge.text} ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${statusBadge.bg} ${statusBadge.text} ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             title={canManage ? 'Nhấn để đổi trạng thái' : undefined}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusBadge.dot}`} />
@@ -115,22 +115,22 @@ export default function ExamTableRow({
       </td>
 
       {/* Thời lượng */}
-      <td className="px-3 py-3.5 text-center text-sm text-slate-700 font-medium">
+      <td className="px-3 py-3 text-center text-sm text-slate-700 font-medium whitespace-nowrap">
         {item.durationMinutes} phút
       </td>
 
       {/* Số câu hỏi */}
-      <td className="px-3 py-3.5 text-center font-semibold text-slate-700 text-sm">
+      <td className="px-2 py-3 text-center font-semibold text-slate-700 text-sm whitespace-nowrap">
         {item.totalQuestions ?? item.questions?.length ?? 0} câu
       </td>
 
       {/* Ngày tạo */}
-      <td className="px-3 py-3.5 text-sm text-slate-500">
+      <td className="px-3 py-3 text-center text-xs text-slate-500 whitespace-nowrap">
         {formatDate(item.createdAt)}
       </td>
 
       {/* Thao tác */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-3 whitespace-nowrap text-right">
         <div
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}

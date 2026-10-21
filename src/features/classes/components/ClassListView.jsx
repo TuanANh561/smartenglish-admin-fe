@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, Pencil, Plus, Search, Trash2, BookOpen, Crown, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
 import Pagination from '@/components/ui/Pagination'
-import { CLASS_STATUS, LEVEL_COLOR } from '../classConstants'
+import { CLASS_STATUS, LEVEL_COLOR, formatTeacherName } from '../classConstants'
+import { http } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { createClass, deleteClass, getTeacherClasses, updateClass, getTeacherQuotaStatus } from '../classApi'
 import ClassFormModal from './ClassFormModal'
@@ -21,12 +22,46 @@ export default function ClassListView({ onViewClass }) {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [classes, setClasses] = useState([])
+  const [userMap, setUserMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const userRole = (user?.role || '').toLowerCase()
   const isAdmin = userRole === 'admin' || userRole === 'role_admin'
+
+  // Tải danh bạ người dùng để hiển thị chính xác tên giảng viên
+  useEffect(() => {
+    let isMounted = true
+    const fetchUsers = async () => {
+      try {
+        const res = await http.get('/admin/users?size=100')
+        const items =
+          res?.items ||
+          res?.data?.items ||
+          res?.data?.data?.items ||
+          res?.content ||
+          res?.data?.content ||
+          (Array.isArray(res?.data) ? res?.data : Array.isArray(res) ? res : [])
+        if (isMounted && Array.isArray(items)) {
+          const map = {}
+          items.forEach((u) => {
+            const name = u.displayName || u.fullName || u.username || u.email
+            if (u.id && name) {
+              map[u.id] = name
+            }
+          })
+          setUserMap(map)
+        }
+      } catch (err) {
+        console.warn('Không thể tải danh sách người dùng để hiển thị tên giảng viên:', err)
+      }
+    }
+    fetchUsers()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // Quota states
   const [quota, setQuota] = useState(null)
@@ -42,9 +77,8 @@ export default function ClassListView({ onViewClass }) {
       setQuota(null)
       return
     }
-    const teacherId = user?.id || 2
     try {
-      const res = await getTeacherQuotaStatus(teacherId)
+      const res = await getTeacherQuotaStatus()
       if (res) {
         setQuota(res)
       }
@@ -56,10 +90,8 @@ export default function ClassListView({ onViewClass }) {
   const loadClasses = async () => {
     setLoading(true)
     try {
-      // Nếu là giáo viên, chỉ lấy lớp của họ. Admin thì lấy tất cả lớp học trong hệ thống.
-      const teacherId = !isAdmin ? (user?.id || 2) : undefined
+      // Nếu là giáo viên, backend tự lọc theo JWT. Admin thì lấy tất cả lớp học trong hệ thống.
       const data = await getTeacherClasses({
-        teacherId,
         status: statusFilter || undefined,
         search: search.trim() || undefined,
       })
@@ -121,11 +153,7 @@ export default function ClassListView({ onViewClass }) {
       if (editingClass) {
         await updateClass(editingClass.id, payload)
       } else {
-        const teacherId = user?.id || 2
-        await createClass({
-          ...payload,
-          teacherId,
-        })
+        await createClass(payload)
       }
       setIsModalOpen(false)
       await loadClasses()
@@ -146,7 +174,8 @@ export default function ClassListView({ onViewClass }) {
     const q = search.toLowerCase()
     const name = (c.name || '').toLowerCase()
     const code = (c.code || c.joinCode || '').toLowerCase()
-    return name.includes(q) || code.includes(q)
+    const teacher = (formatTeacherName(c.teacherName, c.teacherId, userMap) || '').toLowerCase()
+    return name.includes(q) || code.includes(q) || teacher.includes(q)
   })
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
@@ -301,20 +330,20 @@ export default function ClassListView({ onViewClass }) {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-6 py-3.5">TÊN LỚP</th>
+                <th className={`px-3 py-3 ${isAdmin ? 'w-[21%]' : 'w-[28%]'} whitespace-nowrap`}>TÊN LỚP</th>
                 {isAdmin && (
-                  <th className="px-6 py-3.5">LỚP CỦA</th>
+                  <th className="px-2.5 py-3 w-[13%] whitespace-nowrap">GIẢNG VIÊN</th>
                 )}
-                <th className="px-6 py-3.5">GIÁO TRÌNH</th>
-                <th className="px-6 py-3.5">MÃ THAM GIA</th>
-                <th className="px-6 py-3.5 text-center">SỐ HỌC VIÊN</th>
-                <th className="px-6 py-3.5 text-center">SỐ BÀI TẬP</th>
-                <th className="px-6 py-3.5">TRẠNG THÁI</th>
-                <th className="px-6 py-3.5 text-right">THAO TÁC</th>
+                <th className={`px-2.5 py-3 ${isAdmin ? 'w-[16%]' : 'w-[18%]'} whitespace-nowrap`}>GIÁO TRÌNH</th>
+                <th className={`px-2 py-3 ${isAdmin ? 'w-[9%]' : 'w-[10%]'} whitespace-nowrap`}>MÃ LỚP</th>
+                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[8%]' : 'w-[10%]'} whitespace-nowrap`}>HỌC VIÊN</th>
+                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[7%]' : 'w-[8%]'} whitespace-nowrap`}>BÀI TẬP</th>
+                <th className="px-2 py-3 w-[14%] whitespace-nowrap">TRẠNG THÁI</th>
+                <th className="px-3 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -344,20 +373,20 @@ export default function ClassListView({ onViewClass }) {
                       className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
                     >
                       {/* Tên lớp */}
-                      <td className="px-6 py-4.5">
-                        <div className="flex items-center gap-3">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2 min-w-0">
                           <span
                             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold shadow-2xs"
                             style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
                           >
                             {levelKey}
                           </span>
-                          <div>
-                            <span className="font-bold text-slate-900 text-sm tracking-tight block">
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-slate-900 text-sm tracking-tight truncate block" title={cls.name}>
                               {cls.name}
                             </span>
                             {cls.description && (
-                              <span className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                              <span className="text-xs text-slate-400 truncate block mt-0.5" title={cls.description}>
                                 {cls.description}
                               </span>
                             )}
@@ -365,41 +394,44 @@ export default function ClassListView({ onViewClass }) {
                         </div>
                       </td>
 
-                      {/* Lớp của (chỉ admin) */}
+                      {/* Giảng viên (chỉ admin) */}
                       {isAdmin && (
-                        <td className="px-6 py-4.5">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800">
-                              {cls.teacherName || '—'}
+                        <td className="px-2.5 py-3">
+                          <div className="flex flex-col min-w-0">
+                            <span
+                              className="text-sm font-semibold text-slate-800 truncate"
+                              title={formatTeacherName(cls.teacherName, cls.teacherId, userMap)}
+                            >
+                              {formatTeacherName(cls.teacherName, cls.teacherId, userMap)}
                             </span>
                             {cls.teacherId && (
-                              <span className="text-xs text-slate-400 mt-0.5">ID: {cls.teacherId}</span>
+                              <span className="text-xs text-slate-400 mt-0.5 whitespace-nowrap">ID: {cls.teacherId}</span>
                             )}
                           </div>
                         </td>
                       )}
 
                       {/* Giáo trình khóa học */}
-                      <td className="px-6 py-4.5">
+                      <td className="px-2.5 py-3">
                         {cls.courseTitle || cls.courseId ? (
-                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2.5 py-1 text-sm font-medium text-brand-700 max-w-[200px]">
+                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2 py-1 text-xs font-medium text-brand-700 max-w-full min-w-0">
                             <BookOpen size={13} className="shrink-0 text-brand-600" />
-                            <span className="truncate" title={cls.courseTitle}>
+                            <span className="truncate" title={cls.courseTitle || `Khóa #${cls.courseId}`}>
                               {cls.courseTitle || `Khóa #${cls.courseId}`}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-slate-400 italic">Lớp tự do</span>
+                          <span className="text-xs text-slate-400 italic whitespace-nowrap">Lớp tự do</span>
                         )}
                       </td>
 
                       {/* Mã lớp */}
-                      <td className="px-6 py-4.5 font-mono text-sm font-semibold text-brand-600">
+                      <td className="px-2 py-3 font-mono text-xs font-semibold text-brand-600 whitespace-nowrap">
                         {cls.joinCode || cls.code || 'CHƯA CÓ'}
                       </td>
 
                       {/* Số học viên */}
-                      <td className="px-6 py-4.5 text-center font-bold text-slate-800 text-sm">
+                      <td className="px-2 py-3 text-center font-bold text-slate-800 text-sm whitespace-nowrap">
                         {cls.studentCount ?? 0}
                         {cls.maxStudents && (
                           <span className="text-slate-400 text-xs font-normal">
@@ -409,14 +441,14 @@ export default function ClassListView({ onViewClass }) {
                       </td>
 
                       {/* Số bài tập */}
-                      <td className="px-6 py-4.5 text-center text-sm font-medium text-slate-600">
+                      <td className="px-2 py-3 text-center text-sm font-medium text-slate-600 whitespace-nowrap">
                         {cls.assignmentCount ?? 0}
                       </td>
 
                       {/* Trạng thái */}
-                      <td className="px-6 py-4.5">
+                      <td className="px-2 py-3 whitespace-nowrap">
                         <span
-                          className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap shrink-0"
                           style={{
                             backgroundColor:
                               statusKey === 'active'
@@ -433,42 +465,42 @@ export default function ClassListView({ onViewClass }) {
                           }}
                         >
                           <span
-                            className="h-2 w-2 rounded-full"
+                            className="h-1.5 w-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: statusMeta.dot }}
                           />
-                          <span>{statusMeta.label}</span>
+                          <span className="whitespace-nowrap">{statusMeta.label}</span>
                         </span>
                       </td>
 
                       {/* Thao tác */}
-                      <td className="px-6 py-4.5">
-                        <div className="flex items-center justify-end gap-1 text-slate-400">
+                      <td className="px-3 py-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5 text-slate-400">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
                               onViewClass(cls)
                             }}
-                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+                            className="rounded-lg p-1.5 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer shrink-0"
                             title="Xem chi tiết"
                           >
-                            <Eye size={17} />
+                            <Eye size={16} />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleOpenEdit(cls, e)}
-                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                            className="rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
                             title="Chỉnh sửa"
                           >
-                            <Pencil size={17} />
+                            <Pencil size={16} />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => handleDeleteClass(cls, e)}
-                            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer shrink-0"
                             title="Xóa"
                           >
-                            <Trash2 size={17} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>

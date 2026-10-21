@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { http } from '@/lib/api'
 import {
   getAIContentRecords,
   saveGeminiContent,
@@ -7,8 +8,13 @@ import {
 } from './aiContentService'
 
 describe('ai content soft delete', () => {
-  it('xóa mềm nội dung và ẩn khỏi danh sách đang hoạt động', () => {
-    const created = saveGeminiContent({
+  beforeEach(() => {
+    vi.spyOn(http, 'post').mockRejectedValue(new Error('offline test fallback'))
+    vi.spyOn(http, 'put').mockRejectedValue(new Error('offline test fallback'))
+    vi.spyOn(http, 'delete').mockRejectedValue(new Error('offline test fallback'))
+  })
+  it('xóa mềm nội dung và ẩn khỏi danh sách đang hoạt động', async () => {
+    const created = await saveGeminiContent({
       type: 'reading',
       title: 'Bài đọc test soft delete',
       content: 'Nội dung mẫu để kiểm tra xóa mềm.',
@@ -17,7 +23,7 @@ describe('ai content soft delete', () => {
       createdBy: 'Admin',
     })
 
-    const deleted = softDeleteAIContent(created.id, { displayName: 'Admin' })
+    const deleted = await softDeleteAIContent(created.id, { displayName: 'Admin' })
     expect(deleted.status).toBe('DELETED')
     expect(deleted.deletedAt).toBeTruthy()
 
@@ -27,8 +33,8 @@ describe('ai content soft delete', () => {
     expect(target.deletedBy).toBe('Admin')
   })
 
-  it('khôi phục nội dung từ thùng rác về trạng thái chờ duyệt', () => {
-    const created = saveGeminiContent({
+  it('khôi phục nội dung từ thùng rác về trạng thái chờ duyệt', async () => {
+    const created = await saveGeminiContent({
       type: 'quiz',
       title: 'Bài kiểm tra restore',
       content: 'Nội dung cần khôi phục',
@@ -37,8 +43,8 @@ describe('ai content soft delete', () => {
       createdBy: 'Admin',
     })
 
-    softDeleteAIContent(created.id, { displayName: 'Admin' })
-    const restored = restoreAIContent(created.id)
+    await softDeleteAIContent(created.id, { displayName: 'Admin' })
+    const restored = await restoreAIContent(created.id)
 
     expect(restored.status).toBe('PENDING_REVIEW')
     expect(restored.deletedAt).toBeNull()

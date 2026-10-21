@@ -11,6 +11,7 @@ import {
   Search,
   Filter,
   RefreshCw,
+  RotateCcw,
   Layers,
   BookOpen,
   Loader2,
@@ -46,9 +47,12 @@ import {
 import {
   PRONUNCIATION_CATEGORIES,
   getPronunciationLessons,
+  getPronunciationTrashCount,
   createPronunciationLesson,
   updatePronunciationLesson,
   deletePronunciationLesson,
+  restorePronunciationLesson,
+  permanentDeletePronunciationLesson,
   togglePublishPronunciationLesson,
 } from './pronunciationLessonApi'
 
@@ -111,11 +115,26 @@ export default function PronunciationPage() {
   const [selectedLevel, setSelectedLevel] = useState('Tất cả')
   const [selectedStatus, setSelectedStatus] = useState('all')
 
+  const [trashView, setTrashView] = useState(false)
+  const [trashCount, setTrashCount] = useState(0)
+
   const [activeLesson, setActiveLesson] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [restoreTarget, setRestoreTarget] = useState(null)
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null)
   const [playingAudioId, setPlayingAudioId] = useState(null)
   const [isIpaModalOpen, setIsIpaModalOpen] = useState(false)
   const [editingIpa, setEditingIpa] = useState(null)
+
+  // ─── REFRESH TRASH COUNT ──────────────────────────────────────
+  const refreshTrashCount = async () => {
+    try {
+      const count = await getPronunciationTrashCount()
+      setTrashCount(Number(count) || 0)
+    } catch (err) {
+      console.error('Lỗi khi tải số lượng thùng rác phát âm:', err)
+    }
+  }
 
   // ─── LOAD SCENARIOS FROM BACKEND ──────────────────────────────
   const loadScenarios = async () => {
@@ -151,7 +170,7 @@ export default function PronunciationPage() {
   }
 
   // ─── LOAD IPA LESSONS FROM BACKEND ────────────────────────────
-  const loadIpaLessons = async () => {
+  const loadIpaLessons = async (targetTrash = trashView) => {
     setIsLoadingIpa(true)
     try {
       const res = await getPronunciationLessons({
@@ -161,6 +180,7 @@ export default function PronunciationPage() {
         category: selectedCategory,
         cefrLevel: selectedLevel,
         status: selectedStatus,
+        trash: targetTrash,
       })
       const data = res?.data !== undefined ? res.data : res
       if (data?.items) {
@@ -183,13 +203,22 @@ export default function PronunciationPage() {
     }
   }
 
+  const handleToggleTrash = (nextTrash) => {
+    setTrashView(nextTrash)
+    setIpaPage(1)
+    setSearch('')
+    loadIpaLessons(nextTrash)
+    refreshTrashCount()
+  }
+
   useEffect(() => {
     if (activeTab === 'scenarios') {
       loadScenarios()
     } else if (activeTab === 'ipa') {
-      loadIpaLessons()
+      loadIpaLessons(trashView)
+      refreshTrashCount()
     }
-  }, [activeTab, scenarioPage, scenarioLevel, scenarioCategory, ipaPage, selectedCategory, selectedLevel, selectedStatus])
+  }, [activeTab, scenarioPage, scenarioLevel, scenarioCategory, ipaPage, selectedCategory, selectedLevel, selectedStatus, trashView])
 
   // Handle Search Debounce for Scenarios
   useEffect(() => {
@@ -205,7 +234,7 @@ export default function PronunciationPage() {
     if (activeTab !== 'ipa') return
     const timer = setTimeout(() => {
       setIpaPage(1)
-      loadIpaLessons()
+      loadIpaLessons(trashView)
     }, 400)
     return () => clearTimeout(timer)
   }, [search])
@@ -241,18 +270,51 @@ export default function PronunciationPage() {
     }
   }
 
-  // ─── IPA: DELETE ───────────────────────────────────────────────
+  // ─── IPA: SOFT DELETE ──────────────────────────────────────────
   const handleConfirmDeleteIpa = async () => {
     if (!deleteTarget) return
     try {
       await deletePronunciationLesson(deleteTarget.id)
-      toast.success(`Đã xóa bài học "${deleteTarget.title}"`)
+      toast.success(`Đã chuyển bài phát âm "${deleteTarget.title}" vào thùng rác`)
       setDeleteTarget(null)
-      loadIpaLessons()
+      setTrashCount((prev) => prev + 1)
+      loadIpaLessons(trashView)
+      refreshTrashCount()
     } catch (err) {
       toast.error('Lỗi khi xóa bài phát âm: ' + err.message)
     }
   }
+
+  // ─── IPA: RESTORE ──────────────────────────────────────────────
+  const handleConfirmRestoreIpa = async () => {
+    if (!restoreTarget) return
+    try {
+      await restorePronunciationLesson(restoreTarget.id)
+      toast.success(`Đã khôi phục bài phát âm "${restoreTarget.title}"`)
+      setRestoreTarget(null)
+      setTrashCount((prev) => Math.max(0, prev - 1))
+      loadIpaLessons(trashView)
+      refreshTrashCount()
+    } catch (err) {
+      toast.error('Lỗi khi khôi phục bài phát âm: ' + err.message)
+    }
+  }
+
+  // ─── IPA: PERMANENT DELETE ─────────────────────────────────────
+  const handleConfirmPermanentDeleteIpa = async () => {
+    if (!permanentDeleteTarget) return
+    try {
+      await permanentDeletePronunciationLesson(permanentDeleteTarget.id)
+      toast.success(`Đã xóa vĩnh viễn bài phát âm "${permanentDeleteTarget.title}"`)
+      setPermanentDeleteTarget(null)
+      setTrashCount((prev) => Math.max(0, prev - 1))
+      loadIpaLessons(trashView)
+      refreshTrashCount()
+    } catch (err) {
+      toast.error('Lỗi khi xóa vĩnh viễn: ' + err.message)
+    }
+  }
+
 
   // ─── IPA: TOGGLE PUBLISH ────────────────────────────────────────
   const handleTogglePublish = async (item) => {
@@ -423,6 +485,25 @@ export default function PronunciationPage() {
       {/* ═════════════════════════════════════════════════════════════════ */}
       {activeTab === 'ipa' && (
         <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          {/* Banner thông báo thùng rác */}
+          {trashView && (
+            <div className="flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50/70 px-6 py-3 text-xs text-amber-800">
+              <div className="flex items-center gap-2">
+                <Trash2 size={15} className="text-amber-600 shrink-0" />
+                <span>
+                  Bạn đang xem các bài học phát âm trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleTrash(false)}
+                className="font-semibold text-brand-600 hover:text-brand-800 underline cursor-pointer shrink-0"
+              >
+                Quay lại danh sách chính
+              </button>
+            </div>
+          )}
+
           <PronunciationToolbar
             search={search}
             onSearchChange={(val) => {
@@ -444,7 +525,13 @@ export default function PronunciationPage() {
               setSelectedStatus(val)
               setIpaPage(1)
             }}
-            onRefresh={loadIpaLessons}
+            trashView={trashView}
+            onToggleTrash={handleToggleTrash}
+            trashCount={trashCount}
+            onRefresh={() => {
+              loadIpaLessons(trashView)
+              refreshTrashCount()
+            }}
             onOpenCreate={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
           />
 
@@ -452,33 +539,48 @@ export default function PronunciationPage() {
             <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
           ) : lessons.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                <BookOpen size={24} />
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Chưa có bài học phát âm nào</h3>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                {trashView ? 'Thùng rác rỗng' : 'Chưa có bài học phát âm nào'}
+              </h3>
               <p className="text-xs text-slate-500 max-w-md mb-4">
-                Hiện tại chưa có bài học nào trong cơ sở dữ liệu. Hãy bấm vào nút &quot;Thêm bài phát âm&quot; để tạo bài học đầu tiên.
+                {trashView
+                  ? 'Hiện không có bài học phát âm nào trong thùng rác.'
+                  : 'Hiện tại chưa có bài học nào trong cơ sở dữ liệu. Hãy bấm vào nút "Thêm bài phát âm" để tạo bài học đầu tiên.'}
               </p>
-              <Button
-                size="sm"
-                variant="primary"
-                icon={Plus}
-                onClick={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
-              >
-                Thêm bài phát âm ngay
-              </Button>
+              {trashView ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={RotateCcw}
+                  onClick={() => handleToggleTrash(false)}
+                >
+                  Quay lại danh sách phát âm
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={Plus}
+                  onClick={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
+                >
+                  Thêm bài phát âm ngay
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-700">
+            <div className="w-full">
+              <table className="w-full text-left text-sm text-slate-700 table-fixed">
                 <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-6">Bài học & Ký hiệu IPA</th>
-                    <th className="py-3.5 px-3 w-36">Phân loại</th>
-                    <th className="py-3.5 px-2 w-20 text-center">Trình độ</th>
-                    <th className="py-3.5 px-3 w-32">Trạng thái</th>
-                    <th className="py-3.5 px-3 w-32">Cập nhật</th>
-                    <th className="py-3.5 px-6 w-36 text-right">Thao tác</th>
+                    <th className="py-3 px-3.5 w-[38%] whitespace-nowrap">Bài học & Ký hiệu IPA</th>
+                    <th className="py-3 px-3 w-[16%] whitespace-nowrap">Phân loại</th>
+                    <th className="py-3 px-2 w-[10%] text-center whitespace-nowrap">Trình độ</th>
+                    <th className="py-3 px-3 w-[13%] whitespace-nowrap">Trạng thái</th>
+                    <th className="py-3 px-3 w-[12%] whitespace-nowrap">{trashView ? 'Thời gian xóa' : 'Cập nhật'}</th>
+                    <th className="py-3 px-4 w-[11%] text-right whitespace-nowrap">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -486,12 +588,15 @@ export default function PronunciationPage() {
                     <PronunciationTableRow
                       key={item.id}
                       item={item}
+                      isTrash={trashView}
                       isPlaying={playingAudioId === item.id}
                       onPlayAudio={handlePlayAudio}
                       onViewDetails={(it) => setActiveLesson(it)}
                       onEdit={(e, it) => navigate(`/app/hoc-lieu/phat-am/${it.id}/chinh-sua`)}
                       onDuplicate={handleDuplicateLesson}
                       onDelete={(e, it) => setDeleteTarget(it)}
+                      onRestore={(e, it) => setRestoreTarget(it)}
+                      onPermanentDelete={(e, it) => setPermanentDeleteTarget(it)}
                     />
                   ))}
                 </tbody>
@@ -504,7 +609,7 @@ export default function PronunciationPage() {
             <p className="text-xs text-slate-500">
               Hiển thị <strong>{ipaTotalCount === 0 ? 0 : (ipaPage - 1) * PAGE_SIZE + 1}</strong>-
               <strong>{Math.min(ipaPage * PAGE_SIZE, ipaTotalCount)}</strong> trong tổng số{' '}
-              <strong>{ipaTotalCount}</strong> bài học phát âm
+              <strong>{ipaTotalCount}</strong> {trashView ? 'bài học trong thùng rác' : 'bài học phát âm'}
             </p>
             <Pagination page={ipaPage} totalPages={ipaTotalPages} onChange={setIpaPage} />
           </div>
@@ -567,58 +672,59 @@ export default function PronunciationPage() {
                 ))}
               </select>
 
-              {/* Bộ chuyển đổi dạng Card và dạng Bảng */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/90">
+              {/* Bộ chuyển đổi dạng Card và dạng Bảng (Icon-only) */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/90 h-9">
                 <button
                   type="button"
                   onClick={() => setScenarioViewMode('card')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer ${
                     scenarioViewMode === 'card'
                       ? 'bg-white text-indigo-600 shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Xem dạng thẻ (Card)"
+                  aria-label="Xem dạng thẻ (Card)"
                 >
-                  <LayoutGrid size={14} />
-                  <span className="hidden sm:inline">Card</span>
+                  <LayoutGrid size={15} />
                 </button>
                 <button
                   type="button"
                   onClick={() => setScenarioViewMode('table')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer ${
                     scenarioViewMode === 'table'
                       ? 'bg-white text-indigo-600 shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Xem dạng bảng (Table)"
+                  aria-label="Xem dạng bảng (Table)"
                 >
-                  <List size={14} />
-                  <span className="hidden sm:inline">Bảng</span>
+                  <List size={15} />
                 </button>
               </div>
 
-              {/* Làm mới */}
+              {/* Làm mới (Icon-only) */}
               <button
                 type="button"
                 onClick={loadScenarios}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-2xs focus:outline-none cursor-pointer hover:border-slate-300"
                 title="Làm mới dữ liệu"
+                aria-label="Làm mới dữ liệu"
               >
-                <RefreshCw size={14} />
-                <span className="hidden sm:inline">Làm mới</span>
+                <RefreshCw size={15} />
               </button>
 
-              {/* Thêm kịch bản mới */}
+              {/* Thêm kịch bản mới (Icon-only) */}
               <button
                 type="button"
                 onClick={() => {
                   setEditingScenario(null)
                   setIsScenarioModalOpen(true)
                 }}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                title="Thêm kịch bản mới"
+                aria-label="Thêm kịch bản mới"
               >
-                <Plus size={15} />
-                <span>Thêm kịch bản mới</span>
+                <Plus size={18} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -667,16 +773,16 @@ export default function PronunciationPage() {
             </div>
           ) : (
             /* DẠNG 2: TABLE */
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-700">
+            <div className="w-full">
+              <table className="w-full text-left text-sm text-slate-700 table-fixed">
                 <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-6 w-20">Hình ảnh</th>
-                    <th className="py-3.5 px-3 w-24 text-center">Trình độ</th>
-                    <th className="py-3.5 px-6">Kịch bản & Tình huống</th>
-                    <th className="py-3.5 px-4 w-32">Phân loại</th>
-                    <th className="py-3.5 px-6 max-w-sm">Mô tả tóm tắt</th>
-                    <th className="py-3.5 px-6 w-36 text-right">Thao tác</th>
+                    <th className="py-3 px-3 w-[8%] text-center whitespace-nowrap">Hình ảnh</th>
+                    <th className="py-3 px-2 w-[10%] text-center whitespace-nowrap">Trình độ</th>
+                    <th className="py-3 px-3.5 w-[32%] whitespace-nowrap">Kịch bản & Tình huống</th>
+                    <th className="py-3 px-3 w-[14%] whitespace-nowrap">Phân loại</th>
+                    <th className="py-3 px-3.5 w-[24%] whitespace-nowrap">Mô tả tóm tắt</th>
+                    <th className="py-3 px-4 w-[12%] text-right whitespace-nowrap">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -686,37 +792,39 @@ export default function PronunciationPage() {
                       onClick={() => setSimulatingScenario(item)}
                       className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     >
-                      <td className="py-3.5 px-6">
+                      <td className="py-2.5 px-3 text-center">
                         <img
                           src={item.imageUrl || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&auto=format&fit=crop&q=80'}
                           alt={item.titleEn}
-                          className="h-10 w-14 object-cover rounded-lg border border-slate-200"
+                          className="h-9 w-12 object-cover rounded-lg border border-slate-200 mx-auto"
                         />
                       </td>
-                      <td className="py-3.5 px-3 text-center">
+                      <td className="py-2.5 px-2 text-center whitespace-nowrap">
                         <span className="inline-flex items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-300/60 px-2.5 py-0.5 text-xs font-bold">
                           {item.cefrLevel || 'A1'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-6 font-medium text-slate-900">
-                        <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      <td className="py-2.5 px-3.5 font-medium text-slate-900 overflow-hidden">
+                        <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate block w-full" title={item.titleEn}>
                           {item.titleEn}
                         </div>
                         {item.titleVi && (
-                          <div className="text-xs text-slate-400 font-normal">
+                          <div className="text-xs text-slate-400 font-normal truncate block w-full" title={item.titleVi}>
                             {item.titleVi}
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-block rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span className="inline-block rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 truncate max-w-full">
                           {item.category || 'Tổng hợp'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-6 text-slate-500 text-xs">
-                        <p className="line-clamp-2">{item.descriptionEn || item.descriptionVi || '—'}</p>
+                      <td className="py-2.5 px-3.5 text-slate-500 text-xs overflow-hidden">
+                        <p className="truncate block w-full" title={item.descriptionEn || item.descriptionVi || '—'}>
+                          {item.descriptionEn || item.descriptionVi || '—'}
+                        </p>
                       </td>
-                      <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
@@ -816,16 +924,39 @@ export default function PronunciationPage() {
         }}
       />
 
-      {/* Delete IPA Dialog */}
+      {/* Delete IPA Dialog (Soft Delete) */}
       <ConfirmDialog
         isOpen={Boolean(deleteTarget)}
-        title="Xác nhận xóa bài phát âm"
-        message={`Bạn có chắc chắn muốn xóa bài học "${deleteTarget?.title}" không? Hành động này không thể hoàn tác.`}
-        confirmText="Xóa bài học"
+        title="Chuyển bài phát âm vào thùng rác"
+        message={`Bạn có chắc chắn muốn chuyển bài phát âm "${deleteTarget?.title}" vào thùng rác? Bạn có thể khôi phục lại bất kỳ lúc nào.`}
+        confirmText="Chuyển vào thùng rác"
         confirmVariant="danger"
         onConfirm={handleConfirmDeleteIpa}
         onClose={() => setDeleteTarget(null)}
       />
+
+      {/* Restore IPA Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(restoreTarget)}
+        title="Khôi phục bài phát âm"
+        message={`Bạn có chắc chắn muốn khôi phục bài phát âm "${restoreTarget?.title}" về danh sách bài học đang hoạt động?`}
+        confirmText="Khôi phục bài học"
+        confirmVariant="primary"
+        onConfirm={handleConfirmRestoreIpa}
+        onClose={() => setRestoreTarget(null)}
+      />
+
+      {/* Permanent Delete IPA Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(permanentDeleteTarget)}
+        title="Xác nhận xóa vĩnh viễn"
+        message={`Bài phát âm "${permanentDeleteTarget?.title}" sẽ bị xóa hoàn toàn khỏi hệ thống và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?`}
+        confirmText="Xóa vĩnh viễn"
+        confirmVariant="danger"
+        onConfirm={handleConfirmPermanentDeleteIpa}
+        onClose={() => setPermanentDeleteTarget(null)}
+      />
     </div>
   )
 }
+

@@ -167,28 +167,28 @@ export default function IpaInputField({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {/* Label & Actions */}
-      <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-slate-600">
+      <div className="flex items-center justify-between gap-2">
+        <label className="block text-xs font-semibold text-slate-600 whitespace-nowrap shrink-0">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Quick IPA Trigger Button */}
           <button
             type="button"
             onClick={() => handleAiGenerate(true)}
             disabled={isLoading}
-            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-brand-700 px-2 py-0.5 text-[11px] font-semibold border border-brand-200 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-brand-700 px-2 py-0.5 text-[11px] font-semibold border border-brand-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
             title="Tự động tra cứu phiên âm chuẩn quốc tế và kiểm tra chính tả (0 token)"
           >
             {isLoading ? (
               <>
-                <Loader2 size={12} className="animate-spin text-brand-600" />
-                <span>Đang tra cứu...</span>
+                <Loader2 size={12} className="animate-spin text-brand-600 shrink-0" />
+                <span className="whitespace-nowrap">Đang tra cứu...</span>
               </>
             ) : (
               <>
-                <Sparkles size={12} className="text-brand-600" />
-                <span>Lấy IPA chuẩn</span>
+                <Sparkles size={12} className="text-brand-600 shrink-0" />
+                <span className="whitespace-nowrap">Lấy IPA chuẩn</span>
               </>
             )}
           </button>
@@ -197,15 +197,15 @@ export default function IpaInputField({
           <button
             type="button"
             onClick={() => setShowKeyboard((prev) => !prev)}
-            className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold border transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold border transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               showKeyboard
                 ? 'bg-brand-50 border-brand-300 text-brand-700'
                 : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
             }`}
             title="Mở bảng phím chọn ký tự IPA"
           >
-            <Keyboard size={12} />
-            <span>Ký tự</span>
+            <Keyboard size={12} className="shrink-0" />
+            <span className="whitespace-nowrap">Ký tự</span>
           </button>
         </div>
       </div>

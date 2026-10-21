@@ -9,14 +9,11 @@ import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 
 /**
- * Lấy danh sách lớp học của giáo viên (theo teacherId từ JWT)
+ * Lấy danh sách lớp học của giáo viên (theo JWT subject)
  */
-export async function getMyClasses({ page = 0, size = 20, teacherId } = {}) {
-  if (teacherId == null) {
-    throw new Error('Không xác định được giáo viên đang đăng nhập')
-  }
+export async function getMyClasses({ page = 0, size = 20 } = {}) {
   const res = await api.get(ENDPOINTS.teacher.classes, {
-    params: { page, size, teacherId },
+    params: { page, size },
   })
   // teacher-service trả về Page<ClassDTO> hoặc List<ClassDTO>
   const payload = res?.data ?? res
@@ -30,13 +27,11 @@ export async function getMyClasses({ page = 0, size = 20, teacherId } = {}) {
 }
 
 /**
- * Lấy quota/thống kê tổng hợp của giáo viên (từ payment-service qua teacher-service)
+ * Lấy quota/thống kê tổng hợp của giáo viên (từ payment-service qua teacher-service theo JWT)
  */
-export async function getMyQuota(teacherId) {
+export async function getMyQuota() {
   try {
-    const res = await api.get(ENDPOINTS.teacher.quota, {
-      params: { teacherId },
-    })
+    const res = await api.get(ENDPOINTS.teacher.quota)
     const payload = res?.data ?? res
     if (payload && typeof payload === 'object') {
       return payload.data ?? payload

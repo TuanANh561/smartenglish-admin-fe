@@ -6,14 +6,20 @@ import {
   Copy,
   GraduationCap,
   LayoutGrid,
+  Pencil,
+  Shield,
   Users,
 } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { useAuthStore } from '@/store/authStore'
+import { formatTeacherName } from '../classConstants'
 import {
   addMember,
   createAssignment,
   getClassAssignments,
   getClassMembers,
   removeMember,
+  updateClass,
 } from '../classApi'
 import AddStudentModal from './detail/AddStudentModal'
 import ClassAssignmentsTab from './detail/ClassAssignmentsTab'
@@ -21,6 +27,7 @@ import ClassGradebookTab from './detail/ClassGradebookTab'
 import ClassOverviewTab from './detail/ClassOverviewTab'
 import ClassStudentsTab from './detail/ClassStudentsTab'
 import CreateAssignmentModal from './detail/CreateAssignmentModal'
+import ClassFormModal from './ClassFormModal'
 
 const DETAIL_TABS = [
   { key: 'overview', label: 'Tổng quan', icon: LayoutGrid },
@@ -30,8 +37,16 @@ const DETAIL_TABS = [
 ]
 
 export default function ClassDetailView({ cls, onBack, onViewStudent }) {
+  const user = useAuthStore((s) => s.user)
+  const [currentCls, setCurrentCls] = useState(cls)
   const [activeTab, setActiveTab] = useState('overview')
   const [copied, setCopied] = useState(false)
+
+  const userRole = (user?.role || '').toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
+  const isTeacherOwner =
+    currentCls?.teacherId != null && user?.id != null && String(currentCls.teacherId) === String(user.id)
+  const canEditClass = isAdmin || isTeacherOwner
 
   // Data states
   const [members, setMembers] = useState([])
@@ -42,11 +57,16 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   // Modal states
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  useEffect(() => {
+    setCurrentCls(cls)
+  }, [cls])
 
   const loadMembers = async () => {
     setLoadingMembers(true)
     try {
-      const data = await getClassMembers(cls?.id)
+      const data = await getClassMembers(currentCls?.id)
       setMembers(Array.isArray(data) ? data : [])
     } catch (err) {
       console.warn('Lỗi khi tải danh sách học viên:', err)
@@ -59,7 +79,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   const loadAssignments = async () => {
     setLoadingAssignments(true)
     try {
-      const data = await getClassAssignments(cls?.id)
+      const data = await getClassAssignments(currentCls?.id)
       setAssignments(Array.isArray(data) ? data : [])
     } catch (err) {
       console.warn('Lỗi khi tải danh sách bài tập:', err)
@@ -71,27 +91,27 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
 
   // Fetch members and assignments
   useEffect(() => {
-    if (!cls?.id) return
+    if (!currentCls?.id) return
     loadMembers()
     loadAssignments()
-  }, [cls?.id])
+  }, [currentCls?.id])
 
   const handleCopyCode = () => {
-    if (!cls.joinCode) return
-    navigator.clipboard.writeText(cls.joinCode).catch(() => {})
+    if (!currentCls.joinCode) return
+    navigator.clipboard.writeText(currentCls.joinCode).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
   const handleAddMember = async (payload) => {
-    await addMember(cls.id, payload)
+    await addMember(currentCls.id, payload)
     await loadMembers()
   }
 
   const handleRemoveMember = async (userId, studentName) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa học viên "${studentName}" khỏi lớp?`)) {
       try {
-        await removeMember(cls.id, userId)
+        await removeMember(currentCls.id, userId)
         await loadMembers()
       } catch (err) {
         alert(err?.message || 'Không thể xóa học viên khỏi lớp')
@@ -100,8 +120,19 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   }
 
   const handleCreateAssignment = async (payload) => {
-    await createAssignment(cls.id, payload)
+    await createAssignment(currentCls.id, payload)
     await loadAssignments()
+  }
+
+  const handleUpdateClass = async (payload) => {
+    try {
+      const updated = await updateClass(currentCls.id, payload)
+      setCurrentCls(updated || { ...currentCls, ...payload })
+      setIsEditModalOpen(false)
+      toast.success('Cập nhật thông tin lớp học thành công!')
+    } catch (err) {
+      toast.error(err?.message || 'Không thể cập nhật lớp học')
+    }
   }
 
   return (
@@ -121,26 +152,48 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <span className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-600">
-              {cls.cefrTarget || cls.level || 'B1'}
+              {currentCls.cefrTarget || currentCls.level || 'B1'}
             </span>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="truncate text-lg font-bold text-slate-900 tracking-tight">{cls.name}</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="truncate text-lg font-bold text-slate-900 tracking-tight">{currentCls.name}</h2>
                 <span className="shrink-0 text-xs font-mono text-slate-400">
-                  #{cls.id}
+                  #{currentCls.id}
                 </span>
+                {isAdmin && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-[11px] font-bold text-purple-700 border border-purple-200">
+                    <Shield size={11} /> Chế độ Quản trị
+                  </span>
+                )}
+                {(currentCls.teacherName || currentCls.teacherId) && (
+                  <span className="hidden sm:inline text-xs text-slate-500 font-medium">
+                    (GV: {formatTeacherName(currentCls.teacherName, currentCls.teacherId)})
+                  </span>
+                )}
               </div>
-              {cls.description && (
-                <p className="truncate text-xs text-slate-500 max-w-xl">{cls.description}</p>
+              {currentCls.description && (
+                <p className="truncate text-xs text-slate-500 max-w-xl">{currentCls.description}</p>
               )}
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {canEditClass && (
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Chỉnh sửa thông tin lớp học"
+              >
+                <Pencil size={13} className="text-slate-500" />
+                <span>Chỉnh sửa lớp</span>
+              </button>
+            )}
+
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-500">Mã vào lớp:</span>
               <span className="font-mono text-xs font-bold text-slate-800 tracking-wider">
-                {cls.joinCode}
+                {currentCls.joinCode}
               </span>
               <button
                 type="button"
@@ -197,7 +250,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
         {/* Tab Body */}
         {activeTab === 'overview' && (
           <ClassOverviewTab
-            cls={cls}
+            cls={currentCls}
             members={members}
             assignments={assignments}
             copied={copied}
@@ -207,7 +260,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
 
         {activeTab === 'students' && (
           <ClassStudentsTab
-            cls={cls}
+            cls={currentCls}
             members={members}
             loading={loadingMembers}
             onViewStudent={onViewStudent}
@@ -218,7 +271,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
 
         {activeTab === 'assignments' && (
           <ClassAssignmentsTab
-            cls={cls}
+            cls={currentCls}
             assignments={assignments}
             loading={loadingAssignments}
             onCreateAssignmentClick={() => setIsCreateAssignmentOpen(true)}
@@ -226,7 +279,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
         )}
 
         {activeTab === 'gradebook' && (
-          <ClassGradebookTab cls={cls} members={members} assignments={assignments} />
+          <ClassGradebookTab cls={currentCls} members={members} assignments={assignments} />
         )}
       </div>
 
@@ -240,8 +293,16 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
       <CreateAssignmentModal
         isOpen={isCreateAssignmentOpen}
         onClose={() => setIsCreateAssignmentOpen(false)}
-        cls={cls}
+        cls={currentCls}
         onCreateAssignment={handleCreateAssignment}
+      />
+
+      <ClassFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialData={currentCls}
+        onSubmit={handleUpdateClass}
+        quota={null}
       />
     </div>
   )

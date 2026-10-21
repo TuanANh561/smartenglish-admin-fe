@@ -37,55 +37,71 @@ export default function SampleWordsSection({
         {sampleWords.map((sw, swIdx) => (
           <div
             key={swIdx}
-            className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 space-y-2 relative group"
+            className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3 relative group"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600">Từ mẫu {swIdx + 1}</span>
+            {/* Header hàng từ vựng */}
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/70">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-brand-100 text-brand-700 text-[11px] font-bold">
+                  {swIdx + 1}
+                </span>
+                Từ mẫu {swIdx + 1}
+              </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => onPlayAudio(swIdx, sw.word)}
-                  className="flex items-center gap-1 text-[11px] text-brand-600 font-semibold hover:underline cursor-pointer"
+                  className="flex items-center gap-1 text-xs text-brand-600 font-semibold hover:underline cursor-pointer px-2 py-0.5 rounded-md hover:bg-brand-50 transition-colors whitespace-nowrap"
                 >
-                  <Volume2 size={13} /> Nghe thử
+                  <Volume2 size={13} /> Nghe thử phát âm
                 </button>
                 {sampleWords.length > 1 && (
                   <button
                     type="button"
                     onClick={() => onRemoveWord(swIdx)}
-                    className="text-slate-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                    title="Xóa từ mẫu"
+                    className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50 cursor-pointer"
+                    title="Xóa từ mẫu này"
                   >
                     <Trash2 size={13} />
                   </button>
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 items-start">
+
+            {/* Hàng 1: Từ vựng tiếng Anh & Nghĩa tiếng Việt */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ mẫu</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                  Từ tiếng Anh <span className="text-red-500">*</span>
+                </label>
                 <Input
                   value={sw.word}
                   onChange={(e) => onUpdateWord(swIdx, 'word', e.target.value)}
-                  placeholder="Từ (VD: About)"
+                  placeholder="VD: Water, Butter, About..."
                 />
               </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600 whitespace-nowrap">
+                  Nghĩa tiếng Việt
+                </label>
+                <Input
+                  value={sw.meaning}
+                  onChange={(e) => onUpdateWord(swIdx, 'meaning', e.target.value)}
+                  placeholder="VD: Nước, Bơ, Về, khoảng..."
+                />
+              </div>
+            </div>
+
+            {/* Hàng 2: Phiên âm IPA chuẩn - Rộng rãi đầy đủ không gian */}
+            <div className="pt-0.5">
               <IpaInputField
                 value={sw.ipa}
                 onChange={(newVal) => onUpdateWord(swIdx, 'ipa', newVal)}
                 sourceWord={sw.word}
                 onWordCorrect={(corrected) => onUpdateWord(swIdx, 'word', corrected)}
-                label="Phiên âm IPA"
-                placeholder="VD: /əˈbaʊt/"
+                label="Phiên âm IPA chuẩn"
+                placeholder="VD: /ˈwɔː.tər/, /ˈbʌt.ər/, /əˈbaʊt/..."
               />
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Việt</label>
-                <Input
-                  value={sw.meaning}
-                  onChange={(e) => onUpdateWord(swIdx, 'meaning', e.target.value)}
-                  placeholder="Nghĩa (VD: Về, khoảng)"
-                />
-              </div>
             </div>
           </div>
         ))}

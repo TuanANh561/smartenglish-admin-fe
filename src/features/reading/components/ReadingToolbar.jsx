@@ -136,7 +136,20 @@ export default function ReadingToolbar({
           </button>
         )}
 
-        {/* Thùng rác (Icon-only) */}
+        {/* Thêm bài đọc (Icon-only) */}
+        {!trashView && (
+          <button
+            type="button"
+            onClick={onOpenCreate}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+            title="Thêm bài đọc mới"
+            aria-label="Thêm bài đọc mới"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+          </button>
+        )}
+
+        {/* Thùng rác (Icon-only, ở cuối row) */}
         <button
           type="button"
           onClick={() => onToggleTrash(!trashView)}
@@ -161,19 +174,6 @@ export default function ReadingToolbar({
             </>
           )}
         </button>
-
-        {/* Thêm bài đọc (Icon-only) */}
-        {!trashView && (
-          <button
-            type="button"
-            onClick={onOpenCreate}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-            title="Thêm bài đọc mới"
-            aria-label="Thêm bài đọc mới"
-          >
-            <Plus size={18} strokeWidth={2.5} />
-          </button>
-        )}
       </div>
     </div>
   )

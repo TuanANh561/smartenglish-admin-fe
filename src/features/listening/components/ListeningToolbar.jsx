@@ -154,7 +154,20 @@ export default function ListeningToolbar({
           </button>
         )}
 
-        {/* Nút Thùng rác (Icon-only) */}
+        {/* Nút Thêm bài nghe (Icon-only) */}
+        {!trashView && (
+          <button
+            type="button"
+            onClick={onOpenCreate}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+            title="Thêm bài nghe mới"
+            aria-label="Thêm bài nghe mới"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+          </button>
+        )}
+
+        {/* Nút Thùng rác (Icon-only, ở cuối row) */}
         <button
           type="button"
           onClick={() => {
@@ -183,19 +196,6 @@ export default function ListeningToolbar({
             </>
           )}
         </button>
-
-        {/* Nút Thêm bài nghe (Icon-only) */}
-        {!trashView && (
-          <button
-            type="button"
-            onClick={onOpenCreate}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-            title="Thêm bài nghe mới"
-            aria-label="Thêm bài nghe mới"
-          >
-            <Plus size={18} strokeWidth={2.5} />
-          </button>
-        )}
       </div>
     </div>
   )
