@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import {
   X,
@@ -98,6 +99,18 @@ export default function PostCommentModal({
     }
   }
 
+  const navigate = useNavigate()
+
+  const handleGoToProfile = (targetId) => {
+    if (!targetId) return
+    onClose?.()
+    if (String(targetId) === String(myUser?.id)) {
+      navigate('/app/ho-so')
+    } else {
+      navigate(`/app/ho-so/${targetId}`)
+    }
+  }
+
   const handleReplyClick = (comment) => {
     setReplyTarget(comment)
     setCommentText(`@${comment.authorName} `)
@@ -138,11 +151,17 @@ export default function PostCommentModal({
                 src={post.authorAvatar}
                 name={post.authorName}
                 size="md"
-                className="h-10 w-10 shrink-0"
+                onClick={() => handleGoToProfile(post.authorId)}
+                className="h-10 w-10 shrink-0 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-brand-400 transition-all"
+                title={`Xem hồ sơ của ${post.authorName}`}
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-slate-900 truncate">
+                  <span
+                    onClick={() => handleGoToProfile(post.authorId)}
+                    className="font-bold text-sm text-slate-900 truncate cursor-pointer hover:text-brand-600 hover:underline transition-colors"
+                    title={`Xem hồ sơ của ${post.authorName}`}
+                  >
                     {post.authorName}
                   </span>
                   {post.authorRole && (
@@ -265,11 +284,17 @@ export default function PostCommentModal({
                         src={root.authorAvatar}
                         name={root.authorName}
                         size="sm"
-                        className="h-8 w-8 shrink-0 mt-0.5"
+                        onClick={() => handleGoToProfile(root.authorId)}
+                        className="h-8 w-8 shrink-0 mt-0.5 cursor-pointer hover:opacity-90 hover:ring-1 hover:ring-brand-400 transition-all"
+                        title={`Xem hồ sơ của ${root.authorName}`}
                       />
                       <div className="space-y-1 max-w-[85%]">
                         <div className="rounded-2xl bg-slate-100 px-3.5 py-2 text-xs border border-slate-200/50">
-                          <p className="font-bold text-slate-900 leading-tight">
+                          <p
+                            onClick={() => handleGoToProfile(root.authorId)}
+                            className="font-bold text-slate-900 leading-tight cursor-pointer hover:text-brand-600 hover:underline transition-colors"
+                            title={`Xem hồ sơ của ${root.authorName}`}
+                          >
                             {root.authorName}
                           </p>
                           <p className="text-slate-800 mt-1 whitespace-pre-wrap leading-relaxed">
@@ -323,11 +348,17 @@ export default function PostCommentModal({
                           src={reply.authorAvatar}
                           name={reply.authorName}
                           size="xs"
-                          className="h-7 w-7 shrink-0 mt-0.5 z-10"
+                          onClick={() => handleGoToProfile(reply.authorId)}
+                          className="h-7 w-7 shrink-0 mt-0.5 z-10 cursor-pointer hover:opacity-90 hover:ring-1 hover:ring-brand-400 transition-all"
+                          title={`Xem hồ sơ của ${reply.authorName}`}
                         />
                         <div className="space-y-1 max-w-[85%]">
                           <div className="rounded-2xl bg-slate-100 px-3.5 py-2 text-xs border border-slate-200/50">
-                            <p className="font-bold text-slate-900 leading-tight">
+                            <p
+                              onClick={() => handleGoToProfile(reply.authorId)}
+                              className="font-bold text-slate-900 leading-tight cursor-pointer hover:text-brand-600 hover:underline transition-colors"
+                              title={`Xem hồ sơ của ${reply.authorName}`}
+                            >
                               {reply.authorName}
                             </p>
                             <p className="text-slate-800 mt-1 whitespace-pre-wrap leading-relaxed">

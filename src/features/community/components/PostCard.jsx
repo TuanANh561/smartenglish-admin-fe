@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bookmark,
   Download,
@@ -17,8 +18,10 @@ import toast from 'react-hot-toast'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
 import { submitPublicReport } from '@/features/reports/reportApi'
+import { useAuthStore } from '@/store/authStore'
 
 export default function PostCard({
   post,
@@ -171,6 +174,20 @@ export default function PostCard({
     )
   }
 
+  const navigate = useNavigate()
+  const currentUser = useAuthStore((s) => s.user)
+
+  const handleGoToProfile = (e) => {
+    e?.stopPropagation()
+    const targetId = post.authorId || post.userId
+    if (!targetId) return
+    if (String(targetId) === String(currentUser?.id)) {
+      navigate('/app/ho-so')
+    } else {
+      navigate(`/app/ho-so/${targetId}`)
+    }
+  }
+
   const commentsCount =
     post.commentsCount !== undefined
       ? post.commentsCount
@@ -191,11 +208,17 @@ export default function PostCard({
             src={post.authorAvatar}
             name={post.authorName}
             size="md"
-            className="h-10 w-10 shrink-0"
+            onClick={handleGoToProfile}
+            className="h-10 w-10 shrink-0 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-brand-400 transition-all"
+            title={`Xem hồ sơ của ${post.authorName}`}
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm text-slate-900 truncate">
+              <h3
+                onClick={handleGoToProfile}
+                className="font-bold text-sm text-slate-900 truncate cursor-pointer hover:text-brand-600 hover:underline transition-colors"
+                title={`Xem hồ sơ của ${post.authorName}`}
+              >
                 {post.authorName}
               </h3>
               {post.authorRole && (
@@ -205,7 +228,12 @@ export default function PostCard({
               )}
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
-              <span>{post.authorTitle || 'Thành viên'}</span>
+              <span
+                onClick={handleGoToProfile}
+                className="cursor-pointer hover:text-brand-600 hover:underline transition-colors"
+              >
+                {post.authorTitle || 'Thành viên'}
+              </span>
               <span>•</span>
               <span>{formatRelativeTime(post.createdAt)}</span>
               <span>•</span>
@@ -436,18 +464,19 @@ export default function PostCard({
             <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1.5">
               Lý do báo cáo:
             </label>
-            <select
+            <Select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-500 cursor-pointer"
-            >
-              <option value="Ngôn từ kích động / Xúc phạm">Ngôn từ kích động / Xúc phạm / Thù địch</option>
-              <option value="Spam / Quảng cáo trái phép">Spam / Quảng cáo / Lừa đảo</option>
-              <option value="Nội dung không phù hợp chuẩn mực">Nội dung không phù hợp chuẩn mực giáo dục</option>
-              <option value="Vi phạm bản quyền tài liệu">Vi phạm bản quyền tài liệu / Đề thi</option>
-              <option value="Quấy rối / Đe dọa thành viên khác">Quấy rối / Đe dọa thành viên khác</option>
-              <option value="Lý do khác">Lý do khác</option>
-            </select>
+              size="sm"
+              options={[
+                { value: 'Ngôn từ kích động / Xúc phạm', label: 'Ngôn từ kích động / Xúc phạm / Thù địch' },
+                { value: 'Spam / Quảng cáo trái phép', label: 'Spam / Quảng cáo / Lừa đảo' },
+                { value: 'Nội dung không phù hợp chuẩn mực', label: 'Nội dung không phù hợp chuẩn mực giáo dục' },
+                { value: 'Vi phạm bản quyền tài liệu', label: 'Vi phạm bản quyền tài liệu / Đề thi' },
+                { value: 'Quấy rối / Đe dọa thành viên khác', label: 'Quấy rối / Đe dọa thành viên khác' },
+                { value: 'Lý do khác', label: 'Lý do khác' },
+              ]}
+            />
           </div>
 
           <div>

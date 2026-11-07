@@ -3,6 +3,7 @@ import { Check, Clock, MessageSquare, Search, UserCheck, UserPlus, Users, X } fr
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
+import Select from '@/components/ui/Select'
 import { formatRelativeTime } from '@/lib/utils'
 
 export default function FindFriendsModal({
@@ -128,16 +129,20 @@ export default function FindFriendsModal({
                 />
               </div>
 
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none cursor-pointer"
-              >
-                <option value="ALL">Tất cả vai trò</option>
-                <option value="TEACHER">Giáo viên</option>
-                <option value="STUDENT">Học viên</option>
-                <option value="ADMIN">Quản trị viên</option>
-              </select>
+              <div className="w-36 shrink-0">
+                <Select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  size="sm"
+                  align="right"
+                  options={[
+                    { value: 'ALL', label: 'Tất cả vai trò' },
+                    { value: 'TEACHER', label: 'Giáo viên' },
+                    { value: 'STUDENT', label: 'Học viên' },
+                    { value: 'ADMIN', label: 'Quản trị viên' },
+                  ]}
+                />
+              </div>
             </div>
 
             {/* Users List */}

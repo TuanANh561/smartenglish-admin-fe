@@ -168,17 +168,7 @@ export default function CommunitySearchResults({
       <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSearchingMode(false)
-                setSearchQuery('')
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-600 transition-all cursor-pointer shadow-2xs"
-              title="Quay lại bảng tin cộng đồng"
-            >
-              <ArrowLeft size={18} />
-            </button>
+            
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-navy-900 tracking-tight">
@@ -190,9 +180,6 @@ export default function CommunitySearchResults({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Tìm thấy {matchedPosts.length} bài viết và {matchedUsers.length} người dùng phù hợp
-              </p>
             </div>
           </div>
         </div>
@@ -210,7 +197,7 @@ export default function CommunitySearchResults({
             )}
           >
             <FileText size={15} />
-            <span>Bài viết liên quan</span>
+            <span>Bài viết</span>
             <span
               className={cn(
                 'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold',
@@ -232,7 +219,7 @@ export default function CommunitySearchResults({
             )}
           >
             <Users size={15} />
-            <span>Danh sách người dùng</span>
+            <span>Người dùng</span>
             <span
               className={cn(
                 'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold',
@@ -245,7 +232,7 @@ export default function CommunitySearchResults({
         </div>
       </div>
 
-      {/* ── NỘI DUNG TAB 1: BÀI VIẾT LIÊN QUAN ── */}
+      {/* ── NỘI DUNG TAB 1: BÀI VIẾT ── */}
       {searchActiveTab === 'posts' && (
         <div className="space-y-4">
           {matchedPosts.length === 0 ? (
@@ -253,11 +240,8 @@ export default function CommunitySearchResults({
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                 <FileText size={22} />
               </div>
-              <p className="text-sm font-semibold text-slate-700">
-                Không tìm thấy bài viết nào chứa từ khóa "{searchQuery}"
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                Thử tìm với từ khóa chung hơn hoặc chuyển sang tab Người dùng để kết nối bạn mới!
+              <p className="text-sm font-medium text-slate-500">
+                Không tìm thấy bài viết
               </p>
             </div>
           ) : (
@@ -292,10 +276,7 @@ export default function CommunitySearchResults({
         <div className="space-y-4">
           {/* Bộ lọc phân loại vai trò người dùng */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <span className="text-slate-400 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider shrink-0 mr-1">
-              <Filter size={12} />
-              Lọc theo:
-            </span>
+            <Filter size={13} className="text-slate-400 shrink-0 mr-0.5" />
             {[
               { id: 'ALL', label: 'Tất cả' },
               { id: 'TEACHER', label: 'Giảng viên' },
@@ -324,11 +305,8 @@ export default function CommunitySearchResults({
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                 <Users size={22} />
               </div>
-              <p className="text-sm font-semibold text-slate-700">
-                Không tìm thấy người dùng nào phù hợp với từ khóa "{searchQuery}"
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                Hãy kiểm tra lại chính tả hoặc thử tìm kiếm theo email / tên đăng nhập.
+              <p className="text-sm font-medium text-slate-500">
+                Không tìm thấy người dùng
               </p>
             </div>
           ) : (

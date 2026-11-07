@@ -114,7 +114,7 @@ export default function CommunitySearchDropdown({ onClose }) {
                 <TrendingUp size={14} />
               </span>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Chủ Đề Thảo Luận Sôi Nổi
+                Chủ đề thảo luận
               </h3>
             </div>
             {selectedTag && (
@@ -192,7 +192,7 @@ export default function CommunitySearchDropdown({ onClose }) {
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
             <span className="flex items-center gap-1">
               <Sparkles size={12} className="text-amber-500" />
-              Gõ tên giáo viên, học viên hoặc từ khóa để tìm kiếm nhanh
+              Nhập từ khóa để tìm kiếm
             </span>
             <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">
               Nhấn Enter để tìm
@@ -205,11 +205,11 @@ export default function CommunitySearchDropdown({ onClose }) {
           {/* Header kết quả tìm kiếm người dùng */}
           <div className="px-4 py-2.5 bg-slate-50/70 flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-              Người dùng phù hợp ({totalMatchedUsers})
+              Người dùng ({totalMatchedUsers})
             </p>
             {totalMatchedUsers > 0 && (
               <span className="text-[11px] text-slate-400">
-                Hiển thị {topUsers.length}/{totalMatchedUsers} người
+                Hiển thị {topUsers.length}/{totalMatchedUsers}
               </span>
             )}
           </div>
@@ -217,11 +217,8 @@ export default function CommunitySearchDropdown({ onClose }) {
           {/* Danh sách tối đa 10 người dùng */}
           <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100/80">
             {topUsers.length === 0 ? (
-              <div className="p-6 text-center text-slate-400">
-                <p className="text-xs font-semibold text-slate-600">Không tìm thấy người dùng phù hợp</p>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Thử tìm kiếm với tên, email hoặc chức vụ khác
-                </p>
+              <div className="py-6 px-4 text-center">
+                <p className="text-xs font-medium text-slate-500">Không tìm thấy người dùng</p>
               </div>
             ) : (
               topUsers.map((targetUser) => {
@@ -347,14 +344,14 @@ export default function CommunitySearchDropdown({ onClose }) {
           {/* Footer: Nút xem tất cả kết quả chi tiết (Tab bài viết & Tab người dùng) */}
           <div className="p-3 bg-slate-50/90 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500 text-[11px]">
-              Nhấn <strong>Enter</strong> để tìm toàn diện
+              Nhấn <strong>Enter</strong> để tìm
             </span>
             <button
               type="button"
               onClick={() => handleViewAllResults('users')}
               className="inline-flex items-center gap-1.5 text-brand-600 hover:text-brand-800 font-bold cursor-pointer group"
             >
-              <span>Xem toàn bộ kết quả ({totalMatchedUsers} người dùng)</span>
+              <span>Xem tất cả kết quả</span>
               <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
