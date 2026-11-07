@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { Eye } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
@@ -36,22 +37,60 @@ const PLAN_LABEL = {
 const columnHelper = createColumnHelper()
 
 export const transactionColumns = [
-  columnHelper.accessor('createdAt', {
-    header: 'Ngày',
-    enableSorting: true,
-    cell: (info) => <span className="text-sm text-slate-600 font-medium">{formatDate(info.getValue())}</span>,
+  columnHelper.accessor('id', {
+    header: 'Mã đơn',
+    enableSorting: false,
+    meta: { widthClass: 'w-28 min-w-[110px]' },
+    cell: (info) => {
+      const row = info.row.original
+      const code = row.orderCode || (row.id ? `ORD-${row.id}` : '—')
+      return (
+        <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200">
+          {code}
+        </span>
+      )
+    },
   }),
-  columnHelper.accessor('studentName', {
-    header: 'Học viên',
+  columnHelper.accessor('createdAt', {
+    header: 'Ngày giờ',
     enableSorting: true,
+    meta: { widthClass: 'w-32 min-w-[120px]' },
+    cell: (info) => (
+      <div>
+        <p className="text-sm text-slate-800 font-semibold">{formatDate(info.getValue())}</p>
+        <p className="text-[11px] text-slate-400 font-medium">{formatDate(info.getValue(), 'HH:mm:ss')}</p>
+      </div>
+    ),
+  }),
+  columnHelper.accessor('customerName', {
+    header: 'Khách hàng',
+    enableSorting: true,
+    meta: { widthClass: 'min-w-[250px]' },
     cell: (info) => {
       const transaction = info.row.original
+      const name = transaction.customerName || transaction.studentName || 'Khách hàng'
+      const email = transaction.customerEmail || transaction.studentEmail || '—'
+      const role = (transaction.customerRole || '').toLowerCase()
+      const isTeacher = role === 'teacher' || name.startsWith('Thầy') || name.startsWith('Thay') || name.startsWith('Cô')
+
       return (
         <div className="flex items-center gap-3">
-          <Avatar name={transaction.studentName} src={transaction.studentAvatar} size="md" />
-          <div>
-            <p className="font-bold text-slate-900 text-sm">{transaction.studentName}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{transaction.studentEmail}</p>
+          <Avatar name={name} src={transaction.studentAvatar} size="md" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="font-bold text-slate-900 text-sm truncate">{name}</p>
+              <span
+                className={cn(
+                  'rounded-md px-1.5 py-0.2 text-[10px] font-bold border',
+                  isTeacher
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-sky-50 text-sky-700 border-sky-200'
+                )}
+              >
+                {isTeacher ? 'Giáo viên' : 'Học viên'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5 truncate">{email}</p>
           </div>
         </div>
       )
@@ -60,11 +99,13 @@ export const transactionColumns = [
   columnHelper.accessor('plan', {
     header: 'Gói dịch vụ',
     enableSorting: false,
+    meta: { widthClass: 'w-48 min-w-[160px]' },
     cell: (info) => {
-      const raw = info.row.original.planName || PLAN_LABEL[info.getValue()] || info.getValue() || 'Gói Premium'
+      const row = info.row.original
+      const raw = row.planName || row.courseName || PLAN_LABEL[info.getValue()] || info.getValue() || 'Gói Dịch Vụ'
       const cleanName = raw.replace(/\s*\([^)]*\)/g, '').trim()
       return (
-        <span className="text-sm font-medium text-slate-700">
+        <span className="text-sm font-semibold text-slate-800" title={raw}>
           {cleanName}
         </span>
       )
@@ -73,12 +114,24 @@ export const transactionColumns = [
   columnHelper.accessor('amount', {
     header: 'Khoản tiền',
     enableSorting: true,
-    meta: { align: 'right' },
+    meta: { align: 'right', widthClass: 'w-32 min-w-[110px]' },
     cell: (info) => {
-      const status = (info.row.original.status || '').toLowerCase()
+      const row = info.row.original
+      const status = (row.status || '').toLowerCase()
       const isCancelled = ['cancelled', 'canceled', 'expired', 'failed'].includes(status)
       const isRefunded = status === 'refunded'
       const isInactive = isCancelled || isRefunded
+      const val = Number(info.getValue()) || 0
+      const isGrant = (row.orderCode || '').startsWith('GRANT-') || (row.gateway || '').toLowerCase() === 'admin_grant' || (row.paymentMethod || '').toLowerCase() === 'admin_grant'
+
+      if (isGrant && val === 0) {
+        return (
+          <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200">
+            Miễn phí (Cấp quyền)
+          </span>
+        )
+      }
+
       return (
         <span
           className={cn(
@@ -87,7 +140,7 @@ export const transactionColumns = [
           )}
           title={isCancelled ? 'Đơn hàng đã hủy (0đ thực thu)' : isRefunded ? 'Đã hoàn tiền' : ''}
         >
-          {formatCurrency(info.getValue(), { compact: false })}
+          {formatCurrency(val, { compact: false })}
         </span>
       )
     },
@@ -95,6 +148,7 @@ export const transactionColumns = [
   columnHelper.accessor('status', {
     header: 'Trạng thái',
     enableSorting: false,
+    meta: { align: 'center', widthClass: 'w-32 min-w-[110px]' },
     cell: (info) => {
       const status = (info.getValue() || 'completed').toLowerCase()
       return <Badge tone={STATUS_TONE[status] ?? 'neutral'}>{STATUS_LABEL[status] ?? status}</Badge>
@@ -103,14 +157,42 @@ export const transactionColumns = [
   columnHelper.accessor('paymentMethod', {
     header: 'Phương thức thanh toán',
     enableSorting: false,
+    meta: { widthClass: 'w-48 min-w-[160px]' },
     cell: (info) => {
-      const method = info.getValue()
+      const row = info.row.original
+      const rawMethod = (info.getValue() || row.gateway || '').toLowerCase()
+      const isGrant = (row.orderCode || '').startsWith('GRANT-') || rawMethod.includes('grant') || rawMethod.includes('admin')
       const methodLabel = {
         credit_card: 'Thẻ tín dụng',
         bank_transfer: 'Chuyển khoản',
         e_wallet: 'Ví điện tử',
+        sepay: 'VietQR SePay',
+        admin_grant: 'Admin cấp trực tiếp',
       }
-      return <span className="text-sm text-slate-600">{methodLabel[method] ?? method}</span>
+      const label = isGrant ? 'Admin cấp trực tiếp' : (methodLabel[rawMethod] ?? (row.gateway ? String(row.gateway).toUpperCase() : rawMethod))
+      return <span className="text-sm text-slate-700 font-medium">{label}</span>
+    },
+  }),
+  columnHelper.display({
+    id: 'actions',
+    header: 'Thao tác',
+    meta: { align: 'right', widthClass: 'w-24 min-w-[90px]' },
+    cell: (info) => {
+      const onView = info.table.options.meta?.onViewDetail
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onView?.(info.row.original)
+          }}
+          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200 shadow-2xs cursor-pointer"
+          title="Xem chi tiết giao dịch"
+        >
+          <Eye size={13} />
+          <span>Chi tiết</span>
+        </button>
+      )
     },
   }),
 ]

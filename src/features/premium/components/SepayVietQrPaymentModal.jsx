@@ -88,7 +88,7 @@ export default function SepayVietQrPaymentModal({
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
     setPaymentSuccess(true)
     playSuccessChime()
-    toast.success('🎉 Đã nhận thanh toán thành công qua SePay!')
+    toast.success('Thanh toán thành công! Gói dịch vụ đã được kích hoạt.')
     try {
       window.dispatchEvent(new Event('smartenglish:notification_update'))
     } catch {}
@@ -179,18 +179,18 @@ export default function SepayVietQrPaymentModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-slate-900">
-                  Thanh toán VietQR Napas 24/7
+                  Thanh toán chuyển khoản VietQR
                 </h3>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                   </span>
-                  Tự động gạch nợ
+                  Tự động kích hoạt
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Quét mã từ bất kỳ ứng dụng ngân hàng nào • Xác thực tức thì trong 1 - 3 giây
+                Quét mã từ ứng dụng ngân hàng để hoàn tất thanh toán
               </p>
             </div>
           </div>
@@ -218,9 +218,9 @@ export default function SepayVietQrPaymentModal({
                 Chúc mừng bạn đã kích hoạt {planName}!
               </h4>
               <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-                Hệ thống SePay đã ghi nhận biến động số dư cho đơn{' '}
+                Đơn hàng{' '}
                 <strong className="text-slate-700 font-mono">{orderCode}</strong>. Quyền lợi giáo
-                viên và Hóa đơn điện tử đã được phát hành.
+                viên đã được kích hoạt thành công.
               </p>
             </div>
 
@@ -237,7 +237,7 @@ export default function SepayVietQrPaymentModal({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Phương thức:</span>
-                <span className="font-medium text-slate-700">VietQR Napas 24/7 (MB Bank)</span>
+                <span className="font-medium text-slate-700">Chuyển khoản VietQR (MB Bank)</span>
               </div>
             </div>
 
@@ -304,12 +304,12 @@ export default function SepayVietQrPaymentModal({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
                     </span>
-                    <span>Đang chờ chuyển khoản từ App...</span>
+                    <span>Đang chờ thanh toán...</span>
                   </div>
                 ) : (
                   <div className="mt-3.5 w-full py-2 px-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
                     <AlertTriangle size={13} />
-                    <span>Giao dịch đã kết thúc (10 phút)</span>
+                    <span>Mã thanh toán đã hết hạn</span>
                   </div>
                 )}
               </div>
@@ -321,6 +321,23 @@ export default function SepayVietQrPaymentModal({
                     Thông tin thanh toán chuyển khoản
                   </h4>
                 </div>
+
+                {/* Tài khoản thụ hưởng (nếu đăng ký hộ) */}
+                {order?.customerName && (
+                  <div className="p-2.5 bg-brand-50/60 rounded-xl border border-brand-200/80 flex items-center justify-between shadow-2xs">
+                    <div className="min-w-0 pr-2">
+                      <span className="text-[11px] text-brand-600 block font-medium">Tài khoản được nâng cấp</span>
+                      <div className="font-semibold text-brand-900 text-xs truncate">
+                        {order.customerName} {order.customerEmail ? `(${order.customerEmail})` : ''}
+                      </div>
+                    </div>
+                    {order?.forRole && (
+                      <span className="px-2 py-0.5 rounded-md bg-white text-brand-700 text-[10px] font-bold border border-brand-200 shrink-0">
+                        {order.forRole === 'teacher' ? 'Giáo viên' : 'Học viên'}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Ngân hàng */}
                 <div className="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
@@ -379,9 +396,15 @@ export default function SepayVietQrPaymentModal({
                       {formatCurrency(amount)}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                    Ưu đãi 20.000đ
-                  </span>
+                  {order?.discountAmount > 0 ? (
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                      Đã giảm {formatCurrency(order.discountAmount)}
+                    </span>
+                  ) : amount === 20000 ? (
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                      Ưu đãi 20.000đ
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Nội dung chuyển khoản BẮT BUỘC (Nổi bật nhất - Khóa chống chỉnh sửa) */}
@@ -390,7 +413,7 @@ export default function SepayVietQrPaymentModal({
                     <div>
                       <span className="text-[11px] font-bold text-amber-800 flex items-center gap-1">
                         <Lock size={12} className="text-amber-700" />
-                        Nội dung chuyển khoản (BẮT BUỘC CHÍNH XÁC):
+                        Nội dung chuyển khoản:
                       </span>
                       <span className="font-mono font-black text-amber-900 text-lg tracking-wider">
                         {orderCode}
@@ -414,7 +437,7 @@ export default function SepayVietQrPaymentModal({
                     </button>
                   </div>
                   <p className="text-[10px] text-amber-800 font-medium">
-                    ⚠️ Tuyệt đối giữ nguyên nội dung trên để hệ thống AI tự động đối soát và kích hoạt gói sau 2 giây.
+                    Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống kích hoạt gói tự động.
                   </p>
                 </div>
               </div>
@@ -424,10 +447,10 @@ export default function SepayVietQrPaymentModal({
             <div className="mt-4 p-3 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-600 flex items-start gap-2.5 shadow-2xs">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>Bảo mật & Tự động:</strong> Vui lòng giữ nguyên nội dung chuyển khoản{' '}
-                <strong className="text-amber-800 font-mono font-bold">{orderCode}</strong>. Hệ
-                thống SePay sẽ tự động đối soát số dư và nâng cấp tài khoản VIP ngay lập tức mà không
-                cần can thiệp thủ công.
+                <strong>Lưu ý:</strong> Vui lòng chuyển khoản đúng nội dung{' '}
+                <strong className="text-amber-800 font-mono font-bold">{orderCode}</strong> để hệ
+                thống sẽ tự động kích hoạt gói dịch vụ ngay sau khi thanh toán thành công.
+
               </span>
             </div>
           </div>
@@ -440,11 +463,11 @@ export default function SepayVietQrPaymentModal({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span>Hệ thống Napas 24/7 đang kết nối trực tiếp với SePay</span>
+            <span>Hệ thống tiếp nhận thanh toán tự động 24/7</span>
           </div>
           <div className="flex items-center gap-1.5 text-slate-400">
             <Lock size={12} />
-            <span>Mã hóa bảo mật SSL 256-bit</span>
+            <span>Giao dịch an toàn & bảo mật</span>
           </div>
         </div>
       </div>

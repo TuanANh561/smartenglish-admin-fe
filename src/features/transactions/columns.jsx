@@ -28,11 +28,26 @@ export const transactionColumns = [
       const rawStatus = (row.status || '').toLowerCase()
       const isInactive = ['cancelled', 'canceled', 'expired', 'failed', 'refunded'].includes(rawStatus)
       const email = info.getValue() || row.studentEmail || 'Chưa có email'
-      const name = row.customerName || row.studentName
+      const name = row.customerName || row.studentName || 'Khách hàng'
+      const role = (row.customerRole || '').toLowerCase()
+      const isTeacher = role === 'teacher' || name.startsWith('Thầy') || name.startsWith('Thay') || name.startsWith('Cô')
+
       return (
         <div>
-          {name && <div className={cn('text-xs font-semibold', isInactive ? 'text-slate-400' : 'text-slate-900')}>{name}</div>}
-          <span className={cn('text-sm font-medium', isInactive ? 'text-slate-400' : 'text-slate-700')}>{email}</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={cn('text-xs font-bold', isInactive ? 'text-slate-400' : 'text-slate-900')}>{name}</span>
+            <span
+              className={cn(
+                'rounded-md px-1.5 py-0.2 text-[9px] font-bold border',
+                isTeacher
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-sky-50 text-sky-700 border-sky-200'
+              )}
+            >
+              {isTeacher ? 'Giáo viên' : 'Học viên'}
+            </span>
+          </div>
+          <span className={cn('text-xs font-medium block mt-0.5', isInactive ? 'text-slate-400' : 'text-slate-500')}>{email}</span>
         </div>
       )
     },
@@ -51,10 +66,22 @@ export const transactionColumns = [
     header: 'Số tiền',
     meta: { align: 'right' },
     cell: (info) => {
-      const rawStatus = (info.row.original.status || '').toLowerCase()
+      const row = info.row.original
+      const rawStatus = (row.status || '').toLowerCase()
       const isCancelled = ['cancelled', 'canceled', 'expired', 'failed'].includes(rawStatus)
       const isRefunded = rawStatus === 'refunded'
       const isInactive = isCancelled || isRefunded
+      const val = Number(info.getValue()) || 0
+      const isGrant = (row.orderCode || '').startsWith('GRANT-') || (row.gateway || '').toLowerCase() === 'admin_grant'
+
+      if (isGrant && val === 0) {
+        return (
+          <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200">
+            Miễn phí (Cấp quyền)
+          </span>
+        )
+      }
+
       return (
         <span
           className={cn(
@@ -63,7 +90,7 @@ export const transactionColumns = [
           )}
           title={isCancelled ? 'Đơn hàng đã hủy (0đ thực thu)' : isRefunded ? 'Đã hoàn tiền' : ''}
         >
-          {formatCurrency(info.getValue())}
+          {formatCurrency(val)}
         </span>
       )
     },
@@ -89,7 +116,11 @@ export const transactionColumns = [
   columnHelper.accessor('status', {
     header: 'Trạng thái',
     cell: (info) => {
+      const row = info.row.original
       const val = (info.getValue() || 'completed').toLowerCase()
+      if (row.refundReason && (val === 'pending' || val === 'processing' || val === 'refund_requested')) {
+        return <Badge tone="warning">Yêu cầu hoàn</Badge>
+      }
       const meta = TXN_STATUS_META[val] || { label: val, tone: 'neutral' }
       return <Badge tone={meta.tone}>{meta.label}</Badge>
     },

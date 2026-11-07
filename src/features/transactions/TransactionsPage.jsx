@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import DataTable from '@/components/ui/DataTable/DataTable'
 import { exportCsv } from '@/components/ui/DataTable/exportCsv'
 import { formatCurrency, formatNumber, maskBankAccount } from '@/lib/utils'
@@ -141,11 +143,11 @@ function TransactionsPage() {
     <div className="space-y-4">
       {/* 3 KPI Stats Cards - Gọn gàng, hiện đại, thẩm mỹ */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* Card 1: Doanh thu tháng */}
+        {/* Card 1: Doanh thu tháng này */}
         <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              Doanh thu tháng
+              Doanh thu tháng này
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
               <Wallet size={16} strokeWidth={2} />
@@ -158,7 +160,7 @@ function TransactionsPage() {
             <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
               {stats.revenueDelta != null
                 ? `${stats.revenueDelta >= 0 ? '+' : ''}${stats.revenueDelta}%`
-                : (stats.todayRevenueGrowth ? `+${stats.todayRevenueGrowth}%` : '+18.4%')}
+                : (stats.todayRevenueGrowth ? `+${stats.todayRevenueGrowth}%` : '0%')}
             </span>
           </div>
         </div>
@@ -249,49 +251,49 @@ function TransactionsPage() {
 
           {/* Right: Cụm bộ lọc dropdowns + Nút xóa lọc + Action buttons trên 1 hàng */}
           <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-nowrap">
-            <select
+            <Select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-            >
-              {DATE_RANGES.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={DATE_RANGES}
+            />
 
-            <select
+            <Select
               value={gateway}
               onChange={(e) => {
                 setGateway(e.target.value)
                 setPage(1)
               }}
-              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-            >
-              <option value="all">Cổng: Tất cả</option>
-              {Object.entries(GATEWAY_META).map(([value, meta]) => (
-                <option key={value} value={value}>
-                  {meta.label}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={[
+                { value: 'all', label: 'Cổng: Tất cả' },
+                ...Object.entries(GATEWAY_META).map(([val, meta]) => ({
+                  value: val,
+                  label: meta.label,
+                })),
+              ]}
+            />
 
-            <select
+            <Select
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value)
                 setPage(1)
               }}
-              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-            >
-              <option value="all">Trạng thái: Tất cả</option>
-              <option value="completed">Thành công</option>
-              <option value="pending">Chờ xử lý / Hoàn tiền</option>
-              <option value="cancelled">Đã hủy</option>
-              <option value="refunded">Đã hoàn tiền</option>
-              <option value="failed">Thất bại</option>
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={[
+                { value: 'all', label: 'Trạng thái: Tất cả' },
+                { value: 'completed', label: 'Thành công' },
+                { value: 'pending', label: 'Chờ xử lý / Hoàn tiền' },
+                { value: 'refunded', label: 'Đã hoàn tiền' },
+                { value: 'expired', label: 'Đã hết hạn' },
+                { value: 'cancelled', label: 'Đã hủy' },
+                { value: 'failed', label: 'Thất bại' },
+              ]}
+            />
 
             {hasFilters && (
               <button

@@ -2,6 +2,7 @@ import React from 'react'
 import {
   Check,
   ShieldCheck,
+  QrCode,
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
@@ -14,25 +15,31 @@ export default function TeacherPlanCard({
   currentBillingCycle = 'monthly',
   subscribingId,
   onSubscribe,
+  isAdmin = false,
+  targetUser = null,
 }) {
   const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly
   const planId = plan.numericId || pIdx + 1
-  const isCurrentPlan = planId === currentPlanId
+  const isCurrentPlan = !isAdmin && planId === currentPlanId
 
   // Phân biệt trạng thái chu kỳ thanh toán
-  const isExactActivePlan = isCurrentPlan && currentBillingCycle === billingCycle
-  const isUpgradingCycleToYearly = isCurrentPlan && currentBillingCycle === 'monthly' && billingCycle === 'yearly'
-  const isLowerBillingCycle = isCurrentPlan && currentBillingCycle === 'yearly' && billingCycle === 'monthly'
+  const isExactActivePlan = !isAdmin && isCurrentPlan && currentBillingCycle === billingCycle
+  const isUpgradingCycleToYearly = !isAdmin && isCurrentPlan && currentBillingCycle === 'monthly' && billingCycle === 'yearly'
+  const isLowerBillingCycle = !isAdmin && isCurrentPlan && currentBillingCycle === 'yearly' && billingCycle === 'monthly'
 
-  const isStarterFallback = planId === 1 && currentPlanId > 1
-  const isLowerPaidPlan = planId > 1 && planId < currentPlanId
+  const isStarterFallback = !isAdmin && planId === 1 && currentPlanId > 1
+  const isLowerPaidPlan = !isAdmin && planId > 1 && planId < currentPlanId
 
   return (
     <div
       key={plan.id}
       className={[
         'relative flex flex-col rounded-2xl border bg-white p-6 shadow-xs transition-all hover:shadow-md',
-        isExactActivePlan ? 'border-2 border-brand-500 ring-2 ring-brand-500/10' : 'border-line',
+        isExactActivePlan
+          ? 'border-2 border-brand-500 ring-2 ring-brand-500/10'
+          : plan.isPopular
+            ? 'border-brand-300 shadow-2xs'
+            : 'border-line',
       ].join(' ')}
     >
       {/* Badge trên cùng */}
@@ -112,7 +119,27 @@ export default function TeacherPlanCard({
       </ul>
 
       {/* CTA Button */}
-      {isExactActivePlan ? (
+      {isAdmin ? (
+        targetUser ? (
+          <button
+            type="button"
+            onClick={() => onSubscribe(plan, targetUser)}
+            className="w-full justify-center rounded-xl bg-brand-600 hover:bg-brand-700 py-2.5 px-4 text-xs font-bold text-white transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center gap-1.5"
+          >
+            <QrCode size={14} />
+            <span>Quét VietQR đăng ký hộ ({price === 0 ? 'Miễn phí' : formatCurrency(price)})</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSubscribe(plan)}
+            className="w-full justify-center rounded-xl border border-brand-200 bg-brand-50/60 hover:bg-brand-100/80 py-2.5 px-4 text-xs font-bold text-brand-700 transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+          >
+            <QrCode size={14} />
+            <span>Xem trước VietQR ({price === 0 ? 'Miễn phí' : formatCurrency(price)})</span>
+          </button>
+        )
+      ) : isExactActivePlan ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 py-2.5 text-center text-xs font-bold text-emerald-700 flex items-center justify-center gap-1.5 shadow-2xs">
           <ShieldCheck size={15} /> Gói Bạn Đang Dùng
         </div>

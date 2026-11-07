@@ -14,18 +14,16 @@ export default function TeacherPlansTab({
   onToggleFeature,
   onAddFeature,
   onRemoveFeature,
+  highlightedPlanId,
 }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-brand-500" />
-          <span className="text-xs font-bold text-navy-700 uppercase tracking-wide">
-            Các gói dành cho Giáo viên ({teacherPlans.length})
-          </span>
-        </div>
+        <span className="text-xs font-bold text-navy-700 uppercase tracking-wide">
+          Gói giáo viên ({teacherPlans.length})
+        </span>
         <Button icon={Plus} size="sm" onClick={onAddPlan}>
-          Thêm Gói Mới
+          Thêm gói
         </Button>
       </div>
 
@@ -33,13 +31,25 @@ export default function TeacherPlansTab({
         {teacherPlans.map((plan) => (
           <Card
             key={plan.id}
+            id={`plan-card-${plan.id}`}
             className={cn(
-              'flex flex-col justify-between border-2 transition-all relative',
-              plan.isPopular
-                ? 'border-brand-500 shadow-md ring-2 ring-brand-500/10'
-                : 'border-line hover:border-slate-300',
+              'flex flex-col justify-between border-2 transition-all duration-700 relative',
+              highlightedPlanId === plan.id
+                ? 'border-emerald-500 ring-4 ring-emerald-400/80 shadow-2xl scale-[1.03] z-20 bg-emerald-50/20'
+                : plan.isPopular
+                  ? 'border-brand-500 shadow-md ring-2 ring-brand-500/10'
+                  : 'border-line hover:border-slate-300',
             )}
           >
+            {/* Vừa thêm mới badge */}
+            {highlightedPlanId === plan.id && (
+              <div className="absolute -top-3 right-4 z-30">
+                <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md animate-pulse">
+                  Vừa thêm mới
+                </span>
+              </div>
+            )}
+
             {/* Popular Pill Highlight */}
             {plan.isPopular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -73,7 +83,7 @@ export default function TeacherPlansTab({
               {/* Badge & Popular Toggle */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-bold text-ink-muted uppercase">Nhãn phụ</label>
+                  <label className="text-xs font-bold text-ink-muted uppercase">Huy hiệu</label>
                   <Input
                     value={plan.badge || ''}
                     onChange={(e) => onUpdatePlan(plan.id, 'badge', e.target.value)}
@@ -89,7 +99,7 @@ export default function TeacherPlansTab({
                       onChange={(e) => onUpdatePlan(plan.id, 'isPopular', e.target.checked)}
                       className="rounded border-line text-brand-500 focus:ring-brand-500"
                     />
-                    Đặt làm Nổi bật
+                    Nổi bật
                   </label>
                 </div>
               </div>
@@ -114,13 +124,6 @@ export default function TeacherPlansTab({
                       className="font-bold text-navy-700 text-sm mt-0.5"
                     />
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60 font-semibold">
-                  <span className="text-ink-muted">Hiển thị giá:</span>
-                  <span className="text-brand-600">
-                    {plan.priceMonthly === 0 ? 'Miễn phí' : `${formatCurrency(plan.priceMonthly)} / tháng`}
-                  </span>
                 </div>
               </div>
 

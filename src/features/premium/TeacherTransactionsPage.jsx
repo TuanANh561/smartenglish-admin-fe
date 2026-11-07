@@ -62,6 +62,10 @@ export default function TeacherTransactionsPage() {
     return <Navigate to="/app/doi-soat" replace />
   }
 
+  return <TeacherTransactionsContent user={user} />
+}
+
+function TeacherTransactionsContent({ user }) {
   const teacherId = user?.id ?? null
 
   const PAGE_SIZE = 10

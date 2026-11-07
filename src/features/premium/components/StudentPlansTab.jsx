@@ -28,6 +28,7 @@ export default function StudentPlansTab({
   onToggleFeature,
   onAddFeature,
   onRemoveFeature,
+  highlightedPlanId,
 }) {
   const [newFeatureText, setNewFeatureText] = useState({})
 
@@ -44,14 +45,11 @@ export default function StudentPlansTab({
     <div className="space-y-4">
       {/* Header bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-indigo-500" />
-          <span className="text-xs font-bold text-navy-700 uppercase tracking-wide">
-            Các gói dành cho Học viên ({studentPlans.length})
-          </span>
-        </div>
+        <span className="text-xs font-bold text-navy-700 uppercase tracking-wide">
+          Gói học viên ({studentPlans.length})
+        </span>
         <Button icon={Plus} size="sm" onClick={onAddPlan}>
-          Thêm Gói Mới
+          Thêm gói
         </Button>
       </div>
 
@@ -64,13 +62,25 @@ export default function StudentPlansTab({
           return (
             <Card
               key={plan.id}
+              id={`plan-card-${plan.id}`}
               className={cn(
-                'flex flex-col justify-between border-2 transition-all relative',
-                plan.isPopular
-                  ? 'border-brand-500 shadow-md ring-2 ring-brand-500/10'
-                  : 'border-line hover:border-slate-300',
+                'flex flex-col justify-between border-2 transition-all duration-700 relative',
+                highlightedPlanId === plan.id
+                  ? 'border-emerald-500 ring-4 ring-emerald-400/80 shadow-2xl scale-[1.03] z-20 bg-emerald-50/20'
+                  : plan.isPopular
+                    ? 'border-brand-500 shadow-md ring-2 ring-brand-500/10'
+                    : 'border-line hover:border-slate-300',
               )}
             >
+              {/* Vừa thêm mới badge */}
+              {highlightedPlanId === plan.id && (
+                <div className="absolute -top-3 right-4 z-30">
+                  <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-md animate-pulse">
+                    Vừa thêm mới
+                  </span>
+                </div>
+              )}
+
               {/* Popular Badge */}
               {plan.isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -104,17 +114,17 @@ export default function StudentPlansTab({
                 {/* 2. Badge & Thời hạn */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs font-bold text-ink-muted uppercase">Nhãn phụ</label>
+                    <label className="text-xs font-bold text-ink-muted uppercase">Huy hiệu</label>
                     <Input
                       value={plan.badge || ''}
                       onChange={(e) => onUpdatePlan(plan.id, 'badge', e.target.value)}
-                      placeholder="VD: Linh hoạt"
+                      placeholder="VD: Tiết kiệm"
                       className="text-sm mt-0.5"
                     />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-ink-muted uppercase">
-                      {plan.durationMonths === 999 ? 'Thời hạn' : 'Thời hạn (Tháng)'}
+                      {plan.durationMonths === 999 ? 'Thời hạn' : 'Thời hạn (tháng)'}
                     </label>
                     <Input
                       type="number"
@@ -128,7 +138,7 @@ export default function StudentPlansTab({
                 {/* 3. Giá bán */}
                 <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-200/80">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-ink-muted uppercase">Giá bán (VNĐ)</label>
+                    <label className="text-xs font-bold text-ink-muted uppercase">Giá (VNĐ)</label>
                     <span className="text-xs text-brand-600 font-semibold">
                       {plan.durationMonths === 999 ? 'Trọn đời' : plan.durationMonths >= 12 ? 'Theo năm' : 'Theo tháng'}
                     </span>
@@ -144,32 +154,22 @@ export default function StudentPlansTab({
                     }}
                     className="font-bold text-navy-700 text-sm"
                   />
-                  <div className="mt-1 flex items-center justify-between text-xs font-semibold">
-                    <span className="text-ink-muted">Hiển thị:</span>
-                    <span className="text-brand-600">
-                      {currentPrice === 0
-                        ? '0 đ (Miễn phí)'
-                        : `${formatCurrency(currentPrice)} / ${plan.durationMonths === 999 ? 'Trọn đời' : `${plan.durationMonths || 1} tháng`}`}
-                    </span>
-                  </div>
                 </div>
 
-                {/* 4. HẠN MỨC QUOTA AI & LỚP HỌC (QUOTA LIMITS SECTION) */}
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-2.5 space-y-2">
+                {/* 4. HẠN MỨC AI */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1">
-                      <Sparkles size={12} className="text-indigo-600" />
-                      Hạn Mức Quota AI & Lớp Học
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      Hạn mức AI
                     </span>
-                    <span className="text-xs text-indigo-600 font-medium">9999 = Vô hạn</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5 text-xs">
                     {/* AI Chat */}
-                    <div className="rounded-lg bg-white p-1.5 border border-indigo-100/80 shadow-2xs">
+                    <div className="rounded-lg bg-white p-1.5 border border-slate-200/80 shadow-2xs">
                       <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
                         <span className="flex items-center gap-1 font-medium">
-                          <Bot size={12} className="text-indigo-500" /> AI Chat
+                          <Bot size={12} className="text-slate-600" /> Chat AI
                         </span>
                         <span className="text-xs text-slate-400">/ngày</span>
                       </div>
@@ -187,10 +187,10 @@ export default function StudentPlansTab({
                     </div>
 
                     {/* AI Speaking */}
-                    <div className="rounded-lg bg-white p-1.5 border border-indigo-100/80 shadow-2xs">
+                    <div className="rounded-lg bg-white p-1.5 border border-slate-200/80 shadow-2xs">
                       <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
                         <span className="flex items-center gap-1 font-medium">
-                          <Mic size={12} className="text-rose-500" /> Phát âm AI
+                          <Mic size={12} className="text-slate-600" /> Luyện nói
                         </span>
                         <span className="text-xs text-slate-400">/ngày</span>
                       </div>
@@ -208,10 +208,10 @@ export default function StudentPlansTab({
                     </div>
 
                     {/* AI Writing */}
-                    <div className="rounded-lg bg-white p-1.5 border border-indigo-100/80 shadow-2xs">
+                    <div className="rounded-lg bg-white p-1.5 border border-slate-200/80 shadow-2xs">
                       <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
                         <span className="flex items-center gap-1 font-medium">
-                          <FileText size={12} className="text-amber-500" /> Viết luận AI
+                          <FileText size={12} className="text-slate-600" /> Viết luận
                         </span>
                         <span className="text-xs text-slate-400">/tuần</span>
                       </div>
@@ -229,10 +229,10 @@ export default function StudentPlansTab({
                     </div>
 
                     {/* AI Scan */}
-                    <div className="rounded-lg bg-white p-1.5 border border-indigo-100/80 shadow-2xs">
+                    <div className="rounded-lg bg-white p-1.5 border border-slate-200/80 shadow-2xs">
                       <div className="flex items-center justify-between text-xs text-slate-500 mb-0.5">
                         <span className="flex items-center gap-1 font-medium">
-                          <Camera size={12} className="text-cyan-500" /> Quét đề AI
+                          <Camera size={12} className="text-slate-600" /> Quét bài
                         </span>
                         <span className="text-xs text-slate-400">/ngày</span>
                       </div>
@@ -250,9 +250,9 @@ export default function StudentPlansTab({
                     </div>
 
                     {/* Lớp học tối đa (col-span-2) */}
-                    <div className="col-span-2 rounded-lg bg-white p-1.5 border border-indigo-100/80 shadow-2xs flex items-center justify-between">
+                    <div className="col-span-2 rounded-lg bg-white p-1.5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
                       <span className="flex items-center gap-1 text-[10px] font-medium text-slate-600">
-                        <Users size={11} className="text-emerald-600" /> Số lớp tham gia tối đa:
+                        <Users size={11} className="text-slate-600" /> Lớp tham gia tối đa:
                       </span>
                       <div className="flex items-center gap-1 w-24">
                         <Input
