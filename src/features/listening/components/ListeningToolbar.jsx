@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { ArrowLeft, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LISTENING_TOPICS, LISTENING_CATEGORIES, LISTENING_ACCENTS } from '../listeningConstants'
@@ -60,70 +61,64 @@ export default function ListeningToolbar({
       {/* Cụm bộ lọc và nút hành động trên 1 hàng */}
       <div className="flex flex-wrap items-center gap-2 shrink-0">
         {/* Lọc Dạng bài / TOEIC Part */}
-        <select
+        <Select
           value={category}
           onChange={(e) => {
             setCategory(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
-        >
-          {LISTENING_CATEGORIES.map((cat) => (
-            <option key={cat.value} value={cat.value}>
-              {cat.label}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-36 shrink-0"
+          options={LISTENING_CATEGORIES}
+        />
 
         {/* Lọc Nguồn học liệu */}
-        <select
+        <Select
           value={ownershipFilter}
           onChange={(e) => {
             setOwnershipFilter(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
-        >
-          <option value="all">Nguồn: Tất cả ({totalLessons})</option>
-          <option value="mine">Của tôi ({myLessonsCount})</option>
-          <option value="system">SmartEnglish</option>
-          {isTeacher && <option value="others">Giáo viên khác</option>}
-        </select>
+          size="sm"
+          containerClassName="w-36 shrink-0"
+          options={[
+            { value: 'all', label: `Nguồn: Tất cả (${totalLessons})` },
+            { value: 'mine', label: `Của tôi (${myLessonsCount})` },
+            { value: 'system', label: 'SmartEnglish' },
+            ...(isTeacher ? [{ value: 'others', label: 'Giáo viên khác' }] : []),
+          ]}
+        />
 
         {/* Lọc Chủ đề */}
-        <select
+        <Select
           value={topic}
           onChange={(e) => {
             setTopic(e.target.value)
             setPage(1)
           }}
-          className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
-        >
-          <option value="all">Chủ đề: Tất cả</option>
-          {LISTENING_TOPICS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-36 shrink-0"
+          options={[
+            { value: 'all', label: 'Chủ đề: Tất cả' },
+            ...LISTENING_TOPICS.map((item) => ({ value: item, label: item })),
+          ]}
+        />
 
         {/* Lọc Giọng đọc / Accent */}
         {setAccent && (
-          <select
+          <Select
             value={accent}
             onChange={(e) => {
               setAccent(e.target.value)
               setPage(1)
             }}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer h-9"
-          >
-            <option value="all">Giọng: Tất cả</option>
-            {LISTENING_ACCENTS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-36 shrink-0"
+            options={[
+              { value: 'all', label: 'Giọng: Tất cả' },
+              ...LISTENING_ACCENTS.map((item) => ({ value: item, label: item })),
+            ]}
+          />
         )}
 
         {/* Nút Xóa bộ lọc nếu có */}

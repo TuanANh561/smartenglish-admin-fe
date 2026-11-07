@@ -184,3 +184,40 @@ export async function getListeningCategories() {
   const data = res?.data !== undefined ? res.data : res
   return Array.isArray(data) ? data : []
 }
+
+/**
+ * Tải file ảnh đề bài lên hệ thống
+ * @param {File} file 
+ * @param {string} folder 
+ * @returns {Promise<{ url: string }>}
+ */
+export async function uploadListeningImage(file, folder = 'listening/images') {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('folder', folder)
+
+  const { http } = await import('@/lib/api')
+  const res = await http.post('/admin/upload/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res?.data !== undefined ? res.data : res
+}
+
+/**
+ * Tải file âm thanh (.mp3, .m4a, .wav, .ogg, .aac) lên hệ thống
+ * @param {File} file 
+ * @param {string} folder 
+ * @returns {Promise<{ url: string }>}
+ */
+export async function uploadListeningAudio(file, folder = 'listening/audios') {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('folder', folder)
+
+  const { http } = await import('@/lib/api')
+  const res = await http.post('/admin/upload/file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res?.data !== undefined ? res.data : res
+}
+

@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
@@ -262,42 +263,36 @@ function GrammarPage() {
             />
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <select
+            <Select
               value={selectedTopic}
               onChange={(e) => { setSelectedTopic(e.target.value); setPage(1) }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              {topics.map((topic) => (
-                <option key={topic} value={topic}>
-                  {topic === 'Tất cả chủ điểm' ? 'Chủ điểm: Tất cả' : topic}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={topics.map((topic) => ({
+                value: topic,
+                label: topic === 'Tất cả chủ điểm' ? 'Chủ điểm: Tất cả' : topic,
+              }))}
+            />
 
-            <select
+            <Select
               value={selectedLevel}
               onChange={(e) => { setSelectedLevel(e.target.value); setPage(1) }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              {CEFR_LEVELS.map((lvl) => (
-                <option key={lvl} value={lvl}>
-                  {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : `Cấp độ ${lvl}`}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-38 shrink-0"
+              options={CEFR_LEVELS.map((lvl) => ({
+                value: lvl,
+                label: lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : `Cấp độ ${lvl}`,
+              }))}
+            />
 
             {activeTab !== 'trash' && (
-              <select
+              <Select
                 value={selectedStatus}
                 onChange={(e) => { setSelectedStatus(e.target.value); setPage(1) }}
-                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                size="sm"
+                containerClassName="w-36 shrink-0"
+                options={STATUS_OPTIONS}
+              />
             )}
 
             <Button

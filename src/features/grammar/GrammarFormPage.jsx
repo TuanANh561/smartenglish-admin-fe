@@ -11,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -122,77 +123,10 @@ function GrammarFormPage() {
       .finally(() => setIsLoading(false))
   }, [id, isEditing])
 
-  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
-  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
 
-  useEffect(() => {
-    setCustomHeader({
-      backLink: '/app/hoc-lieu/ngu-phap',
-      backText: 'Quay lại Ngữ pháp',
-      title: isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài học ngữ pháp mới',
-      subtitle: `Quản lý học liệu / Ngữ pháp / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
-      actions: (
-        <div className="flex items-center gap-2">
-          <Link
-            to="/app/hoc-lieu/ngu-phap"
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
-          >
-            Hủy bỏ
-          </Link>
-          <button
-            type="submit"
-            form="grammar-form"
-            disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
-          >
-            <Save size={14} />
-            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
-          </button>
-        </div>
-      ),
-    })
-
-    return () => {
-      clearCustomHeader()
-    }
-  }, [isEditing, editTitle, form.title, isSaving, setCustomHeader, clearCustomHeader])
-
-  const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
-
-  const handleAddExample = () => {
-    setForm((prev) => ({
-      ...prev,
-      examples: [...prev.examples, { en: '', vi: '' }],
-    }))
-  }
-
-  const handleUpdateExample = (idx, field, val) => {
-    setForm((prev) => {
-      const nextEx = [...prev.examples]
-      nextEx[idx] = { ...nextEx[idx], [field]: val }
-      return { ...prev, examples: nextEx }
-    })
-  }
-
-  const handleRemoveExample = (idx) => {
-    setForm((prev) => ({
-      ...prev,
-      examples: prev.examples.filter((_, i) => i !== idx),
-    }))
-  }
-
-  const addQuestion = () => {
-    if (questions.length >= 10) {
-      toast.error('Tối đa 10 câu hỏi bài tập cho bài học này')
-      return
-    }
-    const newIdx = questions.length
-    setQuestions((prev) => [...prev, { ...EMPTY_QUESTION }])
-    setOpenQuestionIdx(newIdx)
-  }
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     if (!form.title.trim()) {
       toast.error('Vui lòng nhập tên bài học ngữ pháp')
       return
@@ -239,15 +173,86 @@ function GrammarFormPage() {
     }
   }
 
+  useCtrlSave(handleSave, !isSaving)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/ngu-phap',
+      backText: 'Quay lại Ngữ pháp',
+      title: isEditing ? `Chỉnh sửa: "${editTitle || form.title}"` : 'Thêm bài học ngữ pháp mới',
+      subtitle: `Quản lý học liệu / Ngữ pháp / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/ngu-phap"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <Button
+            type="submit"
+            form="grammar-form"
+            loading={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu bài học ngữ pháp (Ctrl + S)"
+          >
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
+        </div>
+      ),
+    })
+return () => {
+      clearCustomHeader()
+    }
+  }, [isEditing, editTitle, form.title, isSaving, setCustomHeader, clearCustomHeader])
+
+  const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
+
+  const handleAddExample = () => {
+    setForm((prev) => ({
+      ...prev,
+      examples: [...prev.examples, { en: '', vi: '' }],
+    }))
+  }
+
+  const handleUpdateExample = (idx, field, val) => {
+    setForm((prev) => {
+      const nextEx = [...prev.examples]
+      nextEx[idx] = { ...nextEx[idx], [field]: val }
+      return { ...prev, examples: nextEx }
+    })
+  }
+
+  const handleRemoveExample = (idx) => {
+    setForm((prev) => ({
+      ...prev,
+      examples: prev.examples.filter((_, i) => i !== idx),
+    }))
+  }
+
+  const addQuestion = () => {
+    if (questions.length >= 10) {
+      toast.error('Tối đa 10 câu hỏi bài tập cho bài học này')
+      return
+    }
+    const newIdx = questions.length
+    setQuestions((prev) => [...prev, { ...EMPTY_QUESTION }])
+    setOpenQuestionIdx(newIdx)
+  }
+
+
   if (isLoading) {
-    return (
+return (
       <div className="flex h-96 items-center justify-center">
         <LoadingSpinner text="Đang tải dữ liệu bài học ngữ pháp..." />
       </div>
     )
   }
-
-  return (
+return (
     <div className="min-h-screen bg-slate-50/50 pb-12 pt-2">
       {/* ── Body Form ── */}
       <form id="grammar-form" onSubmit={handleSave}>

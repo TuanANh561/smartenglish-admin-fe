@@ -13,10 +13,12 @@ import {
   Trash2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 import { useTopbarStore } from '@/store/topbarStore'
 import {
@@ -49,6 +51,7 @@ const EMPTY_VOCAB = {
 // ── Accordion Question Card ─────────────────────────────────────────────────
 function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove }) {
   const hasContent = question.question?.trim()
+
   return (
     <div className={`rounded-2xl border transition-all ${isOpen ? 'border-brand-300 bg-white shadow-md' : 'border-slate-200 bg-slate-50/60 hover:border-slate-300'}`}>
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" onClick={onToggle}>
@@ -191,15 +194,16 @@ function ReadingFormPage() {
           >
             Hủy bỏ
           </Link>
-          <button
+          <Button
             type="submit"
             form="reading-form"
-            disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+            loading={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu bài đọc (Ctrl + S)"
           >
-            <Save size={14} />
-            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài đọc'}
-          </button>
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
         </div>
       ),
     })
@@ -314,7 +318,7 @@ function ReadingFormPage() {
   }
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     if (!form.titleEn.trim()) {
       toast.error('Vui lòng nhập tiêu đề tiếng Anh cho bài đọc')
       return
@@ -379,6 +383,8 @@ function ReadingFormPage() {
       setIsSaving(false)
     }
   }
+
+  useCtrlSave(handleSave, !isSaving)
 
   if (isLoading) {
     return (

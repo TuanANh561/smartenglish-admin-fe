@@ -1,5 +1,6 @@
 import { ArrowLeft, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const STATUS_OPTIONS = [
@@ -57,46 +58,38 @@ export default function ReadingToolbar({
       {/* Cụm bộ lọc và nút hành động trên 1 hàng */}
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Chủ đề */}
-        <select
+        <Select
           value={selectedTopic}
           onChange={(e) => onTopicChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-        >
-          <option value="Tất cả chủ đề">Chủ đề: Tất cả</option>
-          {topics.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-40 shrink-0"
+          options={[
+            { value: 'Tất cả chủ đề', label: 'Chủ đề: Tất cả' },
+            ...topics.map((t) => ({ value: t, label: t })),
+          ]}
+        />
 
         {/* Cấp độ CEFR */}
-        <select
+        <Select
           value={selectedLevel}
           onChange={(e) => onLevelChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-        >
-          <option value="Tất cả">Cấp độ: Tất cả</option>
-          {CEFR_LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-38 shrink-0"
+          options={[
+            { value: 'Tất cả', label: 'Cấp độ: Tất cả' },
+            ...CEFR_LEVELS.map((l) => ({ value: l, label: `Cấp độ ${l}` })),
+          ]}
+        />
 
         {/* Trạng thái - Chỉ hiện khi không ở thùng rác */}
         {!trashView && (
-          <select
+          <Select
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-36 shrink-0"
+            options={STATUS_OPTIONS}
+          />
         )}
 
         {/* Nút Xóa lọc nếu có */}
