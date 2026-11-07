@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { ArrowLeft, CheckCheck, Plus, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { STATUS_FILTERS } from './aiContentConstants'
@@ -40,40 +41,46 @@ export default function AiContentToolbar({
         {/* Right: Bộ lọc dropdown & Các nút thao tác */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Lọc Dạng bài / Loại nội dung */}
-          <select
+          <Select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            <option value="all">Dạng bài: Tất cả</option>
-            <option value="reading">Bài đọc hiểu</option>
-            <option value="quiz">Bài kiểm tra (Quiz)</option>
-            <option value="toeic">TOEIC & Điền từ</option>
-          </select>
+            size="sm"
+            containerClassName="w-44 shrink-0"
+            options={[
+              { value: 'all', label: 'Dạng bài: Tất cả' },
+              { value: 'grammar', label: 'Ngữ pháp (Grammar)' },
+              { value: 'vocab', label: 'Từ vựng (Vocab)' },
+              { value: 'toeic', label: 'TOEIC (Part 5/6/7)' },
+              { value: 'placement', label: 'Đầu vào (Placement)' },
+              { value: 'reading', label: 'Bài đọc hiểu' },
+              { value: 'quiz', label: 'Quiz tổng hợp' },
+            ]}
+          />
 
           {/* Lọc Trạng thái kiểm duyệt */}
-          <select
+          <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            {STATUS_FILTERS.map((filter) => (
-              <option key={filter.value} value={filter.value}>
-                {filter.value === 'all' ? 'Trạng thái: Tất cả' : filter.label}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-38 shrink-0"
+            options={STATUS_FILTERS.map((filter) => ({
+              value: filter.value,
+              label: filter.value === 'all' ? 'Trạng thái: Tất cả' : filter.label,
+            }))}
+          />
 
           {/* Lọc Nguồn / Tác giả */}
-          <select
+          <Select
             value={authorFilter}
             onChange={(e) => setAuthorFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            <option value="all">Nguồn: Tất cả</option>
-            <option value="mine">Của tôi</option>
-            <option value="others">Tác giả khác</option>
-          </select>
+            size="sm"
+            containerClassName="w-36 shrink-0"
+            options={[
+              { value: 'all', label: 'Nguồn: Tất cả' },
+              { value: 'mine', label: 'Của tôi' },
+              { value: 'others', label: 'Tác giả khác' },
+            ]}
+          />
 
           {/* Nút Làm mới / Tải lại */}
           {onReload && (

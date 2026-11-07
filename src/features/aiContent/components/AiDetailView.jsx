@@ -1,18 +1,31 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ArchiveRestore,
   ArrowLeft,
   BookOpen,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  ExternalLink,
+  GraduationCap,
+  Layers,
   Pencil,
+  SpellCheck,
   Trash2,
   X,
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import { confidenceTone, STATUS_BADGE } from './aiContentConstants'
+import {
+  confidenceTone,
+  STATUS_BADGE,
+  TYPE_ICON,
+  TYPE_LABELS,
+  mapAiTypeToExamCategory,
+  EXAM_CATEGORY_NAMES,
+} from './aiContentConstants'
 
 export default function AiDetailView({
   item,
@@ -34,18 +47,15 @@ export default function AiDetailView({
     return idx === q.correctAnswer.charCodeAt(0) - 'A'.charCodeAt(0)
   }
 
+  const Icon = TYPE_ICON[item.type] || ClipboardList
+  const examCat = mapAiTypeToExamCategory(item.type)
+  const examCatLabel = EXAM_CATEGORY_NAMES[examCat] || 'Tổng hợp'
+  const isApproved = item.status === 'APPROVED'
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-navy-700 cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          Quay lại
-        </button>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={STATUS_BADGE[item.status]?.tone ?? 'info'}>
             {STATUS_BADGE[item.status]?.label ?? item.status}
@@ -57,7 +67,23 @@ export default function AiDetailView({
           ) : (
             <Badge tone="info">Chỉ xem</Badge>
           )}
+
+          {isApproved && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+              <CheckCircle2 size={13} className="text-emerald-600" />
+              Đã xuất bản vào Ngân hàng Quiz: <strong>{examCatLabel}</strong>
+            </span>
+          )}
         </div>
+
+        {isApproved && (
+          <Link
+            to="/quiz"
+            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+          >
+            Mở Ngân hàng Đề thi & Quiz <ExternalLink size={13} />
+          </Link>
+        )}
       </div>
 
       {/* Title bar */}
@@ -65,12 +91,12 @@ export default function AiDetailView({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
-              {item.type === 'reading' ? <BookOpen size={22} /> : <ClipboardList size={22} />}
+              <Icon size={22} />
             </span>
             <div>
               <h2 className="text-lg font-bold text-navy-700">{item.title}</h2>
               <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                {item.type === 'reading' ? 'Bài đọc' : 'Bài kiểm tra'} · Cấp {item.level}
+                {TYPE_LABELS[item.type] || item.type} · Cấp độ {item.level} · {questions.length} câu hỏi
               </p>
             </div>
           </div>
@@ -88,8 +114,8 @@ export default function AiDetailView({
                     </Button>
                   )}
                   {(item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') && (
-                    <Button size="sm" onClick={onApprove}>
-                      Duyệt
+                    <Button size="sm" onClick={onApprove} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      Phê duyệt & Xuất bản
                     </Button>
                   )}
                   {item.status === 'PENDING_REVIEW' && (
@@ -103,7 +129,7 @@ export default function AiDetailView({
                       onClick={onRevoke}
                       className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 cursor-pointer"
                     >
-                      ↩ Thu hồi
+                      ↩ Thu hồi xuất bản
                     </button>
                   )}
                   <Button size="sm" variant="danger" icon={Trash2} onClick={onDelete}>
@@ -120,11 +146,16 @@ export default function AiDetailView({
         {/* Content — fixed, scrollable */}
         <div className="lg:col-span-2">
           <div className="sticky top-4 rounded-xl border border-line bg-white shadow-sm">
-            <div className="border-b border-line px-5 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Nội dung</p>
+            <div className="border-b border-line px-5 py-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                {item.type === 'reading' || item.type.includes('toeic_part_6') || item.type.includes('toeic_part_7')
+                  ? 'Đoạn văn đọc hiểu'
+                  : 'Ngữ cảnh bài kiểm tra'}
+              </p>
+              <span className="text-[11px] text-slate-400 font-medium">CEFR {item.level}</span>
             </div>
             <div className="max-h-[480px] overflow-y-auto px-5 py-4">
-              <p className="text-sm leading-relaxed text-ink whitespace-pre-wrap">
+              <p className="text-sm leading-relaxed text-ink whitespace-pre-wrap font-sans">
                 {item.content || item.definition || '—'}
               </p>
             </div>
@@ -142,7 +173,7 @@ export default function AiDetailView({
               {/* Question header */}
               <div className="flex items-center justify-between border-b border-line px-5 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Câu hỏi
+                  Câu hỏi trắc nghiệm
                 </p>
                 <Badge>
                   {questionIndex + 1} / {questions.length}
@@ -161,7 +192,7 @@ export default function AiDetailView({
 
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Tùy chọn trả lời:
+                    Lựa chọn đáp án:
                   </p>
                   {q.options?.map((opt, idx) => {
                     const letter = String.fromCharCode(65 + idx)
@@ -172,23 +203,23 @@ export default function AiDetailView({
                         className={[
                           'w-full rounded-lg border-2 p-3 text-sm transition-colors',
                           correct
-                            ? 'border-green-500 bg-green-50 font-semibold text-green-700'
+                            ? 'border-emerald-500 bg-emerald-50/70 font-semibold text-emerald-800'
                             : 'border-line bg-white text-ink',
                         ].join(' ')}
                       >
                         <span className="font-semibold">{letter}.</span> {opt}
-                        {correct && <span className="ml-2 text-xs">✓ Đúng</span>}
+                        {correct && <span className="ml-2 text-xs text-emerald-600 font-bold">✓ Đáp án đúng</span>}
                       </div>
                     )
                   })}
                 </div>
 
                 {q.explanationVi && (
-                  <div className="rounded-lg bg-blue-50 p-3">
+                  <div className="rounded-lg bg-blue-50/80 border border-blue-200/80 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                      💡 Giải thích:
+                      💡 Giải thích chi tiết (Song ngữ):
                     </p>
-                    <p className="mt-1.5 text-sm text-blue-900">{q.explanationVi}</p>
+                    <p className="mt-1 text-xs text-blue-900 leading-relaxed">{q.explanationVi}</p>
                   </div>
                 )}
               </div>

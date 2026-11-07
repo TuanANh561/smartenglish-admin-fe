@@ -5,27 +5,25 @@ import {
   Mic,
   ShieldCheck,
   Activity,
-  Plus,
-  Trash2,
-  Eye,
-  EyeOff,
   RotateCcw,
   Save,
   CheckCircle2,
   ExternalLink,
-  Sparkles,
   Zap,
   Check,
-  AlertCircle,
   Lock,
   Unlock,
   Clock,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import Card from '@/components/ui/Card'
-import Modal from '@/components/ui/Modal'
 import SudoUnlockModal from '@/components/ui/SudoUnlockModal'
+import AiKeyPoolCard from './components/AiKeyPoolCard'
+import AiAddKeyModal from './components/AiAddKeyModal'
+import AiQuotaPolicyCard from './components/AiQuotaPolicyCard'
 import { useSudoMode } from '@/hooks/useSudoMode'
 import { claimAppAudio, releaseAppAudio, stopAllAppAudio } from '@/lib/appAudioCoordinator'
 import { api } from '@/lib/api'
@@ -53,6 +51,7 @@ export default function AiConfigPage() {
   const [activeTab, setActiveTab] = useState('models') // 'models' | 'routing' | 'speech' | 'quotas'
   const [showKeyMap, setShowKeyMap] = useState({})
   const [isPinging, setIsPinging] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [pingResult, setPingResult] = useState(null)
   const [isAddKeyModalOpen, setIsAddKeyModalOpen] = useState(false)
   const [isTestingKey, setIsTestingKey] = useState(null) // keyId being tested
@@ -79,6 +78,8 @@ export default function AiConfigPage() {
   })
   const [showModalKey, setShowModalKey] = useState(false)
   const [, setIsPlayingAudio] = useState(false)
+
+
 
   // 1. Tải cấu hình từ Backend khi mở trang
   useEffect(() => {
@@ -120,6 +121,7 @@ export default function AiConfigPage() {
   // 2. Lưu cài đặt
   const handleSave = async () => {
     requireSudo(async () => {
+      setIsSaving(true)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
 
@@ -139,12 +141,18 @@ export default function AiConfigPage() {
           console.warn('Đồng bộ backend không bắt buộc:', e)
         }
 
-        toast.success('Đã lưu cấu hình AI thành công!', { icon: '✨' })
-      } catch {
+        toast.success('Đã lưu cấu hình AI thành công!')
+      } catch (e) {
+        console.error(e)
         toast.error('Lỗi khi lưu cấu hình!')
+      } finally {
+        setIsSaving(false)
       }
     })
   }
+
+  // Phím tắt Ctrl + S lưu cấu hình AI
+  useCtrlSave(handleSave, !isPinging)
 
   // 3. Khôi phục mặc định
   const handleReset = () => {
@@ -213,7 +221,7 @@ export default function AiConfigPage() {
       })
       const data = res?.data || res
       const latency = data?.latencyMs || 150
-      toast.success(`⚡ Khóa "${k.label}" hoạt động tốt! Độ trễ: ${latency}ms`)
+      toast.success(`Khóa "${k.label}" hoạt động tốt! Độ trễ: ${latency}ms`)
       setConfig((prev) => ({
         ...prev,
         apiKeyPool: prev.apiKeyPool.map((item) =>
@@ -221,7 +229,7 @@ export default function AiConfigPage() {
         ),
       }))
     } catch {
-      toast.success(`⚡ Khóa "${k.label}" phản hồi tốt (~180ms)`)
+      toast.success(`Khóa "${k.label}" phản hồi tốt (~180ms)`)
     } finally {
       setIsTestingKey(null)
     }
@@ -289,7 +297,7 @@ export default function AiConfigPage() {
       }
     })
 
-    toast.success(`✨ Đã thêm khóa "${newKeyData.label}" thành công!`)
+    toast.success(`Đã thêm khóa "${newKeyData.label}" thành công!`)
     setIsAddKeyModalOpen(false)
     setNewKeyData({
       provider: 'groq',
@@ -304,6 +312,7 @@ export default function AiConfigPage() {
   // 7. Xóa khóa
   const handleDeleteKey = async (keyId) => {
     requireSudo(async () => {
+      setIsSaving(true)
       if (config.apiKeyPool.length <= 1) {
         toast.error('Hệ thống yêu cầu duy trì ít nhất 1 khóa kết nối!')
         return
@@ -326,6 +335,7 @@ export default function AiConfigPage() {
   // 8. Đặt khóa làm chạy chính
   const handleSetActiveKey = async (keyRecord) => {
     requireSudo(async () => {
+      setIsSaving(true)
       try {
         await api.post(ENDPOINTS.aiConfig.activateKey, { path: { id: keyRecord.id } })
       } catch (e) {
@@ -389,7 +399,7 @@ export default function AiConfigPage() {
   const activeKeyRecord = config.apiKeyPool.find((k) => k.status === 'ACTIVE') || config.apiKeyPool[0]
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Sudo Unlock Modal */}
       <SudoUnlockModal
         isOpen={isSudoModalOpen}
@@ -427,14 +437,18 @@ export default function AiConfigPage() {
           >
             Kiểm tra kết nối
           </Button>
-          <button
+          <Button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-2xs cursor-pointer"
+            loading={isSaving}
+            disabled={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu cấu hình AI (Ctrl + S)"
+            className="rounded-xl px-4 py-2 text-xs font-semibold shadow-2xs"
           >
-            <Save size={15} />
-            <span>Lưu thay đổi</span>
-          </button>
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
         </div>
       </div>
 
@@ -586,7 +600,8 @@ export default function AiConfigPage() {
         </button>
       </div>
 
-      {/* ─── TAB 1: NHÀ CUNG CẤP & KHÓA KẾT NỐI AI ─── */}
+      <div className="w-full min-h-[580px] transition-all space-y-6">
+{/* ─── TAB 1: NHÀ CUNG CẤP & KHÓA KẾT NỐI AI ─── */}
       {activeTab === 'models' && (
         <div className="space-y-6">
           {/* Card Nhà Cung Cấp Nổi Bật */}
@@ -649,115 +664,16 @@ export default function AiConfigPage() {
           </div>
 
           {/* Danh sách Khóa API kết nối */}
-          <Card className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <span>Khóa kết nối AI</span>
-                  <span className="rounded-full bg-slate-100 text-slate-700 text-[11px] px-2 py-0.5 font-semibold">
-                    {config.apiKeyPool.length} khóa
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Thêm khóa API cho Google Gemini, Groq hoặc OpenRouter để luân chuyển dự phòng khi cần.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => requireSudo(() => setIsAddKeyModalOpen(true))}
-                className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-3.5 py-2 text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs shrink-0"
-              >
-                <Plus size={14} />
-                <span>Thêm khóa AI</span>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {config.apiKeyPool.map((k) => {
-                const isRevealed = showKeyMap[k.id]
-                const isActive = k.status === 'ACTIVE'
-                const isTesting = isTestingKey === k.id
-
-                return (
-                  <div
-                    key={k.id}
-                    className={`rounded-xl border p-4 transition-all ${
-                      isActive ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                            {k.provider}
-                          </span>
-                          <span className="text-sm font-bold text-slate-900">{k.label}</span>
-                          <span
-                            className={`rounded px-2 py-0.5 text-[10px] font-bold ${
-                              isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {isActive ? 'ĐANG DÙNG' : 'DỰ PHÒNG'}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <code className="text-xs font-mono text-slate-600">
-                            {isRevealed ? k.keyMasked : `${k.keyMasked.slice(0, 6)}••••••••${k.keyMasked.slice(-4)}`}
-                          </code>
-                          <button
-                            type="button"
-                            onClick={() => setShowKeyMap((p) => ({ ...p, [k.id]: !p[k.id] }))}
-                            className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
-                            title={isRevealed ? 'Ẩn mã khóa' : 'Hiện mã khóa'}
-                          >
-                            {isRevealed ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                          <span className="text-[11px] text-slate-400 font-mono ml-2">
-                            Mô hình: {k.model || 'Tự động'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
-                        {k.lastLatencyMs && (
-                          <span className="text-[11px] text-emerald-600 font-bold font-mono">
-                            ⚡ {k.lastLatencyMs}ms
-                          </span>
-                        )}
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          icon={Activity}
-                          loading={isTesting}
-                          onClick={() => handleTestKey(k)}
-                          className="text-xs py-1 px-2.5"
-                        >
-                          Kiểm tra
-                        </Button>
-                        {!isActive && (
-                          <button
-                            type="button"
-                            onClick={() => handleSetActiveKey(k)}
-                            className="rounded-lg border border-slate-200 hover:bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
-                          >
-                            Dùng chính
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteKey(k.id)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                          title="Xóa khóa này"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </Card>
+          <AiKeyPoolCard
+            apiKeyPool={config.apiKeyPool}
+            showKeyMap={showKeyMap}
+            setShowKeyMap={setShowKeyMap}
+            isTestingKey={isTestingKey}
+            handleTestKey={handleTestKey}
+            handleSetActiveKey={handleSetActiveKey}
+            handleDeleteKey={handleDeleteKey}
+            onAddKeyClick={() => requireSudo(() => setIsAddKeyModalOpen(true))}
+          />
 
           {/* Danh mục Mô hình AI ưu tiên */}
           <Card className="p-6">
@@ -815,6 +731,7 @@ export default function AiConfigPage() {
                               type="button"
                               onClick={() => {
                                 requireSudo(async () => {
+      setIsSaving(true)
                                   setConfig((prev) => ({ ...prev, primaryModel: m.id, provider: m.providerId }))
                                   try {
                                     await api.put(ENDPOINTS.aiConfig.updateConfig, {
@@ -930,101 +847,188 @@ export default function AiConfigPage() {
 
       {/* ─── TAB 2: PHÂN BỔ THEO TÍNH NĂNG ─── */}
       {activeTab === 'routing' && (
-        <Card className="p-6 space-y-6">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Phân bổ Mô hình theo từng Tính năng</h3>
-            <p className="text-xs text-slate-500">
-              Chỉ định mô hình AI chuyên trách cho từng nghiệp vụ để đạt tốc độ phản hồi nhanh nhất và độ chuẩn xác học thuật cao nhất.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Task 1: Content Studio */}
-            <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Sinh Đề thi & Trắc nghiệm</h4>
-                  <span className="text-[11px] text-slate-400">Biên soạn bài tập và đề thi</span>
-                </div>
-                <select
-                  value={config.routing.contentStudio.model}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      routing: { ...prev.routing, contentStudio: { ...prev.routing.contentStudio, model: e.target.value } },
-                    }))
-                  }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
-                >
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng)</option>
-                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq - Nhanh)</option>
-                  <option value="deepseek/deepseek-chat">DeepSeek V3 (OpenRouter)</option>
-                  <option value="gemini-2.5-pro">Gemini 2.5 Pro (Chuyên sâu)</option>
-                </select>
-              </div>
-
-              <div className="text-xs text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span>Tự động duyệt khi đạt điểm:</span>
-                <span className="font-bold text-slate-800 font-mono">≥ {config.routing.contentStudio.autoApproveThreshold}%</span>
+        <div className="space-y-6 w-full">
+          {/* Header Card */}
+          <Card className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>Phân bổ Mô hình theo từng Tính năng Hệ thống</span>
+                  <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] px-2.5 py-0.5 font-bold">
+                    Điều phối động (Dynamic AI Router)
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Chỉ định mô hình AI chuyên trách cho từng nghiệp vụ để đạt tốc độ phản hồi nhanh nhất và độ chuẩn xác học thuật cao nhất.
+                </p>
               </div>
             </div>
 
-            {/* Task 2: PDF Smart Extractor */}
-            <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Bóc tách Từ vựng từ PDF</h4>
-                  <span className="text-[11px] text-slate-400">Đọc hiểu tài liệu tải lên</span>
+            {/* 3 Cột lớn tận dụng toàn bộ chiều ngang màn hình */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {/* Task 1: Content Studio */}
+              <div className="rounded-2xl border border-slate-200 p-5 space-y-4 bg-slate-50/40 hover:bg-white hover:border-brand-300 transition-all shadow-2xs">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 font-bold text-sm">
+                      📝
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">Sinh Đề thi & Trắc nghiệm</h4>
+                      <span className="text-[11px] text-slate-400">Content Studio & Quiz</span>
+                    </div>
+                  </div>
                 </div>
-                <select
-                  value={config.routing.pdfExtractor.model}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      routing: { ...prev.routing, pdfExtractor: { ...prev.routing.pdfExtractor, model: e.target.value } },
-                    }))
-                  }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
-                >
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Tốt nhất)</option>
-                  <option value="gemini-2.5-pro">Gemini 2.5 Pro (Tài liệu khó)</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                </select>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Mô hình AI chuyên trách:</label>
+                  <Select
+                    value={config.routing.contentStudio.model}
+                    onChange={(e) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        routing: { ...prev.routing, contentStudio: { ...prev.routing.contentStudio, model: e.target.value } },
+                      }))
+                    }
+                    size="sm"
+                    containerClassName="w-full"
+                    options={[
+                      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Khuyên dùng)' },
+                      { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Groq - Siêu nhanh)' },
+                      { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (OpenRouter)' },
+                      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Học thuật cao)' },
+                    ]}
+                  />
+                </div>
+
+                <div className="text-xs text-slate-600 pt-3 border-t border-slate-200/80 flex items-center justify-between">
+                  <span>Tự động xuất bản khi điểm:</span>
+                  <span className="font-bold text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    ≥ {config.routing.contentStudio.autoApproveThreshold}%
+                  </span>
+                </div>
               </div>
 
-              <div className="text-xs text-slate-600 pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span>Chế độ đọc:</span>
-                <span className="font-bold text-slate-800">Đa phương thức (Hình ảnh & Văn bản)</span>
+              {/* Task 2: PDF Smart Extractor */}
+              <div className="rounded-2xl border border-slate-200 p-5 space-y-4 bg-slate-50/40 hover:bg-white hover:border-brand-300 transition-all shadow-2xs">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold text-sm">
+                      📄
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">Bóc tách Từ vựng từ PDF</h4>
+                      <span className="text-[11px] text-slate-400">Multimodal OCR & Vision</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Mô hình AI chuyên trách:</label>
+                  <Select
+                    value={config.routing.pdfExtractor.model}
+                    onChange={(e) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        routing: { ...prev.routing, pdfExtractor: { ...prev.routing.pdfExtractor, model: e.target.value } },
+                      }))
+                    }
+                    size="sm"
+                    containerClassName="w-full"
+                    options={[
+                      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Tốt nhất cho PDF)' },
+                      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Tài liệu quét mờ)' },
+                      { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+                    ]}
+                  />
+                </div>
+
+                <div className="text-xs text-slate-600 pt-3 border-t border-slate-200/80 flex items-center justify-between">
+                  <span>Chế độ phân tích:</span>
+                  <span className="font-semibold text-slate-800">Đa phương thức (Hình ảnh + Chữ)</span>
+                </div>
+              </div>
+
+              {/* Task 3: Chấm điểm phát âm & Luyện nói */}
+              <div className="rounded-2xl border border-slate-200 p-5 space-y-4 bg-slate-50/40 hover:bg-white hover:border-brand-300 transition-all shadow-2xs">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm">
+                      🎙️
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">Luyện nói & Chấm phát âm</h4>
+                      <span className="text-[11px] text-slate-400">AI Speech Scoring Engine</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Động cơ nhận diện âm thanh:</label>
+                  <Select
+                    value={config.speechEngine.selectedVoice.startsWith('en-GB') ? 'british' : 'american'}
+                    onChange={() => {}}
+                    size="sm"
+                    containerClassName="w-full"
+                    options={[
+                      { value: 'american', label: 'Whisper AI + Web Speech (Chuẩn Mỹ US)' },
+                      { value: 'british', label: 'Whisper AI + Web Speech (Chuẩn Anh UK)' },
+                    ]}
+                  />
+                </div>
+
+                <div className="text-xs text-slate-600 pt-3 border-t border-slate-200/80 flex items-center justify-between">
+                  <span>Độ trễ trung bình:</span>
+                  <span className="font-bold text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    ~0.4s (Thời gian thực)
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Task 3: Teacher Cáo Chatbot */}
-            <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white md:col-span-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Gia sư ảo Teacher Cáo</h4>
-                  <span className="text-[11px] text-slate-400">Hội thoại và giải đáp 24/7</span>
+            {/* Gia sư ảo Teacher Cáo (Trải rộng toàn màn hình) */}
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 text-lg font-bold">
+                    🦊
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Gia sư ảo tương tác 24/7 (Teacher Cáo)</h4>
+                    <span className="text-[11px] text-slate-400">Trợ lý hội thoại giao tiếp và phản xạ song ngữ cho học viên</span>
+                  </div>
                 </div>
-                <select
-                  value={config.routing.teacherCaoChat.model}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      routing: { ...prev.routing, teacherCaoChat: { ...prev.routing.teacherCaoChat, model: e.target.value } },
-                    }))
-                  }
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs focus:outline-none cursor-pointer"
-                >
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Thân thiện, am hiểu tiếng Việt)</option>
-                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq - Phản xạ tức thì)</option>
-                  <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                </select>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs font-semibold text-slate-600">Mô hình phụ trách:</span>
+                  <Select
+                    value={config.routing.teacherCaoChat.model}
+                    onChange={(e) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        routing: { ...prev.routing, teacherCaoChat: { ...prev.routing.teacherCaoChat, model: e.target.value } },
+                      }))
+                    }
+                    size="sm"
+                    containerClassName="w-64"
+                    options={[
+                      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Thân thiện, am hiểu tiếng Việt)' },
+                      { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Groq - Phản xạ tức thì)' },
+                      { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (Tối ưu tài nguyên)' },
+                    ]}
+                  />
+                </div>
               </div>
 
-              <div className="text-xs text-slate-600 pt-2 border-t border-slate-100">
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Tính cách & Chỉ dẫn sư phạm cho Teacher Cáo:</label>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-bold text-slate-700">
+                    Tính cách & Chỉ dẫn sư phạm cho Teacher Cáo:
+                  </label>
+                  <span className="text-[10px] text-slate-400">Áp dụng cho toàn bộ phiên chat học tập của học viên</span>
+                </div>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={config.routing.teacherCaoChat.personaPrompt}
                   onChange={(e) =>
                     setConfig((prev) => ({
@@ -1032,12 +1036,67 @@ export default function AiConfigPage() {
                       routing: { ...prev.routing, teacherCaoChat: { ...prev.routing.teacherCaoChat, personaPrompt: e.target.value } },
                     }))
                   }
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-brand-400"
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 leading-relaxed focus:outline-none focus:border-brand-400 bg-slate-50/30 font-sans"
                 />
               </div>
             </div>
-          </div>
-        </Card>
+
+            {/* Bảng Ma trận Phân bổ & Tối ưu chi phí */}
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <h4 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                <span>Ma trận điều phối & Luân chuyển dự phòng (Failover Route)</span>
+              </h4>
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-4">Nghiệp vụ AI</th>
+                      <th className="py-2.5 px-4">Mô hình chính</th>
+                      <th className="py-2.5 px-4">Mô hình dự phòng</th>
+                      <th className="py-2.5 px-4">Tốc độ ước tính</th>
+                      <th className="py-2.5 px-4 text-right">Trạng thái Router</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="py-2.5 px-4 font-bold text-slate-900">Soạn Đề thi & Quiz</td>
+                      <td className="py-2.5 px-4 font-mono text-brand-600 font-semibold">{config.routing.contentStudio.model}</td>
+                      <td className="py-2.5 px-4 font-mono text-slate-500">llama-3.3-70b-versatile</td>
+                      <td className="py-2.5 px-4 text-emerald-700 font-medium">⚡ ~0.9s / đề</td>
+                      <td className="py-2.5 px-4 text-right">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          ● Hoạt động
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="py-2.5 px-4 font-bold text-slate-900">Bóc tách Từ vựng PDF</td>
+                      <td className="py-2.5 px-4 font-mono text-brand-600 font-semibold">{config.routing.pdfExtractor.model}</td>
+                      <td className="py-2.5 px-4 font-mono text-slate-500">gemini-2.5-pro</td>
+                      <td className="py-2.5 px-4 text-emerald-700 font-medium">⚡ ~1.8s / tài liệu</td>
+                      <td className="py-2.5 px-4 text-right">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          ● Hoạt động
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="py-2.5 px-4 font-bold text-slate-900">Gia sư Teacher Cáo</td>
+                      <td className="py-2.5 px-4 font-mono text-brand-600 font-semibold">{config.routing.teacherCaoChat.model}</td>
+                      <td className="py-2.5 px-4 font-mono text-slate-500">gemini-2.5-flash-lite</td>
+                      <td className="py-2.5 px-4 text-emerald-700 font-medium">⚡ ~0.6s / phản hồi</td>
+                      <td className="py-2.5 px-4 text-right">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          ● Hoạt động
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* ─── TAB 3: GIỌNG ĐỌC MẪU & LUYỆN NÓI ─── */}
@@ -1164,229 +1223,31 @@ export default function AiConfigPage() {
 
       {/* ─── TAB 4: GIỚI HẠN & TIẾT KIỆM CHI PHÍ ─── */}
       {activeTab === 'quotas' && (
-        <Card className="p-6 space-y-6">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Giới hạn Lượt gọi Hàng ngày theo Phân hạng Tài khoản</h3>
-            <p className="text-xs text-slate-500">
-              Kiểm soát số lượt gọi AI hàng ngày cho từng nhóm người dùng để đảm bảo hiệu năng và tối ưu chi phí vận hành.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 p-4 bg-white">
-              <label className="text-xs font-bold text-slate-800 block mb-1">Học viên Miễn phí (Free Tier)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Tài khoản trải nghiệm cơ bản</span>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs text-slate-600">Chatbot Teacher Cáo / ngày:</span>
-                  <input
-                    type="number"
-                    value={config.quotas.freeUserChatLimitPerDay}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        quotas: { ...prev.quotas, freeUserChatLimitPerDay: parseInt(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
-                  />
-                </div>
-                <div>
-                  <span className="text-xs text-slate-600">Lượt chấm phát âm / ngày:</span>
-                  <input
-                    type="number"
-                    value={config.quotas.freeUserSpeakingLimitPerDay}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        quotas: { ...prev.quotas, freeUserSpeakingLimitPerDay: parseInt(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-amber-200 bg-amber-50/20 p-4">
-              <label className="text-xs font-bold text-amber-900 block mb-1">Học viên VIP (Premium)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Đã nâng cấp gói học chuyên sâu</span>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs text-slate-600">Chatbot Teacher Cáo / ngày:</span>
-                  <input
-                    type="number"
-                    value={config.quotas.vipUserChatLimitPerDay}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        quotas: { ...prev.quotas, vipUserChatLimitPerDay: parseInt(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
-                  />
-                </div>
-                <div>
-                  <span className="text-xs text-slate-600">Lượt chấm phát âm / ngày:</span>
-                  <input
-                    type="number"
-                    value={config.quotas.vipUserSpeakingLimitPerDay}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        quotas: { ...prev.quotas, vipUserSpeakingLimitPerDay: parseInt(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-full mt-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 p-4 bg-white">
-              <label className="text-xs font-bold text-slate-800 block mb-1">Giảng viên (Teacher)</label>
-              <span className="text-[11px] text-slate-400 block mb-3">Soạn bài giảng và bộ câu hỏi lớp học</span>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs text-slate-600">Lượt sinh học liệu & bài thi / ngày:</span>
-                  <input
-                    type="number"
-                    value={config.quotas.teacherGenLimitPerDay}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        quotas: { ...prev.quotas, teacherGenLimitPerDay: parseInt(e.target.value) || 0 },
-                      }))
-                    }
-                    className="w-full mt-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-brand-400"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <AiQuotaPolicyCard
+          quotas={config.quotas}
+          onChangeQuota={(field, val) =>
+            setConfig((prev) => ({
+              ...prev,
+              quotas: { ...prev.quotas, [field]: val },
+            }))
+          }
+        />
       )}
 
+      </div>
+
       {/* ─── MODAL THÊM KHÓA AI MỚI ─── */}
-      <Modal
+      <AiAddKeyModal
         isOpen={isAddKeyModalOpen}
         onClose={() => setIsAddKeyModalOpen(false)}
-        title="Thêm khóa AI mới"
-        size="md"
-      >
-        <div className="space-y-4 py-2">
-          {/* Chọn nhà cung cấp */}
-          <div>
-            <label className="text-xs font-bold text-slate-800 block mb-1.5">
-              Nhà cung cấp AI *
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {AI_PROVIDERS.map((prov) => {
-                const isSelected = newKeyData.provider === prov.id
-                return (
-                  <button
-                    key={prov.id}
-                    type="button"
-                    onClick={() =>
-                      setNewKeyData((prev) => ({
-                        ...prev,
-                        provider: prov.id,
-                        model: prov.defaultModel,
-                      }))
-                    }
-                    className={`rounded-xl border p-2.5 text-left transition-all cursor-pointer flex items-center justify-between ${
-                      isSelected
-                        ? 'border-brand-500 bg-brand-50/40 ring-1 ring-brand-500 text-brand-900 font-bold'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <span className="text-xs block">{prov.name}</span>
-                      <span className="text-[10px] text-slate-400 font-normal block">{prov.badge}</span>
-                    </div>
-                    {isSelected && <Check size={14} className="text-brand-600 shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Nhãn gợi nhớ */}
-          <div>
-            <label className="text-xs font-bold text-slate-800 block mb-1">Tên gợi nhớ *</label>
-            <input
-              type="text"
-              placeholder={`VD: ${selectedProviderMeta.name} Chính`}
-              value={newKeyData.label}
-              onChange={(e) => setNewKeyData((p) => ({ ...p, label: e.target.value }))}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-400"
-            />
-          </div>
-
-          {/* Ô nhập mã API Key */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-bold text-slate-800">
-                Mã khóa API *
-              </label>
-              <a
-                href={selectedProviderMeta.keyUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1"
-              >
-                <span>Lấy Key tại {selectedProviderMeta.name}</span>
-                <ExternalLink size={11} />
-              </a>
-            </div>
-
-            <div className="relative">
-              <input
-                type={showModalKey ? 'text' : 'password'}
-                placeholder={`Dán mã khóa API tại đây (${selectedProviderMeta.keyPrefixHint})`}
-                value={newKeyData.apiKey}
-                onChange={(e) => setNewKeyData((p) => ({ ...p, apiKey: e.target.value }))}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-9 text-xs font-mono text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-400"
-              />
-              <button
-                type="button"
-                onClick={() => setShowModalKey((v) => !v)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                title={showModalKey ? 'Ẩn mã' : 'Hiện mã'}
-              >
-                {showModalKey ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-            <p className="mt-1 text-[11px] text-slate-400">
-              Mã khóa được mã hóa an toàn trên máy chủ. Hệ thống không bao giờ hiển thị toàn bộ mã khóa ra ngoài.
-            </p>
-          </div>
-
-          {/* Tùy chọn đặt làm khóa chính */}
-          <div className="pt-2 flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_active_check"
-              checked={newKeyData.isActive}
-              onChange={(e) => setNewKeyData((p) => ({ ...p, isActive: e.target.checked }))}
-              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
-            />
-            <label htmlFor="is_active_check" className="text-xs font-semibold text-slate-700 cursor-pointer">
-              Đặt khóa này làm Nhà cung cấp AI chạy chính ngay sau khi lưu
-            </label>
-          </div>
-
-          {/* Nút hành động */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-            <Button variant="secondary" size="sm" onClick={() => setIsAddKeyModalOpen(false)}>
-              Hủy
-            </Button>
-            <Button size="sm" onClick={handleAddKey}>
-              Lưu khóa kết nối
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        newKeyData={newKeyData}
+        setNewKeyData={setNewKeyData}
+        handleAddKey={handleAddKey}
+        aiProviders={AI_PROVIDERS}
+        selectedProviderMeta={selectedProviderMeta}
+        showModalKey={showModalKey}
+        setShowModalKey={setShowModalKey}
+      />
     </div>
   )
 }

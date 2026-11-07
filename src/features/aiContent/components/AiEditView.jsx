@@ -1,3 +1,4 @@
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import { useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Save } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -40,20 +41,15 @@ export default function AiEditView({ item, onBack, onSave }) {
     }
   }
 
+  useCtrlSave(handleSave, !saving)
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-navy-700 cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          Quay lại
-        </button>
-        <Button icon={Save} onClick={handleSave} loading={saving} disabled={saving}>
-          Lưu thay đổi
+        
+        <Button icon={Save} onClick={handleSave} loading={saving} disabled={saving} size="sm" title="Lưu (Ctrl + S)">
+          {saving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
         </Button>
       </div>
 

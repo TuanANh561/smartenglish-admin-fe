@@ -1,4 +1,6 @@
 import { http } from '@/lib/api'
+import { createExam } from '../quiz/examApi'
+import { mapAiTypeToExamCategory } from './components/aiContentConstants'
 
 // Key lưu trữ dự phòng trong localStorage khi offline hoặc chưa kịp sync
 const STORAGE_KEY = 'smartenglish_ai_content_v1'
