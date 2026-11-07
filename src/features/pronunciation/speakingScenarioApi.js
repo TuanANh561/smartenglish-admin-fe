@@ -46,8 +46,20 @@ export async function getSpeakingScenarios(params = {}) {
   if (params.search?.trim()) {
     cleanParams.search = params.search.trim()
   }
+  if (params.trash !== undefined) {
+    cleanParams.trash = params.trash
+  }
 
   return await callApiWithFallback('get', '/ai-practice/admin/scenarios', { params: cleanParams })
+}
+
+/**
+ * Lấy số lượng kịch bản trong thùng rác
+ */
+export async function getSpeakingScenarioTrashCount() {
+  const res = await callApiWithFallback('get', '/ai-practice/admin/scenarios/trash/count')
+  const count = res?.data !== undefined ? res.data : res
+  return typeof count === 'number' ? count : Number(count) || 0
 }
 
 /**
@@ -72,10 +84,24 @@ export async function updateSpeakingScenario(id, data) {
 }
 
 /**
- * Xóa kịch bản luyện nói
+ * Chuyển kịch bản vào thùng rác (xóa mềm)
  */
 export async function deleteSpeakingScenario(id) {
   return await callApiWithFallback('delete', `/ai-practice/admin/scenarios/${id}`)
+}
+
+/**
+ * Khôi phục kịch bản từ thùng rác
+ */
+export async function restoreSpeakingScenario(id) {
+  return await callApiWithFallback('patch', `/ai-practice/admin/scenarios/${id}/restore`)
+}
+
+/**
+ * Xóa vĩnh viễn kịch bản khỏi CSDL
+ */
+export async function permanentDeleteSpeakingScenario(id) {
+  return await callApiWithFallback('delete', `/ai-practice/admin/scenarios/${id}/permanent`)
 }
 
 /**
@@ -100,6 +126,7 @@ export async function chatRoleplayTurn(scenarioId, userText, sessionId = null) {
       scenarioId,
       sessionId,
       userText,
+      userMessage: userText,
     },
   })
 }

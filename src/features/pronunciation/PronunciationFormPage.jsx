@@ -15,6 +15,7 @@ import {
   Volume2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -101,7 +102,7 @@ function PronunciationFormPage() {
     const unregister = registerAudioStopHandler(() => {
       setPlayingWordIdx(null)
     })
-    return () => {
+return () => {
       unregister()
       stopAudio()
     }
@@ -126,6 +127,49 @@ function PronunciationFormPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [playingWordIdx, setPlayingWordIdx] = useState(null)
 
+
+
+  const handleSave = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (!form.title.trim()) {
+      toast.error('Vui lòng nhập tên bài học phát âm')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const payload = {
+        title:               form.title,
+        ipaSymbol:           form.ipaSymbol,
+        category:            form.category,
+        cefrLevel:           form.level,
+        status:              form.status,
+        aiMinScoreThreshold: Number(form.aiMinScoreThreshold) || 85,
+        description:         form.description,
+        mouthShapeGuide:     form.mouthShapeGuide,
+        sampleWords:         form.sampleWords,
+        sampleSentences:     form.sampleSentences,
+        authorName:          user?.fullName || user?.email || '',
+        authorEmail:         user?.email || '',
+      }
+
+      if (isEditing) {
+        await updatePronunciationLesson(id, payload)
+        toast.success(`Đã cập nhật bài học phát âm "${form.title}"`)
+      } else {
+        await createPronunciationLesson(payload)
+        toast.success(`Đã thêm bài phát âm mới "${form.title}"`)
+      }
+      navigate('/hoc-lieu/phat-am')
+    } catch (err) {
+      toast.error('Lỗi khi lưu bài phát âm: ' + err.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  useCtrlSave(handleSave, !isSaving)
+
   const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
   const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
 
@@ -143,15 +187,16 @@ function PronunciationFormPage() {
           >
             Hủy bỏ
           </Link>
-          <button
+          <Button
             type="submit"
             form="pronunciation-form"
-            disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+            loading={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu bài phát âm (Ctrl + S)"
           >
-            <Save size={14} />
-            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài học'}
-          </button>
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
         </div>
       ),
     })
@@ -224,44 +269,6 @@ function PronunciationFormPage() {
     setOpenQuestionIdx(newIdx)
   }
 
-  const handleSave = async (e) => {
-    e.preventDefault()
-    if (!form.title.trim()) {
-      toast.error('Vui lòng nhập tên bài học phát âm')
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      const payload = {
-        title:               form.title,
-        ipaSymbol:           form.ipaSymbol,
-        category:            form.category,
-        cefrLevel:           form.level,
-        status:              form.status,
-        aiMinScoreThreshold: Number(form.aiMinScoreThreshold) || 85,
-        description:         form.description,
-        mouthShapeGuide:     form.mouthShapeGuide,
-        sampleWords:         form.sampleWords,
-        sampleSentences:     form.sampleSentences,
-        authorName:          user?.fullName || user?.email || '',
-        authorEmail:         user?.email || '',
-      }
-
-      if (isEditing) {
-        await updatePronunciationLesson(id, payload)
-        toast.success(`Đã cập nhật bài học phát âm "${form.title}"`)
-      } else {
-        await createPronunciationLesson(payload)
-        toast.success(`Đã thêm bài phát âm mới "${form.title}"`)
-      }
-      navigate('/hoc-lieu/phat-am')
-    } catch (err) {
-      toast.error('Lỗi khi lưu bài phát âm: ' + err.message)
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   // Nếu đang tải dữ liệu chỉnh sửa, hiện loading
   if (isLoading) {
