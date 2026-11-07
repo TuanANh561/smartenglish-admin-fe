@@ -2,15 +2,14 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import { cn, formatPercent } from '@/lib/utils'
 
-// Mỗi chỉ số một màu nhấn riêng — vẫn trong palette design-system.md,
-// chỉ đổi cách phối để 4 thẻ không còn giống hệt nhau.
+// Mỗi chỉ số có icon màu nhận diện tinh tế trong bảng màu hệ thống
 const TONE_STYLES = {
-  brand: { icon: 'bg-brand-500/10 text-brand-500', accent: 'border-l-brand-500' },
-  navy: { icon: 'bg-navy-700/10 text-navy-700', accent: 'border-l-navy-700' },
-  success: { icon: 'bg-emerald-50 text-emerald-700', accent: 'border-l-emerald-600' },
-  gold: { icon: 'bg-amber-50 text-amber-700', accent: 'border-l-amber-500' },
-  indigo: { icon: 'bg-indigo-50 text-indigo-700', accent: 'border-l-indigo-600' },
-  purple: { icon: 'bg-purple-50 text-purple-700', accent: 'border-l-purple-600' },
+  brand: { icon: 'bg-brand-500/10 text-brand-500' },
+  navy: { icon: 'bg-navy-700/10 text-navy-700' },
+  success: { icon: 'bg-emerald-50 text-emerald-700' },
+  gold: { icon: 'bg-amber-50 text-amber-700' },
+  indigo: { icon: 'bg-indigo-50 text-indigo-700' },
+  purple: { icon: 'bg-purple-50 text-purple-700' },
 }
 
 function KpiCard({ icon: Icon, label, value, changePercent, tone = 'brand', subtitle }) {
@@ -18,12 +17,7 @@ function KpiCard({ icon: Icon, label, value, changePercent, tone = 'brand', subt
   const styles = TONE_STYLES[tone] || TONE_STYLES.brand
 
   return (
-    <Card
-      className={cn(
-        'border-l-[3px] transition-shadow hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)]',
-        styles.accent,
-      )}
-    >
+    <Card className="transition-all hover:border-slate-300 hover:shadow-[0_2px_8px_rgba(16,24,40,0.06)]">
       <div className="flex items-start justify-between">
         <span className={cn('rounded-lg p-2', styles.icon)}>
           <Icon size={18} strokeWidth={1.75} />
@@ -49,7 +43,9 @@ function KpiCard({ icon: Icon, label, value, changePercent, tone = 'brand', subt
         ) : null}
       </div>
       <p className="mt-3 text-xs font-medium text-ink-muted truncate" title={label}>{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-navy-800">{value}</p>
+      <p className="mt-1 text-2xl font-bold tracking-tight text-navy-800 truncate" title={String(value)}>
+        {value}
+      </p>
     </Card>
   )
 }

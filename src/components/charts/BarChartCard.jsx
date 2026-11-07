@@ -47,7 +47,12 @@ function BarChartCard({
   error = null,
   onRetry,
   className,
+  barSize,
+  maxBarSize = 52,
 }) {
+  // Tự động tính toán barSize tối ưu nếu không truyền vào: ít cột thì cột to dày dặn hơn
+  const computedBarSize = barSize ?? (data && data.length <= 6 ? 48 : data && data.length <= 10 ? 38 : undefined)
+
   return (
     <Card className={className}>
       <CardHeader title={title} description={description} action={action} />
@@ -60,12 +65,21 @@ function BarChartCard({
         <ChartEmpty />
       ) : (
         <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={data} margin={{ top: 28, right: 8, left: 0, bottom: 0 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 28, right: 12, left: 0, bottom: 0 }}
+            barCategoryGap={data.length <= 6 ? '25%' : '15%'}
+          >
             <CartesianGrid vertical={false} stroke={GRID_COLOR} strokeDasharray="3 3" />
             <XAxis dataKey={dataKeyX} tickLine={false} axisLine={false} tick={AXIS_TICK_STYLE} />
             <YAxis hide />
             <Tooltip content={<ChartTooltip formatter={valueFormatter} />} cursor={{ fill: 'transparent' }} />
-            <Bar dataKey={dataKeyY} radius={[6, 6, 0, 0]} maxBarSize={32}>
+            <Bar
+              dataKey={dataKeyY}
+              radius={[8, 8, 0, 0]}
+              barSize={computedBarSize}
+              maxBarSize={maxBarSize}
+            >
               {data.map((_, index) => (
                 <Cell key={index} fill={index === highlightIndex ? HIGHLIGHT_COLOR : IDLE_COLOR} />
               ))}

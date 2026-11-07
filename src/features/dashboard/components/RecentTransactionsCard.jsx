@@ -144,7 +144,7 @@ export default function RecentTransactionsCard({
         <div className="border-t border-line px-4 py-2.5 bg-slate-50/60 flex items-center justify-between text-[11px] text-slate-500">
           <div className="flex items-center gap-1.5">
             <ShieldCheck size={13} className="text-emerald-600" />
-            <span>Tự động gạch nợ SePay Napas 24/7</span>
+            <span>Tự động xác nhận giao dịch 24/7</span>
           </div>
           <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
             Trạng thái: 100% Thành công

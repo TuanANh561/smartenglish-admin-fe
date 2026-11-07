@@ -12,7 +12,7 @@ function AppShell({ children, actions }) {
           <div className="flex flex-col gap-5">{children}</div>
         </main>
         <footer className="shrink-0 border-t border-line py-3 text-center text-xs text-ink-muted">
-          © 2026 SmartEnglish AI — Trang quản trị nội bộ
+          © 2026 SmartEnglish AI • Nền tảng học tiếng Anh thông minh
         </footer>
       </div>
 

@@ -1,7 +1,23 @@
-import { forwardRef } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { forwardRef, useEffect, useId, useMemo, useRef, useState } from 'react'
+import React from 'react'
+import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+/**
+ * Helper trích xuất text hiển thị từ children của <option>
+ */
+function extractTextFromChildren(children) {
+  if (children === null || children === undefined) return ''
+  if (typeof children === 'string' || typeof children === 'number') return String(children)
+  if (Array.isArray(children)) return children.map(extractTextFromChildren).join('')
+  if (React.isValidElement(children)) return extractTextFromChildren(children.props.children)
+  return String(children)
+}
+
+/**
+ * Modern Custom Dropdown / Select Component for SmartEnglish
+ * Thay thế hoàn toàn popup native vuông vức của OS bằng menu bo cong rounded-2xl, shadow-xl sang trọng
+ */
 const Select = forwardRef(function Select(
   {
     label,
@@ -11,53 +27,234 @@ const Select = forwardRef(function Select(
     className,
     containerClassName,
     selectClassName,
-    id,
+    id: propId,
+    value: propValue,
+    defaultValue,
+    onChange,
+    onBlur,
+    options,
     children,
+    placeholder = 'Chọn một tùy chọn...',
+    align = 'left',
+    size = 'md', // 'sm' | 'md'
     ...props
   },
   ref,
 ) {
-  const hasLabelOrHint = Boolean(label || hint || error)
+  const generatedId = useId()
+  const id = propId || generatedId
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
 
-  const containerCls = hasLabelOrHint
-    ? cn('flex flex-col gap-1.5', containerClassName || (selectClassName ? className : ''))
-    : cn('relative w-full flex items-center', containerClassName)
+  // Parse options từ props.options hoặc từ props.children (<option>, <optgroup>)
+  const parsedOptions = useMemo(() => {
+    if (Array.isArray(options) && options.length > 0) {
+      return options.map((opt) =>
+        typeof opt === 'object' && opt !== null
+          ? {
+              value: String(opt.value !== undefined ? opt.value : ''),
+              label: opt.label !== undefined ? String(opt.label) : String(opt.value),
+              icon: opt.icon,
+              disabled: Boolean(opt.disabled),
+              isGroupHeader: Boolean(opt.isGroupHeader),
+            }
+          : { value: String(opt), label: String(opt), disabled: false },
+      )
+    }
 
-  const selectCls = cn(
-    'h-10 w-full appearance-none rounded-lg border border-line bg-white pl-3 pr-8 text-sm text-ink focus:border-brand-500 focus:outline-none disabled:bg-canvas disabled:text-ink-muted transition-colors',
-    error && 'border-[#B91C1C] focus:border-[#B91C1C]',
-    (!hasLabelOrHint || selectClassName) ? (selectClassName || className) : '',
+    const items = []
+    const parseChild = (child) => {
+      if (!React.isValidElement(child)) return
+      if (child.type === 'optgroup') {
+        if (child.props.label) {
+          items.push({
+            value: `__group_${child.props.label}`,
+            label: child.props.label,
+            isGroupHeader: true,
+            disabled: true,
+          })
+        }
+        React.Children.forEach(child.props.children, parseChild)
+      } else {
+        const text = extractTextFromChildren(child.props.children) || child.props.label || String(child.props.value || '')
+        items.push({
+          value: child.props.value !== undefined ? String(child.props.value) : '',
+          label: text,
+          disabled: Boolean(child.props.disabled),
+        })
+      }
+    }
+
+    React.Children.forEach(children, parseChild)
+    return items
+  }, [options, children])
+
+  // Quản lý internal value nếu uncontrolled
+  const [internalValue, setInternalValue] = useState(
+    defaultValue !== undefined ? String(defaultValue) : parsedOptions.find((o) => !o.isGroupHeader)?.value || '',
   )
 
+  const currentValue = propValue !== undefined ? String(propValue) : internalValue
+
+  // Tìm option đang được chọn (bỏ qua group header)
+  const selectedOption = useMemo(() => {
+    return parsedOptions.find((opt) => !opt.isGroupHeader && String(opt.value) === String(currentValue)) || null
+  }, [parsedOptions, currentValue])
+
+  // Xử lý click outside & phím Escape
+  useEffect(() => {
+    if (!isOpen) return
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false)
+        onBlur?.({ target: { name: props.name || id, value: currentValue } })
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        onBlur?.({ target: { name: props.name || id, value: currentValue } })
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onBlur, props.name, id, currentValue])
+
+  const handleSelect = (optValue) => {
+    if (disabled) return
+    setInternalValue(optValue)
+    setIsOpen(false)
+
+    if (onChange) {
+      // Giả lập native event object để tương thích 100% với e.target.value
+      const syntheticEvent = {
+        target: {
+          value: optValue,
+          name: props.name || id,
+          id,
+        },
+        currentTarget: {
+          value: optValue,
+          name: props.name || id,
+          id,
+        },
+        value: optValue,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+      }
+      onChange(syntheticEvent)
+    }
+  }
+
+  const hasLabelOrHint = Boolean(label || hint || error)
+
   return (
-    <div className={containerCls}>
+    <div
+      ref={dropdownRef}
+      className={cn(
+        hasLabelOrHint ? 'flex flex-col gap-1.5' : 'relative',
+        containerClassName,
+      )}
+    >
       {label && (
         <label htmlFor={id} className="text-sm font-medium text-ink">
           {label}
         </label>
       )}
-      <div className="relative w-full flex items-center">
-        <select
+
+      <div className="relative w-full">
+        {/* Hidden input để hỗ trợ native form submission / ref */}
+        <input
+          type="hidden"
           ref={ref}
+          name={props.name}
           id={id}
+          value={currentValue}
           disabled={disabled}
-          className={selectCls}
-          {...props}
-        >
-          {props.options
-            ? props.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))
-            : children}
-        </select>
-        <ChevronDown
-          size={15}
-          strokeWidth={2}
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted shrink-0"
         />
+
+        {/* Trigger Button */}
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setIsOpen((prev) => !prev)}
+          title={selectedOption ? selectedOption.label : placeholder}
+          className={cn(
+            'flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white text-left font-medium text-slate-700 shadow-2xs transition-all cursor-pointer select-none',
+            size === 'sm' ? 'h-9 px-3 text-xs' : 'h-10 px-3.5 text-sm',
+            isOpen ? 'border-brand-500 ring-2 ring-brand-200/60' : 'hover:border-slate-300 hover:bg-slate-50/50',
+            disabled && 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-75',
+            error && 'border-[#B91C1C] focus:border-[#B91C1C] ring-1 ring-red-300/50',
+            selectClassName || className,
+          )}
+        >
+          <span className="truncate">
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronDown
+            size={size === 'sm' ? 14 : 16}
+            strokeWidth={2}
+            className={cn('text-slate-400 shrink-0 transition-transform duration-200', isOpen && 'rotate-180 text-brand-600')}
+          />
+        </button>
+
+        {/* Custom Popover Dropdown Menu */}
+        {isOpen && (
+          <div
+            className={cn(
+              'absolute z-50 mt-1.5 min-w-full min-w-[160px] w-max max-w-sm rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-xl shadow-slate-200/60 max-h-64 overflow-y-auto select-scrollbar pr-1 transition-all duration-150 animate-in fade-in-0 zoom-in-95',
+              align === 'right' ? 'right-0' : 'left-0',
+            )}
+          >
+            {parsedOptions.length === 0 ? (
+              <div className="py-2 px-3 text-xs text-slate-400 italic text-center">
+                Không có tùy chọn nào
+              </div>
+            ) : (
+              parsedOptions.map((opt) => {
+                if (opt.isGroupHeader) {
+                  return (
+                    <div
+                      key={opt.value}
+                      className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 select-none"
+                    >
+                      {opt.label}
+                    </div>
+                  )
+                }
+
+                const isSelected = String(opt.value) === String(currentValue)
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={opt.disabled}
+                    onClick={() => handleSelect(opt.value)}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-2.5 rounded-xl px-3 py-2 transition-all cursor-pointer text-left select-none whitespace-nowrap',
+                      size === 'sm' ? 'text-xs' : 'text-sm',
+                      isSelected
+                        ? 'bg-brand-50 text-brand-600 font-semibold shadow-2xs'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-navy-900',
+                      opt.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent',
+                    )}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {isSelected && (
+                      <Check size={size === 'sm' ? 13 : 15} strokeWidth={2.5} className="text-brand-600 shrink-0 ml-1.5" />
+                    )}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        )}
       </div>
+
       {error ? (
         <span className="text-xs text-[#B91C1C]">{error}</span>
       ) : (

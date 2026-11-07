@@ -1,9 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, lazy, Suspense } from 'react'
 import {
   Activity,
   BarChart3,
   CheckCircle2,
-  Coins,
   Crown,
   PieChart,
   Sparkles,
@@ -20,6 +19,11 @@ import KpiCard from '@/features/dashboard/components/KpiCard'
 import RecentActivityCard from '@/features/dashboard/components/RecentActivityCard'
 import RecentTransactionsCard from '@/features/dashboard/components/RecentTransactionsCard'
 import TeacherDashboardPage from '@/features/dashboard/TeacherDashboardPage'
+
+// Lazy Loading Code-Splitting cho phần Analytics Giảng viên & Học viên
+const TeacherStudentAnalyticsSection = lazy(
+  () => import('@/features/dashboard/components/TeacherStudentAnalyticsSection'),
+)
 import { useAuthStore } from '@/store/authStore'
 import {
   useActiveUsers,
@@ -36,7 +40,7 @@ import {
 function SectionTitle({ icon: Icon, iconClassName, children }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <Icon size={18} strokeWidth={1.75} className={iconClassName ?? 'text-brand-500'} />
+      <Icon size={18} strokeWidth={1.75} className={iconClassName ?? 'text-slate-600'} />
       {children}
     </span>
   )
@@ -78,25 +82,60 @@ function AdminDashboard() {
           }).length
         : 0)
 
-    const todayRev = rs.todayRevenue ?? (rs.totalRevenue ? Math.round(rs.totalRevenue * 0.12) : 0)
+    // Xác định giao dịch phát sinh trong ngày hôm nay
+    const isToday = (dateStr) => {
+      if (!dateStr) return false
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return false
+      const now = new Date()
+      return (
+        d.getDate() === now.getDate() &&
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      )
+    }
+
+    // Doanh thu thực tế phát sinh hôm nay: tính từ các giao dịch thành công trong ngày
+    const txTodayRevenue = Array.isArray(recentTransactions.data)
+      ? recentTransactions.data
+          .filter((t) => {
+            const s = String(t.status || '').toLowerCase()
+            const isPaid = s === 'completed' || s === 'success' || s === 'paid'
+            return isPaid && isToday(t.createdAt || t.occurredAt || t.paidAt)
+          })
+          .reduce((sum, t) => sum + Number(t.amount || t.amountFinal || 0), 0)
+      : null
+
+    // Nếu không có giao dịch hôm nay thì chuẩn xác là 0đ (không dùng công thức ước tính ảo)
+    const todayRev = txTodayRevenue !== null ? txTodayRevenue : (Number(rs.todayRevenue) || 0)
     const successRate = rs.successRate != null ? rs.successRate : 100
+
+    // Doanh thu tháng này: ưu tiên số liệu trực tiếp từ payment-service (rs.monthlyRevenue),
+    // không để fallback số liệu cũ của tháng trước đè lên số liệu thực của tháng hiện tại
+    const monthlyRev = rs.monthlyRevenue != null
+      ? Number(rs.monthlyRevenue)
+      : (ov.monthlyRevenue?.value != null ? Number(ov.monthlyRevenue.value) : 0)
+
+    const monthlyDelta = rs.revenueDelta != null
+      ? rs.revenueDelta
+      : (ov.monthlyRevenue?.changePercent ?? 0)
 
     return [
       {
         icon: Wallet,
         tone: 'success',
         label: 'Doanh thu tháng này',
-        value: formatCurrency(ov.monthlyRevenue?.value ?? rs.monthlyRevenue ?? rs.totalRevenue ?? 0, {
-          compact: true,
+        value: formatCurrency(monthlyRev, {
+          compact: false,
         }),
-        changePercent: ov.monthlyRevenue?.changePercent ?? rs.revenueDelta,
+        changePercent: monthlyDelta,
       },
       {
         icon: TrendingUp,
         tone: 'indigo',
         label: 'Doanh thu hôm nay',
-        value: formatCurrency(todayRev, { compact: true }),
-        changePercent: rs.todayDelta ?? 12.5,
+        value: formatCurrency(todayRev, { compact: false }),
+        changePercent: rs.todayDelta ?? 0,
       },
       {
         icon: CheckCircle2,
@@ -109,13 +148,13 @@ function AdminDashboard() {
         icon: Crown,
         tone: 'gold',
         label: 'Tỷ lệ chuyển đổi',
-        value: formatPercent(ov.premiumConversionRate?.value ?? rs.conversionRate ?? 8.3),
+        value: formatPercent(ov.premiumConversionRate?.value ?? rs.conversionRate ?? 0),
         changePercent: ov.premiumConversionRate?.changePercent,
       },
     ]
   }, [overview.data, revenueStats.data, recentTransactions.data])
 
-  // Chuẩn hóa xu hướng tương tác AI
+  // Chuẩn hóa xu hướng tương tác AI (không dùng số liệu ảo)
   const aiPracticeTrends = useMemo(() => {
     if (Array.isArray(aiUsage.data) && aiUsage.data.length > 0) {
       const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
@@ -124,18 +163,19 @@ function AdminDashboard() {
         const dayLabel = !isNaN(d.getDay()) ? days[d.getDay()] : `T${idx + 2}`
         return {
           day: dayLabel,
-          requests: Number(item.requests || Math.round((item.tokens || 1000) / 400)),
+          requests: Number(item.requests || Math.round((item.tokens || 0) / 400)),
         }
       })
     }
+    // Nếu chưa có nhật ký AI riêng biệt, hiển thị theo ngày trong tuần thực tế với 0 lượt
     return [
-      { day: 'T2', requests: 3120 },
-      { day: 'T3', requests: 3610 },
-      { day: 'T4', requests: 3480 },
-      { day: 'T5', requests: 4050 },
-      { day: 'T6', requests: 3890 },
-      { day: 'T7', requests: 4320 },
-      { day: 'CN', requests: 4780 },
+      { day: 'T2', requests: 0 },
+      { day: 'T3', requests: 0 },
+      { day: 'T4', requests: 0 },
+      { day: 'T5', requests: 0 },
+      { day: 'T6', requests: 0 },
+      { day: 'T7', requests: 0 },
+      { day: 'CN', requests: 0 },
     ]
   }, [aiUsage.data])
 
@@ -185,7 +225,7 @@ function AdminDashboard() {
           <LineChartCard
             className="flex flex-col justify-between"
             title={
-              <SectionTitle icon={Sparkles} iconClassName="text-amber-500">
+              <SectionTitle icon={Sparkles}>
                 Lượt tương tác học tập cùng AI
               </SectionTitle>
             }
@@ -203,7 +243,7 @@ function AdminDashboard() {
           <DonutCard
             className="flex flex-col justify-between lg:col-span-2 xl:col-span-1"
             title={
-              <SectionTitle icon={PieChart} iconClassName="text-indigo-600">
+              <SectionTitle icon={PieChart}>
                 Tính năng được dùng nhiều
               </SectionTitle>
             }
@@ -217,7 +257,21 @@ function AdminDashboard() {
         </div>
       </section>
 
-      {/* SECTION 3: DOANH THU THEO THÁNG & GIAO DỊCH THÀNH CÔNG GẦN ĐÂY NẰM CÙNG 1 ROW */}
+      {/* SECTION 3: GIÁM SÁT ĐÀO TẠO & HIỆU SUẤT GIẢNG VIÊN - HỌC VIÊN */}
+      <section>
+        <SectionEyebrow>Giám sát Đào tạo & Hiệu suất Giảng viên - Học viên</SectionEyebrow>
+        <Suspense
+          fallback={
+            <div className="h-64 w-full rounded-2xl bg-slate-50 border border-line animate-pulse flex items-center justify-center text-xs text-slate-400">
+              Đang tải biểu đồ phân tích đào tạo...
+            </div>
+          }
+        >
+          <TeacherStudentAnalyticsSection />
+        </Suspense>
+      </section>
+
+      {/* SECTION 4: DOANH THU THEO THÁNG & GIAO DỊCH THÀNH CÔNG GẦN ĐÂY NẰM CÙNG 1 ROW */}
       <section>
         <SectionEyebrow>Tài chính & Dòng tiền</SectionEyebrow>
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-stretch">
@@ -226,7 +280,7 @@ function AdminDashboard() {
             <BarChartCard
               className="h-full flex flex-col justify-between"
               title={
-                <SectionTitle icon={BarChart3} iconClassName="text-emerald-600">
+                <SectionTitle icon={BarChart3}>
                   Doanh thu theo tháng
                 </SectionTitle>
               }

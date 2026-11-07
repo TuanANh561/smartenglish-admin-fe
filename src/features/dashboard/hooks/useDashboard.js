@@ -56,3 +56,31 @@ export function useAiUsage(range) {
     queryFn: () => dashboardApi.getAiUsage(range),
   })
 }
+
+export function useStudentCefrStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'student-cefr-stats'],
+    queryFn: () => dashboardApi.getStudentCefrStats(),
+  })
+}
+
+export function useTeacherPerformanceStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'teacher-performance-stats'],
+    queryFn: () => dashboardApi.getTeacherPerformanceStats(),
+  })
+}
+
+export function useStudentHourlyActivity() {
+  return useQuery({
+    queryKey: ['dashboard', 'student-hourly-activity'],
+    queryFn: () => dashboardApi.getStudentHourlyActivity(),
+  })
+}
+
+export function useStudentRetentionStats() {
+  return useQuery({
+    queryKey: ['dashboard', 'student-retention-stats'],
+    queryFn: () => dashboardApi.getStudentRetentionStats(),
+  })
+}

@@ -9,14 +9,18 @@ export default function SudoUnlockModal({
   onClose,
   onUnlock,
   isVerifying,
+  title = 'Xác thực Quản trị viên',
+  subtitle = 'Nhập mật khẩu quản trị để tiếp tục thao tác',
 }) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
+    console.log('SUDO MODAL handleSubmit called with:', password)
     if (!password.trim()) return
     const success = await onUnlock(password)
+    console.log('SUDO MODAL onUnlock result:', success)
     if (success) {
       setPassword('')
     }
@@ -37,23 +41,23 @@ export default function SudoUnlockModal({
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 shadow-xs shrink-0">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 border border-brand-100 shadow-2xs shrink-0">
             <ShieldCheck size={22} />
           </div>
           <div>
             <h3 className="text-base font-bold text-navy-900">
-              Xác thực bảo mật
+              {title}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Nhập mật khẩu quản trị để chỉnh sửa cấu hình AI
+              {subtitle}
             </p>
           </div>
         </div>
 
         {/* Thông tin phiên */}
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3.5 py-2.5 text-xs text-indigo-950 flex items-center gap-2">
-          <Lock size={14} className="text-indigo-600 shrink-0" />
-          <span>Phiên làm việc an toàn sẽ duy trì trong <strong>15 phút</strong>.</span>
+        <div className="rounded-xl border border-slate-200/80 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-700 flex items-center gap-2">
+          <Lock size={14} className="text-slate-500 shrink-0" />
+          <span>Phiên xác thực an toàn sẽ duy trì trong <strong>15 phút</strong>.</span>
         </div>
 
         {/* Form nhập mật khẩu */}
@@ -68,7 +72,7 @@ export default function SudoUnlockModal({
                 autoFocus
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Nhập mật khẩu của bạn..."
+                placeholder="Nhập mật khẩu quản trị viên..."
                 className="pr-10 text-xs font-medium"
                 disabled={isVerifying}
               />
@@ -83,7 +87,7 @@ export default function SudoUnlockModal({
             </div>
             <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
               <KeyRound size={11} className="text-slate-400 shrink-0" />
-              <span>Áp dụng cho tài khoản quản trị hệ thống.</span>
+              <span>Bảo vệ quyền kích hoạt và thay đổi cấu hình hệ thống.</span>
             </p>
           </div>
 
@@ -101,9 +105,10 @@ export default function SudoUnlockModal({
             <Button
               type="submit"
               variant="primary"
+              onClick={handleSubmit}
               loading={isVerifying}
               disabled={!password.trim() || isVerifying}
-              className="text-xs font-bold px-5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+              className="text-xs font-bold px-5 bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
             >
               Xác nhận mở khóa
             </Button>

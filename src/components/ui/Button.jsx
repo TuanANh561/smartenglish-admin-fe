@@ -2,11 +2,13 @@ import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const VARIANT_CLASSES = {
-  primary: 'bg-navy-700 text-white hover:bg-navy-800 disabled:bg-navy-700/50',
-  secondary: 'bg-white text-ink border border-line hover:bg-canvas disabled:text-ink-muted',
-  ghost: 'bg-transparent text-ink hover:bg-canvas disabled:text-ink-muted',
-  danger: 'bg-[#FEE2E2] text-[#B91C1C] hover:bg-[#FEE2E2]/70 disabled:opacity-50',
-  success: 'bg-[#DCFCE7] text-[#15803D] hover:bg-[#DCFCE7]/70 disabled:opacity-50',
+  primary: 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-2xs disabled:bg-brand-400/50',
+  secondary: 'bg-white text-ink border border-slate-200 hover:bg-slate-50 hover:text-brand-600 hover:border-brand-200 disabled:text-ink-muted transition-colors',
+  ghost: 'bg-transparent text-ink hover:bg-brand-50 hover:text-brand-600 disabled:text-ink-muted transition-colors',
+  danger: 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 hover:text-rose-800 disabled:opacity-50',
+  warning: 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 disabled:opacity-50',
+  outline: 'bg-transparent text-brand-600 border border-brand-300 hover:bg-brand-50 disabled:text-ink-muted',
+  success: 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50',
 }
 
 const SIZE_CLASSES = {
