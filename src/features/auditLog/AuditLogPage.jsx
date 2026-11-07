@@ -34,6 +34,7 @@ import Button from '@/components/ui/Button'
 import Drawer from '@/components/ui/Drawer'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Pagination from '@/components/ui/Pagination'
+import Select from '@/components/ui/Select'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
@@ -488,35 +489,39 @@ function AuditLogPage() {
           {/* Right: Nhóm Dropdown Bộ lọc & Nút Thao tác */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Lọc Thời gian */}
-            <select
+            <Select
               value={dateRange}
               onChange={(e) => {
                 setDateRange(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Thời gian: Tất cả</option>
-              <option value="24h">24 giờ qua</option>
-              <option value="7d">7 ngày qua</option>
-              <option value="30d">30 ngày qua</option>
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={[
+                { value: 'all', label: 'Thời gian: Tất cả' },
+                { value: '24h', label: '24 giờ qua' },
+                { value: '7d', label: '7 ngày qua' },
+                { value: '30d', label: '30 ngày qua' },
+              ]}
+            />
 
             {/* Lọc Vai trò (Chỉ hiển thị đầy đủ cho Admin, với Giáo viên cố định xem hoạt động giáo viên) */}
             {!isTeacher ? (
-              <select
+              <Select
                 value={userRole}
                 onChange={(e) => {
                   setUserRole(e.target.value)
                   setPage(1)
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-              >
-                <option value="all">Vai trò: Tất cả</option>
-                <option value="admin">Quản trị viên (Admin)</option>
-                <option value="teacher">Giáo viên (Teacher)</option>
-                <option value="student">Học viên (Student)</option>
-              </select>
+                size="sm"
+                containerClassName="w-44 shrink-0"
+                options={[
+                  { value: 'all', label: 'Vai trò: Tất cả' },
+                  { value: 'admin', label: 'Quản trị viên (Admin)' },
+                  { value: 'teacher', label: 'Giáo viên (Teacher)' },
+                  { value: 'student', label: 'Học viên (Student)' },
+                ]}
+              />
             ) : (
               <span className="rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-2 text-sm font-medium text-brand-700">
                 Vai trò: Giáo viên
@@ -524,37 +529,41 @@ function AuditLogPage() {
             )}
 
             {/* Lọc Loại thao tác */}
-            <select
+            <Select
               value={actionType}
               onChange={(e) => {
                 setActionType(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[170px]"
-            >
-              <option value="all">Thao tác: Tất cả</option>
-              <option value="payment">Thanh toán & Gói Pro</option>
-              <option value="create">Tạo mới</option>
-              <option value="update">Cập nhật & Chấm điểm</option>
-              <option value="approve">Phê duyệt</option>
-              <option value="auth">Khóa / Phân quyền</option>
-              <option value="delete">Xóa tài nguyên</option>
-            </select>
+              size="sm"
+              containerClassName="w-48 shrink-0"
+              options={[
+                { value: 'all', label: 'Thao tác: Tất cả' },
+                { value: 'payment', label: 'Thanh toán & Gói Pro' },
+                { value: 'create', label: 'Tạo mới' },
+                { value: 'update', label: 'Cập nhật & Chấm điểm' },
+                { value: 'approve', label: 'Phê duyệt' },
+                { value: 'auth', label: 'Khóa / Phân quyền' },
+                { value: 'delete', label: 'Xóa tài nguyên' },
+              ]}
+            />
 
             {/* Lọc Mức độ */}
-            <select
+            <Select
               value={severity}
               onChange={(e) => {
                 setSeverity(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Mức độ: Tất cả</option>
-              <option value="normal">Bình thường</option>
-              <option value="warning">Cảnh báo</option>
-              <option value="critical">Nghiêm trọng</option>
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={[
+                { value: 'all', label: 'Mức độ: Tất cả' },
+                { value: 'normal', label: 'Bình thường' },
+                { value: 'warning', label: 'Cảnh báo' },
+                { value: 'critical', label: 'Nghiêm trọng' },
+              ]}
+            />
 
             {/* Nút Đặt lại bộ lọc (nếu đang lọc) */}
             {hasActiveFilters && (

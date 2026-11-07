@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -31,6 +32,7 @@ const MAIN_TABS = [
  * Màn hình Quản Lý Người Dùng & Phê Duyệt Hồ Sơ Giáo Viên
  */
 export default function UsersPage() {
+  const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.user)
   const isAdmin = currentUser?.role === 'admin'
   const dataTable = useDataTable()
@@ -133,13 +135,23 @@ export default function UsersPage() {
     }
   }
 
+  const handleViewProfile = useCallback(
+    (user) => {
+      if (user?.id) {
+        navigate(`/app/hoc-vien/${user.id}`)
+      }
+    },
+    [navigate],
+  )
+
   const columns = useMemo(() => {
     return buildUserColumns({
       isAdmin,
       onToggleLock: handleToggleLock,
+      onViewProfile: handleViewProfile,
       currentUser,
     })
-  }, [isAdmin, currentUser, handleToggleLock])
+  }, [isAdmin, currentUser, handleToggleLock, handleViewProfile])
 
   return (
     <div className="space-y-4">
@@ -176,6 +188,7 @@ export default function UsersPage() {
           dataTable={dataTable}
           columns={columns}
           onRetry={usersQuery.refetch}
+          onSelectUser={handleViewProfile}
         />
       )}
 

@@ -28,6 +28,7 @@ import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import { registerTeacher, getTeacherRegistrationStatus } from './api'
 import { maskEmail } from '@/lib/utils'
 
@@ -376,32 +377,34 @@ export default function RegisterTeacherPage() {
                       <label className="block text-xs font-semibold text-navy-800 mb-1">
                         Trình độ học vấn cao nhất *
                       </label>
-                      <select
+                      <Select
                         value={formData.education}
                         onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 focus:outline-none"
-                      >
-                        <option value="Cử nhân Sư phạm Tiếng Anh">Cử nhân Sư phạm Tiếng Anh</option>
-                        <option value="Cử nhân Ngôn ngữ Anh">Cử nhân Ngôn ngữ Anh</option>
-                        <option value="Thạc sĩ Ngôn ngữ Anh / Applied Linguistics">Thạc sĩ Ngôn ngữ Anh / TESOL</option>
-                        <option value="Tiến sĩ Ngôn ngữ Anh">Tiến sĩ Ngôn ngữ Anh</option>
-                      </select>
+                        size="sm"
+                        options={[
+                          { value: 'Cử nhân Sư phạm Tiếng Anh', label: 'Cử nhân Sư phạm Tiếng Anh' },
+                          { value: 'Cử nhân Ngôn ngữ Anh', label: 'Cử nhân Ngôn ngữ Anh' },
+                          { value: 'Thạc sĩ Ngôn ngữ Anh / Applied Linguistics', label: 'Thạc sĩ Ngôn ngữ Anh / TESOL' },
+                          { value: 'Tiến sĩ Ngôn ngữ Anh', label: 'Tiến sĩ Ngôn ngữ Anh' },
+                        ]}
+                      />
                     </div>
 
                     <div>
                       <label className="block text-xs font-semibold text-navy-800 mb-1">
                         Chứng chỉ Tiếng Anh cao nhất *
                       </label>
-                      <select
+                      <Select
                         value={formData.certificateType}
                         onChange={(e) => setFormData({ ...formData, certificateType: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 focus:outline-none"
-                      >
-                        <option value="IELTS Academic 8.0+">IELTS Academic 8.0+</option>
-                        <option value="IELTS Academic 7.5">IELTS Academic 7.5</option>
-                        <option value="TOEIC 900+ / 990">TOEIC 900+ / 990</option>
-                        <option value="Chứng chỉ TESOL / CELTA / DELTA">TESOL / CELTA / DELTA</option>
-                      </select>
+                        size="sm"
+                        options={[
+                          { value: 'IELTS Academic 8.0+', label: 'IELTS Academic 8.0+' },
+                          { value: 'IELTS Academic 7.5', label: 'IELTS Academic 7.5' },
+                          { value: 'TOEIC 900+ / 990', label: 'TOEIC 900+ / 990' },
+                          { value: 'Chứng chỉ TESOL / CELTA / DELTA', label: 'TESOL / CELTA / DELTA' },
+                        ]}
+                      />
                     </div>
 
                     <div>
