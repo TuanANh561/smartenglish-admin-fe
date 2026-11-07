@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { RotateCcw, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -9,6 +10,23 @@ import CourseFilters from './components/CourseFilters'
 import CourseGrid from './components/CourseGrid'
 import CourseTable from './components/CourseTable'
 import DeleteCourseModal from './components/DeleteCourseModal'
+
+const COURSE_TRASH_STORAGE_KEY = 'SMART_ENGLISH_COURSE_TRASH'
+
+const getStoredCourseTrash = () => {
+  try {
+    const raw = localStorage.getItem(COURSE_TRASH_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+const saveStoredCourseTrash = (list) => {
+  try {
+    localStorage.setItem(COURSE_TRASH_STORAGE_KEY, JSON.stringify(list))
+  } catch {}
+}
 
 /**
  * Trang Quản Lý Khóa Học & Lộ Trình Học
@@ -24,6 +42,8 @@ export default function CoursesPage() {
 
   // States
   const [courses, setCourses] = useState([])
+  const [trashView, setTrashView] = useState(false)
+  const [trashCourses, setTrashCourses] = useState(() => getStoredCourseTrash())
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState(isAdmin ? 'table' : 'grid')
   const [search, setSearch] = useState('')
@@ -43,7 +63,11 @@ export default function CoursesPage() {
     setIsLoading(true)
     try {
       const data = await fetchCoursesApi()
-      setCourses(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : []
+      const storedTrash = getStoredCourseTrash()
+      const trashIds = new Set(storedTrash.map((t) => t.id))
+      setCourses(list.filter((c) => !trashIds.has(c.id)))
+      setTrashCourses(storedTrash)
     } catch (err) {
       console.warn('Lỗi kết nối Backend courses:', err)
       setCourses([])
@@ -79,12 +103,13 @@ export default function CoursesPage() {
     )
   }
 
-  // 2. Lọc danh sách theo các tiêu chí
+  // 2. Lọc danh sách theo các tiêu chí (Tự động chuyển đổi giữa Khóa học chính & Thùng rác)
   const filteredCourses = useMemo(() => {
-    return courses.filter((c) => {
+    const targetList = trashView ? trashCourses : courses
+    return targetList.filter((c) => {
       const isOwned = checkOwnership(c)
       const isSystem =
-        c.createdBy === 1 || c.courseType === 'STRUCTURED' || c.authorName === 'Hệ thống'
+        Number(c.createdBy) === 1 || Number(c.id) <= 4 || c.authorName === 'Hệ thống'
 
       let matchAuthor = true
       if (authorFilter === 'mine') {
@@ -107,6 +132,7 @@ export default function CoursesPage() {
         c.cefrLevelMax === cefrFilter
 
       const matchStatus =
+        trashView ||
         statusFilter === 'all' ||
         (statusFilter === 'published' && (c.status === 'published' || c.isPublished)) ||
         (statusFilter === 'draft' && (c.status === 'draft' || !c.isPublished))
@@ -119,7 +145,7 @@ export default function CoursesPage() {
 
       return matchAuthor && matchCategory && matchCefr && matchStatus && matchSearch
     })
-  }, [courses, search, categoryFilter, cefrFilter, statusFilter, authorFilter, user])
+  }, [courses, trashCourses, trashView, search, categoryFilter, cefrFilter, statusFilter, authorFilter, user])
 
   // Phân trang
   const total = filteredCourses.length
@@ -152,19 +178,53 @@ export default function CoursesPage() {
     }
   }
 
-  // 4. Xóa khóa học
+  // Chuyển đổi xem thùng rác
+  const handleToggleTrash = (nextTrashView) => {
+    setTrashView(nextTrashView)
+    setPage(1)
+    setSearch('')
+  }
+
+  // Khôi phục khóa học từ thùng rác
+  const handleRestoreCourse = (course) => {
+    const nextTrash = trashCourses.filter((c) => c.id !== course.id)
+    setTrashCourses(nextTrash)
+    saveStoredCourseTrash(nextTrash)
+    setCourses((prev) => [course, ...prev])
+    toast.success(`Đã khôi phục khóa học "${course.title || course.titleVi}" thành công!`)
+  }
+
+  // 4. Xóa khóa học (Chuyển vào thùng rác hoặc Xóa vĩnh viễn)
   const handleConfirmDelete = async (course) => {
     setIsDeleting(true)
     try {
-      await deleteCourseApi(course.id)
-      setCourses((prev) => prev.filter((c) => c.id !== course.id))
-      toast.success(`Đã xoá thành công chương "${course.title || course.titleVi}"`)
+      if (trashView) {
+        // Xóa vĩnh viễn khỏi hệ thống
+        try {
+          await deleteCourseApi(course.id)
+        } catch (err) {
+          console.warn('Lỗi API xóa khóa học backend:', err)
+        }
+        const nextTrash = trashCourses.filter((c) => c.id !== course.id)
+        setTrashCourses(nextTrash)
+        saveStoredCourseTrash(nextTrash)
+        toast.success(`Đã xoá vĩnh viễn khóa học "${course.title || course.titleVi}"`)
+      } else {
+        // Chuyển vào thùng rác (Soft delete)
+        const trashedItem = {
+          ...course,
+          deletedAt: new Date().toLocaleDateString('vi-VN'),
+        }
+        const nextTrash = [trashedItem, ...trashCourses.filter((c) => c.id !== course.id)]
+        setTrashCourses(nextTrash)
+        saveStoredCourseTrash(nextTrash)
+        setCourses((prev) => prev.filter((c) => c.id !== course.id))
+        toast.success(`Đã chuyển khóa học "${course.title || course.titleVi}" vào thùng rác`)
+      }
       setCourseToDelete(null)
     } catch (err) {
       console.error('Lỗi khi xóa khóa học:', err)
-      // Vẫn cập nhật state phía local
-      setCourses((prev) => prev.filter((c) => c.id !== course.id))
-      toast.success(`Đã xoá chương "${course.title || course.titleVi}"`)
+      toast.error('Có lỗi xảy ra khi xử lý khóa học')
       setCourseToDelete(null)
     } finally {
       setIsDeleting(false)
@@ -173,6 +233,25 @@ export default function CoursesPage() {
 
   return (
     <div className="space-y-4">
+      {/* Banner thông báo khi ở chế độ thùng rác */}
+      {trashView && (
+        <div className="flex items-center justify-between rounded-2xl bg-amber-50/80 border border-amber-200/80 px-4 py-3 text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Trash2 size={16} className="text-amber-600 shrink-0" />
+            <span>
+              Bạn đang xem các khóa học trong <strong>Thùng rác</strong> ({trashCourses.length}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleToggleTrash(false)}
+            className="font-bold text-brand-600 hover:text-brand-700 underline cursor-pointer"
+          >
+            Quay lại danh sách chính &rarr;
+          </button>
+        </div>
+      )}
+
       {/* Bộ lọc, tìm kiếm & Tạo mới */}
       <CourseFilters
         search={search}
@@ -191,8 +270,11 @@ export default function CoursesPage() {
         onRefresh={loadCourses}
         isTeacher={isTeacher}
         myCount={courses.filter((c) => checkOwnership(c)).length}
-        systemCount={courses.filter((c) => c.createdBy === 1 || c.courseType === 'STRUCTURED' || c.authorName === 'Hệ thống').length}
+        systemCount={courses.filter((c) => Number(c.createdBy) === 1 || Number(c.id) <= 4 || c.authorName === 'Hệ thống').length}
         totalCount={courses.length}
+        trashView={trashView}
+        onToggleTrash={handleToggleTrash}
+        trashCount={trashCourses.length}
       />
 
       {/* 3. Danh sách Khóa học (Dạng Bảng hoặc Dạng Card Lưới) */}
@@ -202,7 +284,7 @@ export default function CoursesPage() {
           role="status"
           aria-live="polite"
         >
-          <LoadingSpinner text="Đang tải danh sách khóa học..." />
+          <LoadingSpinner text={trashView ? 'Đang tải thùng rác...' : 'Đang tải danh sách khóa học...'} />
         </div>
       ) : viewMode === 'table' ? (
         <CourseTable
@@ -212,6 +294,8 @@ export default function CoursesPage() {
           onTogglePublish={handleTogglePublish}
           checkOwnership={checkOwnership}
           isAdmin={isAdmin}
+          isTrash={trashView}
+          onRestore={handleRestoreCourse}
         />
       ) : (
         <CourseGrid
@@ -220,6 +304,8 @@ export default function CoursesPage() {
           onTogglePublish={handleTogglePublish}
           checkOwnership={checkOwnership}
           isAdmin={isAdmin}
+          isTrash={trashView}
+          onRestore={handleRestoreCourse}
         />
       )}
 
@@ -229,7 +315,7 @@ export default function CoursesPage() {
         <div>
           Hiển thị <strong className="text-navy-800">{total === 0 ? 0 : start + 1}</strong> -{' '}
           <strong className="text-navy-800">{Math.min(start + PAGE_SIZE, total)}</strong> trong tổng
-          số <strong className="text-navy-800">{total}</strong> khóa học
+          số <strong className="text-navy-800">{total}</strong> khóa học {trashView ? 'trong thùng rác' : ''}
         </div>
 
         {totalPages > 1 && (
@@ -245,6 +331,7 @@ export default function CoursesPage() {
         onConfirm={handleConfirmDelete}
         course={courseToDelete}
         isDeleting={isDeleting}
+        isPermanent={trashView}
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, CheckCircle, Clock, FileText, Plus } from 'lucide-react'
+import { BookOpen, Calendar, CheckCircle, Clock, FileText, Plus, ClipboardList } from 'lucide-react'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const TYPE_CONFIG = {
@@ -42,9 +42,9 @@ export default function ClassAssignmentsTab({
         <button
           type="button"
           onClick={onCreateAssignmentClick}
-          className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
         >
-          <Plus size={14} />
+          <ClipboardList size={14} />
           <span>Giao bài tập mới</span>
         </button>
       </div>

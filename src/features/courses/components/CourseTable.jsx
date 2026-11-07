@@ -1,4 +1,4 @@
-import { Eye, Lock, Pencil, ShieldCheck, Trash2 } from 'lucide-react'
+import { Eye, Lock, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge'
 import { formatNumber } from '@/lib/utils'
@@ -13,6 +13,8 @@ export default function CourseTable({
   onTogglePublish,
   checkOwnership,
   isAdmin,
+  isTrash = false,
+  onRestore,
 }) {
   return (
     <div className="w-full rounded-xl border border-line bg-white shadow-xs">
@@ -25,16 +27,26 @@ export default function CourseTable({
             <th className="py-3 px-3 w-[11%] text-center whitespace-nowrap">Cấp độ CEFR</th>
             <th className="py-3 px-2 w-[7%] text-center whitespace-nowrap">Số bài</th>
             <th className="py-3 px-3 w-[12%] whitespace-nowrap">Người tạo</th>
-            <th className="py-3 px-3 w-[10%] text-center whitespace-nowrap">Trạng thái</th>
-            <th className="py-3 px-3 w-[7%] whitespace-nowrap">Cập nhật</th>
+            <th className="py-3 px-3 w-[10%] text-center whitespace-nowrap">
+              {isTrash ? 'Trạng thái rác' : 'Trạng thái'}
+            </th>
+            <th className="py-3 px-3 w-[7%] whitespace-nowrap">
+              {isTrash ? 'Ngày xóa' : 'Cập nhật'}
+            </th>
             <th className="py-3 px-3.5 w-[8%] text-right whitespace-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
           {courses.length === 0 ? (
             <tr>
-              <td colSpan={9} className="py-8 text-center text-ink-muted">
-                Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.
+              <td colSpan={9} className="py-12 text-center text-slate-400">
+                <Trash2 size={24} className="mx-auto mb-2 text-slate-300" />
+                <p className="font-semibold text-slate-700 text-xs">
+                  {isTrash ? 'Thùng rác đang trống' : 'Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.'}
+                </p>
+                {isTrash && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">Chưa có khóa học nào bị chuyển vào thùng rác</p>
+                )}
               </td>
             </tr>
           ) : (
@@ -42,8 +54,8 @@ export default function CourseTable({
               const isOwner = checkOwnership(course)
               const canEdit = isAdmin || isOwner
               const isSystemCourse =
-                course.createdBy === 1 ||
-                course.courseType === 'STRUCTURED' ||
+                Number(course.createdBy) === 1 ||
+                Number(course.id) <= 4 ||
                 course.authorName === 'Hệ thống'
 
               return (
@@ -126,24 +138,31 @@ export default function CourseTable({
 
                   {/* Status */}
                   <td className="py-2.5 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => onTogglePublish && onTogglePublish(course)}
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-transform active:scale-95 ${
-                        course.status === 'published' || course.isPublished
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-slate-100 text-slate-600 border border-slate-200'
-                      }`}
-                      title="Bấm để bật/tắt xuất bản"
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
+                    {isTrash ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                        Đã xóa
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onTogglePublish && onTogglePublish(course)}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-transform active:scale-95 ${
                           course.status === 'published' || course.isPublished
-                            ? 'bg-emerald-500'
-                            : 'bg-slate-400'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
                         }`}
-                      />
-                      {course.status === 'published' || course.isPublished ? 'Xuất bản' : 'Bản nháp'}
-                    </button>
+                        title="Bấm để bật/tắt xuất bản"
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            course.status === 'published' || course.isPublished
+                              ? 'bg-emerald-500'
+                              : 'bg-slate-400'
+                          }`}
+                        />
+                        {course.status === 'published' || course.isPublished ? 'Xuất bản' : 'Bản nháp'}
+                      </button>
+                    )}
                   </td>
 
                   {/* Date */}
@@ -154,35 +173,64 @@ export default function CourseTable({
                   {/* Actions */}
                   <td className="py-2.5 px-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      {/* View */}
-                      <Link
-                        to={`/app/hoc-lieu/khoa-hoc/${course.id}`}
-                        className="p-1.5 text-ink-muted hover:text-brand-600 rounded hover:bg-slate-100 transition-colors"
-                        title="Xem chi tiết & danh sách Unit"
-                      >
-                        <Eye size={15} />
-                      </Link>
+                      {isTrash ? (
+                        <>
+                          {/* Khôi phục */}
+                          <button
+                            type="button"
+                            onClick={() => onRestore && onRestore(course)}
+                            className="p-1.5 text-slate-500 hover:text-emerald-600 rounded hover:bg-emerald-50 transition-colors"
+                            title="Khôi phục khóa học này"
+                          >
+                            <RotateCcw size={15} />
+                          </button>
 
-                      {/* Edit */}
-                      {canEdit && (
-                        <Link
-                          to={`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`}
-                          className="p-1.5 text-ink-muted hover:text-amber-600 rounded hover:bg-slate-100 transition-colors"
-                          title="Chỉnh sửa chương học"
-                        >
-                          <Pencil size={15} />
-                        </Link>
-                      )}
+                          {/* Xóa vĩnh viễn */}
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => onDelete && onDelete(course)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                              title="Xóa vĩnh viễn khóa học này"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {/* View */}
+                          <Link
+                            to={`/app/hoc-lieu/khoa-hoc/${course.id}`}
+                            className="p-1.5 text-ink-muted hover:text-brand-600 rounded hover:bg-slate-100 transition-colors"
+                            title="Xem chi tiết & danh sách Unit"
+                          >
+                            <Eye size={15} />
+                          </Link>
 
-                      {/* Delete */}
-                      {canEdit && (
-                        <button
-                          onClick={() => onDelete && onDelete(course)}
-                          className="p-1.5 text-ink-muted hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-                          title="Xóa chương học"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                          {/* Edit */}
+                          {canEdit && (
+                            <Link
+                              to={`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`}
+                              className="p-1.5 text-ink-muted hover:text-amber-600 rounded hover:bg-slate-100 transition-colors"
+                              title="Chỉnh sửa chương học"
+                            >
+                              <Pencil size={15} />
+                            </Link>
+                          )}
+
+                          {/* Delete */}
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => onDelete && onDelete(course)}
+                              className="p-1.5 text-ink-muted hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                              title="Chuyển vào thùng rác"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </td>

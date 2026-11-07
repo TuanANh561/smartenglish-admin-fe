@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BookOpen, Calendar, Loader2, X } from 'lucide-react'
+import { BookOpen, ClipboardList, Calendar, Loader2, X } from 'lucide-react'
+import Select from '@/components/ui/Select'
 
 const ASSIGNMENT_TYPES = [
   { value: 'HOMEWORK', label: 'Bài tập về nhà (Homework)' },
@@ -61,7 +62,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2 text-slate-800">
-            <BookOpen size={18} className="text-brand-500" />
+            <ClipboardList size={18} className="text-brand-600" />
             <h3 className="font-bold text-base">Giao bài tập mới</h3>
           </div>
           <button
@@ -110,17 +111,12 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Loại bài tập
               </label>
-              <select
+              <Select
                 value={formData.assignmentType}
                 onChange={(e) => setFormData({ ...formData, assignmentType: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none"
-              >
-                {ASSIGNMENT_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+                size="sm"
+                options={ASSIGNMENT_TYPES}
+              />
             </div>
 
             <div>
@@ -192,7 +188,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-700 px-5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
               {submitting && <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />}
               <span>Giao bài tập</span>

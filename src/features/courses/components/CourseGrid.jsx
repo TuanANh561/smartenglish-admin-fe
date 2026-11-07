@@ -1,4 +1,4 @@
-import { BookOpen, Eye, Lock, Pencil, ShieldCheck, Trash2, Users } from 'lucide-react'
+import { BookOpen, Eye, Lock, Pencil, RotateCcw, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Card from '@/components/ui/Card'
 import { formatNumber } from '@/lib/utils'
@@ -12,11 +12,19 @@ export default function CourseGrid({
   onTogglePublish,
   checkOwnership,
   isAdmin,
+  isTrash = false,
+  onRestore,
 }) {
   if (courses.length === 0) {
     return (
-      <div className="py-12 text-center text-ink-muted bg-white rounded-xl border border-line">
-        Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.
+      <div className="py-12 text-center text-slate-400 bg-white rounded-xl border border-line">
+        <Trash2 size={24} className="mx-auto mb-2 text-slate-300" />
+        <p className="font-semibold text-slate-700 text-xs">
+          {isTrash ? 'Thùng rác đang trống' : 'Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.'}
+        </p>
+        {isTrash && (
+          <p className="text-[11px] text-slate-400 mt-0.5">Chưa có khóa học nào bị chuyển vào thùng rác</p>
+        )}
       </div>
     )
   }
@@ -27,8 +35,8 @@ export default function CourseGrid({
         const isOwner = checkOwnership(course)
         const canEdit = isAdmin || isOwner
         const isSystemCourse =
-          course.createdBy === 1 ||
-          course.courseType === 'STRUCTURED' ||
+          Number(course.createdBy) === 1 ||
+          Number(course.id) <= 4 ||
           course.authorName === 'Hệ thống'
 
         return (
@@ -126,30 +134,62 @@ export default function CourseGrid({
 
             {/* Actions Footer */}
             <div className="flex items-center justify-between border-t border-line bg-slate-50/50 px-3 py-2">
-              <Link
-                to={`/app/hoc-lieu/khoa-hoc/${course.id}`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
-              >
-                <Eye size={13} /> Chi tiết & Unit
-              </Link>
-
-              {canEdit && (
-                <div className="flex items-center gap-1">
+              {isTrash ? (
+                <>
+                  <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                    Trong thùng rác
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onRestore && onRestore(course)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      title="Khôi phục khóa học"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Khôi phục</span>
+                    </button>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete && onDelete(course)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                        title="Xóa vĩnh viễn"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
                   <Link
-                    to={`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`}
-                    className="p-1.5 text-ink-muted hover:text-amber-600 rounded hover:bg-slate-200/60 transition-colors"
-                    title="Chỉnh sửa chương học"
+                    to={`/app/hoc-lieu/khoa-hoc/${course.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
                   >
-                    <Pencil size={14} />
+                    <Eye size={13} /> Chi tiết & Unit
                   </Link>
-                  <button
-                    onClick={() => onDelete && onDelete(course)}
-                    className="p-1.5 text-ink-muted hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-                    title="Xóa chương học"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+
+                  {canEdit && (
+                    <div className="flex items-center gap-1">
+                      <Link
+                        to={`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`}
+                        className="p-1.5 text-ink-muted hover:text-amber-600 rounded hover:bg-slate-200/60 transition-colors"
+                        title="Chỉnh sửa chương học"
+                      >
+                        <Pencil size={14} />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => onDelete && onDelete(course)}
+                        className="p-1.5 text-ink-muted hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                        title="Chuyển vào thùng rác"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </Card>

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, Pencil, Plus, Search, Trash2, BookOpen, Crown, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
 import Pagination from '@/components/ui/Pagination'
+import Select from '@/components/ui/Select'
 import { CLASS_STATUS, LEVEL_COLOR, formatTeacherName } from '../classConstants'
 import { http } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { createClass, deleteClass, getTeacherClasses, updateClass, getTeacherQuotaStatus } from '../classApi'
+import { getClassCourseIds } from '../classCourseHelper'
 import ClassFormModal from './ClassFormModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
@@ -291,20 +293,16 @@ export default function ClassListView({ onViewClass }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5">
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer focus:outline-none"
-            >
-              {STATUS_FILTERS.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={STATUS_FILTERS}
+            />
 
             {/* Nút nâng cấp — chỉ hiện với giáo viên khi đã hết quota */}
             {!isAdmin && quota && !quota.canCreateMoreClasses && (
@@ -334,16 +332,16 @@ export default function ClassListView({ onViewClass }) {
           <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className={`px-3 py-3 ${isAdmin ? 'w-[21%]' : 'w-[28%]'} whitespace-nowrap`}>TÊN LỚP</th>
+                <th className={`px-3 py-3 ${isAdmin ? 'w-[26%]' : 'w-[33%]'} whitespace-nowrap`}>TÊN LỚP</th>
                 {isAdmin && (
                   <th className="px-2.5 py-3 w-[13%] whitespace-nowrap">GIẢNG VIÊN</th>
                 )}
-                <th className={`px-2.5 py-3 ${isAdmin ? 'w-[16%]' : 'w-[18%]'} whitespace-nowrap`}>GIÁO TRÌNH</th>
-                <th className={`px-2 py-3 ${isAdmin ? 'w-[9%]' : 'w-[10%]'} whitespace-nowrap`}>MÃ LỚP</th>
-                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[8%]' : 'w-[10%]'} whitespace-nowrap`}>HỌC VIÊN</th>
-                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[7%]' : 'w-[8%]'} whitespace-nowrap`}>BÀI TẬP</th>
-                <th className="px-2 py-3 w-[14%] whitespace-nowrap">TRẠNG THÁI</th>
-                <th className="px-3 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
+                <th className={`px-2.5 py-3 ${isAdmin ? 'w-[20%]' : 'w-[24%]'} whitespace-nowrap`}>GIÁO TRÌNH</th>
+                <th className={`px-2 py-3 ${isAdmin ? 'w-[8%]' : 'w-[9%]'} whitespace-nowrap`}>MÃ LỚP</th>
+                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[7%]' : 'w-[8%]'} whitespace-nowrap`}>HỌC VIÊN</th>
+                <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[6%]' : 'w-[6%]'} whitespace-nowrap`}>BÀI TẬP</th>
+                <th className={`px-2 py-3 ${isAdmin ? 'w-[12%]' : 'w-[12%]'} whitespace-nowrap`}>TRẠNG THÁI</th>
+                <th className={`px-3 py-3 text-right ${isAdmin ? 'w-[8%]' : 'w-[8%]'} whitespace-nowrap`}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -413,16 +411,31 @@ export default function ClassListView({ onViewClass }) {
 
                       {/* Giáo trình khóa học */}
                       <td className="px-2.5 py-3">
-                        {cls.courseTitle || cls.courseId ? (
-                          <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2 py-1 text-xs font-medium text-brand-700 max-w-full min-w-0">
-                            <BookOpen size={13} className="shrink-0 text-brand-600" />
-                            <span className="truncate" title={cls.courseTitle || `Khóa #${cls.courseId}`}>
-                              {cls.courseTitle || `Khóa #${cls.courseId}`}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400 italic whitespace-nowrap">Lớp tự do</span>
-                        )}
+                        {(() => {
+                          const courseIds = getClassCourseIds(cls.id, cls.courseId)
+                          if (courseIds.length > 1) {
+                            return (
+                              <div
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50/90 border border-indigo-200/80 px-2 py-1 text-xs font-semibold text-indigo-700 max-w-full min-w-0 shadow-2xs"
+                                title={`${courseIds.length} khóa học giáo trình áp dụng cho lớp`}
+                              >
+                                <BookOpen size={13} className="shrink-0 text-indigo-600" />
+                                <span className="truncate">{courseIds.length} khóa học</span>
+                              </div>
+                            )
+                          }
+                          if (cls.courseTitle || cls.courseId || courseIds.length === 1) {
+                            return (
+                              <div className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50/70 border border-brand-100 px-2 py-1 text-xs font-medium text-brand-700 max-w-full min-w-0">
+                                <BookOpen size={13} className="shrink-0 text-brand-600" />
+                                <span className="truncate" title={cls.courseTitle || `Khóa #${courseIds[0] || cls.courseId}`}>
+                                  {cls.courseTitle || `Khóa #${courseIds[0] || cls.courseId}`}
+                                </span>
+                              </div>
+                            )
+                          }
+                          return <span className="text-xs text-slate-400 italic whitespace-nowrap">Lớp tự do</span>
+                        })()}
                       </td>
 
                       {/* Mã lớp */}

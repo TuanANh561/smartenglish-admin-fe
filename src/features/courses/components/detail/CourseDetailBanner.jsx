@@ -43,11 +43,7 @@ export default function CourseDetailBanner({
               <span className="rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-brand-600 border border-blue-100">
                 {course.levelLabel || course.level}
               </span>
-              {!canManage && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
-                  <Lock size={11} /> Chỉ xem (Tác giả khác)
-                </span>
-              )}
+
             </div>
 
             <h2 className="text-2xl font-bold text-navy-700 leading-tight">
@@ -69,7 +65,7 @@ export default function CourseDetailBanner({
                   }
                 >
                   {course.authorName === 'Hệ thống' || course.createdBy === 1
-                    ? 'Hệ thống (Lộ trình chuẩn)'
+                    ? 'Hệ thống'
                     : course.authorName}
                 </strong>
               </span>
@@ -106,9 +102,9 @@ export default function CourseDetailBanner({
         </div>
 
         {/* Right Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          {canManage ? (
-            <>
+        {canManage && (
+          <div className="flex items-center gap-2 shrink-0">
+            {onEdit && (
               <Button
                 variant="secondary"
                 icon={Pencil}
@@ -117,22 +113,17 @@ export default function CourseDetailBanner({
               >
                 Chỉnh sửa
               </Button>
-              <Button
-                variant="primary"
-                icon={Upload}
-                onClick={onTogglePublish}
-                size="sm"
-              >
-                {course.status === 'published' || course.isPublished ? 'Tạm ẩn' : 'Xuất bản'}
-              </Button>
-            </>
-          ) : (
-            <div className="rounded-lg bg-slate-100 border border-slate-200 px-3 py-2 text-xs text-ink-muted flex items-center gap-1.5">
-              <Lock size={14} />
-              <span>Bạn không thể chỉnh sửa khóa học này</span>
-            </div>
-          )}
-        </div>
+            )}
+            <Button
+              variant="primary"
+              icon={Upload}
+              onClick={onTogglePublish}
+              size="sm"
+            >
+              {course.status === 'published' || course.isPublished ? 'Tạm ẩn' : 'Xuất bản'}
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   )
