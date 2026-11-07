@@ -6,23 +6,23 @@
 
 export const TYPE_CONFIG = {
   vocabulary: {
-    title: 'Import Từ Vựng Từ File JSON / PDF',
-    subtitle: 'Hỗ trợ nạp nhanh từ mảng JSON chuẩn hoặc trích xuất tự động từ file PDF',
+    title: 'Import từ vựng',
+    subtitle: 'Hỗ trợ tệp định dạng .JSON hoặc .PDF',
     label: 'Từ vựng',
   },
   grammar: {
-    title: 'Import Bài Học Ngữ Pháp Từ File PDF',
-    subtitle: 'Trích xuất tự động cấu trúc ngữ pháp, công thức, quy tắc & ví dụ minh họa',
+    title: 'Import bài học ngữ pháp',
+    subtitle: 'Hỗ trợ tệp định dạng .PDF hoặc .JSON',
     label: 'Ngữ pháp',
   },
   reading: {
-    title: 'Import Bài Đọc Hiểu Từ File PDF',
-    subtitle: 'Trích xuất tự động bài đọc hiểu và danh sách câu hỏi trắc nghiệm đính kèm',
+    title: 'Import bài đọc hiểu',
+    subtitle: 'Hỗ trợ tệp định dạng .PDF hoặc .JSON',
     label: 'Bài đọc hiểu',
   },
   quiz: {
-    title: 'Import Câu Hỏi Trắc Nghiệm Từ File PDF',
-    subtitle: 'Trích xuất tự động ngân hàng câu hỏi, lựa chọn đáp án A/B/C/D & giải thích',
+    title: 'Import câu hỏi trắc nghiệm',
+    subtitle: 'Hỗ trợ tệp định dạng .PDF hoặc .JSON',
     label: 'Bài kiểm tra',
   },
 }
@@ -32,20 +32,20 @@ export const REAL_SAMPLE_FILES = [
     id: 'sample-vocab-audio',
     name: 'vocabulary_audio_sample.json',
     type: 'vocabulary',
-    typeLabel: 'Từ Vựng Audio Chuẩn (JSON)',
+    typeLabel: 'Tệp mẫu JSON',
     size: '5.0 KB',
     itemCount: 10,
-    sampleTitle: 'Từ Vựng Tiếng Anh Học Thuật Kèm Audio & Phát Âm IPA Chuẩn',
+    sampleTitle: 'Từ vựng tiếng Anh kèm phiên âm IPA',
     url: '/samples/vocabulary_audio_sample.json',
   },
   {
     id: 'sample-vocab-pdf',
     name: 'English_Vocabulary_With_Audio.pdf',
     type: 'vocabulary',
-    typeLabel: 'Tài Liệu PDF Từ Vựng (PDF)',
+    typeLabel: 'Tệp mẫu PDF',
     size: '12.2 KB',
     itemCount: 15,
-    sampleTitle: 'Tài Liệu Từ Vựng & Luyện Phát Âm Trích Xuất AI',
+    sampleTitle: 'Tài liệu từ vựng tiếng Anh',
     url: '/samples/English_Vocabulary_With_Audio.pdf',
   },
 ]

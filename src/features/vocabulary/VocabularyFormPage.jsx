@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  BookOpen,
   Check,
   ChevronDown,
   ChevronUp,
@@ -9,12 +10,13 @@ import {
   Loader2,
   Plus,
   Save,
-  Sparkles,
+  Search,
   Trash2,
   Volume2,
   X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -22,11 +24,15 @@ import Textarea from '@/components/ui/Textarea'
 import IpaInputField from '@/components/ui/IpaInputField'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useTopbarStore } from '@/store/topbarStore'
+import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 import { speakWord, speakWithWebSpeech, stopAudio } from '@/lib/ipaHelper'
 import { cleanDisplayMeaning } from './columns'
+import { cn } from '@/lib/utils'
+import { TopicSelect } from './components/TopicSelect'
+import { QuestionCard } from './components/QuestionCard'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const PARTS_OF_SPEECH = [
@@ -42,115 +48,12 @@ const PARTS_OF_SPEECH = [
 
 const EMPTY_QUESTION = { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' }
 
-// ── Accordion Question Card ─────────────────────────────────────────────────
-function QuestionCard({ question, index, isOpen, onToggle, onChange, onRemove }) {
-  const hasContent = question.question.trim()
-
-  return (
-    <div className={`rounded-2xl border transition-all ${isOpen ? 'border-brand-300 bg-white shadow-md' : 'border-slate-200 bg-slate-50/60 hover:border-slate-300'}`}>
-      {/* Header */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-        onClick={onToggle}
-      >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700 text-xs font-bold">
-          {index + 1}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm truncate ${hasContent ? 'text-slate-800 font-medium' : 'text-slate-400 italic'}`}>
-            {hasContent ? question.question : `Câu hỏi ${index + 1} — chưa nhập nội dung`}
-          </p>
-          {!isOpen && question.options[question.correctIndex] && (
-            <p className="text-xs text-emerald-600 mt-0.5">
-              ✓ Đáp án: {question.options[question.correctIndex]}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onRemove() }}
-            className="rounded-lg p-1.5 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer"
-            title="Xóa câu hỏi"
-          >
-            <Trash2 size={14} />
-          </button>
-          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
-      </div>
-
-      {/* Body */}
-      {isOpen && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Câu hỏi</label>
-            <Textarea
-              rows={2}
-              autoResize
-              value={question.question}
-              onChange={(e) => onChange({ ...question, question: e.target.value })}
-              placeholder="VD: Choose the correct meaning of 'serendipity':"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-              Các đáp án <span className="text-emerald-600 font-normal">(click vào ô vuông để chọn đáp án đúng)</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {question.options.map((opt, optIdx) => (
-                <div key={optIdx} className={`flex items-center gap-2 rounded-xl p-2.5 border transition-colors ${question.correctIndex === optIdx ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
-                  <button
-                    type="button"
-                    onClick={() => onChange({ ...question, correctIndex: optIdx })}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all cursor-pointer ${
-                      question.correctIndex === optIdx
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-slate-300 bg-white hover:border-emerald-400'
-                    }`}
-                  >
-                    {question.correctIndex === optIdx && <Check size={11} strokeWidth={3} />}
-                  </button>
-                  <span className="text-xs font-bold text-slate-500 shrink-0">{String.fromCharCode(65 + optIdx)}.</span>
-                  <input
-                    type="text"
-                    value={opt}
-                    onChange={(e) => {
-                      const options = [...question.options]
-                      options[optIdx] = e.target.value
-                      onChange({ ...question, options })
-                    }}
-                    placeholder={`Nhập đáp án ${String.fromCharCode(65 + optIdx)}...`}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600">Giải thích đáp án <span className="text-slate-400 font-normal">(không bắt buộc)</span></label>
-            <Textarea
-              rows={2}
-              autoResize
-              value={question.explanation}
-              onChange={(e) => onChange({ ...question, explanation: e.target.value })}
-              placeholder="VD: 'Serendipity' means a fortunate accident, so option A is correct..."
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main Form Page ──────────────────────────────────────────────────────────
-function VocabularyFormPage() {
+export default function VocabularyFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const initialWordFromUrl = searchParams.get('word') || ''
-  const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
 
   const [form, setForm] = useState({
@@ -173,9 +76,11 @@ function VocabularyFormPage() {
   const [dbTopics, setDbTopics] = useState([])
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(isEditing)
+  const [isLookingUp, setIsLookingUp] = useState(false)
+  const [isPlayingExample, setIsPlayingExample] = useState(false)
 
+  // Tải danh sách chủ đề thực tế từ Backend CSDL
   useEffect(() => {
-    // Tải danh sách chủ đề thực tế từ Backend CSDL
     api.get('/admin/words/topics')
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -185,6 +90,7 @@ function VocabularyFormPage() {
       .catch((err) => console.warn('Không thể tải topics từ backend:', err))
   }, [])
 
+  // Tải dữ liệu từ vựng khi chỉnh sửa
   useEffect(() => {
     if (isEditing) {
       setIsLoading(true)
@@ -196,7 +102,7 @@ function VocabularyFormPage() {
               pronunciation: data.pronunciation || data.ipaUs || data.ipaUk || '',
               partOfSpeech: data.partOfSpeech || 'Noun',
               cefrLevel: data.cefrLevel || 'B1',
-              vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning) || '',
+              vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning, data.word) || '',
               englishMeaning: cleanDisplayMeaning(data.englishMeaning) || '',
               topic: data.topic || '',
               exampleEn: data.exampleEn || '',
@@ -220,20 +126,16 @@ function VocabularyFormPage() {
     }
   }, [id, isEditing])
 
-  // Tự động kích hoạt tra cứu từ điển nếu mở trang tạo từ vựng qua query param ?word=
+  // Tự động kích hoạt tra cứu nếu mở trang tạo từ vựng qua query param ?word=
   useEffect(() => {
     if (!isEditing && initialWordFromUrl.trim()) {
       handleAutoLookup(initialWordFromUrl.trim())
     }
   }, [initialWordFromUrl, isEditing])
 
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
-  const [isPlayingExample, setIsPlayingExample] = useState(false)
-
-  // Tắt âm thanh khi rời khỏi màn hình form từ vựng hoặc khi audio khác phát
+  // Tắt âm thanh khi rời khỏi màn hình
   useEffect(() => {
     const unregister = registerAudioStopHandler(() => {
-      setIsPlayingAudio(false)
       setIsPlayingExample(false)
     })
     return () => {
@@ -244,27 +146,10 @@ function VocabularyFormPage() {
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
-  const playAudio = () => {
-    const rawWord = (form.word || '').trim()
-    if (!rawWord) {
-      toast.error('Vui lòng nhập từ vựng trước khi nghe phát âm')
-      return
-    }
-    if (isPlayingAudio) {
-      stopAudio()
-      setIsPlayingAudio(false)
-      return
-    }
-    setIsPlayingAudio(true)
-    speakWithWebSpeech(rawWord, () => {
-      setIsPlayingAudio(false)
-    })
-  }
-
   const playExampleAudio = () => {
     const example = (form.exampleEn || '').trim()
     if (!example) {
-      toast.error('Chưa có câu ví dụ tiếng Anh để phát âm')
+      toast.error('Chưa có câu ví dụ để phát âm')
       return
     }
     if (isPlayingExample) {
@@ -278,20 +163,18 @@ function VocabularyFormPage() {
     })
   }
 
-  const [isLookingUp, setIsLookingUp] = useState(false)
-
   const handleAutoLookup = async (overrideWord = null) => {
     const rawWord = (typeof overrideWord === 'string' ? overrideWord : form.word || '').trim()
     if (!rawWord) {
-      toast.error('Vui lòng nhập từ vựng trước khi bấm tra cứu')
+      toast.error('Vui lòng nhập từ vựng trước khi tra cứu')
       return
     }
 
     setIsLookingUp(true)
-    const tId = toast.loading(`Đang tra cứu từ điển online & AI cho "${rawWord}"...`)
+    const tId = toast.loading(`Đang tra cứu từ điển cho "${rawWord}"...`)
     try {
       const res = await api.get(ENDPOINTS.words.autoLookup, {
-        params: { word: rawWord }
+        params: { word: rawWord },
       })
       const data = res?.data || res
       if (data && data.word) {
@@ -301,71 +184,45 @@ function VocabularyFormPage() {
           pronunciation: data.pronunciation || prev.pronunciation,
           partOfSpeech: data.partOfSpeech || prev.partOfSpeech,
           cefrLevel: data.cefrLevel || prev.cefrLevel,
-          vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning) || prev.vietnameseMeaning,
+          vietnameseMeaning: cleanDisplayMeaning(data.vietnameseMeaning, data.word) || prev.vietnameseMeaning,
           englishMeaning: cleanDisplayMeaning(data.englishMeaning) || prev.englishMeaning,
           topic: data.topic || prev.topic,
           exampleEn: data.exampleEn || prev.exampleEn,
           exampleVi: cleanDisplayMeaning(data.exampleVi) || prev.exampleVi,
           audioUrl: data.audioUrl || prev.audioUrl,
         }))
-        toast.success(`✨ Đã tra cứu & điền đầy đủ dữ liệu cho "${data.word}"!`, { id: tId })
+        toast.success(`Đã tra cứu & điền dữ liệu cho "${data.word}"`, { id: tId })
       } else {
         toast.error('Không tìm thấy dữ liệu từ điển cho từ này', { id: tId })
       }
     } catch (err) {
       console.error(err)
-      toast.error(err?.message || 'Lỗi khi tra cứu từ điển online', { id: tId })
+      toast.error(err?.message || 'Lỗi khi tra cứu từ điển', { id: tId })
     } finally {
       setIsLookingUp(false)
     }
   }
 
   const addQuestion = () => {
-    if (questions.length >= 10) { toast.error('Tối đa 10 câu hỏi bài tập'); return }
+    if (questions.length >= 10) {
+      toast.error('Tối đa 10 câu hỏi bài tập')
+      return
+    }
     const newIdx = questions.length
     setQuestions((prev) => [...prev, { ...EMPTY_QUESTION }])
     setOpenQuestionIdx(newIdx)
   }
 
-  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
-  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
-
-  useEffect(() => {
-    setCustomHeader({
-      backLink: '/app/hoc-lieu/tu-vung',
-      backText: 'Quay lại Từ vựng',
-      title: isEditing ? `Chỉnh sửa từ: "${form.word || 'Đang tải...'}"` : 'Thêm từ vựng mới',
-      subtitle: `Kho từ vựng / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
-      actions: (
-        <div className="flex items-center gap-2">
-          <Link
-            to="/app/hoc-lieu/tu-vung"
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
-          >
-            Hủy bỏ
-          </Link>
-          <button
-            type="submit"
-            form="vocab-form"
-            disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
-          >
-            <Save size={14} />
-            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Thêm từ vựng'}
-          </button>
-        </div>
-      ),
-    })
-
-    return () => {
-      clearCustomHeader()
-    }
-  }, [isEditing, form.word, isSaving, setCustomHeader, clearCustomHeader])
-
   const handleSave = async (e) => {
-    e.preventDefault()
-    if (!form.word.trim()) { toast.error('Vui lòng nhập từ vựng'); return }
-    if (!form.vietnameseMeaning.trim()) { toast.error('Vui lòng nhập nghĩa tiếng Việt'); return }
+    if (e) e.preventDefault()
+    if (!form.word.trim()) {
+      toast.error('Vui lòng nhập từ vựng')
+      return
+    }
+    if (!form.vietnameseMeaning.trim()) {
+      toast.error('Vui lòng nhập nghĩa tiếng Việt')
+      return
+    }
 
     setIsSaving(true)
     const validQuestions = questions.filter((q) => q.question.trim())
@@ -391,166 +248,216 @@ function VocabularyFormPage() {
     }
   }
 
+  // Phím tắt Ctrl + S để lưu
+  useCtrlSave(handleSave, !isSaving)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/tu-vung',
+      backText: 'Quay lại Từ vựng',
+      title: isEditing ? `Chỉnh sửa từ: "${form.word || 'Đang tải...'}"` : 'Thêm từ vựng mới',
+      subtitle: `Kho từ vựng / ${isEditing ? 'Chỉnh sửa' : 'Thêm mới'}`,
+      actions: (
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/hoc-lieu/tu-vung"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            Hủy bỏ
+          </Link>
+          <Button
+            type="submit"
+            form="vocab-form"
+            loading={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu từ vựng (Ctrl + S)"
+          >
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
+        </div>
+      ),
+    })
+    return () => clearCustomHeader()
+  }, [form.word, isSaving, isEditing, setCustomHeader, clearCustomHeader])
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-12 pt-2">
-      {/* ── Body ── */}
       {isLoading ? (
         <LoadingSpinner text="Đang tải thông tin từ vựng..." className="py-32" />
       ) : (
         <form id="vocab-form" onSubmit={handleSave}>
-          <div className="mx-auto max-w-[1440px] px-6 py-4 space-y-6">
+          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* ── CỘT TRÁI (LỚN HƠN): THÔNG TIN TỪ VỰNG & VÍ DỤ ── */}
+              <div className="lg:col-span-7 rounded-2xl border border-slate-200/90 bg-white shadow-2xs p-5 sm:p-6 space-y-5">
+              <div className="border-b border-slate-100 pb-3.5">
+                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
+                    1
+                  </span>
+                  Thông tin từ vựng
+                </h3>
+              </div>
 
-          {/* ── TOP: Card 1 & Card 2 side-by-side ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {/* Card 1: Thông tin cơ bản */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-600 text-xs font-bold">1</span>
-                Thông tin từ vựng
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-slate-600">Từ vựng *</label>
-                      <button
-                        type="button"
-                        onClick={handleAutoLookup}
-                        disabled={isLookingUp || !form.word.trim()}
-                        className="flex items-center gap-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Tự động tra cứu phiên âm IPA, nghĩa tiếng Việt, CEFR, ví dụ và phát âm audio"
-                      >
-                        {isLookingUp ? (
-                          <>
-                            <Loader2 size={12} className="animate-spin" />
-                            <span>Đang tra cứu AI...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={12} className="text-indigo-600" />
-                            <span>✨ Tra từ điển & Tự động điền</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <Input
-                      value={form.word}
-                      onChange={set('word')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAutoLookup()
-                        }
-                      }}
-                      placeholder="VD: serendipity, resilience, sustainable..."
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-slate-600">Phiên âm IPA</label>
-                      {form.word.trim() && (
-                        <button
-                          type="button"
-                          onClick={playAudio}
-                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
-                            isPlayingAudio
-                              ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-300 animate-pulse'
-                              : 'text-slate-500 hover:text-brand-600 hover:bg-slate-50'
-                          }`}
-                          title="Phát âm từ vựng bằng Web Speech API"
-                        >
-                          <Volume2 size={13} className={isPlayingAudio ? 'text-brand-600' : 'text-slate-500'} />
-                          <span>{isPlayingAudio ? 'Đang đọc...' : 'Phát âm (Web Speech)'}</span>
-                        </button>
+              {/* Hàng 1: Từ vựng & Phiên âm IPA */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-600">Từ vựng *</label>
+                    <button
+                      type="button"
+                      onClick={() => handleAutoLookup()}
+                      disabled={isLookingUp || !form.word.trim()}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                      title="Tra cứu phiên âm, nghĩa và ví dụ từ từ điển"
+                    >
+                      {isLookingUp ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin text-brand-600" />
+                          <span>Đang tra cứu...</span>
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen size={12} className="text-slate-500" />
+                          <span>Tra từ điển</span>
+                        </>
                       )}
-                    </div>
-                    <IpaInputField
-                      value={form.pronunciation}
-                      onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
-                      sourceWord={form.word}
-                      onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
-                      placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
-                    />
+                    </button>
                   </div>
+                  <Input
+                    value={form.word}
+                    onChange={set('word')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAutoLookup()
+                      }
+                    }}
+                    placeholder="Nhập từ tiếng Anh..."
+                    required
+                  />
                 </div>
+
+                <div className="space-y-1.5">
+                  <IpaInputField
+                    value={form.pronunciation}
+                    onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
+                    sourceWord={form.word}
+                    onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
+                    placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
+                  />
+                </div>
+              </div>
+
+              {/* Hàng 2: Từ loại & Cấp độ CEFR */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ loại</label>
                   <Select value={form.partOfSpeech} onChange={set('partOfSpeech')}>
-                    {PARTS_OF_SPEECH.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    {PARTS_OF_SPEECH.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
                   </Select>
                 </div>
+
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Cấp độ CEFR</label>
                   <Select value={form.cefrLevel} onChange={set('cefrLevel')}>
-                    {CEFR_LEVELS.map((l) => <option key={l} value={l}>Cấp độ {l}</option>)}
+                    {CEFR_LEVELS.map((l) => (
+                      <option key={l} value={l}>
+                        Cấp độ {l}
+                      </option>
+                    ))}
                   </Select>
                 </div>
-                <div className="col-span-2">
+              </div>
+
+              {/* Hàng 3: Nghĩa tiếng Việt & Nghĩa tiếng Anh */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Việt *</label>
-                  <Input value={form.vietnameseMeaning} onChange={set('vietnameseMeaning')} placeholder="VD: sự tình cờ may mắn" required />
+                  <Input
+                    value={form.vietnameseMeaning}
+                    onChange={set('vietnameseMeaning')}
+                    placeholder="VD: Tối đa, chăm sóc, sự tình cờ may mắn..."
+                    required
+                  />
                 </div>
-                <div className="col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Anh (định nghĩa)</label>
-                  <Textarea rows={2} autoResize value={form.englishMeaning} onChange={set('englishMeaning')} placeholder="VD: the occurrence of events by chance in a happy way" />
-                </div>
-                <div className="col-span-2">
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Chủ đề (Topic)</label>
-                  <Input value={form.topic} onChange={set('topic')} placeholder="VD: Công nghệ & AI, Kinh doanh & Tài chính..." />
-                  <div className="mt-2 flex flex-wrap gap-1.5 items-center">
-                    <span className="text-[11px] text-slate-400">Gợi ý từ CSDL:</span>
-                    {(dbTopics.length > 0 
-                      ? dbTopics.map((t) => t.nameVi || t.nameEn) 
-                      : ['Công nghệ & AI', 'Kinh doanh & Tài chính', 'Giao tiếp hàng ngày', 'Du lịch & Khám phá', 'Học tập & Giáo dục', 'Môi trường & Tự nhiên', 'Sức khỏe & Y tế']
-                    ).map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, topic: t }))}
-                        className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${form.topic === t ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Nghĩa tiếng Anh</label>
+                  <Input
+                    value={form.englishMeaning}
+                    onChange={set('englishMeaning')}
+                    placeholder="Định nghĩa tiếng Anh ngắn gọn..."
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Card 2: Ví dụ & Đồng / Trái nghĩa */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">2</span>
-                Ví dụ & Từ liên quan
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-semibold text-slate-600">Câu ví dụ (Tiếng Anh)</label>
-                    {form.exampleEn.trim() && (
-                      <button
-                        type="button"
-                        onClick={playExampleAudio}
-                        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${
-                          isPlayingExample
-                            ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-300 animate-pulse'
-                            : 'text-slate-500 hover:text-brand-600 hover:bg-slate-50'
-                        }`}
-                        title="Nghe câu ví dụ bằng Web Speech API"
-                      >
-                        <Volume2 size={13} className={isPlayingExample ? 'text-brand-600' : 'text-slate-500'} />
-                        <span>{isPlayingExample ? 'Đang đọc...' : 'Đọc ví dụ (Web Speech)'}</span>
-                      </button>
-                    )}
+              {/* Hàng 4: Chủ đề (Searchable Dropdown thay thế cho hàng gợi ý cũ) */}
+              <div>
+                <TopicSelect
+                  value={form.topic}
+                  onChange={(val) => setForm((prev) => ({ ...prev, topic: val }))}
+                  dbTopics={dbTopics}
+                />
+              </div>
+
+              {/* Phần phân tách Ví dụ & Từ liên quan */}
+              <div className="border-t border-slate-100 pt-4 space-y-4">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Ví dụ & Từ liên quan
+                </h4>
+
+                {/* Hàng 5: Câu ví dụ & Dịch câu ví dụ */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-600">Câu ví dụ</label>
+                      {form.exampleEn.trim() && (
+                        <button
+                          type="button"
+                          onClick={playExampleAudio}
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold cursor-pointer transition-all',
+                            isPlayingExample
+                              ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-300 animate-pulse'
+                              : 'text-slate-500 hover:text-brand-600 hover:bg-slate-50'
+                          )}
+                          title="Nghe phát âm câu ví dụ"
+                        >
+                          <Volume2 size={13} className={isPlayingExample ? 'text-brand-600' : 'text-slate-500'} />
+                          <span>{isPlayingExample ? 'Đang phát...' : 'Nghe ví dụ'}</span>
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      value={form.exampleEn}
+                      onChange={set('exampleEn')}
+                      placeholder="VD: Finding that job was pure serendipity."
+                    />
                   </div>
-                  <Input value={form.exampleEn} onChange={set('exampleEn')} placeholder="VD: Finding that job was pure serendipity." />
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Dịch câu ví dụ
+                    </label>
+                    <Input
+                      value={form.exampleVi}
+                      onChange={set('exampleVi')}
+                      placeholder="VD: Tìm được việc đó hoàn toàn là may mắn."
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">Dịch câu ví dụ (Tiếng Việt)</label>
-                  <Input value={form.exampleVi} onChange={set('exampleVi')} placeholder="VD: Tìm được việc đó hoàn toàn là may mắn." />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+
+                {/* Hàng 6: Từ đồng nghĩa & Từ trái nghĩa */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold text-slate-600">Từ đồng nghĩa</label>
                     <Input value={form.synonyms} onChange={set('synonyms')} placeholder="VD: luck, fortune" />
@@ -561,15 +468,15 @@ function VocabularyFormPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+              </div>
 
-          {/* ── BOTTOM: Câu hỏi bài tập (FULL ROW) ── */}
-          <div className="w-full space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">3</span>
+              {/* ── CỘT PHẢI: CÂU HỎI BÀI TẬP CỦNG CỐ ── */}
+              <div className="lg:col-span-5 rounded-2xl border border-slate-200/90 bg-white shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold">
+                    2
+                  </span>
                   Câu hỏi bài tập củng cố
                   <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                     {questions.length}/10
@@ -578,24 +485,24 @@ function VocabularyFormPage() {
                 <button
                   type="button"
                   onClick={addQuestion}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer shadow-2xs"
                 >
                   <Plus size={13} />
-                  Thêm câu
+                  Thêm câu hỏi
                 </button>
               </div>
 
               {questions.length === 0 ? (
                 <div
                   onClick={addQuestion}
-                  className="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-slate-200 py-10 text-center text-slate-400 hover:border-brand-300 hover:bg-brand-50/30 transition-colors cursor-pointer"
+                  className="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-slate-200 py-10 text-center text-slate-400 hover:border-brand-300 hover:bg-brand-50/20 transition-colors cursor-pointer"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
                     <Plus size={20} className="text-slate-400" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-600">Chưa có câu hỏi bài tập</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Nhấn để thêm câu hỏi trắc nghiệm đầu tiên</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Nhấn để thêm câu hỏi trắc nghiệm củng cố từ vựng</p>
                   </div>
                 </div>
               ) : (
@@ -607,7 +514,7 @@ function VocabularyFormPage() {
                       index={idx}
                       isOpen={openQuestionIdx === idx}
                       onToggle={() => setOpenQuestionIdx(openQuestionIdx === idx ? null : idx)}
-                      onChange={(updated) => setQuestions((prev) => prev.map((x, i) => i === idx ? updated : x))}
+                      onChange={(updated) => setQuestions((prev) => prev.map((x, i) => (i === idx ? updated : x)))}
                       onRemove={() => {
                         setQuestions((prev) => prev.filter((_, i) => i !== idx))
                         setOpenQuestionIdx(null)
@@ -616,24 +523,18 @@ function VocabularyFormPage() {
                   ))}
                 </div>
               )}
-            </div>
 
-            {/* Tips card */}
-            <div className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 space-y-2">
-              <p className="text-xs font-bold text-brand-700">💡 Gợi ý tạo bài tập hiệu quả</p>
-              <ul className="space-y-1 text-xs text-brand-800/80">
-                <li>• Nhấn vào ô vuông để chọn đáp án đúng (màu xanh)</li>
-                <li>• Nên thêm 3–5 câu hỏi đa dạng: nghĩa, ví dụ, từ loại</li>
-                <li>• Câu hỏi để trống sẽ không được lưu</li>
-              </ul>
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 text-xs text-slate-600 space-y-1">
+                <p className="font-semibold text-slate-800">Lưu ý khi tạo câu hỏi củng cố:</p>
+                <p className="text-slate-500 leading-relaxed">
+                  Nhấp vào ô vuông để chọn đáp án đúng (được đánh dấu màu xanh). Các câu hỏi để trống nội dung sẽ tự động được bỏ qua khi lưu.
+                </p>
+              </div>
             </div>
           </div>
-
-        </div>
-      </form>
+          </div>
+        </form>
       )}
     </div>
   )
 }
-
-export default VocabularyFormPage

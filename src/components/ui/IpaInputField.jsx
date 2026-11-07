@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Check,
   Keyboard,
+  Languages,
   Loader2,
-  Sparkles,
   Volume2,
   X,
 } from 'lucide-react'
@@ -71,22 +71,22 @@ export default function IpaInputField({
       if (result.isCorrected && onWordCorrect) {
         onWordCorrect(result.correctedWord)
         toast.success(
-          `✨ Đã sửa chính tả: "${result.originalWord}" → "${result.correctedWord}"`,
-          { icon: '🪄', duration: 4000 }
+          `Đã sửa chính tả: "${result.originalWord}" → "${result.correctedWord}"`,
+          { duration: 4000 }
         )
       }
 
       // 2. Set generated IPA or handle not found
       if (result.notFound) {
         if (isManual) {
-          toast('Chưa tìm thấy phiên âm tự động. Bạn có thể bấm "Ký tự" để chọn IPA thủ công.', { icon: 'ℹ️' })
+          toast('Chưa tìm thấy phiên âm tự động. Bạn có thể bấm "Ký tự" để chọn IPA thủ công.')
         }
       } else if (result.ipa && onChange) {
         lastAutoFetchedWordRef.current = trimmedWord.toLowerCase()
         lastAutoFetchedIpaRef.current = result.ipa
         onChange(result.ipa)
         if (!result.isCorrected && isManual) {
-          toast.success(`✨ Đã lấy phiên âm chuẩn: ${result.ipa}`, { duration: 2500 })
+          toast.success(`Đã lấy phiên âm chuẩn: ${result.ipa}`, { duration: 2500 })
         }
       }
     } catch (err) {
@@ -178,7 +178,7 @@ export default function IpaInputField({
             onClick={() => handleAiGenerate(true)}
             disabled={isLoading}
             className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-brand-700 px-2 py-0.5 text-[11px] font-semibold border border-brand-200 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            title="Tự động tra cứu phiên âm chuẩn quốc tế và kiểm tra chính tả (0 token)"
+            title="Tra cứu phiên âm chuẩn quốc tế"
           >
             {isLoading ? (
               <>
@@ -187,7 +187,7 @@ export default function IpaInputField({
               </>
             ) : (
               <>
-                <Sparkles size={12} className="text-brand-600 shrink-0" />
+                <Languages size={12} className="text-brand-600 shrink-0" />
                 <span className="whitespace-nowrap">Lấy IPA chuẩn</span>
               </>
             )}
@@ -233,7 +233,7 @@ export default function IpaInputField({
                 ? 'bg-brand-500 text-white animate-pulse'
                 : 'text-slate-400 hover:bg-slate-100 hover:text-brand-600'
             }`}
-            title="Nghe phát âm chuẩn (AI Speech)"
+            title="Nghe phát âm"
           >
             <Volume2 size={15} />
           </button>

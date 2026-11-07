@@ -14,16 +14,25 @@ export function buildPageNumbers(page, totalPages) {
   return [1, '...', page - 1, page, page + 1, '...', totalPages]
 }
 
-export function Pagination({ page = 1, totalPages = 1, onChange, className }) {
+export function Pagination({
+  page = 1,
+  currentPage,
+  totalPages = 1,
+  onChange,
+  onPageChange,
+  className,
+}) {
+  const activePage = Number(currentPage ?? page) || 1
+  const handlePageChange = onPageChange ?? onChange
   if (totalPages <= 1) return null
-  const pages = buildPageNumbers(page, totalPages)
+  const pages = buildPageNumbers(activePage, totalPages)
 
   return (
     <nav aria-label="Phân trang" className={cn('flex items-center gap-1.5', className)}>
       <button
         type="button"
-        onClick={() => onChange(page - 1)}
-        disabled={page <= 1}
+        onClick={() => handlePageChange?.(activePage - 1)}
+        disabled={activePage <= 1}
         aria-label="Trang trước"
         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted transition-colors hover:bg-canvas hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
       >
@@ -42,11 +51,11 @@ export function Pagination({ page = 1, totalPages = 1, onChange, className }) {
           <button
             key={item}
             type="button"
-            onClick={() => onChange(item)}
-            aria-current={item === page ? 'page' : undefined}
+            onClick={() => handlePageChange?.(item)}
+            aria-current={item === activePage ? 'page' : undefined}
             className={cn(
               'inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2.5 text-xs font-semibold transition-colors cursor-pointer',
-              item === page
+              item === activePage
                 ? 'bg-navy-700 text-white shadow-xs'
                 : 'border border-line bg-white text-ink-muted hover:bg-canvas hover:text-ink',
             )}
@@ -58,8 +67,8 @@ export function Pagination({ page = 1, totalPages = 1, onChange, className }) {
 
       <button
         type="button"
-        onClick={() => onChange(page + 1)}
-        disabled={page >= totalPages}
+        onClick={() => handlePageChange?.(activePage + 1)}
+        disabled={activePage >= totalPages}
         aria-label="Trang sau"
         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted transition-colors hover:bg-canvas hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
       >
