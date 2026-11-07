@@ -29,12 +29,14 @@ import SettingsPage from '@/features/settings/SettingsPage'
 import ProfilePage from '@/features/profile/ProfilePage'
 import TransactionsPage from '@/features/transactions/TransactionsPage'
 import UsersPage from '@/features/users/UsersPage'
+import UserProfileDetailPage from '@/features/users/UserProfileDetailPage'
 import VocabularyPage from '@/features/vocabulary/VocabularyPage'
 import VocabularyFormPage from '@/features/vocabulary/VocabularyFormPage'
 import ReadingFormPage from '@/features/reading/ReadingFormPage'
 import ListeningFormPage from '@/features/listening/ListeningFormPage'
 import GrammarFormPage from '@/features/grammar/GrammarFormPage'
 import PronunciationFormPage from '@/features/pronunciation/PronunciationFormPage'
+import SpeakingScenarioFormPage from '@/features/pronunciation/SpeakingScenarioFormPage'
 import ExamFormPage from '@/features/quiz/ExamFormPage'
 import NotFound from '@/pages/NotFound'
 import UiKitchenSink from '@/pages/UiKitchenSink'
@@ -54,7 +56,9 @@ export const router = createBrowserRouter([
           { path: 'lop-hoc', element: <TeacherClassesPage /> },
           { path: 'cong-dong', element: <CommunityPage /> },
           { path: 'hoc-vien', element: <UsersPage /> },
+          { path: 'hoc-vien/:id', element: <UserProfileDetailPage /> },
           { path: 'nguoi-dung', element: <UsersPage /> },
+          { path: 'nguoi-dung/:id', element: <UserProfileDetailPage /> },
           { path: 'hoc-lieu/tu-vung', element: <VocabularyPage /> },
           { path: 'hoc-lieu/tu-vung/tao-moi', element: <VocabularyFormPage /> },
           { path: 'hoc-lieu/tu-vung/:id/chinh-sua', element: <VocabularyFormPage /> },
@@ -64,6 +68,8 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/phat-am', element: <PronunciationPage /> },
           { path: 'hoc-lieu/phat-am/tao-moi', element: <PronunciationFormPage /> },
           { path: 'hoc-lieu/phat-am/:id/chinh-sua', element: <PronunciationFormPage /> },
+          { path: 'hoc-lieu/phat-am/kich-ban/tao-moi', element: <SpeakingScenarioFormPage /> },
+          { path: 'hoc-lieu/phat-am/kich-ban/:id/chinh-sua', element: <SpeakingScenarioFormPage /> },
           { path: 'hoc-lieu/khoa-hoc', element: <CoursesPage /> },
           { path: 'hoc-lieu/khoa-hoc/tao-moi', element: <CreateCoursePage /> },
           { path: 'hoc-lieu/khoa-hoc/:id', element: <CourseDetailPage /> },
@@ -90,6 +96,7 @@ export const router = createBrowserRouter([
           { path: 'nhat-ky', element: <AuditLogPage /> },
           { path: 'cai-dat', element: <SettingsPage /> },
           { path: 'ho-so', element: <ProfilePage /> },
+          { path: 'ho-so/:id', element: <UserProfileDetailPage /> },
         ],
       },
     ],
@@ -111,6 +118,8 @@ export const router = createBrowserRouter([
   { path: '/hoc-lieu/phat-am', element: <Navigate to="/app/hoc-lieu/phat-am" replace /> },
   { path: '/hoc-lieu/phat-am/tao-moi', element: <Navigate to="/app/hoc-lieu/phat-am/tao-moi" replace /> },
   { path: '/hoc-lieu/phat-am/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/phat-am/:id/chinh-sua" replace /> },
+  { path: '/hoc-lieu/phat-am/kich-ban/tao-moi', element: <Navigate to="/app/hoc-lieu/phat-am/kich-ban/tao-moi" replace /> },
+  { path: '/hoc-lieu/phat-am/kich-ban/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/phat-am/kich-ban/:id/chinh-sua" replace /> },
   { path: '/hoc-lieu/bai-doc', element: <Navigate to="/app/hoc-lieu/bai-doc" replace /> },
   { path: '/hoc-lieu/bai-doc/tao-moi', element: <Navigate to="/app/hoc-lieu/bai-doc/tao-moi" replace /> },
   { path: '/hoc-lieu/bai-doc/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/bai-doc/:id/chinh-sua" replace /> },
@@ -120,5 +129,8 @@ export const router = createBrowserRouter([
   { path: '/hoc-lieu/bai-kiem-tra', element: <Navigate to="/app/hoc-lieu/bai-kiem-tra" replace /> },
   { path: '/hoc-lieu/bai-kiem-tra/tao-moi', element: <Navigate to="/app/hoc-lieu/bai-kiem-tra/tao-moi" replace /> },
   { path: '/hoc-lieu/bai-kiem-tra/:id/chinh-sua', element: <Navigate to="/app/hoc-lieu/bai-kiem-tra/:id/chinh-sua" replace /> },
+  { path: '/courses/:id', element: <Navigate to="/app/hoc-lieu/khoa-hoc/:id" replace /> },
+  { path: '/hoc-lieu/khoa-hoc', element: <Navigate to="/app/hoc-lieu/khoa-hoc" replace /> },
+  { path: '/hoc-lieu/khoa-hoc/:id', element: <Navigate to="/app/hoc-lieu/khoa-hoc/:id" replace /> },
   { path: '*', element: <NotFound /> },
 ])

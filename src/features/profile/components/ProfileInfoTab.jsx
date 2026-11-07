@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Save, Upload, RotateCcw, CheckCircle2, Image as ImageIcon } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -23,12 +24,14 @@ export default function ProfileInfoTab({
   const displayAvatarUrl = formData.avatarUrl || ''
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     onSave({
       ...formData,
       avatarUrl: formData.avatarUrl || '',
     })
   }
+
+  useCtrlSave(handleSubmit, !isSaving)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -251,9 +254,12 @@ export default function ProfileInfoTab({
             variant="primary"
             icon={Save}
             loading={isSaving}
-            className="px-6"
+            disabled={isSaving}
+            size="sm"
+            title="Lưu hồ sơ cá nhân (Ctrl + S)"
+            className="px-5 text-xs font-semibold"
           >
-            Lưu Thay Đổi
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
           </Button>
         </div>
       </Card>

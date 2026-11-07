@@ -6,6 +6,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { parseDuration, playListeningLessonFull, stopAudio } from '@/lib/ipaHelper'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 import ListeningDetailDrawer from './components/ListeningDetailDrawer'
@@ -59,6 +60,27 @@ function ListeningPage() {
   const [activeLesson, setActiveLesson] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    if (activeLesson) {
+      setCustomHeader({
+        onBack: () => {
+          stopAudio()
+          setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+          setActiveLesson(null)
+        },
+        backText: 'Quay lại',
+        title: activeLesson.title || 'Chi tiết bài nghe',
+        subtitle: `Học liệu / Bài luyện nghe hiểu / Cấp độ ${activeLesson.level || activeLesson.cefrLevel || 'B1'}`,
+      })
+    } else {
+      clearCustomHeader()
+    }
+    return () => clearCustomHeader()
+  }, [activeLesson, setCustomHeader, clearCustomHeader])
 
   // Playback state tập trung
   const [playback, setPlayback] = useState({
@@ -181,7 +203,7 @@ function ListeningPage() {
     if (playback.playingId === item.id) {
       setPlayback({ playingId: null, currentTime: 0, duration: 0 })
       stopAudio()
-      toast('Đã dừng phát bài nghe', { icon: '⏸️' })
+      toast('Đã dừng phát bài nghe')
     } else {
       const durSec = parseDuration(item.duration) || item.durationSec || 30
       setPlayback({ playingId: item.id, currentTime: 0, duration: durSec })
@@ -293,123 +315,127 @@ function ListeningPage() {
         </div>
       )}
 
-      {/* Table Card */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Banner thông báo khi ở chế độ thùng rác */}
-        {trashView && (
-          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Trash2 size={14} className="text-amber-600 shrink-0" />
-              Bạn đang xem các bài nghe trong <strong>Thùng rác</strong> ({stats.trash || 0}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
-            </span>
+      {/* Detail Panel vs Table Card */}
+      {activeLesson ? (
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <ListeningDetailDrawer
+            lesson={activeLesson}
+            onClose={() => {
+              stopAudio()
+              setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+              setActiveLesson(null)
+            }}
+            isTeacher={isTeacher}
+            isOwner={checkOwnership(activeLesson)}
+            canManage={canManage(activeLesson)}
+            isPlaying={playback.playingId === activeLesson?.id}
+            currentTime={playback.playingId === activeLesson?.id ? playback.currentTime : 0}
+            onSeek={handleSeek}
+            onPlayToggle={handlePlayToggle}
+            onAssignToClass={handleAssignToClass}
+            onEditClick={handleEditClick}
+          />
+        </div>
+      ) : (
+        /* Table Card */
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          {/* Banner thông báo khi ở chế độ thùng rác */}
+          {trashView && (
+            <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-800">
+              <span className="flex items-center gap-1.5 font-medium">
+                <Trash2 size={14} className="text-amber-600 shrink-0" />
+                Bạn đang xem các bài nghe trong <strong>Thùng rác</strong> ({stats.trash || 0}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+              </span>
+            </div>
+          )}
+          {/* Toolbar */}
+          <ListeningToolbar
+            search={search}
+            setSearch={setSearch}
+            setPage={setPage}
+            ownershipFilter={ownershipFilter}
+            setOwnershipFilter={setOwnershipFilter}
+            category={category}
+            setCategory={setCategory}
+            topic={topic}
+            setTopic={setTopic}
+            accent={accent}
+            setAccent={setAccent}
+            trashView={trashView}
+            setTrashView={setTrashView}
+            trashCount={stats.trash || 0}
+            totalLessons={total}
+            myLessonsCount={myLessonsCount}
+            isTeacher={isTeacher}
+            onOpenCreate={handleOpenCreate}
+            onReload={fetchLessons}
+          />
+
+
+          {/* Table Content */}
+          <div className="w-full">
+            <table className="w-full text-left text-sm table-fixed">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-3.5 py-3 w-[35%] whitespace-nowrap">BÀI NGHE AUDIO</th>
+                  <th className="px-3 py-3 w-[13%] whitespace-nowrap">CHỦ ĐỀ</th>
+                  <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">CẤP ĐỘ</th>
+                  <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">THỜI LƯỢNG</th>
+                  <th className="px-3 py-3 w-[12%] whitespace-nowrap">NGUỒN / TÁC GIẢ</th>
+                  <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">CÂU HỎI</th>
+                  <th className="px-4 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center">
+                      <LoadingSpinner text="Đang tải danh sách bài nghe từ máy chủ..." />
+                    </td>
+                  </tr>
+                ) : displayedLessons.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                      {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài nghe nào phù hợp'}
+                    </td>
+                  </tr>
+                ) : (
+                  displayedLessons.map((item) => (
+                    <ListeningTableRow
+                      key={item.id}
+                      item={item}
+                      isOwned={checkOwnership(item)}
+                      isSystem={
+                        item.authorEmail === 'system@smartenglish.vn' ||
+                        item.authorName?.includes('Hệ thống')
+                      }
+                      cefr={extractCefr(item.cefrLevel || item.level)}
+                      isPlaying={playback.playingId === item.id}
+                      canManage={canManage(item)}
+                      isTeacher={isTeacher}
+                      onPlayToggle={handlePlayToggle}
+                      onRowClick={setActiveLesson}
+                      onAssignToClass={handleAssignToClass}
+                      onEditClick={handleEditClick}
+                      onDeleteClick={handleDeleteClick}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-        {/* Toolbar */}
-        <ListeningToolbar
-          search={search}
-          setSearch={setSearch}
-          setPage={setPage}
-          ownershipFilter={ownershipFilter}
-          setOwnershipFilter={setOwnershipFilter}
-          category={category}
-          setCategory={setCategory}
-          topic={topic}
-          setTopic={setTopic}
-          accent={accent}
-          setAccent={setAccent}
-          trashView={trashView}
-          setTrashView={setTrashView}
-          trashCount={stats.trash || 0}
-          totalLessons={total}
-          myLessonsCount={myLessonsCount}
-          isTeacher={isTeacher}
-          onOpenCreate={handleOpenCreate}
-          onReload={fetchLessons}
-        />
 
-
-        {/* Table Content */}
-        <div className="w-full">
-          <table className="w-full text-left text-sm table-fixed">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-3.5 py-3 w-[32%] whitespace-nowrap">BÀI NGHE AUDIO</th>
-                <th className="px-3 py-3 w-[13%] whitespace-nowrap">CHỦ ĐỀ</th>
-                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">CẤP ĐỘ</th>
-                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">THỜI LƯỢNG</th>
-                <th className="px-3 py-3 w-[12%] whitespace-nowrap">NGUỒN / TÁC GIẢ</th>
-                <th className="px-3 py-3 w-[13%] whitespace-nowrap">BẢN CHÉP & CÂU HỎI</th>
-                <th className="px-4 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center">
-                    <LoadingSpinner text="Đang tải danh sách bài nghe từ máy chủ..." />
-                  </td>
-                </tr>
-              ) : displayedLessons.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                    {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài nghe nào phù hợp'}
-                  </td>
-                </tr>
-              ) : (
-                displayedLessons.map((item) => (
-                  <ListeningTableRow
-                    key={item.id}
-                    item={item}
-                    isOwned={checkOwnership(item)}
-                    isSystem={
-                      item.authorEmail === 'system@smartenglish.vn' ||
-                      item.authorName?.includes('Hệ thống')
-                    }
-                    cefr={extractCefr(item.cefrLevel || item.level)}
-                    isPlaying={playback.playingId === item.id}
-                    canManage={canManage(item)}
-                    isTeacher={isTeacher}
-                    onPlayToggle={handlePlayToggle}
-                    onRowClick={setActiveLesson}
-                    onAssignToClass={handleAssignToClass}
-                    onEditClick={handleEditClick}
-                    onDeleteClick={handleDeleteClick}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+          {/* Phân trang */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+            <p className="text-xs text-slate-500">
+              Hiển thị <strong>{total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}</strong>-
+              <strong>{Math.min(page * PAGE_SIZE, total)}</strong> trong tổng số{' '}
+              <strong>{total}</strong> bài nghe
+            </p>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </div>
         </div>
-
-        {/* Phân trang */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-          <p className="text-xs text-slate-500">
-            Hiển thị <strong>{total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}</strong>-
-            <strong>{Math.min(page * PAGE_SIZE, total)}</strong> trong tổng số{' '}
-            <strong>{total}</strong> bài nghe
-          </p>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </div>
-      </div>
-
-      {/* Drawer xem chi tiết bài nghe */}
-      <ListeningDetailDrawer
-        lesson={activeLesson}
-        onClose={() => {
-          stopAudio()
-          setPlayback({ playingId: null, currentTime: 0, duration: 0 })
-          setActiveLesson(null)
-        }}
-        isTeacher={isTeacher}
-        isOwner={checkOwnership(activeLesson)}
-        canManage={canManage(activeLesson)}
-        isPlaying={playback.playingId === activeLesson?.id}
-        currentTime={playback.playingId === activeLesson?.id ? playback.currentTime : 0}
-        onSeek={handleSeek}
-        onPlayToggle={handlePlayToggle}
-        onAssignToClass={handleAssignToClass}
-        onEditClick={handleEditClick}
-      />
+      )}
 
       {/* Confirm Chuyển vào Thùng rác */}
       <ConfirmDialog

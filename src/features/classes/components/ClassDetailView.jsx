@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   BookOpen,
   CheckCircle2,
+  ClipboardList,
   Copy,
   GraduationCap,
   LayoutGrid,
@@ -21,18 +22,22 @@ import {
   removeMember,
   updateClass,
 } from '../classApi'
+import { getClassCourseIds } from '../classCourseHelper'
+import { useTopbarStore } from '@/store/topbarStore'
 import AddStudentModal from './detail/AddStudentModal'
 import ClassAssignmentsTab from './detail/ClassAssignmentsTab'
 import ClassGradebookTab from './detail/ClassGradebookTab'
 import ClassOverviewTab from './detail/ClassOverviewTab'
+import ClassCoursesTab from './detail/ClassCoursesTab'
 import ClassStudentsTab from './detail/ClassStudentsTab'
 import CreateAssignmentModal from './detail/CreateAssignmentModal'
 import ClassFormModal from './ClassFormModal'
 
 const DETAIL_TABS = [
   { key: 'overview', label: 'Tổng quan', icon: LayoutGrid },
+  { key: 'courses', label: 'Khóa học/Giáo trình', icon: BookOpen },
   { key: 'students', label: 'Học viên', icon: Users },
-  { key: 'assignments', label: 'Bài tập', icon: BookOpen },
+  { key: 'assignments', label: 'Bài tập', icon: ClipboardList },
   { key: 'gradebook', label: 'Bảng điểm', icon: GraduationCap },
 ]
 
@@ -135,17 +140,24 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
     }
   }
 
+    const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      onBack,
+      backText: 'Quay lại danh sách',
+      title: currentCls?.name || 'Chi tiết lớp học',
+      subtitle: `Lớp học / ${currentCls?.code || ''}`,
+    })
+    return () => clearCustomHeader()
+  }, [currentCls?.name, currentCls?.code, onBack, setCustomHeader, clearCustomHeader])
+
+  const attachedCourseCount = getClassCourseIds(currentCls?.id, currentCls?.courseId).length
+
   return (
     <div className="space-y-4">
-      {/* Back button */}
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-      >
-        <ArrowLeft size={16} />
-        <span>Quay lại danh sách lớp học</span>
-      </button>
+      
 
       {/* Header Banner - Compact single-row layout */}
       <div className="rounded-2xl border border-slate-200/90 bg-white px-5 py-3.5 shadow-xs">
@@ -157,9 +169,6 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="truncate text-lg font-bold text-slate-900 tracking-tight">{currentCls.name}</h2>
-                <span className="shrink-0 text-xs font-mono text-slate-400">
-                  #{currentCls.id}
-                </span>
                 {isAdmin && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-[11px] font-bold text-purple-700 border border-purple-200">
                     <Shield size={11} /> Chế độ Quản trị
@@ -215,7 +224,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
       {/* Tab Navigation & Content Card */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Tab Headers */}
-        <div className="flex border-b border-slate-100 bg-slate-50/50 px-3 pt-2">
+        <div className="flex border-b border-slate-100 bg-slate-50/50 px-3 pt-2 overflow-x-auto">
           {DETAIL_TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.key
@@ -224,7 +233,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-5 py-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                className={`flex items-center gap-2 px-5 py-3 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap ${
                   isActive
                     ? 'border-brand-600 text-brand-600 bg-white rounded-t-xl shadow-2xs'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -232,6 +241,11 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
               >
                 <Icon size={15} />
                 <span>{tab.label}</span>
+                {tab.key === 'courses' && (
+                  <span className="rounded-full bg-brand-100 font-semibold px-2 py-0.5 text-[10px] text-brand-700">
+                    {attachedCourseCount}
+                  </span>
+                )}
                 {tab.key === 'students' && (
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
                     {members.length}
@@ -255,6 +269,15 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
             assignments={assignments}
             copied={copied}
             onCopyCode={handleCopyCode}
+            onSwitchTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'courses' && (
+          <ClassCoursesTab
+            cls={currentCls}
+            canEdit={canEditClass}
+            onCreateAssignmentWithCourse={() => setIsCreateAssignmentOpen(true)}
           />
         )}
 

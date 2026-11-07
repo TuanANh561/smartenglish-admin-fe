@@ -1,6 +1,21 @@
+import { useEffect } from 'react'
+import { useTopbarStore } from '@/store/topbarStore'
 import { ArrowLeft, ClipboardList } from 'lucide-react'
 
 export default function StudentDetailView({ student, cls, onBack }) {
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      onBack,
+      backText: 'Quay lại lớp',
+      title: student?.name || 'Chi tiết học viên',
+      subtitle: `Lớp học / ${cls?.name || ''}`,
+    })
+    return () => clearCustomHeader()
+  }, [student?.name, cls?.name, onBack, setCustomHeader, clearCustomHeader])
+
   const scoreColor =
     student.avgScore >= 8.5
       ? '#15803d'
@@ -16,15 +31,7 @@ export default function StudentDetailView({ student, cls, onBack }) {
 
   return (
     <div className="space-y-4">
-      {/* Back */}
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-navy-700 cursor-pointer"
-      >
-        <ArrowLeft size={16} />
-        Quay lại lớp {cls.name}
-      </button>
+      
 
       {/* Profile card */}
       <div className="rounded-xl border border-line bg-white p-6 shadow-sm">

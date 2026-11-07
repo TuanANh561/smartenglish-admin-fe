@@ -23,6 +23,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Drawer from '@/components/ui/Drawer'
 import Pagination from '@/components/ui/Pagination'
+import Select from '@/components/ui/Select'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { cn } from '@/lib/utils'
 import {
@@ -124,6 +125,19 @@ function ReportsPage() {
     setSeverityFilter('all')
     setContentTypeFilter('all')
     setPage(1)
+  }
+
+  // Lọc nhanh theo trạng thái từ KPI Card (Nút icon con mắt)
+  const handleFilterByStatus = (targetStatus) => {
+    const nextStatus = statusFilter === targetStatus ? 'all' : targetStatus
+    setStatusFilter(nextStatus)
+    setPage(1)
+    setTimeout(() => {
+      const tableSection = document.getElementById('reports-table-card')
+      if (tableSection) {
+        tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 50)
   }
 
   const hasActiveFilters =
@@ -267,14 +281,41 @@ function ReportsPage() {
       {/* 3 KPI Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {/* Card 1: Đang chờ */}
-        <Card className="p-4 border border-slate-200/90 relative overflow-hidden bg-white shadow-2xs">
+        <Card
+          className={cn(
+            'p-4 border relative overflow-hidden bg-white shadow-2xs transition-all duration-200',
+            statusFilter === 'pending'
+              ? 'border-brand-500 ring-2 ring-brand-200/60 shadow-xs'
+              : 'border-slate-200/90 hover:border-slate-300',
+          )}
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Đang chờ xử lý
             </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
-              <AlertTriangle size={18} />
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleFilterByStatus('pending')}
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer shadow-2xs',
+                  statusFilter === 'pending'
+                    ? 'bg-brand-600 text-white shadow-xs ring-1 ring-brand-400'
+                    : 'bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 border border-slate-200/80 active:scale-95',
+                )}
+                title={
+                  statusFilter === 'pending'
+                    ? 'Bấm để hủy lọc (hiện tất cả)'
+                    : 'Bấm để xem danh sách đang chờ xử lý'
+                }
+                aria-label="Lọc danh sách đang chờ xử lý"
+              >
+                <Eye size={16} />
+              </button>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                <AlertTriangle size={18} />
+              </span>
+            </div>
           </div>
           <p className="text-3xl font-extrabold text-slate-900 mt-2">
             {stats.pendingCount ?? 0}
@@ -285,14 +326,41 @@ function ReportsPage() {
         </Card>
 
         {/* Card 2: Đã xử lý */}
-        <Card className="p-4 border border-slate-200/90 relative overflow-hidden bg-white shadow-2xs">
+        <Card
+          className={cn(
+            'p-4 border relative overflow-hidden bg-white shadow-2xs transition-all duration-200',
+            statusFilter === 'resolved'
+              ? 'border-emerald-500 ring-2 ring-emerald-200/60 shadow-xs'
+              : 'border-slate-200/90 hover:border-slate-300',
+          )}
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Đã xử lý thành công
             </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-              <ShieldCheck size={18} />
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleFilterByStatus('resolved')}
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer shadow-2xs',
+                  statusFilter === 'resolved'
+                    ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-400'
+                    : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200/80 active:scale-95',
+                )}
+                title={
+                  statusFilter === 'resolved'
+                    ? 'Bấm để hủy lọc (hiện tất cả)'
+                    : 'Bấm để xem danh sách đã xử lý thành công'
+                }
+                aria-label="Lọc danh sách đã xử lý thành công"
+              >
+                <Eye size={16} />
+              </button>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <ShieldCheck size={18} />
+              </span>
+            </div>
           </div>
           <p className="text-3xl font-extrabold text-slate-900 mt-2">
             {stats.resolvedCount ?? 0}
@@ -325,7 +393,7 @@ function ReportsPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+      <div id="reports-table-card" className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         {/* Row Chứa Thanh Tìm Kiếm Không Viền & Bộ Lọc Dropdown */}
         <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-3.5 md:flex-row md:items-center md:justify-between bg-white">
           {/* Left: Thanh tìm kiếm KHÔNG VIỀN (Chuẩn Tab 1 & Audit Log) */}
@@ -358,50 +426,56 @@ function ReportsPage() {
           {/* Right: Dropdowns Bộ Lọc & Nút Thao Tác */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Lọc Trạng thái */}
-            <select
+            <Select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Trạng thái: Tất cả</option>
-              <option value="pending">Đang chờ xử lý</option>
-              <option value="resolved">Đã xử lý</option>
-              <option value="dismissed">Đã bỏ qua</option>
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={[
+                { value: 'all', label: 'Trạng thái: Tất cả' },
+                { value: 'pending', label: 'Đang chờ xử lý' },
+                { value: 'resolved', label: 'Đã xử lý' },
+                { value: 'dismissed', label: 'Đã bỏ qua' },
+              ]}
+            />
 
             {/* Lọc Phân loại nội dung */}
-            <select
+            <Select
               value={contentTypeFilter}
               onChange={(e) => {
                 setContentTypeFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Loại nội dung: Tất cả</option>
-              <option value="POST">Bài viết</option>
-              <option value="COMMENT">Bình luận</option>
-              <option value="USER_PROFILE">Hồ sơ người dùng</option>
-              <option value="MESSAGE">Tin nhắn</option>
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={[
+                { value: 'all', label: 'Loại nội dung: Tất cả' },
+                { value: 'POST', label: 'Bài viết' },
+                { value: 'COMMENT', label: 'Bình luận' },
+                { value: 'USER_PROFILE', label: 'Hồ sơ người dùng' },
+                { value: 'MESSAGE', label: 'Tin nhắn' },
+              ]}
+            />
 
             {/* Lọc Mức độ */}
-            <select
+            <Select
               value={severityFilter}
               onChange={(e) => {
                 setSeverityFilter(e.target.value)
                 setPage(1)
               }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value="all">Mức độ: Tất cả</option>
-              <option value="CRITICAL">Nghiêm trọng</option>
-              <option value="WARNING">Trung bình</option>
-              <option value="NORMAL">Thấp</option>
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={[
+                { value: 'all', label: 'Mức độ: Tất cả' },
+                { value: 'CRITICAL', label: 'Nghiêm trọng' },
+                { value: 'WARNING', label: 'Trung bình' },
+                { value: 'NORMAL', label: 'Thấp' },
+              ]}
+            />
 
             {/* Reset Filter Button */}
             {hasActiveFilters && (

@@ -67,3 +67,31 @@ export const deletePlan = async (id) => {
   const res = await api.del(ENDPOINTS.plans.remove, { path: { id } })
   return res.data || res
 }
+
+/**
+ * Tìm kiếm người dùng (Học viên, Giáo viên) để phục vụ đăng ký hộ gói
+ * @param {{ search?: string, role?: string, size?: number, page?: number }} params
+ */
+export const searchUsersForSubscription = async ({ search = '', role = '', size = 8, page = 1 } = {}) => {
+  const res = await api.get('/admin/users', {
+    params: {
+      search: search?.trim() || undefined,
+      role: role && role !== 'all' ? role : undefined,
+      size,
+      page,
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+    },
+  })
+  return res?.data?.items || res?.items || (Array.isArray(res) ? res : [])
+}
+
+/**
+ * Admin kích hoạt / cấp quyền gói dịch vụ trực tiếp cho người dùng (có lưu Audit log)
+ * @param {number|string} userId
+ * @param {{ planId?: number, durationDays?: number, reason?: string }} data
+ */
+export const adminGrantPlan = async (userId, data = {}) => {
+  const res = await api.post(`/payment/admin/users/${userId}/grant-plan`, data)
+  return res?.data || res
+}

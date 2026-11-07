@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, RefreshCw, Search, Wallet, Receipt, BarChart3, Percent, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import Card from '@/components/ui/Card'
 import DataTable from '@/components/ui/DataTable/DataTable'
 import { exportCsv } from '@/components/ui/DataTable/exportCsv'
@@ -10,10 +11,29 @@ import { formatCurrency } from '@/lib/utils'
 import { useRevenueTransactions, useRevenueStats } from './hooks/useRevenue'
 import { transactionColumns, transactionCsvColumns } from '@/features/revenue/columns'
 import { useNotificationStream } from '@/features/notifications/useNotificationStream'
+import TransactionDetailModal from '@/features/transactions/components/TransactionDetailModal'
+import TransactionInvoiceModal from '@/features/transactions/components/TransactionInvoiceModal'
 
 function RevenueListPage() {
   const [isLiveMode, setIsLiveMode] = useState(true)
-  const dataTable = useDataTable()
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null)
+
+  const handleViewDetail = (order) => {
+    setSelectedOrder(order)
+    setIsDetailModalOpen(true)
+  }
+
+  const handleOpenInvoice = (order) => {
+    setSelectedInvoiceOrder(order)
+    setIsInvoiceModalOpen(true)
+  }
+
+  const dataTable = useDataTable({
+    initialFilters: { status: 'completed' },
+  })
   const transactionsQuery = useRevenueTransactions(dataTable.params, {
     refetchInterval: isLiveMode ? 8000 : false,
   })
@@ -35,24 +55,18 @@ function RevenueListPage() {
     },
   })
 
-  // Chỉ hiển thị giao dịch thành công hoặc hoàn tiền (trừ tiền) trên trang doanh thu
-  // Các trạng thái khác (expired, cancelled, pending, failed) xem ở trang Giao dịch
-  const REVENUE_STATUSES = ['completed', 'SUCCESS', 'success', 'refunded', 'REFUNDED']
-
-  const rawItems = transactionsQuery.data?.items ?? []
-  const revenueItems = dataTable.filters.status
-    ? rawItems // Khi user chủ động lọc theo status cụ thể → giữ nguyên
-    : rawItems.filter((t) => REVENUE_STATUSES.includes(t.status))
+  // Dữ liệu giao dịch được phân trang & đôn lên đủ 10 mục trực tiếp từ backend
+  const revenueItems = transactionsQuery.data?.items ?? []
 
   const hasFilters = Boolean(
     dataTable.search ||
-    dataTable.filters.status ||
+    (dataTable.filters.status && dataTable.filters.status !== 'completed') ||
     dataTable.filters.planType
   )
 
   const handleClearFilters = () => {
     dataTable.setSearch('')
-    dataTable.setFilter('status', undefined)
+    dataTable.setFilter('status', 'completed')
     dataTable.setFilter('planType', undefined)
     dataTable.setPage(1)
   }
@@ -97,11 +111,11 @@ function RevenueListPage() {
             </div>
           </div>
 
-          {/* Card 2: Doanh thu tháng */}
+          {/* Card 2: Doanh thu tháng này */}
           <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Doanh thu tháng
+                Doanh thu tháng này
               </span>
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                 <BarChart3 size={16} strokeWidth={2} />
@@ -189,28 +203,32 @@ function RevenueListPage() {
           {/* Right: Cụm bộ lọc dropdowns + Nút xóa lọc + Action buttons */}
           <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-nowrap">
             {/* Lọc trạng thái */}
-            <select
-              value={dataTable.filters.status || 'all'}
-              onChange={(e) => dataTable.setFilter('status', e.target.value === 'all' ? undefined : e.target.value)}
-              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-            >
-              <option value="all">Trạng thái: Tất cả</option>
-              <option value="completed">✅ Thành công</option>
-              <option value="refunded">↩ Hoàn tiền</option>
-            </select>
+            <Select
+              value={dataTable.filters.status || 'completed'}
+              onChange={(e) => dataTable.setFilter('status', e.target.value)}
+              size="sm"
+              containerClassName="w-48 shrink-0"
+              options={[
+                { value: 'completed', label: 'Trạng thái: Đã thu tiền (Thành công)' },
+                { value: 'all', label: 'Tất cả đơn hàng (Gồm cả đơn hủy)' },
+                { value: 'refunded', label: '↩ Hoàn tiền' },
+              ]}
+            />
 
             {/* Lọc gói dịch vụ */}
-            <select
+            <Select
               value={dataTable.filters.planType || 'all'}
               onChange={(e) => dataTable.setFilter('planType', e.target.value === 'all' ? undefined : e.target.value)}
-              className="h-8.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-            >
-              <option value="all">Gói: Tất cả</option>
-              <option value="premium_monthly">Premium tháng</option>
-              <option value="premium_yearly">Premium năm</option>
-              <option value="lifetime">Trọn đời (VIP)</option>
-              <option value="teacher_pro">Giảng viên Pro</option>
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={[
+                { value: 'all', label: 'Gói: Tất cả' },
+                { value: 'premium_monthly', label: 'Premium tháng' },
+                { value: 'premium_yearly', label: 'Premium năm' },
+                { value: 'lifetime', label: 'Trọn đời (VIP)' },
+                { value: 'teacher_pro', label: 'Giảng viên Pro' },
+              ]}
+            />
 
             {/* Xóa lọc */}
             {hasFilters && (
@@ -279,8 +297,31 @@ function RevenueListPage() {
           sorting={dataTable.sorting}
           onSortingChange={dataTable.setSorting}
           emptyMessage="Chưa có giao dịch nào khớp bộ lọc"
+          meta={{ onViewDetail: handleViewDetail }}
+          onRowClick={handleViewDetail}
         />
       </div>
+
+      {/* Modal Xem chi tiết giao dịch */}
+      <TransactionDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false)
+          setSelectedOrder(null)
+        }}
+        order={selectedOrder}
+        onOpenInvoice={handleOpenInvoice}
+      />
+
+      {/* Modal Xem Hóa đơn điện tử */}
+      <TransactionInvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false)
+          setSelectedInvoiceOrder(null)
+        }}
+        order={selectedInvoiceOrder}
+      />
     </div>
   )
 }

@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Plus, Trash2, Volume2, BookOpen, Edit3 } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 
 /**
  * Tab Soạn Thảo Từ Vựng Dạng BẢNG (Table)
@@ -10,6 +12,20 @@ export default function LessonVocabTab({
   updateBlock,
 }) {
   const items = vocabBlock?.items || []
+  const [playingIdx, setPlayingIdx] = useState(null)
+
+  const handlePlayWord = (word, idx) => {
+    if (!word?.trim()) return
+    if (playingIdx === idx) {
+      setPlayingIdx(null)
+      stopAudio()
+      return
+    }
+    setPlayingIdx(idx)
+    speakWord(word, null, () => {
+      setPlayingIdx((curr) => (curr === idx ? null : curr))
+    })
+  }
 
   const handleAddItem = () => {
     const nextItem = { word: '', ipa: '', meaningVi: '', exampleEn: '' }
@@ -89,13 +105,29 @@ export default function LessonVocabTab({
 
                     {/* Từ vựng: Không viền tĩnh, hover hiện viền sáng */}
                     <td className="py-1.5 px-2">
-                      <input
-                        type="text"
-                        value={it.word}
-                        onChange={(e) => handleUpdateItem(idx, 'word', e.target.value)}
-                        placeholder="Từ tiếng Anh..."
-                        className="w-full px-2.5 py-1.5 text-xs font-bold text-slate-900 border border-transparent rounded-lg bg-transparent hover:border-slate-300 hover:bg-slate-50/80 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 focus:outline-none transition-all placeholder:text-slate-300"
-                      />
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          value={it.word}
+                          onChange={(e) => handleUpdateItem(idx, 'word', e.target.value)}
+                          placeholder="Từ tiếng Anh..."
+                          className="w-full pr-8 px-2.5 py-1.5 text-xs font-bold text-slate-900 border border-transparent rounded-lg bg-transparent hover:border-slate-300 hover:bg-slate-50/80 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 focus:outline-none transition-all placeholder:text-slate-300"
+                        />
+                        {it.word?.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => handlePlayWord(it.word, idx)}
+                            className={`absolute right-1.5 p-1 rounded-md transition-all cursor-pointer ${
+                              playingIdx === idx
+                                ? 'text-brand-600 bg-brand-50 shadow-2xs animate-pulse'
+                                : 'text-slate-400 hover:text-brand-600 hover:bg-slate-100'
+                            }`}
+                            title="Nghe thử phát âm"
+                          >
+                            <Volume2 size={13} />
+                          </button>
+                        )}
+                      </div>
                     </td>
 
                     {/* Phiên âm IPA: Monospace màu tím */}

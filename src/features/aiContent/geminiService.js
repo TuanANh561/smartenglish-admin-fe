@@ -1,5 +1,5 @@
 /**
- * Dịch vụ Sinh nội dung AI (Reading, Quiz, TOEIC Part 5/6, Cloze)
+ * Dịch vụ Sinh nội dung AI (Reading, Quiz Grammar, Quiz Vocab, TOEIC Part 5/6/7, Placement Test)
  * Toàn bộ yêu cầu sinh nội dung được gửi trực tiếp về Backend Service
  * (/admin/ai/generate-content) để bảo vệ Gemini API Key và đảm bảo hiệu năng.
  */
@@ -15,7 +15,7 @@ export class GeminiServiceError extends Error {
 }
 
 /**
- * Gọi API backend sinh nội dung AI. Không tạo dữ liệu giả khi provider lỗi.
+ * Gọi API backend sinh nội dung AI.
  */
 async function callBackendAiContent(payload) {
   try {
@@ -34,7 +34,7 @@ async function callBackendAiContent(payload) {
     if (status === 429) {
       throw new GeminiServiceError('Đã vượt hạn mức AI. Vui lòng thử lại sau', 'RATE_LIMIT')
     }
-    throw new GeminiServiceError('Dịch vụ AI tạm thời không khả dụng', 'BACKEND_UNAVAILABLE')
+    throw new GeminiServiceError(error?.message || 'Dịch vụ AI tạm thời không khả dụng', 'BACKEND_UNAVAILABLE')
   }
 }
 
@@ -63,9 +63,9 @@ export async function generateReading({ topic, level = 'B2', questionCount = 3 }
 }
 
 /**
- * Sinh bài tập điền khuyết / TOEIC Part 5, Part 6
+ * Sinh bài tập điền khuyết / TOEIC Part 5, Part 6, Part 7
  */
-export async function generateCloze({ topic, level = 'B2', type = 'cloze_sentence', questionCount = 3 }) {
+export async function generateCloze({ topic, level = 'B2', type = 'toeic_part_5', questionCount = 3 }) {
   const data = await callBackendAiContent({
     type,
     topic,
@@ -87,17 +87,19 @@ export async function generateCloze({ topic, level = 'B2', type = 'cloze_sentenc
 }
 
 /**
- * Sinh bộ câu hỏi trắc nghiệm kiểm tra
+ * Sinh bộ câu hỏi trắc nghiệm kiểm tra (Grammar, Vocab, Placement, General)
  */
-export async function generateQuiz({ topic, level = 'B2', questionCount = 3 }) {
+export async function generateQuiz({ topic, level = 'B2', questionCount = 3, type = 'quiz_grammar' }) {
   const data = await callBackendAiContent({
-    type: 'quiz',
+    type,
     topic,
     level,
     questionCount,
   })
 
   return {
+    title: data.title || `Quiz: ${topic}`,
+    text: data.text || '',
     questions: (data.questions || []).map((q, idx) => ({
       id: q.id ?? idx + 1,
       questionText: q.questionText || q.question || `Câu hỏi ${idx + 1}`,

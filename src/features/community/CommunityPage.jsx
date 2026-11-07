@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, FileText, MessageCircle, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import CreateGroupModal from './CreateGroupModal'
+import CreateGroupModal from './components/CreateGroupModal'
 import PostComposer from './components/PostComposer'
 import PostCard from './components/PostCard'
 import ChatConversationSidebar from './components/ChatConversationSidebar'
 import ChatFloatingWindows from './components/ChatFloatingWindows'
 import TrendingTopicsCard from './components/TrendingTopicsCard'
+import SuggestedUsersCard from './components/SuggestedUsersCard'
+import InstagramMessagesDock from './components/InstagramMessagesDock'
 import SharePostModal from './components/SharePostModal'
 import FindFriendsModal from './components/FindFriendsModal'
 import PostCommentModal from './components/PostCommentModal'
@@ -18,6 +20,7 @@ import { sanitizeAvatarUrl } from '@/components/ui/Avatar'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useCommunitySearchStore } from '@/store/communitySearchStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { http } from '@/lib/api'
 import { formatRelativeTime, cn } from '@/lib/utils'
 import {
@@ -56,6 +59,25 @@ function CommunityPage() {
   const setIsSearchingMode = useCommunitySearchStore((s) => s.setIsSearchingMode)
   const storeSelectedTag = useCommunitySearchStore((s) => s.selectedTag)
   const setStoreSelectedTag = useCommunitySearchStore((s) => s.setSelectedTag)
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    if (isSearchingMode) {
+      setCustomHeader({
+        onBack: () => {
+          setIsSearchingMode(false)
+          setSearchQuery('')
+        },
+        backText: 'Bảng tin',
+        title: 'Cộng đồng',
+        subtitle: searchQuery ? `Tìm kiếm: "${searchQuery}"` : 'Kết quả tìm kiếm',
+      })
+    } else {
+      clearCustomHeader()
+    }
+    return () => clearCustomHeader()
+  }, [isSearchingMode, searchQuery, setIsSearchingMode, setSearchQuery, setCustomHeader, clearCustomHeader])
 
   useEffect(() => {
     return () => {
@@ -383,28 +405,31 @@ function CommunityPage() {
 
   // Load friends and pending requests from MongoDB Atlas
   const fetchFriends = useCallback(async () => {
+    if (!myId) return
     try {
-      const res = await http.get('/api/v1/social/friends')
+      const res = await http.get(`/api/v1/social/friends?userId=${myId}`)
       const list = res?.data || res
       if (Array.isArray(list)) setFriends(list)
     } catch (err) {
       console.warn('Cannot fetch friends:', err)
     }
-  }, [])
+  }, [myId])
 
   const fetchFriendRequests = useCallback(async () => {
+    if (!myId) return
     try {
-      const res = await http.get('/api/v1/social/friends/requests')
+      const res = await http.get(`/api/v1/social/friends/requests?userId=${myId}`)
       const list = res?.data || res
       if (Array.isArray(list)) setPendingRequests(list)
     } catch (err) {
       console.warn('Cannot fetch friend requests:', err)
     }
-  }, [])
+  }, [myId])
 
   const fetchSentRequests = useCallback(async () => {
+    if (!myId) return
     try {
-      const res = await http.get('/api/v1/social/friends/sent-requests')
+      const res = await http.get(`/api/v1/social/friends/sent-requests?userId=${myId}`)
       const list = res?.data || res
       if (Array.isArray(list)) {
         setSentRequestUserIds(new Set(list.map((r) => Number(r.addresseeId))))
@@ -524,11 +549,11 @@ function CommunityPage() {
         fetchConversations()
         toast.success(
           `${event.friendName || 'Bạn mới'} đã chấp nhận lời mời kết bạn! Cuộc trò chuyện đã sẵn sàng.`,
-          { icon: '🎉' },
+          {},
         )
       } else if (event.type === 'FRIEND_REQUEST_RECEIVED') {
         fetchFriendRequests()
-        toast.info('Bạn vừa nhận được một lời mời kết bạn mới!', { icon: '👋' })
+        toast('Bạn vừa nhận được một lời mời kết bạn mới!')
       } else if (event.type === 'NEW_MESSAGE') {
         const incomingMsg = event.message
         const convId = String(event.conversationId)
@@ -750,12 +775,8 @@ function CommunityPage() {
     }
   }, [realUsers, getRoleLabel])
 
-  const handleOpenConversation = async (conversationId) => {
-    setIsMobileChatOpen(false)
+  const activateAndSyncConversation = async (conversationId) => {
     setActiveConversationId(conversationId)
-    setOpenConversationIds((prev) =>
-      [...prev.filter((id) => id !== conversationId), conversationId].slice(-3),
-    )
     setConversations((prev) =>
       prev.map((conversation) =>
         conversation.id === conversationId ? { ...conversation, unread: 0 } : conversation,
@@ -856,6 +877,51 @@ function CommunityPage() {
         http.post(`/api/v1/social/conversations/${conversationId}/read`).catch(() => {})
       }
     })
+  }
+
+  // Mở cửa sổ chat nổi ngoài màn hình (ChatFloatingWindows) khi bấm từ Sidebar
+  const handleOpenConversation = async (conversationId) => {
+    setIsMobileChatOpen(false)
+    setOpenConversationIds((prev) =>
+      [...prev.filter((id) => id !== conversationId), conversationId].slice(-3),
+    )
+    await activateAndSyncConversation(conversationId)
+  }
+
+  // Chọn cuộc trò chuyện trong Instagram Messages Dock (THAY ĐỔI NỘI DUNG NGAY TRONG MODAL, KHÔNG TẠO POPUP NGOÀI)
+  const handleSelectConversationInDock = async (conversationId) => {
+    await activateAndSyncConversation(conversationId)
+  }
+
+  // Bắt đầu chat với người dùng mới trong Dock (ĐỔI GIAO DIỆN TRONG CHÍNH MODAL)
+  const handleStartChatInDock = async (targetUser) => {
+    const targetUserId = Number(targetUser.id)
+    const existing = conversations.find(
+      (c) => c.type === 'direct' && Number(c.participantId) === targetUserId,
+    )
+    if (existing) {
+      await activateAndSyncConversation(existing.id)
+      return existing.id
+    }
+
+    try {
+      const targetName =
+        targetUser.name || targetUser.displayName || targetUser.username || targetUser.email
+      const targetAvatar = targetUser.avatarUrl || targetUser.avatar || ''
+      const res = await http.post(
+        `/api/v1/social/conversations/direct?friendId=${targetUserId}&friendName=${encodeURIComponent(targetName)}&friendAvatar=${encodeURIComponent(targetAvatar)}`,
+      )
+      const conv = res?.data || res
+      if (conv?.id) {
+        await fetchConversations()
+        await activateAndSyncConversation(conv.id)
+        return conv.id
+      }
+    } catch (err) {
+      console.error('Error creating direct conversation in dock:', err)
+      toast.error('Không thể mở cuộc trò chuyện')
+    }
+    return null
   }
 
   const typingMap = useChatStore((s) => s.typingMap)
@@ -1243,21 +1309,32 @@ function CommunityPage() {
 
   // Friendships Handlers
   const handleSendFriendRequest = async (targetUser) => {
+    const targetUserId = Number(targetUser.id)
     try {
       const body = {
         requesterId: myId,
         requesterName: myName,
         requesterAvatar: myAvatar,
-        addresseeId: Number(targetUser.id),
+        addresseeId: targetUserId,
         addresseeName: targetUser.name || targetUser.displayName || targetUser.username || targetUser.email,
         addresseeAvatar: targetUser.avatarUrl || targetUser.avatar || '',
       }
       await http.post('/api/v1/social/friends/request', body)
-      setSentRequestUserIds((prev) => new Set([...prev, Number(targetUser.id)]))
+      setSentRequestUserIds((prev) => new Set([...prev, targetUserId]))
       toast.success(`Đã gửi lời mời kết bạn tới ${body.addresseeName}`)
     } catch (err) {
       console.error('Error sending friend request:', err)
-      toast.error('Không thể gửi lời mời kết bạn')
+      const msg = err?.response?.data?.message || err?.message || ''
+      if (
+        msg.includes('đã được gửi trước đó') ||
+        msg.includes('đã là bạn bè') ||
+        msg.includes('already')
+      ) {
+        setSentRequestUserIds((prev) => new Set([...prev, targetUserId]))
+        toast('Lời mời kết bạn đã được gửi trước đó')
+      } else {
+        toast.error('Không thể gửi lời mời kết bạn')
+      }
     }
   }
 
@@ -1508,7 +1585,7 @@ function CommunityPage() {
       console.error('Lỗi khi lưu bài viết vào CSDL:', err)
       const errorMsg =
         err?.response?.data?.message || err?.message || 'Không thể đăng bài viết. Đã hủy lưu.'
-      toast.error(`Lỗi lưu CSDL: ${errorMsg}`)
+      toast.error(`Không thể đăng bài viết: ${errorMsg}`)
     } finally {
       setIsPosting(false)
     }
@@ -1740,20 +1817,18 @@ function CommunityPage() {
           </div>
         </div>
 
-        {/* ─── RIGHT COLUMN: TOPICS & FEATURED TEACHERS (4 COLS - HIDDEN ON MOBILE/TABLET) ───────── */}
+        {/* ─── RIGHT COLUMN: PROFILE, SUGGESTIONS & TOPICS (4 COLS - HIDDEN ON MOBILE/TABLET) ───────── */}
         <div className="hidden lg:block lg:col-span-4 space-y-4">
-          <ChatConversationSidebar
-            conversations={conversations}
-            filteredConversations={filteredConversations}
-            contacts={contacts}
-            conversationSearch={conversationSearch}
-            setConversationSearch={setConversationSearch}
-            getConversationAvatar={getConversationAvatar}
-            onOpenConversation={handleOpenConversation}
-            onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
+          <SuggestedUsersCard
+            currentUser={user}
+            availableUsers={availableUsersForGroup}
+            friends={friends}
+            pendingRequests={pendingRequests}
+            sentRequestUserIds={sentRequestUserIds}
+            onSendFriendRequest={handleSendFriendRequest}
+            onRespondFriendRequest={handleRespondFriendRequest}
+            onStartChat={handleStartChatWithUser}
             onOpenFindFriends={() => setIsFindFriendsOpen(true)}
-            pendingRequestsCount={pendingRequests.length}
-            myId={myId}
           />
 
           <TrendingTopicsCard
@@ -1765,6 +1840,10 @@ function CommunityPage() {
               setIsSearchingMode(false)
             }}
           />
+
+          <div className="px-2 text-[11px] text-slate-400 leading-relaxed">
+            <p>© 2026 SmartEnglish AI • Mạng xã hội học tập &amp; Giảng dạy</p>
+          </div>
         </div>
       </div>
 
@@ -1788,6 +1867,28 @@ function CommunityPage() {
         getSenderAvatar={getSenderAvatar}
         onLoadOlderMessages={handleLoadOlderMessages}
         loadingOlderMap={loadingOlderMap}
+      />
+
+      {/* ─── INSTAGRAM-STYLE FLOATING MESSAGES DOCK (Nút nổi & Cửa sổ tin nhắn góc dưới phải) ─── */}
+      <InstagramMessagesDock
+        conversations={conversations}
+        availableUsers={availableUsersForGroup}
+        myId={myId}
+        myName={myName}
+        getConversationAvatar={getConversationAvatar}
+        getSenderAvatar={getSenderAvatar}
+        onSendMessage={handleSendMessage}
+        onSendMediaMessage={handleSendMediaMessage}
+        onReactMessage={handleReactMessage}
+        onRecallMessage={handleRecallMessage}
+        onTogglePinMessage={handleTogglePinMessage}
+        typingMap={typingMap}
+        onTyping={handleSendTyping}
+        onNavigateToPost={handleNavigateToPost}
+        onLoadOlderMessages={handleLoadOlderMessages}
+        loadingOlderMap={loadingOlderMap}
+        onSelectConversationInDock={handleSelectConversationInDock}
+        onStartChatInDock={handleStartChatInDock}
       />
 
       {/* ─── NÚT NỔI CHAT & CỘNG ĐỒNG DÀNH CHO MOBILE (< LG) ─── */}

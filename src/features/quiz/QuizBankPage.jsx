@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Trash2, GraduationCap, CheckSquare } from 'lucide-react'
+import { Trash2, GraduationCap, CheckSquare, FileText } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { stopAllAppAudio } from '@/lib/appAudioCoordinator'
 import ExamToolbar from './components/ExamToolbar'
 import ExamTableRow from './components/ExamTableRow'
@@ -62,6 +63,23 @@ export default function QuizBankPage() {
 
   // ── Modal / Drawer State ───────────────────────────────────────────────────
   const [activeExam, setActiveExam] = useState(null)
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    if (activeExam) {
+      setCustomHeader({
+        onBack: () => setActiveExam(null),
+        backText: 'Quay lại',
+        title: activeExam.title || 'Chi tiết bài thi',
+        subtitle: `Ngân hàng đề thi / ${activeExam.code || 'Chi tiết'}`,
+      })
+    } else {
+      clearCustomHeader()
+    }
+    return () => clearCustomHeader()
+  }, [activeExam, setCustomHeader, clearCustomHeader])
+
   const [assignExamTarget, setAssignExamTarget] = useState(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -352,34 +370,36 @@ export default function QuizBankPage() {
 
   return (
     <div className="space-y-4">
-      {/* ─── SEGMENTED NAVIGATION TABS ─── */}
-      <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab('exams')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'exams'
-              ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <GraduationCap size={16} className={activeTab === 'exams' ? 'text-brand-600' : 'text-slate-400'} />
-          <span>Đề thi chuẩn hóa (TOEIC, IELTS)</span>
-        </button>
+      {/* ─── SEGMENTED NAVIGATION TABS (Ẩn khi xem chi tiết đề thi) ─── */}
+      {!activeExam && (
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl w-fit border border-slate-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('exams')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'exams'
+                ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+            }`}
+          >
+            <GraduationCap size={16} className={activeTab === 'exams' ? 'text-brand-600' : 'text-slate-400'} />
+            <span>Đề thi chuẩn hóa (TOEIC, IELTS)</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('quizzes')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'quizzes'
-              ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <CheckSquare size={16} className={activeTab === 'quizzes' ? 'text-brand-600' : 'text-slate-400'} />
-          <span>Bài tập & Quiz luyện tập</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('quizzes')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'quizzes'
+                ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+            }`}
+          >
+            <CheckSquare size={16} className={activeTab === 'quizzes' ? 'text-brand-600' : 'text-slate-400'} />
+            <span>Bài tập & Quiz luyện tập</span>
+          </button>
+        </div>
+      )}
 
       {activeTab === 'quizzes' ? (
         /* ─── TAB 2: LEARNING-SERVICE QUIZZES ─── */
@@ -443,14 +463,14 @@ export default function QuizBankPage() {
           <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3 w-[26%] whitespace-nowrap">Bài thi / Đề kiểm tra</th>
+                <th className="px-4 py-3 w-[38%] whitespace-nowrap">Bài thi / Đề kiểm tra</th>
                 <th className="px-3 py-3 w-[11%] whitespace-nowrap">Thể loại</th>
                 <th className="px-2 py-3 text-center w-[6%] whitespace-nowrap">Cấp độ</th>
                 <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Trạng thái</th>
                 <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">Thời lượng</th>
                 <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Số câu</th>
-                <th className="px-3 py-3 text-center w-[13%] whitespace-nowrap">Ngày tạo</th>
-                <th className="px-4 py-3 text-right w-[19%] whitespace-nowrap">Thao tác</th>
+                <th className="px-3 py-3 text-center w-[9%] whitespace-nowrap">Ngày tạo</th>
+                <th className="px-4 py-3 text-right w-[11%] whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -468,7 +488,7 @@ export default function QuizBankPage() {
                         {trashView ? (
                           <Trash2 size={24} className="text-slate-400" />
                         ) : (
-                          <span className="text-2xl">📝</span>
+                          <FileText size={24} className="text-slate-400" />
                         )}
                       </div>
                       <p className="text-sm font-medium text-slate-600">
@@ -515,7 +535,7 @@ export default function QuizBankPage() {
                     {trashView ? (
                       <Trash2 size={24} className="text-slate-400" />
                     ) : (
-                      <span className="text-2xl">📝</span>
+                      <FileText size={24} className="text-slate-400" />
                     )}
                   </div>
                   <p className="text-sm font-medium text-slate-600">

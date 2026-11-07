@@ -16,49 +16,66 @@ import ImportStepReview from './steps/ImportStepReview'
 import ImportStepSuccess from './steps/ImportStepSuccess'
 
 /**
- * @param {boolean}  open
+ * @param {boolean}  [open]
+ * @param {boolean}  [isOpen]
  * @param {function} onClose
  * @param {'vocabulary'|'grammar'|'reading'|'quiz'} defaultType
  * @param {function} onImportSuccess - (importedItems, type) => void
  */
-export default function VocabImportModal({ open, onClose, defaultType = 'vocabulary', onImportSuccess }) {
-  const hook = useVocabImport({ open, defaultType, onClose, onImportSuccess })
+export default function VocabImportModal({
+  open,
+  isOpen,
+  onClose,
+  defaultType = 'vocabulary',
+  onImportSuccess,
+}) {
+  const isModalOpen = Boolean(open ?? isOpen)
+  const hook = useVocabImport({ open: isModalOpen, defaultType, onClose, onImportSuccess })
 
-  if (!open) return null
+  if (!isModalOpen) return null
 
   const config = TYPE_CONFIG[hook.importType] || TYPE_CONFIG.vocabulary
 
   return (
     <Modal
-      open={open}
+      open={isModalOpen}
       onClose={onClose}
       showCloseButton={false}
-      className="max-w-5xl p-0 overflow-hidden rounded-2xl border border-slate-200"
+      className="max-w-6xl w-full p-0 overflow-hidden rounded-2xl border border-slate-200/90 shadow-2xl"
     >
       {/* ── Header ──────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 px-6 py-5 text-white flex items-center justify-between">
+      <div className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20 text-brand-400 border border-brand-500/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100 shadow-2xs">
             <FileText size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold tracking-tight text-white">{config.title}</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{config.subtitle}</p>
+            <h3 className="text-base font-bold tracking-tight text-slate-900">{config.title}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{config.subtitle}</p>
           </div>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+          className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+          title="Đóng modal"
         >
           <X size={18} />
         </button>
       </div>
 
       {/* ── Stepper ──────────────────────────────────────────────────── */}
-      <VocabImportStepperBar currentStep={hook.step} />
+      <VocabImportStepperBar
+        currentStep={hook.step}
+        onStepClick={(stepNum) => {
+          if (hook.step === 3 && stepNum === 1) {
+            hook.setStep(1)
+          }
+        }}
+      />
 
       {/* ── Body ─────────────────────────────────────────────────────── */}
-      <div className="p-6 max-h-[70vh] overflow-y-auto">
+      <div className="p-5 sm:p-6 max-h-[70vh] overflow-y-auto">
         {hook.step === 1 && (
           <ImportStepUpload
             importType={hook.importType}
@@ -67,12 +84,16 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
             customFile={hook.customFile}
             customParsedData={hook.customParsedData}
             customJsonText={hook.customJsonText}
-            setCustomJsonText={hook.setCustomJsonText}
+            setCustomJsonText={hook.handleJsonChange}
             selectedPreset={hook.selectedPreset}
-            setSelectedPreset={hook.setSelectedPreset}
+            setSelectedPreset={hook.handleSelectPreset}
             fileInputRef={hook.fileInputRef}
             onFileChange={hook.handleFileChange}
             onClearFile={hook.handleClearFile}
+            parsedItemsCount={hook.parsedItems?.length || 0}
+            selectedIdsCount={hook.selectedIds?.size || 0}
+            onGoToReview={hook.handleGoToReview}
+            onReParse={hook.startAiParsing}
           />
         )}
 
@@ -115,14 +136,14 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
 
       {/* ── Footer Navigation ────────────────────────────────────────── */}
       {hook.step !== 4 && (
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+        <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-200">
           <div className="flex items-center justify-between">
             {hook.step > 1 ? (
               <Button
                 variant="secondary"
                 size="sm"
                 icon={ArrowLeft}
-                onClick={() => hook.setStep((prev) => Math.max(1, prev - 1))}
+                onClick={hook.handleBack}
                 disabled={hook.step === 2 || hook.isSubmitting}
               >
                 Quay lại
@@ -139,11 +160,11 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
               {hook.step === 1 && (
                 <Button
                   size="sm"
-                  icon={Upload}
-                  onClick={hook.startAiParsing}
-                  className="bg-brand-600 hover:bg-brand-700 text-white font-semibold"
+                  icon={ArrowRight}
+                  onClick={hook.parsedItems?.length > 0 ? hook.handleGoToReview : hook.startAiParsing}
+                  className="bg-brand-600 hover:bg-brand-700 text-white font-semibold shadow-xs cursor-pointer"
                 >
-                  Bắt đầu trích xuất
+                  {hook.parsedItems?.length > 0 ? 'Tiếp tục kiểm duyệt' : 'Tiếp tục'}
                 </Button>
               )}
 
@@ -158,7 +179,7 @@ export default function VocabImportModal({ open, onClose, defaultType = 'vocabul
                 >
                   {hook.isSubmitting
                     ? 'Đang lưu vào CSDL...'
-                    : `Xác nhận Import (${hook.selectedIds.size}) bản ghi`}
+                    : `Xác nhận nhập (${hook.selectedIds.size}) từ`}
                 </Button>
               )}
             </div>

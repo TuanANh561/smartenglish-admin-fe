@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { Lock, Unlock } from 'lucide-react'
+import { Lock, Unlock, ChevronRight } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import { cn, formatDate, formatRelativeTime, maskEmail } from '@/lib/utils'
@@ -7,14 +7,16 @@ import { cn, formatDate, formatRelativeTime, maskEmail } from '@/lib/utils'
 const ROLE_LABEL = { admin: 'Quản trị viên', teacher: 'Giáo viên', student: 'Học viên' }
 const PLAN_LABEL = {
   free: 'Free',
-  premium_monthly: 'Premium tháng',
-  premium_yearly: 'Premium năm',
-  lifetime: 'Trọn đời',
+  premium_monthly: 'Premium Tháng',
+  premium_yearly: 'Premium Năm',
+  lifetime: 'Trọn Đời VIP',
+  teacher_pro: 'Teacher Pro',
+  school_center: 'School & Center',
 }
 
 const columnHelper = createColumnHelper()
 
-export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } = {}) {
+export function buildUserColumns({ isAdmin = false, onToggleLock, onViewProfile, currentUser } = {}) {
   const columns = [
     columnHelper.accessor('displayName', {
       header: 'Học viên / Người dùng',
@@ -94,21 +96,21 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
     }),
   ]
 
-  // Thêm cột Thao tác khoá / mở khoá tài khoản nếu là Quản trị viên (Admin)
-  if (isAdmin) {
-    columns.push(
-      columnHelper.display({
-        id: 'actions',
-        header: () => 'Thao tác',
-        meta: { align: 'right' },
-        cell: (info) => {
-          const user = info.row.original
-          const isSelf = currentUser?.id === user.id
-          const isActive = user.isActive
+  // Cột Thao tác khoá / mở khoá tài khoản và mở hồ sơ người dùng
+  columns.push(
+    columnHelper.display({
+      id: 'actions',
+      header: () => 'Thao tác',
+      meta: { align: 'right' },
+      cell: (info) => {
+        const user = info.row.original
+        const isSelf = currentUser?.id === user.id
+        const isActive = user.isActive
 
-          return (
-            <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-              {isActive ? (
+        return (
+          <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {isAdmin && (
+              isActive ? (
                 <button
                   type="button"
                   disabled={isSelf}
@@ -139,13 +141,22 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, currentUser } 
                   <Unlock size={13} strokeWidth={2} />
                   Mở khoá
                 </button>
-              )}
-            </div>
-          )
-        },
-      }),
-    )
-  }
+              )
+            )}
+
+            <button
+              type="button"
+              onClick={() => onViewProfile?.(user)}
+              className="p-1 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+              title="Xem hồ sơ chi tiết"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )
+      },
+    }),
+  )
 
   return columns
 }

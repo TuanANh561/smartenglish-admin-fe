@@ -7,6 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import ReadingDetailDrawer from './components/ReadingDetailDrawer'
 import ReadingToolbar from './components/ReadingToolbar'
 import ReadingTableRow from './components/ReadingTableRow'
@@ -50,6 +51,23 @@ function ReadingPage() {
   const [deleteTarget,         setDeleteTarget]         = useState(null)
   const [permanentTarget,      setPermanentTarget]      = useState(null)
   const [isDeleting,           setIsDeleting]           = useState(false)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    if (activePassage) {
+      setCustomHeader({
+        onBack: () => setActivePassage(null),
+        backText: 'Quay lại',
+        title: activePassage.titleEn || activePassage.titleVi || 'Chi tiết bài đọc',
+        subtitle: `Học liệu / Bài đọc hiểu / Cấp độ ${activePassage.cefrLevel || 'B1'}`,
+      })
+    } else {
+      clearCustomHeader()
+    }
+    return () => clearCustomHeader()
+  }, [activePassage, setCustomHeader, clearCustomHeader])
 
   // ── Refresh trash count ────────────────────────────────────────────────────
   const refreshTrashCount = useCallback(async () => {
@@ -236,122 +254,125 @@ function ReadingPage() {
 
   return (
     <div className="space-y-4">
-      {/* Table Card */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Banner thông báo khi ở chế độ thùng rác */}
-        {trashView && (
-          <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Trash2 size={14} className="text-amber-600 shrink-0" />
-              Bạn đang xem các bài đọc trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
-            </span>
-          </div>
-        )}
-
-        {/* Toolbar */}
-        <ReadingToolbar
-          search={search}
-          onSearchChange={handleSearch}
-          selectedTopic={selectedTopic}
-          onTopicChange={handleTopicChange}
-          topics={topics}
-          selectedLevel={selectedLevel}
-          onLevelChange={handleLevelChange}
-          selectedStatus={selectedStatus}
-          onStatusChange={handleStatusChange}
-          totalCount={total}
-          trashView={trashView}
-          onToggleTrash={handleToggleTrash}
-          trashCount={trashCount}
-          onOpenCreate={() => navigate('/app/hoc-lieu/bai-doc/tao-moi')}
-          onOpenPdfImport={() => setIsPdfImportOpen(true)}
-          onReload={handleReload}
-        />
-
-        {/* Table — no overflow-x-auto */}
-        <div className="w-full">
-          <table className="w-full text-left text-sm table-fixed">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3 w-[36%] whitespace-nowrap">Bài đọc hiểu</th>
-                <th className="px-3 py-3 w-[11%] whitespace-nowrap">Chủ đề</th>
-                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Cấp độ</th>
-                <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">Trạng thái</th>
-                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Độ dài</th>
-                <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Câu hỏi</th>
-                <th className="px-3 py-3 w-[8%] whitespace-nowrap">Ngày tạo</th>
-                <th className="px-4 py-3 text-right w-[9%] whitespace-nowrap">Thao tác</th>
-              </tr>
-            </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={8} className="py-12 text-center">
-                  <LoadingSpinner text="Đang tải danh sách bài đọc..." />
-                </td>
-              </tr>
-            ) : passages.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="py-14 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
-                      {trashView ? (
-                        <Trash2 size={24} className="text-slate-400" />
-                      ) : (
-                        <span className="text-2xl">📖</span>
-                      )}
-                    </div>
-                    <p className="text-sm font-medium text-slate-600">
-                      {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài đọc nào'}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {trashView ? 'Chưa có bài đọc nào bị xóa' : 'Thử thay đổi bộ lọc hoặc thêm bài đọc mới'}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              passages.map((item) => (
-                <ReadingTableRow
-                  key={item.id}
-                  item={item}
-                  isTrash={trashView}
-                  canManage={canManage(item)}
-                  onRowClick={setActivePassage}
-                  onEditClick={handleEditClick}
-                  onDeleteClick={handleDeleteClick}
-                  onRestoreClick={handleTrashRestore}
-                  onPermanentDeleteClick={(it) => setPermanentTarget(it)}
-                  onTogglePublish={handleTogglePublish}
-                  onDuplicate={handleDuplicate}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-        {/* Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">
-          <p className="text-xs text-slate-500">
-            {total === 0
-              ? 'Không có kết quả'
-              : <>Hiển thị <strong>{start + 1}</strong>–<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong <strong>{total}</strong> bài đọc</>
-            }
-          </p>
-          {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-          )}
+      {activePassage ? (
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <ReadingDetailDrawer
+            passage={activePassage}
+            onClose={() => setActivePassage(null)}
+            canManage={canManage(activePassage)}
+            onEditClick={handleEditClick}
+          />
         </div>
-      </div>
+      ) : (
+        /* Table Card */
+        <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          {/* Banner thông báo khi ở chế độ thùng rác */}
+          {trashView && (
+            <div className="flex items-center justify-between bg-amber-50/90 border-b border-amber-200 px-5 py-2.5 text-xs text-amber-800">
+              <span className="flex items-center gap-1.5 font-medium">
+                <Trash2 size={14} className="text-amber-600 shrink-0" />
+                Bạn đang xem các bài đọc trong <strong>Thùng rác</strong> ({trashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+              </span>
+            </div>
+          )}
 
-      {/* Detail Drawer */}
-      <ReadingDetailDrawer
-        passage={activePassage}
-        onClose={() => setActivePassage(null)}
-        canManage={canManage(activePassage)}
-        onEditClick={handleEditClick}
-      />
+          {/* Toolbar */}
+          <ReadingToolbar
+            search={search}
+            onSearchChange={handleSearch}
+            selectedTopic={selectedTopic}
+            onTopicChange={handleTopicChange}
+            topics={topics}
+            selectedLevel={selectedLevel}
+            onLevelChange={handleLevelChange}
+            selectedStatus={selectedStatus}
+            onStatusChange={handleStatusChange}
+            totalCount={total}
+            trashView={trashView}
+            onToggleTrash={handleToggleTrash}
+            trashCount={trashCount}
+            onOpenCreate={() => navigate('/app/hoc-lieu/bai-doc/tao-moi')}
+            onOpenPdfImport={() => setIsPdfImportOpen(true)}
+            onReload={handleReload}
+          />
+
+          {/* Table — no overflow-x-auto */}
+          <div className="w-full">
+            <table className="w-full text-left text-sm table-fixed">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 w-[36%] whitespace-nowrap">Bài đọc hiểu</th>
+                  <th className="px-3 py-3 w-[11%] whitespace-nowrap">Chủ đề</th>
+                  <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Cấp độ</th>
+                  <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">Trạng thái</th>
+                  <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Độ dài</th>
+                  <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Câu hỏi</th>
+                  <th className="px-3 py-3 w-[8%] whitespace-nowrap">Ngày tạo</th>
+                  <th className="px-4 py-3 text-right w-[9%] whitespace-nowrap">Thao tác</th>
+                </tr>
+              </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center">
+                    <LoadingSpinner text="Đang tải danh sách bài đọc..." />
+                  </td>
+                </tr>
+              ) : passages.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-14 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                        {trashView ? (
+                          <Trash2 size={24} className="text-slate-400" />
+                        ) : (
+                          <span className="text-2xl">📖</span>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-slate-600">
+                        {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài đọc nào'}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {trashView ? 'Chưa có bài đọc nào bị xóa' : 'Thử thay đổi bộ lọc hoặc thêm bài đọc mới'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                passages.map((item) => (
+                  <ReadingTableRow
+                    key={item.id}
+                    item={item}
+                    isTrash={trashView}
+                    canManage={canManage(item)}
+                    onRowClick={setActivePassage}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                    onRestoreClick={handleTrashRestore}
+                    onPermanentDeleteClick={(it) => setPermanentTarget(it)}
+                    onTogglePublish={handleTogglePublish}
+                    onDuplicate={handleDuplicate}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">
+            <p className="text-xs text-slate-500">
+              {total === 0
+                ? 'Không có kết quả'
+                : <>Hiển thị <strong>{start + 1}</strong>–<strong>{Math.min(start + PAGE_SIZE, total)}</strong> trong <strong>{total}</strong> bài đọc</>
+              }
+            </p>
+            {totalPages > 1 && (
+              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Confirm Xóa mềm */}
       <ConfirmDialog

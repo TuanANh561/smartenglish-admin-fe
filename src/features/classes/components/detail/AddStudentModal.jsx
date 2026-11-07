@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Loader2, UserPlus, X } from 'lucide-react'
+import Select from '@/components/ui/Select'
 
 export default function AddStudentModal({ isOpen, onClose, onAddMember }) {
   const [userId, setUserId] = useState('')
@@ -79,14 +80,15 @@ export default function AddStudentModal({ isOpen, onClose, onAddMember }) {
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Vai trò trong lớp
             </label>
-            <select
+            <Select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none"
-            >
-              <option value="STUDENT">Học viên (Student)</option>
-              <option value="ASSISTANT_TEACHER">Trợ giảng (Assistant Teacher)</option>
-            </select>
+              size="sm"
+              options={[
+                { value: 'STUDENT', label: 'Học viên (Student)' },
+                { value: 'ASSISTANT_TEACHER', label: 'Trợ giảng (Assistant Teacher)' },
+              ]}
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { cn } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import Drawer from '@/components/ui/Drawer'
 import {
   CheckCircle2,
   ChevronLeft,
@@ -174,27 +174,61 @@ export default function ListeningDetailDrawer({
   if (!lesson) return null
 
   return (
-    <Drawer open={Boolean(lesson)} onClose={onClose} title={lesson?.title} size="2xl">
-      <div className="space-y-4">
-        {/* Badges thông tin bài nghe gọn gàng, thân thiện */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className={cn('inline-flex items-center rounded-lg px-2.5 py-1 font-bold border shadow-2xs', categoryInfo.bg)}>
-            {categoryInfo.label}
-          </span>
-          <Badge tone="info">Cấp độ {lesson.level || lesson.cefrLevel || 'B1'}</Badge>
-          <Badge tone="neutral">{lesson.topic || 'Tổng hợp'}</Badge>
-          <Badge tone="neutral">{lesson.accent || 'US Accent'}</Badge>
-          {hasAudio ? (
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 border border-emerald-200">
-              <Volume2 size={12} /> Có sẵn file audio
+    <div className="flex flex-col min-h-[600px] bg-white">
+      {/* ── Header thông tin bài nghe & Nút hành động ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1.5">
+            <span className={cn('inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold border', categoryInfo.bg)}>
+              {categoryInfo.label}
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 border border-indigo-200">
-              <Sparkles size={12} /> Giọng đọc AI
-            </span>
-          )}
-          <Badge tone={isOwner ? 'success' : 'neutral'}>Tác giả: {authorDisplay}</Badge>
+            <Badge tone="info">Cấp độ {lesson.level || lesson.cefrLevel || 'B1'}</Badge>
+            <Badge tone="neutral">{lesson.topic || 'Tổng hợp'}</Badge>
+            <Badge tone="neutral">{lesson.accent || 'US Accent'}</Badge>
+            {hasAudio ? (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                <Volume2 size={12} /> Có audio
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 border border-indigo-200">
+                <Sparkles size={12} /> Giọng đọc AI
+              </span>
+            )}
+            <Badge tone={isOwner ? 'success' : 'neutral'}>Tác giả: {authorDisplay}</Badge>
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 leading-snug">{lesson.title}</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Thời lượng: <strong>{lesson.duration || '01:00'}</strong> &bull; Tác giả: {authorDisplay}
+          </p>
         </div>
+
+        {/* Cụm Action Buttons nằm gọn gàng bên phải của Header */}
+        <div className="flex items-center gap-2 shrink-0">
+          {isTeacher && isOwner && onAssignToClass && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Send}
+              onClick={(e) => onAssignToClass(e, lesson)}
+              className="text-brand-700 border-brand-300 hover:bg-brand-50"
+            >
+              Giao cho lớp học
+            </Button>
+          )}
+          {canManage && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Pencil}
+              onClick={(e) => onEditClick(e, lesson)}
+            >
+              Chỉnh sửa bài nghe
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-6 space-y-5">
 
         {/* ─── Trình phát âm thanh TRÀN NGANG (Full Width) ─── */}
         <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/90 to-slate-100/70 p-4 space-y-3 shadow-2xs">
@@ -649,39 +683,7 @@ export default function ListeningDetailDrawer({
             )}
           </div>
         </div>
-
-        {/* Bottom Actions */}
-        <div className="flex gap-2 border-t border-slate-100 pt-4">
-          {isTeacher && isOwner && (
-            <Button
-              variant="primary"
-              fullWidth
-              icon={Send}
-              onClick={(e) => onAssignToClass(e, lesson)}
-            >
-              Giao bài nghe cho lớp học
-            </Button>
-          )}
-          {canManage ? (
-            <Button
-              variant={isTeacher && isOwner ? 'secondary' : 'primary'}
-              fullWidth={!isTeacher || !isOwner}
-              icon={Pencil}
-              onClick={(e) => {
-                onClose()
-                onEditClick(e, lesson)
-              }}
-            >
-              Chỉnh sửa bài nghe
-            </Button>
-          ) : (
-            <div className="w-full text-center text-xs text-slate-400 py-2 bg-slate-50 rounded-lg">
-              <Lock size={13} className="inline mr-1" />
-              Bạn đang xem bài nghe ở chế độ chỉ đọc
-            </div>
-          )}
-        </div>
       </div>
-    </Drawer>
+    </div>
   )
 }

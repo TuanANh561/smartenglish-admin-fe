@@ -37,7 +37,7 @@ function generateSmartMockResponse(messages, userRole = 'admin') {
   if (!isAdmin && (lastUserMsg.includes('doanh thu') || lastUserMsg.includes('đối soát') || lastUserMsg.includes('tài khoản giáo viên khác'))) {
     return `Kính gửi Thầy/Cô,
 
-Teacher Cáo 🦊 được cấu hình để hỗ trợ Thầy/Cô về **công tác giảng dạy, soạn giáo án và kiểm tra lỗi ngữ pháp học liệu**. 
+Teacher Cáo được cấu hình để hỗ trợ Thầy/Cô về **công tác giảng dạy, soạn giáo án và kiểm tra lỗi ngữ pháp học liệu**. 
 
 Các thông tin về doanh thu, đối soát tài chính và quản trị hệ thống thuộc thẩm quyền của **Quản trị viên (Admin)**. Thầy/Cô vui lòng gửi yêu cầu liên quan đến soạn bài học hoặc câu hỏi kiểm tra nhé!`
   }
@@ -53,7 +53,7 @@ Các thông tin về doanh thu, đối soát tài chính và quản trị hệ t
   ) {
     return `Kính gửi ${isAdmin ? 'Quản trị viên' : 'Thầy/Cô'},
 
-Teacher Cáo 🦊 không được phép cung cấp hoặc xử lý các dữ liệu bảo mật nội bộ của hệ thống. Bạn có cần hỗ trợ soạn đề thi, khung bài học hoặc rà soát lỗi ngữ pháp nào hôm nay không ạ?`
+Teacher Cáo không được phép cung cấp hoặc xử lý các dữ liệu bảo mật nội bộ của hệ thống. Bạn có cần hỗ trợ soạn đề thi, khung bài học hoặc rà soát lỗi ngữ pháp nào hôm nay không ạ?`
   }
 
   // Tạo đề thi / câu hỏi trắc nghiệm
@@ -64,7 +64,7 @@ Teacher Cáo 🦊 không được phép cung cấp hoặc xử lý các dữ li�
     lastUserMsg.includes('đề thi') ||
     lastUserMsg.includes('tạo 5 câu')
   ) {
-    return `### 📝 Bộ 5 câu hỏi trắc nghiệm Ngữ pháp (Thì Hiện tại hoàn thành — Level B1):
+    return `### Bộ 5 câu hỏi trắc nghiệm Ngữ pháp (Thì Hiện tại hoàn thành — Level B1):
 
 Thầy/Cô có thể sao chép bộ câu hỏi này vào mục **Học liệu → Ngân hàng câu hỏi (Quiz Bank)**:
 
@@ -109,7 +109,7 @@ Thầy/Cô có thể sao chép bộ câu hỏi này vào mục **Học liệu �
     lastUserMsg.includes('hội thoại') ||
     lastUserMsg.includes('lỗi sai')
   ) {
-    return `### 🔍 Báo cáo Hiệu đính Ngữ pháp Học liệu:
+    return `### Báo cáo Hiệu đính Ngữ pháp Học liệu:
 
 **Đoạn hội thoại gốc:**
 > *"Teacher: Where is John?*
@@ -120,13 +120,13 @@ Thầy/Cô có thể sao chép bộ câu hỏi này vào mục **Học liệu �
 2. **Lỗi hòa hợp thì**: *has caught ... yesterday* $\rightarrow$ Sửa thành: **caught a cold yesterday** (Có mốc thời gian "yesterday" thì dùng Quá khứ đơn).
 
 **Phiên bản chuẩn sư phạm:**
-> ✅ **Teacher:** *"Where is John today?"*
-> ✅ **Student:** *"He didn't come to class because he caught a cold yesterday."*`
+> **Teacher:** *"Where is John today?"*
+> **Student:** *"He didn't come to class because he caught a cold yesterday."*`
   }
 
   // Soạn bài giảng Ngữ pháp
   if (lastUserMsg.includes('ngữ pháp') || lastUserMsg.includes('grammar') || lastUserMsg.includes('bài học')) {
-    return `### 📘 Khung bài giảng Ngữ pháp: Present Perfect vs. Past Simple (CEFR B1)
+    return `### Khung bài giảng Ngữ pháp: Present Perfect vs. Past Simple (CEFR B1)
 
 Gợi ý cấu trúc bài giảng để nhập vào mục **Học liệu → Ngữ pháp**:
 
@@ -141,7 +141,7 @@ Gợi ý cấu trúc bài giảng để nhập vào mục **Học liệu → Ng�
 
   // Soạn bài học Phát âm IPA
   if (lastUserMsg.includes('phát âm') || lastUserMsg.includes('pronunciation') || lastUserMsg.includes('ipa') || lastUserMsg.includes('schwa')) {
-    return `### 🎙️ Học liệu Phát âm: Âm Schwa /ə/ (Central Reduced Vowel)
+    return `### Học liệu Phát âm: Âm Schwa /ə/ (Central Reduced Vowel)
 
 Gợi ý nội dung để thêm vào mục **Học liệu → Phát âm**:
 
@@ -155,13 +155,7 @@ Gợi ý nội dung để thêm vào mục **Học liệu → Phát âm**:
 - **Ngưỡng chấm điểm AI**: **85%**.`
   }
 
-  return `Kính chào ${isAdmin ? 'Quản trị viên' : 'Thầy/Cô'}! Tôi là **Teacher Cáo** 🦊 — Trợ lý AI đồng hành cùng công tác giảng dạy & quản trị học liệu của SmartEnglish.
+  return `Xin chào! Tôi là Trợ lý AI SmartEnglish, hỗ trợ bạn soạn bài tập, kiểm tra ngữ pháp và chuẩn bị học liệu.
 
-🎯 **Tôi có thể hỗ trợ bạn:**
-1. 📝 **Biên soạn học liệu & Tạo câu hỏi**: Sinh bài tập Ngữ pháp, Từ vựng, Bài đọc, Bài nghe theo chuẩn CEFR / IELTS.
-2. 🔍 **Hiệu đính ngữ pháp hội thoại**: Rà soát câu mẫu và bài tập trước khi xuất bản.
-3. 🎙️ **Chuẩn hóa phát âm IPA**: Soạn khẩu hình miệng và danh sách từ luyện âm.
-4. 💡 **Tư vấn sư phạm & Khung chương trình**: Gợi ý phương pháp giải thích bài học sinh động.
-
-${isAdmin ? 'Quản trị viên' : 'Thầy/Cô'} cần Teacher Cáo hỗ trợ soạn nội dung hay hiệu đính học liệu nào hôm nay ạ?`
+Bạn cần hỗ trợ soạn nội dung hay giải đáp thắc mắc nào hôm nay?`
 }

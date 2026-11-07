@@ -14,14 +14,14 @@ export default function PremiumKpiCards({ stats = {} }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-      {/* Doanh thu tháng */}
+      {/* Doanh thu tháng này */}
       <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2 shadow-xs hover:border-brand-300 transition-all">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
           <DollarSign size={16} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[11px] font-medium text-ink-muted">Doanh thu tháng</span>
+            <span className="text-[11px] font-medium text-ink-muted">Doanh thu tháng này</span>
             <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
               <TrendingUp size={10} /> +{revenueDelta}%
             </span>

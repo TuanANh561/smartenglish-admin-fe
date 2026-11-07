@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { Plus, RefreshCw, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { PRONUNCIATION_CATEGORIES } from '../pronunciationLessonApi'
 
@@ -40,42 +41,36 @@ export default function PronunciationToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <select
+        <Select
           value={selectedCategory}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-        >
-          {PRONUNCIATION_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat === 'Tất cả phân loại' ? 'Phân loại: Tất cả' : cat}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-40 shrink-0"
+          options={PRONUNCIATION_CATEGORIES.map((cat) => ({
+            value: cat,
+            label: cat === 'Tất cả phân loại' ? 'Phân loại: Tất cả' : cat,
+          }))}
+        />
 
-        <select
+        <Select
           value={selectedLevel}
           onChange={(e) => onLevelChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-        >
-          {CEFR_LEVELS.map((lvl) => (
-            <option key={lvl} value={lvl}>
-              {lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : lvl}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          containerClassName="w-38 shrink-0"
+          options={CEFR_LEVELS.map((lvl) => ({
+            value: lvl,
+            label: lvl === 'Tất cả' ? 'Cấp độ: Tất cả' : lvl,
+          }))}
+        />
 
         {!trashView && (
-          <select
+          <Select
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-36 shrink-0"
+            options={STATUS_OPTIONS}
+          />
         )}
 
         {handleReload && (

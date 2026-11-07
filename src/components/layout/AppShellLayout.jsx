@@ -33,6 +33,17 @@ function AppShellLayout() {
     }
   }, [])
 
+  // Ngăn trình duyệt mở hộp thoại "Lưu trang web dạng HTML" khi người dùng nhấn Ctrl + S
+  useEffect(() => {
+    const handleGlobalCtrlS = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', handleGlobalCtrlS)
+    return () => window.removeEventListener('keydown', handleGlobalCtrlS)
+  }, [])
+
   return (
     <AppShell>
       <Outlet />

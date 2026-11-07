@@ -78,7 +78,41 @@ select:disabled {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #1673b8;
+}
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Thanh cuộn chuyên biệt cho Dropdown Select & Popover Menu đồng bộ màu hệ thống SmartEnglish */
+.select-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.select-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.select-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+  border-radius: 9999px;
+}
+.select-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.select-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #1673b8;
+}
+.select-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Thanh cuộn siêu mảnh (5px), màu slate/indigo hài hòa cho các khung nội dung như Transcript, Drawer */
@@ -95,7 +129,12 @@ select:disabled {
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6366f1;
+  background: #1673b8;
+}
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 .custom-scrollbar {
   scrollbar-width: thin;

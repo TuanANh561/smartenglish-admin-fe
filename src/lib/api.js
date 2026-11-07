@@ -36,6 +36,13 @@ export const http = axios.create({
 http.interceptors.request.use((config) => {
   const token = getStoredToken(TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
+  // Nếu dữ liệu gửi đi là FormData, xóa Content-Type để trình duyệt tự động sinh multipart boundary chuẩn
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+    }
+  }
   return config
 })
 
@@ -222,10 +229,12 @@ async function request(method, endpoint, options = {}, isRetry = false) {
 export const api = {
   get: (endpoint, options) => request('GET', endpoint, options),
   post: (endpoint, dataOrOptions, options = {}) => {
+    if (Array.isArray(dataOrOptions)) {
+      return request('POST', endpoint, { data: dataOrOptions, ...options })
+    }
     if (
       dataOrOptions &&
       typeof dataOrOptions === 'object' &&
-      !Array.isArray(dataOrOptions) &&
       !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
     ) {
       return request('POST', endpoint, { data: dataOrOptions, ...options })
@@ -233,10 +242,12 @@ export const api = {
     return request('POST', endpoint, { ...dataOrOptions, ...options })
   },
   put: (endpoint, dataOrOptions, options = {}) => {
+    if (Array.isArray(dataOrOptions)) {
+      return request('PUT', endpoint, { data: dataOrOptions, ...options })
+    }
     if (
       dataOrOptions &&
       typeof dataOrOptions === 'object' &&
-      !Array.isArray(dataOrOptions) &&
       !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
     ) {
       return request('PUT', endpoint, { data: dataOrOptions, ...options })
@@ -244,10 +255,12 @@ export const api = {
     return request('PUT', endpoint, { ...dataOrOptions, ...options })
   },
   patch: (endpoint, dataOrOptions, options = {}) => {
+    if (Array.isArray(dataOrOptions)) {
+      return request('PATCH', endpoint, { data: dataOrOptions, ...options })
+    }
     if (
       dataOrOptions &&
       typeof dataOrOptions === 'object' &&
-      !Array.isArray(dataOrOptions) &&
       !('data' in dataOrOptions || 'params' in dataOrOptions || 'headers' in dataOrOptions || 'path' in dataOrOptions)
     ) {
       return request('PATCH', endpoint, { data: dataOrOptions, ...options })

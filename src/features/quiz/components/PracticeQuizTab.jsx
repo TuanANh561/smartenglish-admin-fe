@@ -14,8 +14,11 @@ import {
   Award,
   Layers,
   CheckCircle2,
+  Loader2,
+  X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import useCtrlSave from '@/hooks/useCtrlSave'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -143,7 +146,7 @@ export default function PracticeQuizTab() {
 
   // Add Question Submit
   const handleAddQuestion = async (e) => {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     if (!activeQuiz) return
     setIsSubmittingQuestion(true)
     try {
@@ -183,6 +186,9 @@ export default function PracticeQuizTab() {
       setIsSubmittingQuestion(false)
     }
   }
+
+  // Phím tắt Ctrl + S để lưu nhanh khi form soạn câu hỏi đang mở
+  useCtrlSave(handleAddQuestion, Boolean(activeQuiz && isAddQuestionOpen && !isSubmittingQuestion))
 
   // Delete Quiz
   const handleConfirmDelete = async () => {
@@ -247,17 +253,13 @@ export default function PracticeQuizTab() {
           {/* Cụm bộ lọc và nút thao tác */}
           <div className="flex items-center gap-2 shrink-0 flex-nowrap">
             {/* Lọc loại Quiz */}
-            <select
+            <Select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              {QUIZ_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-40 shrink-0"
+              options={QUIZ_TYPES}
+            />
 
             {/* Nút Làm mới */}
             <Button
@@ -269,14 +271,15 @@ export default function PracticeQuizTab() {
               title="Làm mới danh sách"
             />
 
-            {/* Nút Tạo Quiz mới */}
+            {/* Nút Tạo Quiz mới (Icon-only) */}
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-navy-800 hover:bg-navy-900 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+              title="Tạo Quiz mới"
+              aria-label="Tạo Quiz mới"
             >
-              <Plus size={15} />
-              <span>Tạo Quiz Mới</span>
+              <Plus size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>
@@ -391,12 +394,16 @@ export default function PracticeQuizTab() {
       {/* ─── QUIZ DETAIL & QUESTIONS DRAWER ─── */}
       <Drawer
         open={Boolean(activeQuiz)}
-        onClose={() => setActiveQuiz(null)}
+        onClose={() => {
+          setActiveQuiz(null)
+          setIsAddQuestionOpen(false)
+        }}
         title={`Chi tiết Bài Quiz #${activeQuiz?.id || ''}`}
+        size="lg"
         className="max-w-2xl"
       >
         {activeQuiz && (
-          <div className="space-y-6 text-sm">
+          <div className="space-y-5 text-sm">
             {/* Meta info */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
@@ -410,15 +417,145 @@ export default function PracticeQuizTab() {
               </div>
 
               <Button
-                variant="primary"
+                variant={isAddQuestionOpen ? 'outline' : 'primary'}
                 size="sm"
-                onClick={() => setIsAddQuestionOpen(true)}
+                onClick={() => setIsAddQuestionOpen(!isAddQuestionOpen)}
                 className="flex items-center gap-1.5"
               >
-                <Plus size={14} />
-                <span>Thêm câu hỏi</span>
+                {isAddQuestionOpen ? <X size={14} /> : <Plus size={14} />}
+                <span>{isAddQuestionOpen ? 'Đóng form' : 'Thêm câu hỏi'}</span>
               </Button>
             </div>
+
+            {/* Inline Add Question Form */}
+            {isAddQuestionOpen && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4.5 space-y-3.5 shadow-xs transition-all animate-in fade-in duration-200">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-navy-800 text-white flex items-center justify-center text-xs font-bold">
+                      +
+                    </span>
+                    <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                      Soạn câu hỏi mới
+                    </h5>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddQuestionOpen(false)}
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors cursor-pointer"
+                    title="Đóng form"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddQuestion} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Dạng câu hỏi *</label>
+                    <Select
+                      value={questionForm.questionType}
+                      onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })}
+                      size="sm"
+                      options={[
+                        { value: 'MULTIPLE_CHOICE', label: 'Trắc nghiệm 4 lựa chọn (A, B, C, D)' },
+                        { value: 'FILL_BLANK', label: 'Điền khuyết vào chỗ trống (Fill in the Blank)' },
+                        { value: 'MATCHING', label: 'Ghép nối từ với nghĩa tương ứng (Matching)' },
+                        { value: 'WORD_ORDER', label: 'Sắp xếp lại trật tự từ (Word Order)' },
+                      ]}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nội dung câu hỏi / Điểm ngữ pháp *</label>
+                    <Textarea
+                      rows={2}
+                      value={questionForm.questionText}
+                      onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })}
+                      placeholder="VD: Choose the correct verb form: She _______ to school yesterday."
+                      required
+                    />
+                  </div>
+
+                  {/* Options input */}
+                  <div className="space-y-2">
+                    <label className="block font-semibold text-slate-700">Các lựa chọn đáp án (A, B, C, D)</label>
+                    {questionForm.options.map((opt, optIdx) => (
+                      <div key={opt.key} className="flex items-center gap-2">
+                        <span className="w-5 text-center font-bold text-slate-600">{opt.key}:</span>
+                        <input
+                          type="text"
+                          placeholder={
+                            questionForm.questionType === 'MATCHING'
+                              ? 'VD: Resilient -> Kiên cường'
+                              : `Đáp án ${opt.key}`
+                          }
+                          value={opt.text}
+                          onChange={(e) => {
+                            const newOpts = [...questionForm.options]
+                            newOpts[optIdx].text = e.target.value
+                            setQuestionForm({ ...questionForm, options: newOpts })
+                          }}
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs focus:ring-1 focus:ring-navy-500 focus:border-navy-500 outline-none"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setQuestionForm({ ...questionForm, correctAnswer: opt.key })}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer border ${
+                            questionForm.correctAnswer === opt.key
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                          title="Chọn làm đáp án đúng"
+                        >
+                          {questionForm.correctAnswer === opt.key ? '✓ Đúng' : 'Chọn đúng'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Giải thích đáp án (tiếng Việt)</label>
+                    <Textarea
+                      rows={2}
+                      value={questionForm.explanationVi}
+                      onChange={(e) => setQuestionForm({ ...questionForm, explanationVi: e.target.value })}
+                      placeholder="Giải thích chi tiết vì sao đáp án này là đúng..."
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-200/60">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddQuestionOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      disabled={isSubmittingQuestion}
+                      className="flex items-center gap-1.5"
+                    >
+                      {isSubmittingQuestion ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          <span>Đang lưu...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={13} />
+                          <span>Lưu (Ctrl + S)</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* Questions List */}
             <div>
@@ -537,17 +674,18 @@ export default function PracticeQuizTab() {
         <form onSubmit={handleCreateQuiz} className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold text-slate-700 mb-1">Loại Quiz *</label>
-            <select
+            <Select
               value={createForm.quizType}
               onChange={(e) => setCreateForm({ ...createForm, quizType: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-            >
-              <option value="GRAMMAR_MINI">Mini Test Ngữ pháp (Grammar Mini)</option>
-              <option value="VOCAB_PRACTICE">Luyện tập Từ vựng (Vocab Practice)</option>
-              <option value="DYNAMIC">Quiz Tự động sinh (Dynamic AI)</option>
-              <option value="PLACEMENT">Kiểm tra đầu vào (Placement)</option>
-              <option value="MOCK_TOEIC">Mini Quiz TOEIC (Short Test)</option>
-            </select>
+              size="sm"
+              options={[
+                { value: 'GRAMMAR_MINI', label: 'Mini Test Ngữ pháp (Grammar Mini)' },
+                { value: 'VOCAB_PRACTICE', label: 'Luyện tập Từ vựng (Vocab Practice)' },
+                { value: 'DYNAMIC', label: 'Quiz Tự động sinh (Dynamic AI)' },
+                { value: 'PLACEMENT', label: 'Kiểm tra đầu vào (Placement)' },
+                { value: 'MOCK_TOEIC', label: 'Mini Quiz TOEIC (Short Test)' },
+              ]}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -601,102 +739,7 @@ export default function PracticeQuizTab() {
         </form>
       </Modal>
 
-      {/* ─── ADD QUESTION MODAL ─── */}
-      <Modal
-        open={isAddQuestionOpen}
-        onClose={() => setIsAddQuestionOpen(false)}
-        title={`Thêm Câu Hỏi vào Quiz #${activeQuiz?.id || ''}`}
-        className="max-w-lg"
-      >
-        <form onSubmit={handleAddQuestion} className="space-y-3.5 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Dạng câu hỏi *</label>
-            <select
-              value={questionForm.questionType}
-              onChange={(e) => setQuestionForm({ ...questionForm, questionType: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-            >
-              <option value="MULTIPLE_CHOICE">Trắc nghiệm 4 lựa chọn (A, B, C, D)</option>
-              <option value="FILL_BLANK">Điền khuyết vào chỗ trống (Fill in the Blank)</option>
-              <option value="MATCHING">Ghép nối từ với nghĩa tương ứng (Matching)</option>
-              <option value="WORD_ORDER">Sắp xếp lại trật tự từ (Word Order)</option>
-            </select>
-          </div>
 
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Nội dung câu hỏi / Điểm ngữ pháp *</label>
-            <Textarea
-              rows={2}
-              value={questionForm.questionText}
-              onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })}
-              placeholder="VD: Choose the correct verb form: She _______ to school yesterday."
-              required
-            />
-          </div>
-
-          {/* Options input */}
-          <div className="space-y-2">
-            <label className="block font-semibold text-slate-700">Các lựa chọn đáp án (A, B, C, D)</label>
-            {questionForm.options.map((opt, optIdx) => (
-              <div key={opt.key} className="flex items-center gap-2">
-                <span className="w-5 text-center font-bold text-slate-600">{opt.key}:</span>
-                <input
-                  type="text"
-                  placeholder={
-                    questionForm.questionType === 'MATCHING'
-                      ? 'VD: Resilient -> Kiên cường'
-                      : `Đáp án ${opt.key}`
-                  }
-                  value={opt.text}
-                  onChange={(e) => {
-                    const newOpts = [...questionForm.options]
-                    newOpts[optIdx].text = e.target.value
-                    setQuestionForm({ ...questionForm, options: newOpts })
-                  }}
-                  className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-brand-500"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setQuestionForm({ ...questionForm, correctAnswer: opt.key })}
-                  className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                    questionForm.correctAnswer === opt.key
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                  }`}
-                  title="Chọn làm đáp án đúng"
-                >
-                  {questionForm.correctAnswer === opt.key ? '✓ Đúng' : 'Chọn đúng'}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Giải thích đáp án (tiếng Việt)</label>
-            <Textarea
-              rows={2}
-              value={questionForm.explanationVi}
-              onChange={(e) => setQuestionForm({ ...questionForm, explanationVi: e.target.value })}
-              placeholder="Giải thích chi tiết vì sao đáp án này là đúng..."
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAddQuestionOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={isSubmittingQuestion}>
-              {isSubmittingQuestion ? 'Đang lưu...' : 'Lưu Câu Hỏi'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       {/* ─── DELETE CONFIRM DIALOG ─── */}
       <ConfirmDialog

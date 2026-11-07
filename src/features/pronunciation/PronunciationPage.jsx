@@ -25,6 +25,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import Input from '@/components/ui/Input'
 import { useAuthStore } from '@/store/authStore'
 import { speakWord, stopAudio } from '@/lib/ipaHelper'
@@ -36,13 +37,13 @@ import PronunciationDetailDrawer from './components/PronunciationDetailDrawer'
 
 // Speaking Scenario components
 import SpeakingScenarioCard from './components/SpeakingScenarioCard'
-import SpeakingScenarioModal from './components/SpeakingScenarioModal'
 import SpeakingSimulatorModal from './components/SpeakingSimulatorModal'
 import {
   getSpeakingScenarios,
-  createSpeakingScenario,
-  updateSpeakingScenario,
+  getSpeakingScenarioTrashCount,
   deleteSpeakingScenario,
+  restoreSpeakingScenario,
+  permanentDeleteSpeakingScenario,
 } from './speakingScenarioApi'
 import {
   PRONUNCIATION_CATEGORIES,
@@ -98,9 +99,13 @@ export default function PronunciationPage() {
   const [scenarioLevel, setScenarioLevel] = useState('ALL')
   const [scenarioCategory, setScenarioCategory] = useState('ALL')
 
-  // Modals for Scenarios
-  const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false)
-  const [editingScenario, setEditingScenario] = useState(null)
+  // Thùng rác cho Kịch bản Luyện nói
+  const [scenarioTrashView, setScenarioTrashView] = useState(false)
+  const [scenarioTrashCount, setScenarioTrashCount] = useState(0)
+  const [restoreScenarioTarget, setRestoreScenarioTarget] = useState(null)
+  const [permanentDeleteScenarioTarget, setPermanentDeleteScenarioTarget] = useState(null)
+
+  // Targets for Scenarios
   const [deleteScenarioTarget, setDeleteScenarioTarget] = useState(null)
   const [simulatingScenario, setSimulatingScenario] = useState(null)
 
@@ -126,7 +131,7 @@ export default function PronunciationPage() {
   const [isIpaModalOpen, setIsIpaModalOpen] = useState(false)
   const [editingIpa, setEditingIpa] = useState(null)
 
-  // ─── REFRESH TRASH COUNT ──────────────────────────────────────
+  // ─── REFRESH TRASH COUNT IPA ──────────────────────────────────
   const refreshTrashCount = async () => {
     try {
       const count = await getPronunciationTrashCount()
@@ -136,8 +141,18 @@ export default function PronunciationPage() {
     }
   }
 
+  // ─── REFRESH TRASH COUNT SCENARIOS ────────────────────────────
+  const refreshScenarioTrashCount = async () => {
+    try {
+      const count = await getSpeakingScenarioTrashCount()
+      setScenarioTrashCount(Number(count) || 0)
+    } catch (err) {
+      console.error('Lỗi khi tải số lượng thùng rác kịch bản:', err)
+    }
+  }
+
   // ─── LOAD SCENARIOS FROM BACKEND ──────────────────────────────
-  const loadScenarios = async () => {
+  const loadScenarios = async (targetTrash = scenarioTrashView) => {
     setIsLoadingScenarios(true)
     try {
       const res = await getSpeakingScenarios({
@@ -146,6 +161,7 @@ export default function PronunciationPage() {
         cefrLevel: scenarioLevel,
         category: scenarioCategory,
         search: scenarioSearch,
+        trash: targetTrash,
       })
 
       const data = res?.data !== undefined ? res.data : res
@@ -167,6 +183,14 @@ export default function PronunciationPage() {
     } finally {
       setIsLoadingScenarios(false)
     }
+  }
+
+  const handleToggleScenarioTrash = (nextTrash) => {
+    setScenarioTrashView(nextTrash)
+    setScenarioPage(1)
+    setScenarioSearch('')
+    loadScenarios(nextTrash)
+    refreshScenarioTrashCount()
   }
 
   // ─── LOAD IPA LESSONS FROM BACKEND ────────────────────────────
@@ -213,18 +237,19 @@ export default function PronunciationPage() {
 
   useEffect(() => {
     if (activeTab === 'scenarios') {
-      loadScenarios()
+      loadScenarios(scenarioTrashView)
+      refreshScenarioTrashCount()
     } else if (activeTab === 'ipa') {
       loadIpaLessons(trashView)
       refreshTrashCount()
     }
-  }, [activeTab, scenarioPage, scenarioLevel, scenarioCategory, ipaPage, selectedCategory, selectedLevel, selectedStatus, trashView])
+  }, [activeTab, scenarioPage, scenarioLevel, scenarioCategory, scenarioTrashView, ipaPage, selectedCategory, selectedLevel, selectedStatus, trashView])
 
   // Handle Search Debounce for Scenarios
   useEffect(() => {
     if (activeTab !== 'scenarios') return
     const timer = setTimeout(() => {
-      loadScenarios()
+      loadScenarios(scenarioTrashView)
     }, 400)
     return () => clearTimeout(timer)
   }, [scenarioSearch])
@@ -239,34 +264,48 @@ export default function PronunciationPage() {
     return () => clearTimeout(timer)
   }, [search])
 
-  // Save Scenario (Create / Update)
-  const handleSaveScenario = async (formData) => {
-    try {
-      if (formData.id) {
-        await updateSpeakingScenario(formData.id, formData)
-        toast.success('Đã cập nhật kịch bản thành công!')
-      } else {
-        await createSpeakingScenario(formData)
-        toast.success('Đã tạo kịch bản mới thành công!')
-      }
-      setIsScenarioModalOpen(false)
-      setEditingScenario(null)
-      loadScenarios()
-    } catch (err) {
-      toast.error('Lỗi khi lưu kịch bản: ' + err.message)
-    }
-  }
-
-  // Delete Scenario
+  // ─── SCENARIO: SOFT DELETE ──────────────────────────────────────
   const handleConfirmDeleteScenario = async () => {
     if (!deleteScenarioTarget) return
     try {
       await deleteSpeakingScenario(deleteScenarioTarget.id)
-      toast.success('Đã xóa kịch bản thành công!')
+      toast.success(`Đã chuyển kịch bản "${deleteScenarioTarget.titleEn}" vào thùng rác`)
       setDeleteScenarioTarget(null)
-      loadScenarios()
+      setScenarioTrashCount((prev) => prev + 1)
+      loadScenarios(scenarioTrashView)
+      refreshScenarioTrashCount()
     } catch (err) {
       toast.error('Lỗi khi xóa kịch bản: ' + err.message)
+    }
+  }
+
+  // ─── SCENARIO: RESTORE ──────────────────────────────────────────
+  const handleConfirmRestoreScenario = async () => {
+    if (!restoreScenarioTarget) return
+    try {
+      await restoreSpeakingScenario(restoreScenarioTarget.id)
+      toast.success(`Đã khôi phục kịch bản "${restoreScenarioTarget.titleEn}"`)
+      setRestoreScenarioTarget(null)
+      setScenarioTrashCount((prev) => Math.max(0, prev - 1))
+      loadScenarios(scenarioTrashView)
+      refreshScenarioTrashCount()
+    } catch (err) {
+      toast.error('Lỗi khi khôi phục kịch bản: ' + err.message)
+    }
+  }
+
+  // ─── SCENARIO: PERMANENT DELETE ─────────────────────────────────
+  const handleConfirmPermanentDeleteScenario = async () => {
+    if (!permanentDeleteScenarioTarget) return
+    try {
+      await permanentDeleteSpeakingScenario(permanentDeleteScenarioTarget.id)
+      toast.success(`Đã xóa vĩnh viễn kịch bản "${permanentDeleteScenarioTarget.titleEn}"`)
+      setPermanentDeleteScenarioTarget(null)
+      setScenarioTrashCount((prev) => Math.max(0, prev - 1))
+      loadScenarios(scenarioTrashView)
+      refreshScenarioTrashCount()
+    } catch (err) {
+      toast.error('Lỗi khi xóa vĩnh viễn: ' + err.message)
     }
   }
 
@@ -315,7 +354,6 @@ export default function PronunciationPage() {
     }
   }
 
-
   // ─── IPA: TOGGLE PUBLISH ────────────────────────────────────────
   const handleTogglePublish = async (item) => {
     const prevStatus = item.status || 'published'
@@ -360,7 +398,7 @@ export default function PronunciationPage() {
     }
   }
 
-  // Dừng âm thanh và reset playingAudioId khi chuyển tab (IPA <-> Kịch bản), chuyển trang, đổi bộ lọc, mở drawer hoặc modal
+  // Dừng âm thanh và reset playingAudioId khi chuyển tab, chuyển trang, đổi bộ lọc
   useEffect(() => {
     stopAudio()
     setPlayingAudioId(null)
@@ -370,6 +408,7 @@ export default function PronunciationPage() {
     scenarioSearch,
     scenarioLevel,
     scenarioCategory,
+    scenarioTrashView,
     ipaPage,
     search,
     selectedCategory,
@@ -379,7 +418,7 @@ export default function PronunciationPage() {
     simulatingScenario,
   ])
 
-  // Dọn dẹp âm thanh khi component unmount hoặc khi bộ điều phối toàn cục yêu cầu
+  // Dọn dẹp âm thanh khi unmount
   useEffect(() => {
     const unregister = registerAudioStopHandler(() => {
       setPlayingAudioId(null)
@@ -389,7 +428,6 @@ export default function PronunciationPage() {
       stopAudio()
     }
   }, [])
-
 
   const handlePlayAudio = (e, item) => {
     e.stopPropagation()
@@ -413,8 +451,8 @@ export default function PronunciationPage() {
     <div className="space-y-5">
       {/* Teacher quota notification if applicable */}
       {isTeacher && (
-        <div className="flex items-center gap-2.5 rounded-2xl border border-indigo-200 bg-indigo-50/70 px-4 py-2.5 text-xs shadow-2xs">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-brand-50/70 px-4 py-2.5 text-xs shadow-2xs">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-navy-800 text-white">
             <Crown size={13} />
           </span>
           <div>
@@ -424,22 +462,22 @@ export default function PronunciationPage() {
               <strong className="text-emerald-600 font-bold">Không giới hạn</strong>
             </span>
           </div>
-          <Link to="/goi-dich-vu" className="ml-auto font-semibold text-indigo-600 hover:underline">
+          <Link to="/goi-dich-vu" className="ml-auto font-semibold text-brand-600 hover:underline">
             Chi tiết gói →
           </Link>
         </div>
       )}
 
-      {/* ─── Top Tabs Switcher ────────────────────────────────────────── */}
+      {/* ─── Top Tabs Switcher (Đồng bộ chuẩn màu hệ thống Admin) ───────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 shrink-0">
           {/* TAB 1: Ngân hàng phát âm IPA & Từ mẫu */}
           <button
             type="button"
             onClick={() => setActiveTab('ipa')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
               activeTab === 'ipa'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-brand-600 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
@@ -451,15 +489,15 @@ export default function PronunciationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('scenarios')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
               activeTab === 'scenarios'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-brand-600 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
             <Bot size={16} />
             <span>Kịch bản Luyện nói & AI Roleplay</span>
-            <span className="ml-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-600 border border-indigo-100">
+            <span className="ml-1 rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-600 border border-brand-100">
               Mới
             </span>
           </button>
@@ -485,7 +523,7 @@ export default function PronunciationPage() {
       {/* ═════════════════════════════════════════════════════════════════ */}
       {activeTab === 'ipa' && (
         <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-          {/* Banner thông báo thùng rác */}
+          {/* Banner thông báo thùng rác IPA */}
           {trashView && (
             <div className="flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50/70 px-6 py-3 text-xs text-amber-800">
               <div className="flex items-center gap-2">
@@ -539,7 +577,7 @@ export default function PronunciationPage() {
             <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
           ) : lessons.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
                 {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
               </div>
               <h3 className="text-sm font-bold text-slate-800 mb-1">
@@ -617,12 +655,30 @@ export default function PronunciationPage() {
       )}
 
       {/* ═════════════════════════════════════════════════════════════════ */}
-      {/* ═════════════════════════════════════════════════════════════════ */}
       {/* TAB 2: KỊCH BẢN LUYỆN NÓI & AI ROLEPLAY                         */}
       {/* ═════════════════════════════════════════════════════════════════ */}
       {activeTab === 'scenarios' && (
         <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-          {/* Toolbar gộp chung 1 row đồng bộ với Tab phát âm */}
+          {/* Banner thông báo khi ở chế độ thùng rác kịch bản */}
+          {scenarioTrashView && (
+            <div className="flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50/70 px-6 py-3 text-xs text-amber-800">
+              <div className="flex items-center gap-2">
+                <Trash2 size={15} className="text-amber-600 shrink-0" />
+                <span>
+                  Bạn đang xem các kịch bản trong <strong>Thùng rác</strong> ({scenarioTrashCount}). Bạn có thể khôi phục hoặc xóa hẳn bất kỳ lúc nào.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleScenarioTrash(false)}
+                className="font-semibold text-brand-600 hover:text-brand-800 underline cursor-pointer shrink-0"
+              >
+                Quay lại danh sách chính
+              </button>
+            </div>
+          )}
+
+          {/* Toolbar gộp chung 1 row đồng bộ chuẩn với Tab 1 và toàn bộ Admin */}
           <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
             <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
               <Search size={18} className="shrink-0 text-slate-400" />
@@ -632,45 +688,35 @@ export default function PronunciationPage() {
                   setScenarioSearch(e.target.value)
                   setScenarioPage(1)
                 }}
-                placeholder="Tìm kịch bản, nhân vật, từ khóa..."
+                placeholder={scenarioTrashView ? 'Tìm kiếm trong thùng rác kịch bản...' : 'Tìm kịch bản, nhân vật, từ khóa...'}
                 className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Dropdown Trình độ */}
-              <select
+              <Select
                 value={scenarioLevel}
                 onChange={(e) => {
                   setScenarioLevel(e.target.value)
                   setScenarioPage(1)
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-              >
-                <option value="ALL">Tất cả trình độ</option>
-                <option value="A1">Trình độ A1</option>
-                <option value="A2">Trình độ A2</option>
-                <option value="B1">Trình độ B1</option>
-                <option value="B2">Trình độ B2</option>
-                <option value="C1">Trình độ C1</option>
-                <option value="C2">Trình độ C2</option>
-              </select>
+                size="sm"
+                containerClassName="w-36 shrink-0"
+                options={CEFR_FILTER_OPTIONS}
+              />
 
               {/* Dropdown Chủ đề */}
-              <select
+              <Select
                 value={scenarioCategory}
                 onChange={(e) => {
                   setScenarioCategory(e.target.value)
                   setScenarioPage(1)
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-              >
-                {CATEGORY_FILTER_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                size="sm"
+                containerClassName="w-40 shrink-0"
+                options={CATEGORY_FILTER_OPTIONS}
+              />
 
               {/* Bộ chuyển đổi dạng Card và dạng Bảng (Icon-only) */}
               <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/90 h-9">
@@ -679,7 +725,7 @@ export default function PronunciationPage() {
                   onClick={() => setScenarioViewMode('card')}
                   className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer ${
                     scenarioViewMode === 'card'
-                      ? 'bg-white text-indigo-600 shadow-2xs'
+                      ? 'bg-white text-brand-600 shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Xem dạng thẻ (Card)"
@@ -692,7 +738,7 @@ export default function PronunciationPage() {
                   onClick={() => setScenarioViewMode('table')}
                   className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer ${
                     scenarioViewMode === 'table'
-                      ? 'bg-white text-indigo-600 shadow-2xs'
+                      ? 'bg-white text-brand-600 shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                   title="Xem dạng bảng (Table)"
@@ -705,7 +751,10 @@ export default function PronunciationPage() {
               {/* Làm mới (Icon-only) */}
               <button
                 type="button"
-                onClick={loadScenarios}
+                onClick={() => {
+                  loadScenarios(scenarioTrashView)
+                  refreshScenarioTrashCount()
+                }}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-2xs focus:outline-none cursor-pointer hover:border-slate-300"
                 title="Làm mới dữ liệu"
                 aria-label="Làm mới dữ liệu"
@@ -713,45 +762,82 @@ export default function PronunciationPage() {
                 <RefreshCw size={15} />
               </button>
 
-              {/* Thêm kịch bản mới (Icon-only) */}
+              {/* Thêm kịch bản mới (Icon-only - Chuẩn navy-800 đồng bộ toàn hệ thống) */}
+              {!scenarioTrashView && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/app/hoc-lieu/phat-am/kich-ban/tao-moi')}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-800 hover:bg-navy-900 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                  title="Thêm kịch bản mới"
+                  aria-label="Thêm kịch bản mới"
+                >
+                  <Plus size={18} strokeWidth={2.5} />
+                </button>
+              )}
+
+              {/* Nút Thùng rác ở cuối hàng toolbar của Tab Kịch bản */}
               <button
                 type="button"
-                onClick={() => {
-                  setEditingScenario(null)
-                  setIsScenarioModalOpen(true)
-                }}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
-                title="Thêm kịch bản mới"
-                aria-label="Thêm kịch bản mới"
+                onClick={() => handleToggleScenarioTrash(!scenarioTrashView)}
+                className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs cursor-pointer border ${
+                  scenarioTrashView
+                    ? 'border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                }`}
+                title={scenarioTrashView ? 'Quay lại danh sách kịch bản' : `Thùng rác (${scenarioTrashCount || 0})`}
+                aria-label={scenarioTrashView ? 'Quay lại danh sách kịch bản' : `Thùng rác (${scenarioTrashCount || 0})`}
               >
-                <Plus size={18} strokeWidth={2.5} />
+                {scenarioTrashView ? (
+                  <RotateCcw size={16} />
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    {scenarioTrashCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
+                        {scenarioTrashCount}
+                      </span>
+                    )}
+                  </>
+                )}
               </button>
             </div>
           </div>
 
-          {/* Scenarios Content (Hiển thị dạng Card hoặc Bảng tùy chọn) */}
+          {/* Scenarios Content */}
           {isLoadingScenarios ? (
             <LoadingSpinner text="Đang tải danh sách kịch bản từ máy chủ..." className="py-20" />
           ) : scenarios.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                <MessageSquare size={24} />
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${scenarioTrashView ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
+                {scenarioTrashView ? <Trash2 size={24} /> : <MessageSquare size={24} />}
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Chưa tìm thấy kịch bản nào</h3>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                {scenarioTrashView ? 'Thùng rác kịch bản rỗng' : 'Chưa tìm thấy kịch bản nào'}
+              </h3>
               <p className="text-xs text-slate-500 max-w-md mb-4">
-                Hãy thử thay đổi bộ lọc hoặc sử dụng trợ lý Gemini AI để tạo nhanh kịch bản luyện nói đầu tiên.
+                {scenarioTrashView
+                  ? 'Hiện không có kịch bản luyện nói nào trong thùng rác.'
+                  : 'Hãy thử thay đổi bộ lọc hoặc sử dụng trợ lý Gemini AI để tạo nhanh kịch bản luyện nói đầu tiên.'}
               </p>
-              <Button
-                size="sm"
-                variant="primary"
-                icon={Sparkles}
-                onClick={() => {
-                  setEditingScenario(null)
-                  setIsScenarioModalOpen(true)
-                }}
-              >
-                Sinh kịch bản bằng AI ngay
-              </Button>
+              {scenarioTrashView ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={RotateCcw}
+                  onClick={() => handleToggleScenarioTrash(false)}
+                >
+                  Quay lại danh sách kịch bản
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={Sparkles}
+                  onClick={() => navigate('/app/hoc-lieu/phat-am/kich-ban/tao-moi')}
+                >
+                  Sinh kịch bản bằng AI ngay
+                </Button>
+              )}
             </div>
           ) : scenarioViewMode === 'card' ? (
             /* DẠNG 1: CARD GRID */
@@ -761,11 +847,11 @@ export default function PronunciationPage() {
                   <SpeakingScenarioCard
                     key={item.id}
                     scenario={item}
-                    onEdit={(sc) => {
-                      setEditingScenario(sc)
-                      setIsScenarioModalOpen(true)
-                    }}
+                    isTrash={scenarioTrashView}
+                    onEdit={(sc) => navigate(`/app/hoc-lieu/phat-am/kich-ban/${sc.id}/chinh-sua`)}
                     onDelete={(sc) => setDeleteScenarioTarget(sc)}
+                    onRestore={(sc) => setRestoreScenarioTarget(sc)}
+                    onPermanentDelete={(sc) => setPermanentDeleteScenarioTarget(sc)}
                     onSimulate={(sc) => setSimulatingScenario(sc)}
                   />
                 ))}
@@ -781,7 +867,9 @@ export default function PronunciationPage() {
                     <th className="py-3 px-2 w-[10%] text-center whitespace-nowrap">Trình độ</th>
                     <th className="py-3 px-3.5 w-[32%] whitespace-nowrap">Kịch bản & Tình huống</th>
                     <th className="py-3 px-3 w-[14%] whitespace-nowrap">Phân loại</th>
-                    <th className="py-3 px-3.5 w-[24%] whitespace-nowrap">Mô tả tóm tắt</th>
+                    <th className="py-3 px-3.5 w-[24%] whitespace-nowrap">
+                      {scenarioTrashView ? 'Thời gian xóa' : 'Mô tả tóm tắt'}
+                    </th>
                     <th className="py-3 px-4 w-[12%] text-right whitespace-nowrap">Thao tác</th>
                   </tr>
                 </thead>
@@ -789,8 +877,10 @@ export default function PronunciationPage() {
                   {scenarios.map((item) => (
                     <tr
                       key={item.id}
-                      onClick={() => setSimulatingScenario(item)}
-                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      onClick={() => !scenarioTrashView && setSimulatingScenario(item)}
+                      className={`transition-colors group ${
+                        scenarioTrashView ? 'hover:bg-amber-50/40 cursor-default' : 'hover:bg-slate-50/80 cursor-pointer'
+                      }`}
                     >
                       <td className="py-2.5 px-3 text-center">
                         <img
@@ -805,7 +895,7 @@ export default function PronunciationPage() {
                         </span>
                       </td>
                       <td className="py-2.5 px-3.5 font-medium text-slate-900 overflow-hidden">
-                        <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate block w-full" title={item.titleEn}>
+                        <div className="font-bold text-slate-900 group-hover:text-brand-600 transition-colors truncate block w-full" title={item.titleEn}>
                           {item.titleEn}
                         </div>
                         {item.titleVi && (
@@ -820,39 +910,61 @@ export default function PronunciationPage() {
                         </span>
                       </td>
                       <td className="py-2.5 px-3.5 text-slate-500 text-xs overflow-hidden">
-                        <p className="truncate block w-full" title={item.descriptionEn || item.descriptionVi || '—'}>
-                          {item.descriptionEn || item.descriptionVi || '—'}
+                        <p className="truncate block w-full" title={scenarioTrashView ? (item.deletedAt || '—') : (item.descriptionEn || item.descriptionVi || '—')}>
+                          {scenarioTrashView
+                            ? (item.deletedAt ? new Date(item.deletedAt).toLocaleString('vi-VN') : '—')
+                            : (item.descriptionEn || item.descriptionVi || '—')}
                         </p>
                       </td>
                       <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSimulatingScenario(item)}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
-                            title="Luyện đàm thoại thử"
-                          >
-                            <MessageSquare size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingScenario(item)
-                              setIsScenarioModalOpen(true)
-                            }}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Chỉnh sửa kịch bản"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteScenarioTarget(item)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="Xóa kịch bản"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {scenarioTrashView ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setRestoreScenarioTarget(item)}
+                                className="p-1.5 rounded-lg text-brand-600 hover:text-brand-700 hover:bg-brand-50 transition-colors cursor-pointer"
+                                title="Khôi phục kịch bản"
+                              >
+                                <RotateCcw size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setPermanentDeleteScenarioTarget(item)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Xóa vĩnh viễn"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setSimulatingScenario(item)}
+                                className="p-1.5 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+                                title="Luyện đàm thoại thử"
+                              >
+                                <MessageSquare size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/app/hoc-lieu/phat-am/kich-ban/${item.id}/chinh-sua`)}
+                                className="p-1.5 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                                title="Chỉnh sửa kịch bản"
+                              >
+                                <Pencil size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteScenarioTarget(item)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Chuyển vào thùng rác"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -867,7 +979,7 @@ export default function PronunciationPage() {
             <p className="text-xs text-slate-500">
               Hiển thị <strong>{scenarioTotalCount === 0 ? 0 : (scenarioPage - 1) * 8 + 1}</strong>-
               <strong>{Math.min(scenarioPage * 8, scenarioTotalCount)}</strong> trong tổng số{' '}
-              <strong>{scenarioTotalCount}</strong> kịch bản luyện nói
+              <strong>{scenarioTotalCount}</strong> {scenarioTrashView ? 'kịch bản trong thùng rác' : 'kịch bản luyện nói'}
             </p>
             <Pagination page={scenarioPage} totalPages={scenarioTotalPages} onChange={setScenarioPage} />
           </div>
@@ -875,17 +987,6 @@ export default function PronunciationPage() {
       )}
 
       {/* ─── MODALS & DRAWERS ────────────────────────────────────────── */}
-
-      {/* Speaking Scenario Create/Edit Modal */}
-      <SpeakingScenarioModal
-        isOpen={isScenarioModalOpen}
-        onClose={() => {
-          setIsScenarioModalOpen(false)
-          setEditingScenario(null)
-        }}
-        initialData={editingScenario}
-        onSave={handleSaveScenario}
-      />
 
       {/* Speaking Simulator Modal (Live AI Voice Test) */}
       <SpeakingSimulatorModal
@@ -897,15 +998,37 @@ export default function PronunciationPage() {
         scenario={simulatingScenario}
       />
 
-      {/* Delete Scenario Dialog */}
+      {/* Delete Scenario Dialog (Soft delete) */}
       <ConfirmDialog
         isOpen={Boolean(deleteScenarioTarget)}
-        title="Xác nhận xóa kịch bản"
-        message={`Bạn có chắc chắn muốn xóa kịch bản "${deleteScenarioTarget?.titleEn}" không? Hành động này không thể hoàn tác.`}
-        confirmText="Xóa kịch bản"
+        title="Chuyển kịch bản vào thùng rác"
+        message={`Bạn có chắc chắn muốn chuyển kịch bản "${deleteScenarioTarget?.titleEn}" vào thùng rác? Bạn có thể khôi phục lại bất kỳ lúc nào.`}
+        confirmText="Chuyển vào thùng rác"
         confirmVariant="danger"
         onConfirm={handleConfirmDeleteScenario}
         onClose={() => setDeleteScenarioTarget(null)}
+      />
+
+      {/* Restore Scenario Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(restoreScenarioTarget)}
+        title="Khôi phục kịch bản"
+        message={`Bạn có chắc chắn muốn khôi phục kịch bản "${restoreScenarioTarget?.titleEn}" về danh sách kịch bản đang hoạt động?`}
+        confirmText="Khôi phục kịch bản"
+        confirmVariant="primary"
+        onConfirm={handleConfirmRestoreScenario}
+        onClose={() => setRestoreScenarioTarget(null)}
+      />
+
+      {/* Permanent Delete Scenario Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(permanentDeleteScenarioTarget)}
+        title="Xác nhận xóa vĩnh viễn"
+        message={`Kịch bản "${permanentDeleteScenarioTarget?.titleEn}" sẽ bị xóa hoàn toàn khỏi hệ thống và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?`}
+        confirmText="Xóa vĩnh viễn"
+        confirmVariant="danger"
+        onConfirm={handleConfirmPermanentDeleteScenario}
+        onClose={() => setPermanentDeleteScenarioTarget(null)}
       />
 
       {/* IPA Detail Drawer */}
@@ -959,4 +1082,3 @@ export default function PronunciationPage() {
     </div>
   )
 }
-

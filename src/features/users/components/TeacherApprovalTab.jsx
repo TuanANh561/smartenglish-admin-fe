@@ -17,6 +17,7 @@ import toast from 'react-hot-toast'
 import TeacherProofModal from './TeacherProofModal'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { maskEmail, maskIdentityCard, maskPhone } from '@/lib/utils'
@@ -181,18 +182,18 @@ export default function TeacherApprovalTab({
         </div>
 
         {/* Filter dropdown */}
-        <div className="relative shrink-0">
-          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <select
+        <div className="shrink-0 w-44">
+          <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="appearance-none rounded-xl border border-slate-200 bg-white pl-8 pr-8 py-2 text-xs text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 cursor-pointer transition"
-          >
-            <option value="all">Tất cả trạng thái ({stats.total})</option>
-            <option value="pending">Chờ duyệt ({stats.pending})</option>
-            <option value="approved">Đã duyệt ({stats.approved})</option>
-            <option value="rejected">Đã từ chối ({stats.rejected})</option>
-          </select>
+            size="sm"
+            options={[
+              { value: 'all', label: `Tất cả trạng thái (${stats.total})` },
+              { value: 'pending', label: `Chờ duyệt (${stats.pending})` },
+              { value: 'approved', label: `Đã duyệt (${stats.approved})` },
+              { value: 'rejected', label: `Đã từ chối (${stats.rejected})` },
+            ]}
+          />
         </div>
       </div>
 

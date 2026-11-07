@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { api, http } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/endpoints'
 import { stopAudio } from '@/lib/ipaHelper'
 import { REAL_SAMPLE_FILES } from '../vocabImportConstants'
 import { loadSamplePresetData, parseJsonItems } from '../vocabImportUtils'
@@ -61,6 +62,8 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       setUploadMode('file')
       setFilterStatus('all')
       setEditingRow(null)
+      setParsedItems([])
+      setSelectedIds(new Set())
     }
     return () => {
       stopAudio()
@@ -71,7 +74,6 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
   useEffect(() => {
     stopAudio()
   }, [step])
-
 
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
@@ -102,6 +104,9 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
     setSelectedPreset(null)
     setCustomFile(file)
+    // Khi người dùng chọn file mới, xóa dữ liệu đã phân tích tạm thời trước đó
+    setParsedItems([])
+    setSelectedIds(new Set())
 
     if (file.name.endsWith('.json')) {
       const reader = new FileReader()
@@ -126,6 +131,46 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
   const handleClearFile = () => {
     setCustomFile(null)
     setCustomParsedData(null)
+    setParsedItems([])
+    setSelectedIds(new Set())
+  }
+
+  const handleSelectPreset = (preset) => {
+    if (preset?.id !== selectedPreset?.id) {
+      setSelectedPreset(preset)
+      setParsedItems([])
+      setSelectedIds(new Set())
+    }
+  }
+
+  const handleJsonChange = (text) => {
+    setCustomJsonText(text)
+    if (parsedItems.length > 0) {
+      setParsedItems([])
+      setSelectedIds(new Set())
+    }
+  }
+
+  /**
+   * Điều hướng "Quay lại":
+   * Khi đang ở Bước 3 (Kiểm duyệt), quay lại sẽ trở về thẳng Bước 1 (Chọn tệp),
+   * bỏ qua Bước 2 (animation xử lý).
+   */
+  const handleBack = () => {
+    if (step === 3) {
+      setStep(1)
+    } else {
+      setStep((prev) => Math.max(1, prev - 1))
+    }
+  }
+
+  /**
+   * Quay lại ngay Bước 3 (Kiểm duyệt) nếu đang lưu tạm kết quả phân tích
+   */
+  const handleGoToReview = () => {
+    if (parsedItems.length > 0) {
+      setStep(3)
+    }
   }
 
   // ── Step 1 → Step 2: Bóc tách AI ─────────────────────────────────────
@@ -143,7 +188,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       dataset = customParsedData
     } else if (uploadMode === 'json') {
       if (!customJsonText.trim()) {
-        toast.error('Vui lòng dán đoạn mã JSON từ AI vào khung!')
+        toast.error('Vui lòng dán đoạn mã JSON vào khung!')
         return
       }
       try {
@@ -175,7 +220,6 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     const MAX_ITEMS = 5000
     if (!isPdfUpload && dataset && dataset.length > MAX_ITEMS) {
       toast(`Danh sách có ${dataset.length} từ. Hệ thống tự động lấy ${MAX_ITEMS} từ đầu tiên để bảo đảm an toàn hiệu năng.`, {
-        icon: 'ℹ️',
         duration: 4000,
       })
       dataset = dataset.slice(0, MAX_ITEMS)
@@ -303,7 +347,7 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
 
     const dupCount = dataset.filter((item) => item.isDuplicate).length
     if (dupCount > 0) {
-      toast(`Phát hiện ${dupCount} từ vựng đã tồn tại trong CSDL (đã tự động bỏ chọn)!`, {
+      toast(`Phát hiện ${dupCount} từ vựng đã có trong kho từ (đã tự động bỏ chọn)!`, {
         icon: 'ℹ️',
         duration: 4500,
       })
@@ -340,6 +384,19 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     toast.success('Đã xóa bản ghi khỏi danh sách xem trước')
   }
 
+  const normalizeCefr = (lvl) => {
+    if (!lvl) return 'B1'
+    const upper = String(lvl).trim().toUpperCase()
+    if (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(upper)) return upper
+    if (upper.startsWith('A1')) return 'A1'
+    if (upper.startsWith('A2')) return 'A2'
+    if (upper.startsWith('B1')) return 'B1'
+    if (upper.startsWith('B2')) return 'B2'
+    if (upper.startsWith('C1')) return 'C1'
+    if (upper.startsWith('C2')) return 'C2'
+    return 'B1'
+  }
+
   // ── Step 3 → Step 4: Confirm import ──────────────────────────────────
 
   const handleConfirmImport = async () => {
@@ -349,19 +406,44 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
       return
     }
 
-    if (onImportSuccess) {
-      setIsSubmitting(true)
-      try {
-        await onImportSuccess(itemsToImport, importType)
-        setStep(4)
-      } catch (err) {
-        console.error('Import thất bại:', err)
-        toast.error('Có lỗi xảy ra khi lưu từ vựng vào cơ sở dữ liệu!')
-      } finally {
-        setIsSubmitting(false)
+    setIsSubmitting(true)
+    try {
+      if (importType === 'vocabulary') {
+        const payload = itemsToImport
+          .filter((it) => it && (it.word || '').trim())
+          .map((item) => ({
+            word: (item.word || '').trim(),
+            pronunciation: (item.pronunciation || item.phonetic || '').trim(),
+            partOfSpeech: item.partOfSpeech || 'Noun',
+            cefrLevel: normalizeCefr(item.cefrLevel),
+            vietnameseMeaning: (item.vietnameseMeaning || item.meaningVi || 'Nghĩa từ vựng').trim(),
+            englishMeaning: (item.englishMeaning || item.meaningEn || '').trim(),
+            topic: (item.topic || 'General').trim(),
+            exampleEn: (item.exampleEn || item.example || item.exampleSentence || '').trim(),
+            exampleVi: (item.exampleVi || item.translation_example || '').trim(),
+            audioUrl: item.audioUrl || '',
+            synonyms: item.synonyms || '',
+            antonyms: item.antonyms || '',
+            exercises: Array.isArray(item.exercises) ? item.exercises : [],
+          }))
+
+        if (payload.length > 0) {
+          const res = await api.post(ENDPOINTS.words.import, payload)
+          const savedCount = Array.isArray(res) ? res.length : (res?.length || payload.length)
+          toast.success(`Đã lưu thành công ${savedCount} từ vựng vào CSDL!`)
+        }
       }
-    } else {
+
+      if (onImportSuccess) {
+        await onImportSuccess(itemsToImport, importType)
+      }
       setStep(4)
+    } catch (err) {
+      console.error('Import thất bại:', err)
+      const msg = err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi lưu từ vựng vào cơ sở dữ liệu!'
+      toast.error(msg)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -389,6 +471,10 @@ export function useVocabImport({ open, defaultType, onClose, onImportSuccess }) 
     // Handlers
     handleFileChange,
     handleClearFile,
+    handleSelectPreset,
+    handleJsonChange,
+    handleBack,
+    handleGoToReview,
     startAiParsing,
     handleToggleSelectAll,
     handleToggleSelectRow,

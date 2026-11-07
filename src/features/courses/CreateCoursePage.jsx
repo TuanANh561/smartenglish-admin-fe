@@ -12,9 +12,11 @@ import {
   Sparkles,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import {
   createCourseApi,
   createLessonApi,
@@ -34,10 +36,24 @@ import CourseObjectivesBuilder from './components/CourseObjectivesBuilder'
 export default function CreateCoursePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.role === 'admin'
   const isTeacher = user?.role === 'teacher'
   const isEditing = Boolean(id)
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/khoa-hoc',
+      backText: 'Quay lại',
+      title: isEditing ? 'Chỉnh sửa chương học' : 'Tạo chương mới',
+      subtitle: 'Khóa học & Giáo trình',
+    })
+    return () => clearCustomHeader()
+  }, [isEditing, setCustomHeader, clearCustomHeader])
 
   // 1. Form States theo chuẩn Database content.courses
   const [titleVi, setTitleVi] = useState('')
@@ -287,18 +303,14 @@ export default function CreateCoursePage() {
     }
   }
 
+  useCtrlSave(() => handleSaveCourse('published'), !isSaving)
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header & Quick Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 bg-slate-50/95 py-3 backdrop-blur-xs border-b border-line">
         <div className="flex items-center gap-3">
-          <Link
-            to="/app/hoc-lieu/khoa-hoc"
-            className="p-2 rounded-lg bg-white border border-line text-ink-muted hover:text-navy-800 transition-colors shadow-2xs"
-            title="Quay lại danh sách"
-          >
-            <ArrowLeft size={16} />
-          </Link>
+          
           <div>
             <h1 className="text-lg font-bold text-navy-800 tracking-tight flex items-center gap-2">
               {isEditing ? 'Chỉnh Sửa Chương Học' : 'Tạo Chương Mới Cho Hệ Thống'}
@@ -342,12 +354,14 @@ export default function CreateCoursePage() {
             type="button"
             variant="primary"
             size="sm"
-            icon={isSaving ? Loader2 : Send}
+            icon={Save}
+            loading={isSaving}
             disabled={isSaving}
             onClick={() => handleSaveCourse('published')}
+            title="Lưu chương học (Ctrl + S)"
             className="text-xs shadow-xs"
           >
-            {isSaving ? 'Đang lưu...' : 'Xuất bản ngay'}
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
           </Button>
         </div>
       </div>

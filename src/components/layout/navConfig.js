@@ -30,6 +30,7 @@ export const ROLE_ACCESS = {
     '/app/hoc-lieu/khoa-hoc',
     '/app/hoc-lieu/bai-kiem-tra',
     '/app/noi-dung-ai',
+    '/app/thong-bao',
     '/app/nhat-ky',
     '/app/cai-dat',
     '/app/ho-so',
@@ -61,16 +62,6 @@ export const NAV_GROUPS = [
       { to: '/app/cong-dong', label: 'Cộng đồng', icon: MessagesSquare, unreadCount: 0, roles: ['admin', 'teacher'] },
       { to: '/app/hoc-vien', label: 'Người dùng', icon: Users, roles: ['admin'] },
       { to: '/app/lop-hoc', label: 'Lớp học', icon: GraduationCap, roles: ['teacher', 'admin'] },
-      {
-        label: 'Gói & Giao dịch',
-        icon: Crown,
-        roles: ['teacher', 'admin'],
-        children: [
-          { to: '/app/goi-premium', label: 'Cấu hình gói Premium', roles: ['admin'] },
-          { to: '/app/goi-dich-vu', label: 'Gói dịch vụ Pro', roles: ['teacher', 'admin'] },
-          { to: '/app/giao-dich', label: 'Lịch sử giao dịch', roles: ['teacher'] },
-        ],
-      },
     ],
   },
   {
@@ -113,7 +104,16 @@ export const NAV_GROUPS = [
     items: [
       { to: '/app/doanh-thu', label: 'Doanh thu', icon: Wallet, roles: ['admin'] },
       { to: '/app/doi-soat', label: 'Giao dịch & Đối soát', icon: Receipt, roles: ['admin'] },
-      { to: '/app/goi-premium', label: 'Gói Premium', icon: Crown, roles: ['admin'] },
+      {
+        label: 'Gói & Giao dịch',
+        icon: Crown,
+        roles: ['teacher', 'admin'],
+        children: [
+          { to: '/app/goi-premium', label: 'Cấu hình gói Premium', roles: ['admin'] },
+          { to: '/app/goi-dich-vu', label: 'Gói dịch vụ', roles: ['teacher', 'admin'] },
+          { to: '/app/giao-dich', label: 'Lịch sử giao dịch', roles: ['teacher'] },
+        ],
+      },
     ],
   },
   {
@@ -173,11 +173,11 @@ export const ROUTE_META = {
   },
   '/app/cong-dong': {
     title: 'Cộng đồng',
-    description: 'Không gian chia sẻ kiến thức, tài liệu',
+    description: '',
   },
   '/app/hoc-vien': { title: 'Người dùng', description: 'Quản lý danh sách tất cả người dùng hệ thống' },
   '/app/lop-hoc': { title: 'Lớp học', description: 'Quản lý các lớp học bạn đang phụ trách' },
-  '/app/goi-dich-vu': { title: 'Gói dịch vụ & Xem trước Paywall', description: 'Trực quan hóa gói quyền lợi giảng dạy và paywall học viên' },
+  '/app/goi-dich-vu': { title: 'Gói dịch vụ', description: 'Bảng giá và quyền lợi tài nguyên hệ thống' },
   '/app/giao-dich': { title: 'Quản lý Giao dịch & Hóa đơn', description: 'Tra cứu lịch sử thanh toán và xuất hóa đơn điện tử' },
   '/app/hoc-lieu/tu-vung': { title: 'Kho từ vựng', description: 'Quản lý kho từ vựng gốc của hệ thống' },
   '/app/hoc-lieu/ngu-phap': {

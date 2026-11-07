@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ClassListView from './components/ClassListView'
 import ClassDetailView from './components/ClassDetailView'
 import StudentDetailView from './components/StudentDetailView'
+import { getClassDetail, getTeacherClasses } from './classApi'
 
 /**
  * Trang Quản lý lớp học của giáo viên:
@@ -11,14 +13,47 @@ import StudentDetailView from './components/StudentDetailView'
  * - student: Chi tiết tiến độ và điểm của 1 học viên cụ thể trong lớp
  */
 function TeacherClassesPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const classIdParam = searchParams.get('classId')
+
   const [view, setView] = useState('list')
   const [selectedClass, setSelectedClass] = useState(null)
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  // Tự động mở chi tiết lớp nếu có classId trên URL query param
+  useEffect(() => {
+    if (classIdParam && (!selectedClass || String(selectedClass.id) !== String(classIdParam))) {
+      getClassDetail(classIdParam)
+        .then((res) => {
+          if (res) {
+            setSelectedClass(res)
+            setView('detail')
+          }
+        })
+        .catch(() => {
+          getTeacherClasses({ size: 100 })
+            .then((resList) => {
+              const items = resList?.items || resList?.content || (Array.isArray(resList) ? resList : [])
+              const found = items.find(
+                (c) => String(c.id) === String(classIdParam) || c.code === classIdParam,
+              )
+              if (found) {
+                setSelectedClass(found)
+                setView('detail')
+              }
+            })
+            .catch(() => {})
+        })
+    }
+  }, [classIdParam, selectedClass])
 
   const handleViewClass = (cls) => {
     setSelectedClass(cls)
     setSelectedStudent(null)
     setView('detail')
+    if (cls?.id) {
+      setSearchParams({ classId: cls.id })
+    }
   }
 
   const handleViewStudent = (student, cls) => {
@@ -31,6 +66,9 @@ function TeacherClassesPage() {
     setSelectedClass(null)
     setSelectedStudent(null)
     setView('list')
+    if (classIdParam) {
+      setSearchParams({})
+    }
   }
 
   const handleBackToDetail = () => {

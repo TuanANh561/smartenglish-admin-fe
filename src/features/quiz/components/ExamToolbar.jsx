@@ -1,5 +1,6 @@
 import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { CEFR_LEVELS, EXAM_CATEGORIES } from '../examApi'
 
 const STATUS_OPTIONS = [
@@ -62,53 +63,58 @@ export default function ExamToolbar({
         <div className="flex items-center gap-2 shrink-0 flex-nowrap">
           {/* Nguồn đề thi - Dropdown đồng bộ trên cùng hàng */}
           {!trashView && onAuthorFilterChange && (
-            <select
+            <Select
               value={authorFilter}
               onChange={(e) => onAuthorFilterChange(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-              title="Lọc theo nguồn đề thi"
-            >
-              <option value="all">Nguồn: Tất cả ({totalExamsCount})</option>
-              <option value="system">Hệ thống ({systemCount})</option>
-              <option value="mine">Của tôi ({myCount})</option>
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={[
+                { value: 'all', label: `Nguồn: Tất cả (${totalExamsCount})` },
+                { value: 'system', label: `Hệ thống (${systemCount})` },
+                { value: 'mine', label: `Của tôi (${myCount})` },
+              ]}
+            />
           )}
 
           {/* Thể loại đề thi */}
-          <select
+          <Select
             value={selectedCategory}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer max-w-[150px]"
-          >
-            <option value="ALL">Thể loại: Tất cả</option>
-            {EXAM_CATEGORIES.filter((c) => c.value !== 'ALL').map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-40 shrink-0"
+            options={[
+              { value: 'ALL', label: 'Thể loại: Tất cả' },
+              ...EXAM_CATEGORIES.filter((c) => c.value !== 'ALL').map((c) => ({
+                value: c.value,
+                label: c.label,
+              })),
+            ]}
+          />
 
           {/* Cấp độ CEFR */}
-          <select
+          <Select
             value={selectedLevel}
             onChange={(e) => onLevelChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-          >
-            <option value="ALL">Cấp độ: Tất cả</option>
-            {CEFR_LEVELS.filter((l) => l !== 'ALL').map((l) => (
-              <option key={l} value={l}>Cấp độ {l}</option>
-            ))}
-          </select>
+            size="sm"
+            containerClassName="w-38 shrink-0"
+            options={[
+              { value: 'ALL', label: 'Cấp độ: Tất cả' },
+              ...CEFR_LEVELS.filter((l) => l !== 'ALL').map((l) => ({
+                value: l,
+                label: `Cấp độ ${l}`,
+              })),
+            ]}
+          />
 
           {/* Trạng thái - Chỉ hiện khi không ở thùng rác */}
           {!trashView && (
-            <select
+            <Select
               value={selectedStatus}
               onChange={(e) => onStatusChange(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs focus:outline-none cursor-pointer"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+              size="sm"
+              containerClassName="w-36 shrink-0"
+              options={STATUS_OPTIONS}
+            />
           )}
 
           {/* View mode toggle: List / Grid */}

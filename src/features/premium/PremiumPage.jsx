@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   Building2,
-  ExternalLink,
   GraduationCap,
   Save,
   Tag,
@@ -12,12 +11,14 @@ import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Tabs from '@/components/ui/Tabs'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import PremiumKpiCards from './components/PremiumKpiCards'
 import TeacherPlansTab from './components/TeacherPlansTab'
 import StudentPlansTab from './components/StudentPlansTab'
 import ClassBundlesTab from './components/ClassBundlesTab'
 import CouponsTab from './components/CouponsTab'
 import CreateCouponDrawer from './components/CreateCouponDrawer'
+import CreatePlanModal from './components/CreatePlanModal'
 import {
   getAdminPlans,
   batchSavePlans,
@@ -54,6 +55,11 @@ function PremiumPage() {
   const [studentPlans, setStudentPlans] = useState([])
   const [classBundles, setClassBundles] = useState([])
   const [coupons, setCoupons] = useState([])
+
+  // Modal tạo gói mới & hiệu ứng highlight
+  const [isCreatePlanModalOpen, setIsCreatePlanModalOpen] = useState(false)
+  const [createPlanTarget, setCreatePlanTarget] = useState('teacher')
+  const [highlightedPlanId, setHighlightedPlanId] = useState(null)
 
   // Nạp toàn bộ dữ liệu thật từ Backend Payment Service
   useEffect(() => {
@@ -162,27 +168,8 @@ function PremiumPage() {
   }
 
   const addTeacherPlan = () => {
-    const newId = `T-PLAN-${Date.now()}`
-    const newPlan = {
-      id: newId,
-      name: 'Gói Mới',
-      badge: 'Mới',
-      target: 'teacher',
-      priceMonthly: 199000,
-      priceYearly: 1990000,
-      maxClasses: 5,
-      maxStudents: 100,
-      aiQuotaMonthly: 100,
-      isPopular: false,
-      isActive: true,
-      features: [
-        { key: 'classes', label: 'Tối đa 5 lớp học', enabled: true },
-        { key: 'students', label: 'Tối đa 100 học viên', enabled: true },
-        { key: 'ai_content', label: '100 bài học AI / tháng', enabled: true },
-      ],
-    }
-    setTeacherPlans((prev) => [...prev, newPlan])
-    toast.success('Đã thêm gói mới')
+    setCreatePlanTarget('teacher')
+    setIsCreatePlanModalOpen(true)
   }
 
   const deleteTeacherPlan = async (id) => {
@@ -249,24 +236,46 @@ function PremiumPage() {
   }
 
   const addStudentPlan = () => {
-    const newId = `S-PLAN-${Date.now()}`
-    const newPlan = {
-      id: newId,
-      name: 'Gói Học Viên Mới',
-      badge: 'Mới',
-      target: 'student',
-      priceMonthly: 99000,
-      priceYearly: 890000,
-      durationMonths: 1,
-      isPopular: false,
-      isActive: true,
-      features: [
-        { key: 'daily_lessons', label: 'Luyện tập không giới hạn', enabled: true },
-        { key: 'speaking_score', label: 'Chấm phát âm AI', enabled: true },
-      ],
+    setCreatePlanTarget('student')
+    setIsCreatePlanModalOpen(true)
+  }
+
+  const handleCreatePlan = (planData) => {
+    const isTeacher = planData.target === 'teacher'
+    const newId = `${isTeacher ? 'T' : 'S'}-PLAN-${Date.now()}`
+    const newPlan = { ...planData, id: newId }
+
+    if (isTeacher) {
+      setTeacherPlans((prev) => {
+        const next = [...prev, newPlan]
+        return next.sort((a, b) => (Number(a.priceMonthly) || 0) - (Number(b.priceMonthly) || 0))
+      })
+    } else {
+      setStudentPlans((prev) => {
+        const next = [...prev, newPlan]
+        return next.sort((a, b) => {
+          const priceA = a.priceYearly > 0 ? a.priceYearly : (Number(a.priceMonthly) || 0)
+          const priceB = b.priceYearly > 0 ? b.priceYearly : (Number(b.priceMonthly) || 0)
+          return priceA - priceB
+        })
+      })
     }
-    setStudentPlans((prev) => [...prev, newPlan])
-    toast.success('Đã thêm gói mới')
+
+    setHighlightedPlanId(newId)
+    toast.success(`Đã thêm gói "${newPlan.name}" thành công!`)
+
+    // Cuộn màn hình mượt mà đến đúng vị trí thẻ gói mới
+    setTimeout(() => {
+      const el = document.getElementById(`plan-card-${newId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 150)
+
+    // Tự động tắt hiệu ứng nổi bật sau 3.5 giây
+    setTimeout(() => {
+      setHighlightedPlanId(null)
+    }, 3500)
   }
 
   const deleteStudentPlan = async (id) => {
@@ -411,6 +420,9 @@ function PremiumPage() {
     }
   }
 
+  // Tích hợp phím tắt Ctrl+S để lưu cấu hình
+  useCtrlSave(handleSaveAll, !isSaving)
+
   if (isLoading) {
     return (
       <div className="flex h-80 items-center justify-center">
@@ -428,15 +440,15 @@ function PremiumPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line">
         <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} className="border-b-0" />
         <div className="flex items-center gap-2 pb-2">
-          <Link
-            to="/goi-dich-vu"
-            className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-navy-700 shadow-xs hover:border-brand-500 hover:text-brand-600 transition-colors"
+          <Button
+            icon={Save}
+            loading={isSaving}
+            disabled={isSaving}
+            onClick={handleSaveAll}
+            className="py-1.5 px-3.5 text-xs font-semibold"
+            title="Lưu cấu hình (Ctrl + S)"
           >
-            <ExternalLink size={13} />
-            Xem trang Giáo viên
-          </Link>
-          <Button icon={Save} loading={isSaving} onClick={handleSaveAll} className="py-1.5 px-3.5 text-xs">
-            Lưu Cấu Hình
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
           </Button>
         </div>
       </div>
@@ -451,6 +463,7 @@ function PremiumPage() {
           onToggleFeature={toggleTeacherFeature}
           onAddFeature={addTeacherFeature}
           onRemoveFeature={removeTeacherFeature}
+          highlightedPlanId={highlightedPlanId}
         />
       )}
 
@@ -464,6 +477,7 @@ function PremiumPage() {
           onToggleFeature={toggleStudentFeature}
           onAddFeature={addStudentFeature}
           onRemoveFeature={removeStudentFeature}
+          highlightedPlanId={highlightedPlanId}
         />
       )}
 
@@ -509,6 +523,13 @@ function PremiumPage() {
         setValidUntil={setNewCouponValidUntil}
         target={newCouponTarget}
         setTarget={setNewCouponTarget}
+      />
+      {/* Modal Tạo Gói Dịch Vụ Mới */}
+      <CreatePlanModal
+        open={isCreatePlanModalOpen}
+        onClose={() => setIsCreatePlanModalOpen(false)}
+        target={createPlanTarget}
+        onCreatePlan={handleCreatePlan}
       />
     </div>
   )

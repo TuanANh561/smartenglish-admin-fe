@@ -64,7 +64,7 @@ export default function TeacherRefundModal({
           </div>
 
           <div className="space-y-2 pt-1 border-t border-line">
-            <p className="text-xs font-bold text-navy-800">Tài khoản nhận tiền hoàn (Napas 24/7):</p>
+            <p className="text-xs font-bold text-navy-800">Tài khoản nhận tiền hoàn:</p>
             <div>
               <label className="text-2xs font-semibold text-ink-muted block mb-0.5">Tên Ngân hàng:</label>
               <input

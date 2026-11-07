@@ -1,24 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Tabs from '@/components/ui/Tabs'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import {
-  createLessonApi,
   deleteLessonApi,
   fetchCourseByIdApi,
   fetchLessonsByCourseApi,
   updateCourseApi,
-  updateLessonApi,
 } from './courseApi'
-import QuickLessonModal from './components/QuickLessonModal'
 import CourseDetailBanner from './components/detail/CourseDetailBanner'
 import CourseOverviewTab from './components/detail/CourseOverviewTab'
 import CourseCurriculumTab from './components/detail/CourseCurriculumTab'
 import MediaPreviewModal from './components/detail/MediaPreviewModal'
-import LessonStudentViewModal from './components/detail/LessonStudentViewModal'
 
 const TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -31,8 +28,10 @@ function CourseDetailPage() {
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.role === 'admin'
   const isTeacher = user?.role === 'teacher'
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
 
-  const [activeTab, setActiveTab] = useState('curriculum')
+  const [activeTab, setActiveTab] = useState('overview')
   const [course, setCourse] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [expandedChapters, setExpandedChapters] = useState({})
@@ -45,27 +44,17 @@ function CourseDetailPage() {
     lessonTitle: '',
   })
 
-  // Modal xem bài học ở góc độ người học (Read-only cho giáo viên xem khóa học người khác)
-  const [studentLessonView, setStudentLessonView] = useState({
-    isOpen: false,
-    lesson: null,
-  })
-
-  // Modal thêm / sửa nhanh bài học (Unit)
-  const [lessonModal, setLessonModal] = useState({
-    isOpen: false,
-    isEdit: false,
-    lessonId: null,
-    titleVi: '',
-    titleEn: '',
-    lessonType: 'VOCABULARY',
-    position: 1,
-    estimatedMin: 15,
-    xpReward: 30,
-    isFreePreview: true,
-    theoryContent: '',
-    isSaving: false,
-  })
+  useEffect(() => {
+    if (course) {
+      setCustomHeader({
+        backLink: '/app/hoc-lieu/khoa-hoc',
+        backText: 'Quay lại danh sách',
+        title: course.title || 'Chi tiết khóa học',
+        subtitle: `Khóa học & Giáo trình / ${course.code || ''}`,
+      })
+    }
+    return () => clearCustomHeader()
+  }, [course, setCustomHeader, clearCustomHeader])
 
   const loadCourseData = useCallback(async () => {
     setIsLoading(true)
@@ -75,7 +64,7 @@ function CourseDetailPage() {
       if (cData) {
         try {
           const lessonList = await fetchLessonsByCourseApi(id)
-          if (lessonList) {
+          if (Array.isArray(lessonList) && lessonList.length > 0) {
             cData.lessons = lessonList
             cData.lessonCount = lessonList.length
             const totalLessonMin = lessonList.reduce((acc, l) => acc + (Number(l.estimatedMin) || 15), 0)
@@ -101,6 +90,15 @@ function CourseDetailPage() {
                 lessons: lessonList,
               },
             ]
+          } else {
+            // Giữ nguyên lessons & chapters đã có sẵn từ khóa học, không ghi đè làm mất bài học
+            if (Array.isArray(cData.chapters) && cData.chapters.length > 0) {
+              const existingLessons = cData.chapters.flatMap((ch) => ch.lessons || [])
+              if (existingLessons.length > 0) {
+                cData.lessons = existingLessons
+                cData.lessonCount = existingLessons.length
+              }
+            }
           }
         } catch (lErr) {
           console.warn('Không lấy được lessons từ backend:', lErr)
@@ -131,22 +129,42 @@ function CourseDetailPage() {
 
   const isOwned = useMemo(() => {
     if (!user || !course) return false
-    if (isTeacher) {
-      // Giáo viên chỉ sở hữu khóa học nếu ID, email hoặc tên tác giả khớp chính xác
+    // Kiểm tra xem khóa học có phải của giáo viên riêng biệt (Thầy John, Cô Hoàng Mai...)
+    const isTeacherAuthored =
+      course.authorName === 'Thầy John' ||
+      course.authorName === 'Thầy John Smith' ||
+      course.authorName === 'Cô Hoàng Mai' ||
+      course.authorName === 'Hoàng Thị Mai' ||
+      (course.authorEmail && course.authorEmail.includes('teacher'))
+
+    // Nếu là khóa học của giáo viên, chỉ tài khoản của giáo viên đó mới có quyền sửa
+    if (isTeacherAuthored) {
       const isCreatorId = course.createdBy != null && user.id != null && Number(course.createdBy) === Number(user.id)
       const isCreatorEmail = course.authorEmail && user.email && course.authorEmail.toLowerCase() === user.email.toLowerCase()
       const isCreatorName = course.authorName && user.displayName && course.authorName.toLowerCase() === user.displayName.toLowerCase()
       return Boolean(isCreatorId || isCreatorEmail || isCreatorName)
     }
+
+    if (isTeacher) {
+      const isCreatorId = course.createdBy != null && user.id != null && Number(course.createdBy) === Number(user.id)
+      const isCreatorEmail = course.authorEmail && user.email && course.authorEmail.toLowerCase() === user.email.toLowerCase()
+      const isCreatorName = course.authorName && user.displayName && course.authorName.toLowerCase() === user.displayName.toLowerCase()
+      return Boolean(isCreatorId || isCreatorEmail || isCreatorName)
+    }
+
+    // Với Admin: chỉ sở hữu các khóa học hệ thống chung hoặc khóa học do chính admin tạo
     return (
+      course.authorName === 'Hệ thống' ||
+      course.createdBy === 1 ||
       course.authorEmail === user.email ||
       course.authorName?.includes('Quản trị') ||
       course.authorName?.includes('Admin')
     )
   }, [course, user, isTeacher])
 
-  // Quyền quản lý: Admin hoặc chính chủ sở hữu
-  const canManage = isAdmin || isOwned
+  // Quyền quản lý: Chỉ chính chủ sở hữu khóa học mới có quyền sửa/thêm/xóa.
+  // Khóa học của giáo viên: Admin vào xem hoàn toàn ở chế độ XEM (Read-only).
+  const canManage = isOwned
 
   const toggleChapter = (chapterId) => {
     setExpandedChapters((prev) => ({
@@ -187,114 +205,6 @@ function CourseDetailPage() {
     }
   }
 
-  const handleOpenAddLesson = () => {
-    const nextPos = (course?.lessons?.length || 0) + 1
-    setLessonModal({
-      isOpen: true,
-      isEdit: false,
-      lessonId: null,
-      titleVi: `Unit ${nextPos}: `,
-      titleEn: `Unit ${nextPos}: `,
-      lessonType: 'VOCABULARY',
-      position: nextPos,
-      estimatedMin: 15,
-      xpReward: 30,
-      isFreePreview: true,
-      theoryContent: '',
-      contentBlocks: [],
-      isSaving: false,
-    })
-  }
-
-  const handleOpenEditLesson = (lesson) => {
-    // Nếu không có quyền quản lý (giáo viên xem khóa học người khác), mở ở góc độ người học
-    if (!canManage) {
-      setStudentLessonView({
-        isOpen: true,
-        lesson,
-      })
-      return
-    }
-
-    let theory = ''
-    if (Array.isArray(lesson.contentBlocks)) {
-      const th = lesson.contentBlocks.find((b) => b.type === 'theory')
-      if (th) theory = th.content || ''
-    }
-    setLessonModal({
-      isOpen: true,
-      isEdit: true,
-      lessonId: lesson.id,
-      titleVi: lesson.titleVi || lesson.title || '',
-      titleEn: lesson.titleEn || lesson.title || '',
-      lessonType: lesson.lessonType || 'VOCABULARY',
-      position: lesson.position || 1,
-      estimatedMin: lesson.estimatedMin || 15,
-      xpReward: lesson.xpReward || 30,
-      isFreePreview: Boolean(lesson.isFreePreview),
-      theoryContent: theory,
-      contentBlocks: Array.isArray(lesson.contentBlocks) ? lesson.contentBlocks : [],
-      isSaving: false,
-    })
-  }
-
-  const handleSaveLessonModal = async () => {
-    if (!lessonModal.titleVi.trim()) {
-      toast.error('Vui lòng nhập tên bài học tiếng Việt')
-      return
-    }
-
-    setLessonModal((prev) => ({ ...prev, isSaving: true }))
-    try {
-      let finalBlocks = Array.isArray(lessonModal.contentBlocks)
-        ? [...lessonModal.contentBlocks]
-        : []
-
-      if (lessonModal.theoryContent?.trim()) {
-        const thIdx = finalBlocks.findIndex((b) => b.type === 'theory')
-        if (thIdx >= 0) {
-          finalBlocks[thIdx] = {
-            ...finalBlocks[thIdx],
-            content: lessonModal.theoryContent.trim(),
-          }
-        } else {
-          finalBlocks.unshift({
-            type: 'theory',
-            title: 'Lý thuyết trọng tâm',
-            content: lessonModal.theoryContent.trim(),
-          })
-        }
-      }
-
-      const payload = {
-        courseId: Number(id),
-        titleVi: lessonModal.titleVi.trim(),
-        titleEn: lessonModal.titleEn.trim() || lessonModal.titleVi.trim(),
-        lessonType: lessonModal.lessonType,
-        position: Number(lessonModal.position),
-        estimatedMin: Number(lessonModal.estimatedMin),
-        xpReward: Number(lessonModal.xpReward),
-        isFreePreview: Boolean(lessonModal.isFreePreview),
-        contentBlocks: finalBlocks,
-      }
-
-      if (lessonModal.isEdit && lessonModal.lessonId) {
-        await updateLessonApi(lessonModal.lessonId, payload, id)
-        toast.success('Cập nhật bài học thành công!')
-      } else {
-        await createLessonApi(payload, id)
-        toast.success('Thêm bài học mới thành công!')
-      }
-
-      setLessonModal((prev) => ({ ...prev, isOpen: false, isSaving: false }))
-      loadCourseData()
-    } catch (err) {
-      console.error('Lỗi khi lưu bài học:', err)
-      toast.error('Lỗi khi kết nối với máy chủ!')
-      setLessonModal((prev) => ({ ...prev, isSaving: false }))
-    }
-  }
-
   const handleDeleteLesson = async (lessonId, lessonTitle, e) => {
     e?.stopPropagation()
     if (!window.confirm(`Bạn có chắc muốn xóa bài học "${lessonTitle}"?`)) return
@@ -311,8 +221,8 @@ function CourseDetailPage() {
   const isSystemCourse = useMemo(() => {
     if (!course) return false
     return (
-      course.createdBy === 1 ||
-      course.courseType === 'STRUCTURED' ||
+      Number(course.createdBy) === 1 ||
+      Number(course.id) <= 4 ||
       course.authorName === 'Hệ thống' ||
       course.authorName?.includes('Admin') ||
       course.authorName?.includes('Quản trị')
@@ -325,15 +235,7 @@ function CourseDetailPage() {
 
   return (
     <div className="space-y-6 w-full">
-      {/* Top Breadcrumb */}
-      <div>
-        <Link
-          to="/app/hoc-lieu/khoa-hoc"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-navy-700 transition-colors"
-        >
-          <ArrowLeft size={14} /> Quay lại danh sách khóa học
-        </Link>
-      </div>
+      
 
       {/* Header Banner */}
       <CourseDetailBanner
@@ -349,7 +251,7 @@ function CourseDetailPage() {
       {/* TAB 1: TỔNG QUAN (Overview) */}
       {activeTab === 'overview' && <CourseOverviewTab course={course} />}
 
-      {/* TAB 2: CHƯƠNG & BÀI HỌC (Curriculum View) */}
+      {/* TAB 2: CHƯƠNG & BÀI HỌC (Curriculum View - Master-Detail Workspace) */}
       {activeTab === 'curriculum' && (
         <CourseCurriculumTab
           course={course}
@@ -357,35 +259,17 @@ function CourseDetailPage() {
           canManage={canManage}
           expandedChapters={expandedChapters}
           toggleChapter={toggleChapter}
-          handleOpenAddLesson={handleOpenAddLesson}
-          handleOpenEditLesson={handleOpenEditLesson}
           handleDeleteLesson={handleDeleteLesson}
           setMediaPreview={setMediaPreview}
           navigate={navigate}
+          onReloadCourse={loadCourseData}
         />
       )}
-
-      {/* Modal thêm / sửa nhanh bài học (Unit) */}
-      <QuickLessonModal
-        isOpen={lessonModal.isOpen}
-        onClose={() => setLessonModal((prev) => ({ ...prev, isOpen: false }))}
-        lessonModal={lessonModal}
-        setLessonModal={setLessonModal}
-        onSave={handleSaveLessonModal}
-      />
 
       {/* Modal Xem Trực Tiếp Video hoặc Tệp Đính Kèm */}
       <MediaPreviewModal
         mediaPreview={mediaPreview}
         setMediaPreview={setMediaPreview}
-      />
-
-      {/* Modal Xem Bài Học Cho Người Học / Giáo Viên Xem Khóa Học Người Khác (Read-Only) */}
-      <LessonStudentViewModal
-        isOpen={studentLessonView.isOpen}
-        onClose={() => setStudentLessonView({ isOpen: false, lesson: null })}
-        lesson={studentLessonView.lesson}
-        courseTitle={course?.titleVi || course?.title}
       />
     </div>
   )

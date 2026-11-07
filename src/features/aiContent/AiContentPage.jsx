@@ -23,6 +23,7 @@ import {
   GeminiServiceError,
 } from './geminiService'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import { TYPE_LABELS } from './components/aiContentConstants'
 import AiDetailView from './components/AiDetailView'
 import AiEditView from './components/AiEditView'
@@ -45,11 +46,11 @@ function AiContentPage() {
   const [showCreationForm, setShowCreationForm] = useState(false)
   const [showTrash, setShowTrash] = useState(false)
   const [draft, setDraft] = useState({
-    type: 'reading',
-    topic: '',
+    type: 'quiz_grammar',
+    topic: '12 Thì cơ bản & Nâng cao (Tenses & Aspects)',
     prompt: '',
     level: 'B2',
-    questionCount: 3,
+    questionCount: 5,
   })
 
   // Tải dữ liệu thật từ Backend PostgreSQL khi vào trang
@@ -90,29 +91,32 @@ function AiContentPage() {
     [items],
   )
 
+  const matchCategoryFilter = (tab, rawType) => {
+    if (tab === 'all') return true
+    const t = (rawType || '').toLowerCase()
+    if (tab === 'grammar') return t.includes('grammar')
+    if (tab === 'vocab') return t.includes('vocab')
+    if (tab === 'toeic') return t.includes('toeic') || t.includes('cloze')
+    if (tab === 'placement') return t.includes('placement')
+    if (tab === 'reading') return t === 'reading'
+    if (tab === 'quiz') return t.includes('quiz') || t === 'exam' || t === 'general'
+    return t === tab
+  }
+
   const visibleItems = useMemo(
     () =>
       items.filter((item) => {
         const isDeleted = item.status === 'DELETED'
-
         const itemType = (item.rawType || item.type || '').toLowerCase()
 
         if (showTrash) {
-          const matchesTrashType =
-            activeTab === 'all' ||
-            (activeTab === 'toeic'
-              ? itemType.startsWith('toeic') || itemType.startsWith('cloze')
-              : item.type === activeTab || item.rawType === activeTab)
+          const matchesTrashType = matchCategoryFilter(activeTab, itemType)
           return isDeleted && matchesTrashType
         }
 
         if (isDeleted) return false
 
-        const matchesType =
-          activeTab === 'all' ||
-          (activeTab === 'toeic'
-            ? itemType.startsWith('toeic') || itemType.startsWith('cloze')
-            : item.type === activeTab || item.rawType === activeTab)
+        const matchesType = matchCategoryFilter(activeTab, itemType)
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
         const isMine = isOwnedByCurrentUser(item)
         const matchesOwner =
@@ -160,7 +164,7 @@ function AiContentPage() {
       if (status === 'APPROVED') await approveAIContent(id, user)
       else if (status === 'REJECTED') await rejectAIContent(id, reason, user)
       await refresh()
-      toast.success(status === 'APPROVED' ? 'Đã duyệt nội dung' : 'Đã từ chối nội dung')
+      toast.success(status === 'APPROVED' ? 'Đã duyệt nội dung & đồng bộ sang Ngân hàng đề thi' : 'Đã từ chối nội dung')
     } catch (error) {
       toast.error(error.message || 'Không thể cập nhật nội dung')
     }
@@ -175,7 +179,7 @@ function AiContentPage() {
     const ids = manageableItems.map((item) => item.id)
     await bulkApproveAIContents(ids, user)
     await refresh()
-    toast.success(`Đã duyệt ${ids.length} bài học liệu AI`)
+    toast.success(`Đã duyệt ${ids.length} bài học liệu & đề thi AI`)
   }
 
   const handleCardClick = (item) => {
@@ -195,6 +199,30 @@ function AiContentPage() {
       toast.error(error.message || 'Không thể lưu thay đổi')
     }
   }
+
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    if (view === 'detail' && selectedItem) {
+      setCustomHeader({
+        onBack: handleBack,
+        backText: 'Quay lại',
+        title: selectedItem.title || 'Chi tiết nội dung AI',
+        subtitle: `Nội dung AI / ${TYPE_LABELS[selectedItem.type] || selectedItem.type || ''}`,
+      })
+    } else if (view === 'edit' && selectedItem) {
+      setCustomHeader({
+        onBack: handleBack,
+        backText: 'Quay lại',
+        title: `Chỉnh sửa: ${selectedItem.title || 'Nội dung AI'}`,
+        subtitle: 'Nội dung AI / Chỉnh sửa',
+      })
+    } else {
+      clearCustomHeader()
+    }
+    return () => clearCustomHeader()
+  }, [view, selectedItem, setCustomHeader, clearCustomHeader])
 
   const handleBack = () => {
     if (view === 'edit') {
@@ -253,23 +281,28 @@ function AiContentPage() {
       if (!draft.topic.trim()) { toast.error('Vui lòng nhập chủ đề nội dung'); return }
       setShowCreationForm(false)
       setIsGenerating(true)
-      setGeneratingStatus('Đang gửi yêu cầu đến Gemini...')
+      setGeneratingStatus('Đang gửi yêu cầu sinh câu hỏi đến Gemini AI...')
 
-      const questionCount = Math.min(Math.max(Number(draft.questionCount) || 3, 1), 5)
+      const questionCount = Math.min(Math.max(Number(draft.questionCount) || 3, 1), 10)
       let result
       if (draft.type === 'reading') {
-        setGeneratingStatus('Đang sinh bài đọc và câu hỏi (có thể mất 10-20s)...')
+        setGeneratingStatus('Đang sinh bài đọc và câu hỏi đọc hiểu (có thể mất 10-20s)...')
         result = await generateReading({ topic: draft.topic, level: draft.level, questionCount })
-      } else if (draft.type === 'quiz') {
-        setGeneratingStatus('Đang sinh câu hỏi kiểm tra (có thể mất 15-30s)...')
-        result = await generateQuiz({ topic: draft.topic, level: draft.level, questionCount })
-      } else {
-        setGeneratingStatus('Đang sinh dạng điền khuyết TOEIC (có thể mất 15-30s)...')
+      } else if (draft.type.includes('toeic') || draft.type.includes('cloze')) {
+        setGeneratingStatus('Đang sinh bài tập TOEIC chuẩn ETS (có thể mất 15-30s)...')
         result = await generateCloze({
           topic: draft.topic,
           level: draft.level,
           type: draft.type,
           questionCount,
+        })
+      } else {
+        setGeneratingStatus('Đang sinh bộ câu hỏi Quiz trắc nghiệm chuẩn sư phạm (có thể mất 15-30s)...')
+        result = await generateQuiz({
+          topic: draft.topic,
+          level: draft.level,
+          questionCount,
+          type: draft.type,
         })
       }
 
@@ -288,13 +321,19 @@ function AiContentPage() {
       await refresh()
       setIsGenerating(false)
       setGeneratingStatus('')
-      setDraft({ type: 'reading', topic: '', prompt: '', level: 'B2', questionCount: 3 })
-      toast.success(`✅ Đã tạo ${saved.title} · ${saved.questions?.length || 0} câu hỏi · đã lưu vào CSDL`)
+      setDraft({
+        type: 'quiz_grammar',
+        topic: '12 Thì cơ bản & Nâng cao (Tenses & Aspects)',
+        prompt: '',
+        level: 'B2',
+        questionCount: 5,
+      })
+      toast.success(`Đã tạo "${saved.title}" (${saved.questions?.length || 0} câu hỏi) thành công!`)
     } catch (error) {
       setIsGenerating(false)
       setGeneratingStatus('')
       if (error instanceof GeminiServiceError) toast.error(formatGeminiError(error))
-      else toast.error(error.message || '❌ Không thể tạo nội dung')
+      else toast.error(error.message || 'Không thể tạo nội dung')
     }
   }
 
@@ -340,7 +379,9 @@ function AiContentPage() {
         onClose={() => setShowCreationForm(false)}
         draft={draft}
         setDraft={setDraft}
-        onSubmit={handleCreate}
+        onCreate={handleCreate}
+        isGenerating={isGenerating}
+        generatingStatus={generatingStatus}
       />
 
       {/* Generating Banner */}
@@ -391,7 +432,7 @@ function AiContentPage() {
       {/* Grid Danh sách Card */}
       {isLoading ? (
         <Card className="flex flex-col items-center justify-center p-8">
-          <LoadingSpinner text="Đang tải học liệu từ CSDL..." className="py-6" />
+          <LoadingSpinner text="Đang tải học liệu..." className="py-6" />
         </Card>
       ) : visibleItems.length === 0 ? (
         <Card className="p-8">
@@ -406,7 +447,7 @@ function AiContentPage() {
             description={
               showTrash
                 ? 'Các nội dung bị xóa mềm sẽ xuất hiện tại đây và có thể khôi phục.'
-                : 'Nhấn "Tạo nội dung AI" ở trên để bắt đầu sinh học liệu tự động.'
+                : 'Nhấn nút "+" ở trên để bắt đầu sinh đề thi và câu hỏi Quiz bằng AI.'
             }
           />
         </Card>
@@ -420,8 +461,8 @@ function AiContentPage() {
               onApprove={() => updateStatus(item.id, 'APPROVED')}
               onReject={() => updateStatus(item.id, 'REJECTED', 'Nội dung không đạt tiêu chuẩn chất lượng.')}
               onRestore={() => handleRestore(item.id)}
-              onDelete={() => handleSoftDelete(item.id)}
-              isTrash={showTrash || item.status === 'DELETED'}
+              onSoftDelete={() => handleSoftDelete(item.id)}
+              showTrash={showTrash}
               canManage={isOwnedByCurrentUser(item)}
             />
           ))}

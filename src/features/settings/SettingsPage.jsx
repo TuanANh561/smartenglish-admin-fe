@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { cn } from '@/lib/utils'
 import { useSettings } from './hooks/useSettings'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import TeacherTeachingTab from './components/TeacherTeachingTab'
 import TeacherNotificationsTab from './components/TeacherNotificationsTab'
 import TeacherPreferencesTab from './components/TeacherPreferencesTab'
@@ -41,16 +42,13 @@ export default function SettingsPage() {
     handleReset,
   } = useSettings()
 
+  useCtrlSave(handleSave, !isSaving)
+
   // Tabs cho Admin
   const adminTabs = [
     { id: 'general', label: 'Cài đặt chung', icon: Sliders },
     { id: 'ai', label: 'Trí tuệ nhân tạo (AI)', icon: Sparkles },
-    {
-      id: 'security',
-      label: 'Bảo mật & Phiên làm việc',
-      icon: Lock,
-      badge: 'Sắp ra mắt',
-    },
+    { id: 'security', label: 'Bảo mật & Phiên làm việc', icon: Lock },
     { id: 'payment', label: 'Cổng thanh toán', icon: CreditCard },
     { id: 'email', label: 'Email & Thông báo', icon: Mail },
   ]
@@ -60,12 +58,7 @@ export default function SettingsPage() {
     { id: 'teaching', label: 'Lớp học & Giảng dạy', icon: GraduationCap },
     { id: 'notifications', label: 'Thông báo & Nhắc việc', icon: Bell },
     { id: 'preferences', label: 'Ngôn ngữ & Múi giờ', icon: Globe },
-    {
-      id: 'banking',
-      label: 'Tài khoản nhận tiền',
-      icon: Wallet,
-      badge: 'Sắp ra mắt',
-    },
+    { id: 'banking', label: 'Tài khoản nhận tiền', icon: Wallet },
   ]
 
   const tabs = isTeacher ? teacherTabs : adminTabs
@@ -207,10 +200,13 @@ export default function SettingsPage() {
                   variant="primary"
                   icon={Save}
                   loading={isSaving}
+                  disabled={isSaving}
+                  size="sm"
                   onClick={handleSave}
-                  className="px-6"
+                  title="Lưu cài đặt (Ctrl + S)"
+                  className="px-5 text-xs font-semibold"
                 >
-                  Lưu Thay Đổi
+                  {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
                 </Button>
               </div>
             )}

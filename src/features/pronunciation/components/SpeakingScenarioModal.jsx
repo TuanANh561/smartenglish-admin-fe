@@ -243,7 +243,7 @@ export default function SpeakingScenarioModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold border border-indigo-100">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 font-bold border border-brand-100">
               <Bot size={20} />
             </div>
             <div>
@@ -279,9 +279,9 @@ export default function SpeakingScenarioModal({
 
         {/* AI Quick Generator Drawer/Box */}
         {isAiBoxOpen && (
-          <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border-b border-purple-100 p-4">
-            <div className="flex items-center gap-2 text-purple-900 font-semibold text-xs mb-2">
-              <Sparkles size={14} className="text-purple-600" />
+          <div className="bg-gradient-to-r from-brand-50/60 via-brand-50/80 to-blue-50/60 border-b border-brand-100 p-4">
+            <div className="flex items-center gap-2 text-brand-900 font-semibold text-xs mb-2">
+              <Sparkles size={14} className="text-brand-600" />
               <span>Trợ lý Gemini AI sinh kịch bản hội thoại tự động:</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -412,7 +412,7 @@ export default function SpeakingScenarioModal({
                           'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80',
                       })
                     }
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="text-xs text-brand-600 hover:text-brand-800 font-medium cursor-pointer"
                   >
                     Dùng ảnh mẫu gợi ý
                   </button>
@@ -568,7 +568,7 @@ export default function SpeakingScenarioModal({
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   placeholder="Nhập cụm từ (VD: Nice to meet you) rồi bấm Thêm"
-                  className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-slate-900 focus:border-brand-500 focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
@@ -622,7 +622,7 @@ export default function SpeakingScenarioModal({
                   type="checkbox"
                   checked={form.isPublished}
                   onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                  className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 h-4 w-4"
                 />
                 <span>Xuất bản ngay cho học viên</span>
               </label>

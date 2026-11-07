@@ -1,5 +1,6 @@
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import { cn } from '@/lib/utils'
 
 function ConfirmDialog({
   open,
@@ -16,6 +17,8 @@ function ConfirmDialog({
   cancelLabel = 'Huỷ',
   variant,
   confirmVariant = 'danger',
+  confirmClassName,
+  cancelClassName,
   loading = false,
   isProcessing = false,
 }) {
@@ -40,16 +43,16 @@ function ConfirmDialog({
           variant="secondary"
           onClick={handleClose}
           disabled={isLoading}
-          className="cursor-pointer"
+          className={cn('cursor-pointer', cancelClassName)}
         >
           {finalCancelText}
         </Button>
         <Button
           type="button"
-          variant={variant}
+          variant={finalVariant}
           onClick={onConfirm}
           loading={isLoading}
-          className="cursor-pointer"
+          className={cn('cursor-pointer', confirmClassName)}
         >
           {finalConfirmText}
         </Button>

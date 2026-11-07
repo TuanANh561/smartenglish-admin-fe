@@ -6,6 +6,7 @@ import {
   Mail,
   Phone,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 
@@ -15,14 +16,26 @@ export default function ProfileHeader({
   isTeacher,
   isUploadingAvatar,
   onAvatarFileChange,
+  postsCount,
 }) {
   const fileInputRef = useRef(null)
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
-      {/* Banner Gradient thanh thoát, cân đối, tiết kiệm tối đa không gian */}
-      <div className="h-16 sm:h-18 w-full bg-gradient-to-r from-slate-900 via-navy-900 to-brand-800 relative">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+      {/* Banner Gradient thanh thoát, cân đối, hiện đại */}
+      <div className="h-18 sm:h-20 w-full bg-gradient-to-r from-[#0A2540] via-[#0F609B] to-[#0284C7] relative overflow-hidden">
+        <div className="absolute -top-12 -left-12 h-48 w-48 rounded-full bg-white/20 blur-3xl pointer-events-none" />
+        <div className="absolute top-2 right-12 h-36 w-36 rounded-full bg-cyan-300/25 blur-2xl pointer-events-none" />
+        <svg
+          className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
+          viewBox="0 0 1200 120"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,60 L1200,120 L0,120 Z"
+            fill="#ffffff"
+          />
+        </svg>
         <div className="absolute top-2.5 right-3 sm:top-2.5 sm:right-4 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] font-semibold text-white border border-white/20 shadow-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -100,6 +113,12 @@ export default function ProfileHeader({
                 {currentUser?.username && (
                   <span className="flex items-center gap-1 font-mono text-[10.5px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200/60">
                     @{currentUser.username}
+                  </span>
+                )}
+                {postsCount !== null && postsCount !== undefined && (
+                  <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200/70">
+                    <MessageSquare size={11} className="text-brand-600" />
+                    {postsCount} bài viết
                   </span>
                 )}
               </div>

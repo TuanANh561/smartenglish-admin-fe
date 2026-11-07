@@ -16,6 +16,7 @@ import {
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
+import { http } from '@/lib/api'
 
 // Helper phân tích thời gian tin nhắn
 function parseMessageDate(m) {
@@ -97,39 +98,69 @@ export default function ChatFloatingWindows({
   const fileInputRef = useRef(null)
   const [activeUploadConvId, setActiveUploadConvId] = useState(null)
 
-  const handleImageSelected = (e) => {
+  const handleImageSelected = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !activeUploadConvId) return
+    e.target.value = ''
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      onSendMediaMessage?.(activeUploadConvId, {
+    const convId = activeUploadConvId
+    const toastId = toast.loading('Đang tải ảnh lên AWS S3...')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'community/chat/images')
+
+      const res = await http.post('/admin/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const s3Url = res?.data?.url || res?.url
+      if (!s3Url) throw new Error('Máy chủ không trả về URL ảnh hợp lệ')
+
+      toast.success('Đã tải ảnh lên AWS S3!', { id: toastId })
+      onSendMediaMessage?.(convId, {
         type: 'IMAGE',
-        attachmentUrl: reader.result,
+        attachmentUrl: s3Url,
         content: `[Hình ảnh] ${file.name}`,
       })
+    } catch (err) {
+      console.error('Lỗi upload ảnh lên AWS S3:', err)
+      toast.error('Không thể upload ảnh lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
     }
-    reader.readAsDataURL(file)
-    e.target.value = ''
   }
 
-  const handleFileSelected = (e) => {
+  const handleFileSelected = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !activeUploadConvId) return
+    e.target.value = ''
 
+    const convId = activeUploadConvId
     const sizeStr = `${(file.size / 1024).toFixed(1)} KB`
-    const reader = new FileReader()
-    reader.onload = () => {
-      onSendMediaMessage?.(activeUploadConvId, {
+    const toastId = toast.loading(`Đang tải tệp ${file.name} lên AWS S3...`)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'community/chat/files')
+
+      const res = await http.post('/admin/upload/file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const s3Url = res?.data?.url || res?.url
+      if (!s3Url) throw new Error('Máy chủ không trả về URL tệp hợp lệ')
+
+      toast.success('Đã tải tệp lên AWS S3 thành công!', { id: toastId })
+      onSendMediaMessage?.(convId, {
         type: 'FILE',
-        attachmentUrl: reader.result,
+        attachmentUrl: s3Url,
         attachmentName: file.name,
         attachmentSize: sizeStr,
         content: `[Tệp đính kèm] ${file.name}`,
       })
+    } catch (err) {
+      console.error('Lỗi upload tệp lên AWS S3:', err)
+      toast.error('Không thể tải tệp lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
     }
-    reader.readAsDataURL(file)
-    e.target.value = ''
   }
 
   const handleDownloadFile = (attachmentUrl, attachmentName) => {
@@ -396,7 +427,7 @@ function FloatingChatWindowItem({
       }, 3000)
     } else {
       window.location.hash = `post-${postId}`
-      toast('Đang tìm kiếm bài viết...', { icon: '📌' })
+      toast('Đang tìm kiếm bài viết...')
     }
   }
 

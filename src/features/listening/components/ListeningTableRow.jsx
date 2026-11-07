@@ -133,31 +133,11 @@ export default function ListeningTableRow({
         )}
       </td>
 
-      {/* Bản chép lời & Câu hỏi */}
-      <td className="px-3 py-3 whitespace-nowrap">
-        <div className="flex flex-col gap-0.5">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium w-fit',
-              isReady
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                : 'bg-amber-50 text-amber-800 border border-amber-100',
-            )}
-          >
-            <span
-              className={cn(
-                'h-1.5 w-1.5 rounded-full',
-                isReady ? 'bg-emerald-500' : 'bg-amber-500',
-              )}
-            />
-            {isReady ? `${item.syncedTranscripts.length} câu đồng bộ` : 'Bản chép đầy đủ'}
-          </span>
-          {item.questions && item.questions.length > 0 && (
-            <span className="text-[11px] text-slate-500 font-medium">
-              {item.questions.length} câu hỏi bài tập
-            </span>
-          )}
-        </div>
+      {/* Câu hỏi bài tập (dữ liệu thật) */}
+      <td className="px-3 py-3 text-center whitespace-nowrap">
+        <span className="font-semibold text-slate-700 text-xs">
+          {item.questions?.length ?? 0} câu
+        </span>
       </td>
 
       {/* Thao tác */}

@@ -1,10 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { ArrowLeft, Bell, Calendar, ChevronDown, LogOut, PanelLeft, Search, Settings, User, X } from 'lucide-react'
+import { ArrowLeft, Bell, Calendar, ChevronDown, LogOut, Search, Settings, User, X } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ROUTE_META } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
-import { useSidebarStore } from '@/store/sidebarStore'
+// store
 import { useCommunitySearchStore } from '@/store/communitySearchStore'
 import { useTopbarStore } from '@/store/topbarStore'
 import CommunitySearchDropdown from '@/features/community/components/CommunitySearchDropdown'
@@ -190,32 +190,35 @@ function Topbar({ actions }) {
     description = 'Lịch sử hoạt động, nâng cấp dịch vụ & thao tác sư phạm của bạn'
   }
 
-  const isCollapsed = useSidebarStore((s) => s.isCollapsed)
-  const toggleSidebar = useSidebarStore((s) => s.toggleSidebar)
+
+
 
   return (
     <header className="flex h-[74px] shrink-0 items-center justify-between border-b border-line bg-surface px-6 relative z-30">
-      {/* ── Tiêu đề lớn nhất trang & Nút toggle menu & Nút Quay lại ─────────── */}
+      {/* ── Nút Quay lại (chỉ hiển thị ở các trang có back action) & Tiêu đề trang ── */}
       <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-navy-900 transition-all shadow-2xs cursor-pointer active:scale-95 shrink-0"
-          title={isCollapsed ? 'Mở rộng thanh menu (Phím tắt: [ )' : 'Thu gọn thanh menu (Phím tắt: [ )'}
-          aria-label={isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
-        >
-          <PanelLeft size={18} className={isCollapsed ? 'text-brand-600' : 'text-slate-600'} />
-        </button>
-
-        {customHeader?.backLink && (
+        {(customHeader?.backLink || customHeader?.onBack) && (
           <>
-            <Link
-              to={customHeader.backLink}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-navy-900 transition-all shadow-2xs shrink-0"
-            >
-              <ArrowLeft size={14} />
-              <span className="hidden sm:inline">{customHeader.backText || 'Quay lại'}</span>
-            </Link>
+            {customHeader.backLink ? (
+              <Link
+                to={customHeader.backLink}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-navy-900 transition-all shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                title={customHeader.backText || 'Quay lại'}
+              >
+                <ArrowLeft size={14} className="text-slate-600" />
+                <span className="hidden sm:inline">{customHeader.backText || 'Quay lại'}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={customHeader.onBack}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-navy-900 transition-all shadow-2xs shrink-0 cursor-pointer active:scale-95"
+                title={customHeader.backText || 'Quay lại'}
+              >
+                <ArrowLeft size={14} className="text-slate-600" />
+                <span className="hidden sm:inline">{customHeader.backText || 'Quay lại'}</span>
+              </button>
+            )}
             <div className="h-5 w-px bg-slate-200 shrink-0 hidden sm:block" />
           </>
         )}

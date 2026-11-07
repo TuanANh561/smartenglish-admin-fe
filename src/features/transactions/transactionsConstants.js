@@ -11,6 +11,7 @@ export const GATEWAY_META = {
   stripe: { label: 'Stripe', dotClass: 'bg-navy-700' },
   zalopay: { label: 'ZaloPay', dotClass: 'bg-brand-400' },
   bank_transfer: { label: 'Chuyển khoản', dotClass: 'bg-ink-muted' },
+  admin_grant: { label: 'Admin cấp trực tiếp', dotClass: 'bg-purple-500' },
 }
 
 export const TXN_STATUS_META = {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -6,17 +6,22 @@ import {
   HelpCircle,
   ImageIcon,
   Link2,
+  Loader2,
   Music,
   Plus,
   Save,
   Sparkles,
+  Trash2,
+  Upload,
   Volume2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import Button from '@/components/ui/Button'
 import { LISTENING_ACCENTS, LISTENING_TOPICS } from './listeningConstants'
 import { useAuthStore } from '@/store/authStore'
 import { useTopbarStore } from '@/store/topbarStore'
@@ -27,6 +32,8 @@ import {
   createListeningLesson,
   getListeningLessonById,
   updateListeningLesson,
+  uploadListeningAudio,
+  uploadListeningImage,
 } from './listeningLessonApi'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -145,10 +152,18 @@ function ListeningFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const userRole = String(user?.role || '').trim().toLowerCase()
+  const isAdmin = userRole === 'admin' || userRole === 'role_admin'
+
   const isEditing = Boolean(id)
 
   const [isLoading, setIsLoading] = useState(isEditing)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false)
+
+  const imageInputRef = useRef(null)
+  const audioInputRef = useRef(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -179,7 +194,7 @@ function ListeningFormPage() {
 
   // Ngắt toàn bộ âm thanh khi người dùng rời khỏi form bài nghe
   useEffect(() => {
-    return () => {
+return () => {
       stopAudio()
     }
   }, [])
@@ -313,17 +328,68 @@ function ListeningFormPage() {
     })
   }
 
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingImage(true)
+    const toastId = toast.loading('Đang tải hình ảnh lên...')
+    try {
+      const res = await uploadListeningImage(file)
+      const url = res?.url || res?.data?.url || (typeof res === 'string' ? res : '')
+      if (url) {
+        setForm((prev) => ({ ...prev, imageUrl: url }))
+        toast.success('Tải ảnh thành công!', { id: toastId })
+      } else {
+        toast.error('Không nhận được đường dẫn ảnh từ máy chủ', { id: toastId })
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải ảnh:', err)
+      toast.error(err?.message || 'Không thể tải ảnh lên máy chủ', { id: toastId })
+    } finally {
+      setIsUploadingImage(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
+  }
+
+  const handleAudioFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingAudio(true)
+    const toastId = toast.loading('Đang tải tệp âm thanh lên...')
+    try {
+      const res = await uploadListeningAudio(file)
+      const url = res?.url || res?.data?.url || (typeof res === 'string' ? res : '')
+      if (url) {
+        setForm((prev) => ({ ...prev, audioUrl: url }))
+        toast.success('Tải tệp âm thanh thành công!', { id: toastId })
+      } else {
+        toast.error('Không nhận được đường dẫn âm thanh từ máy chủ', { id: toastId })
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải tệp âm thanh:', err)
+      toast.error(err?.message || 'Không thể tải tệp âm thanh lên máy chủ', { id: toastId })
+    } finally {
+      setIsUploadingAudio(false)
+      if (audioInputRef.current) audioInputRef.current.value = ''
+    }
+  }
+
   const handleTestAudioUrl = () => {
     if (!form.audioUrl.trim()) {
-      toast.error('Vui lòng nhập đường dẫn URL file audio để nghe thử')
+      toast.error('Chưa có file âm thanh để nghe thử')
       return
     }
-    speakWord('Kiểm tra âm thanh', form.audioUrl.trim())
+    const safeAudioUrl = form.audioUrl.trim()
+    const fullAudioUrl =
+      safeAudioUrl.startsWith('/') && !safeAudioUrl.startsWith('//')
+        ? `${window.location.origin}${safeAudioUrl}`
+        : safeAudioUrl
+    speakWord('Kiểm tra âm thanh', fullAudioUrl)
     toast.success('Đang phát thử file âm thanh...')
   }
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     if (!form.title.trim()) {
       toast.error('Vui lòng nhập tiêu đề bài nghe')
       return
@@ -380,6 +446,8 @@ function ListeningFormPage() {
     }
   }
 
+  useCtrlSave(handleSave, !isSaving)
+
   const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
   const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
 
@@ -397,15 +465,16 @@ function ListeningFormPage() {
           >
             Hủy bỏ
           </Link>
-          <button
+          <Button
             type="submit"
             form="listening-editor-form"
-            disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-navy-800 hover:bg-navy-900 disabled:opacity-60 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+            loading={isSaving}
+            size="sm"
+            icon={Save}
+            title="Lưu bài nghe (Ctrl + S)"
           >
-            <Save size={14} />
-            {isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Lưu bài nghe'}
-          </button>
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
         </div>
       ),
     })
@@ -595,26 +664,51 @@ function ListeningFormPage() {
 
               {/* Card 2: Hình ảnh đề bài (Part 1 hoặc có bảng biểu Part 3, 4) */}
               <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageFileChange}
+                />
+
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
                       <ImageIcon size={14} />
                     </span>
-                    Hình ảnh đề bài {form.category === 'TOEIC_PART_1' ? '(Bắt buộc cho Part 1)' : '(Tùy chọn)'}
+                    Hình ảnh đề bài {form.category === 'TOEIC_PART_1' ? '(Bắt buộc)' : '(Tùy chọn)'}
                   </h3>
+
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-60"
+                  >
+                    {isUploadingImage ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Upload size={13} />
+                    )}
+                    <span>{form.imageUrl ? 'Đổi ảnh từ máy' : 'Chọn ảnh từ máy'}</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
-                    <Link2 size={13} className="text-slate-400" /> Đường dẫn URL hình ảnh
-                  </label>
-                  <Input
-                    value={form.imageUrl}
-                    onChange={setField('imageUrl')}
-                    placeholder="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4..."
-                    className="text-xs"
-                  />
-                </div>
+                {/* Chỉ hiển thị ô nhập URL trực tiếp cho ADMIN */}
+                {isAdmin && (
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
+                      <Link2 size={13} className="text-slate-400" /> Đường dẫn URL hình ảnh
+                    </label>
+                    <Input
+                      value={form.imageUrl}
+                      onChange={setField('imageUrl')}
+                      placeholder="https://images.unsplash.com/... hoặc /uploads/..."
+                      className="text-xs"
+                    />
+                  </div>
+                )}
 
                 {/* Preview Image */}
                 {form.imageUrl ? (
@@ -627,57 +721,135 @@ function ListeningFormPage() {
                         e.target.style.display = 'none'
                       }}
                     />
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, imageUrl: '' }))}
+                        className="rounded-lg bg-red-600/80 hover:bg-red-600 p-1.5 text-white transition-colors cursor-pointer"
+                        title="Xóa ảnh"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                     <span className="absolute bottom-2 left-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] text-white backdrop-blur-xs">
                       Xem trước hình ảnh
                     </span>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-slate-400 italic">
-                    {form.category === 'TOEIC_PART_1'
-                      ? 'Dán URL ảnh để học viên quan sát tranh trước khi nghe 4 phương án A, B, C, D.'
-                      : 'Có thể để trống nếu bài nghe không yêu cầu hình ảnh trực quan.'}
-                  </p>
+                  <div
+                    onClick={() => imageInputRef.current?.click()}
+                    className="mt-2 border-2 border-dashed border-slate-200 hover:border-emerald-300 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-emerald-50/20"
+                  >
+                    <Upload size={20} className="mx-auto text-slate-400 mb-1" />
+                    <p className="text-xs font-medium text-slate-600">Nhấn để chọn ảnh từ thiết bị</p>
+                    <p className="text-[10px] text-slate-400">Hỗ trợ JPG, PNG, WEBP</p>
+                  </div>
                 )}
               </div>
 
               {/* Card 3: Nguồn file Audio */}
               <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-3">
+                <input
+                  ref={audioInputRef}
+                  type="file"
+                  accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac"
+                  className="hidden"
+                  onChange={handleAudioFileChange}
+                />
+
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-xs font-bold">
                       <Music size={14} />
                     </span>
-                    File âm thanh bài nghe (Tùy chọn)
+                    File âm thanh bài nghe {form.audioUrl ? '' : '(Tùy chọn)'}
                   </h3>
+
+                  <button
+                    type="button"
+                    onClick={() => audioInputRef.current?.click()}
+                    disabled={isUploadingAudio}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-colors cursor-pointer disabled:opacity-60"
+                  >
+                    {isUploadingAudio ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Upload size={13} />
+                    )}
+                    <span>{form.audioUrl ? 'Đổi file âm thanh' : 'Chọn file từ máy'}</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
-                    <Link2 size={13} className="text-slate-400" /> URL File âm thanh (.mp3, .m4a, .wav)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={form.audioUrl}
-                      onChange={setField('audioUrl')}
-                      placeholder="https://cdn.smartenglish.com/audio/lesson.mp3"
-                      className="text-xs flex-1"
-                    />
-                    {form.audioUrl && (
+                {/* Chỉ hiển thị ô nhập URL trực tiếp cho ADMIN */}
+                {isAdmin && (
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1.5 flex items-center gap-1.5">
+                      <Link2 size={13} className="text-slate-400" /> URL File âm thanh (.mp3, .m4a, .wav)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={form.audioUrl}
+                        onChange={setField('audioUrl')}
+                        placeholder="https://... hoặc /uploads/listening/audios/..."
+                        className="text-xs flex-1"
+                      />
+                      {form.audioUrl && (
+                        <button
+                          type="button"
+                          onClick={handleTestAudioUrl}
+                          className="inline-flex items-center gap-1 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-2 text-xs font-bold transition-colors cursor-pointer border border-brand-200"
+                          title="Nghe thử file âm thanh"
+                        >
+                          <Volume2 size={14} /> Thử
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trạng thái âm thanh */}
+                {form.audioUrl ? (
+                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-50/60 border border-amber-200/80">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-200/80 text-amber-900">
+                        <Music size={16} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 truncate">
+                          {form.audioUrl.split('/').pop() || 'Tệp âm thanh bài nghe'}
+                        </p>
+                        <p className="text-[10px] text-amber-800 font-medium">Đã sẵn sàng phát</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={handleTestAudioUrl}
-                        className="inline-flex items-center gap-1 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-2 text-xs font-bold transition-colors cursor-pointer border border-brand-200"
-                        title="Nghe thử file âm thanh"
+                        className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer shadow-2xs"
                       >
-                        <Volume2 size={14} /> Thử
+                        <Volume2 size={13} /> Nghe thử
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, audioUrl: '' }))}
+                        className="inline-flex items-center p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Xóa file âm thanh (chuyển sang AI đọc)"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Nếu có file âm thanh, hệ thống sẽ phát file thu âm chuẩn này. Nếu để trống, hệ thống sẽ tự động sử dụng Giọng đọc AI đọc theo kịch bản bên dưới.
-                </p>
+                ) : (
+                  <div
+                    onClick={() => audioInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-200 hover:border-amber-300 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-amber-50/20"
+                  >
+                    <Upload size={20} className="mx-auto text-slate-400 mb-1" />
+                    <p className="text-xs font-medium text-slate-600">Nhấn để chọn file audio (.mp3, .m4a, .wav)</p>
+                    <p className="text-[10px] text-slate-400">Nếu để trống, hệ thống sẽ tự động dùng Giọng đọc AI</p>
+                  </div>
+                )}
               </div>
             </div>
 

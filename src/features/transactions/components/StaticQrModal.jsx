@@ -67,7 +67,7 @@ export default function StaticQrModal({ isOpen, onClose }) {
             </span>
             <div>
               <h3 className="text-sm font-bold text-slate-900">Mã QR thu tại quầy</h3>
-              <p className="text-xs text-slate-500">VietQR Napas 24/7</p>
+              <p className="text-xs text-slate-500">Chuyển khoản VietQR</p>
             </div>
           </div>
           <button
