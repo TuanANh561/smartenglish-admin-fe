@@ -23,13 +23,16 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react'
-import { useTwoLayerAudio } from '@/lib/useTwoLayerAudio'
+import { useTwoLayerAudio } from '@/hooks/useTwoLayerAudio'
 import toast from 'react-hot-toast'
+import { useCtrlSave } from '@/hooks/useCtrlSave'
 import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
-import Textarea from '@/components/ui/Textarea'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ExamGeneralInfoCard from './components/ExamGeneralInfoCard'
 import { useAuthStore } from '@/store/authStore'
+import { useTopbarStore } from '@/store/topbarStore'
 import {
   createExam,
   getExamById,
@@ -49,6 +52,19 @@ export default function ExamFormPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const isEditing = Boolean(id)
+  const setCustomHeader = useTopbarStore((s) => s.setCustomHeader)
+  const clearCustomHeader = useTopbarStore((s) => s.clearCustomHeader)
+
+  useEffect(() => {
+    setCustomHeader({
+      backLink: '/app/hoc-lieu/bai-kiem-tra',
+      backText: 'Quay lại',
+      title: isEditing ? 'Chỉnh sửa bài thi' : 'Tạo bài thi mới',
+      subtitle: 'Ngân hàng đề thi TOEIC / Kiểm tra',
+    })
+    return () => clearCustomHeader()
+  }, [isEditing, setCustomHeader, clearCustomHeader])
+
   const audioEngine = useTwoLayerAudio()
 
   const [isLoading, setIsLoading] = useState(isEditing)
@@ -308,7 +324,7 @@ export default function ExamFormPage() {
   }, [questions])
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     if (!form.title.trim()) {
       toast.error('Vui lòng nhập tên đề thi')
       return
@@ -375,6 +391,8 @@ export default function ExamFormPage() {
     }
   }
 
+  useCtrlSave(handleSave, !isSaving)
+
   // Count questions by part
   const partCounts = useMemo(() => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 }
@@ -398,12 +416,7 @@ export default function ExamFormPage() {
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
-          <Link
-            to="/app/hoc-lieu/bai-kiem-tra"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
-          >
-            <ArrowLeft size={16} />
-          </Link>
+          
           <div>
             <h1 className="text-xl font-bold text-slate-900">
               {isEditing ? 'Chỉnh sửa bài thi TOEIC / Kiểm tra' : 'Tạo bài thi / Kiểm tra mới'}
@@ -423,113 +436,30 @@ export default function ExamFormPage() {
           >
             Hủy bỏ
           </Link>
-          <button
+          <Button
             type="button"
             onClick={handleSave}
+            loading={isSaving}
             disabled={isSaving}
-            className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            size="sm"
+            icon={Save}
+            title="Lưu bài thi (Ctrl + S)"
+            className="rounded-xl px-4 py-2 text-xs font-semibold shadow-xs"
           >
-            <Save size={14} />
-            <span>{isSaving ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo bài thi'}</span>
-          </button>
+            {isSaving ? 'Đang lưu...' : 'Lưu (Ctrl + S)'}
+          </Button>
         </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         <div className="space-y-6">
           {/* Card 1: Thông tin chung bài thi */}
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-100 text-brand-700 text-xs font-bold">1</span>
-              Thông tin cấu hình bài thi
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Tên bài thi *</label>
-                <Input
-                  value={form.title}
-                  onChange={set('title')}
-                  placeholder="VD: TOEIC Test 1"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Thể loại bài thi</label>
-                <Select value={form.category} onChange={set('category')}>
-                  {EXAM_CATEGORIES.filter((c) => c.value !== 'ALL').map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Cấp độ CEFR</label>
-                <Select value={form.cefrLevel} onChange={set('cefrLevel')}>
-                  {CEFR_LEVELS.map((l) => (
-                    <option key={l} value={l}>Cấp độ {l}</option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Thời gian làm bài (phút)</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={300}
-                  value={form.durationMinutes}
-                  onChange={set('durationMinutes')}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Điểm đạt yêu cầu</label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.passingScore}
-                  onChange={set('passingScore')}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Điểm thưởng (XP)</label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={form.xpReward}
-                  onChange={set('xpReward')}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Mô tả bài thi</label>
-                <Textarea
-                  rows={2}
-                  autoResize
-                  value={form.description}
-                  onChange={set('description')}
-                  placeholder="Mô tả tóm tắt nội dung, cấu trúc và đối tượng bài thi..."
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Trạng thái đề thi</label>
-                <Select value={form.status} onChange={set('status')}>
-                  <option value="published">Đang hoạt động</option>
-                  <option value="draft">Bản nháp</option>
-                </Select>
-              </div>
-            </div>
-          </div>
+          <ExamGeneralInfoCard
+            form={form}
+            onChangeField={set}
+            examCategories={EXAM_CATEGORIES}
+            cefrLevels={CEFR_LEVELS}
+          />
 
           {/* Card 2: Danh sách câu hỏi */}
           <div className="rounded-2xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">

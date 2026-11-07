@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Calendar, CheckCircle2, Loader2, Send, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { createAssignment } from '@/features/classes/classApi'
 import { getMyClasses } from '@/features/dashboard/teacherDashboardApi'
 import { useAuthStore } from '@/store/authStore'
@@ -156,18 +157,15 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
                 Bạn chưa phụ trách lớp học nào. Vui lòng tạo lớp học trước khi giao bài thi.
               </div>
             ) : (
-              <select
+              <Select
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:border-brand-500 focus:outline-none shadow-2xs cursor-pointer"
-                required
-              >
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name} ({cls.totalStudents || 0} học viên • {cls.cefrTarget || 'B1'})
-                  </option>
-                ))}
-              </select>
+                size="sm"
+                options={classes.map((cls) => ({
+                  value: cls.id,
+                  label: `${cls.name} (${cls.totalStudents || 0} học viên • ${cls.cefrTarget || 'B1'})`,
+                }))}
+              />
             )}
           </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Award, BookOpen, CheckCircle2, Clock, FileText,
   Headphones, Image as ImageIcon, Pencil, Search,
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
-import { useTwoLayerAudio } from '@/lib/useTwoLayerAudio'
+import { useTwoLayerAudio } from '@/hooks/useTwoLayerAudio'
 
 const PART_CONFIG = [
   { id: 1, name: 'Part 1', label: 'Tranh ảnh', icon: ImageIcon, isListening: true },
@@ -27,6 +27,7 @@ function getPartNum(q, idx) {
 function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audioEngine, hideIndividualAudio = false }) {
   const opts = Array.isArray(q.options) ? q.options : []
   const isPlaying = audioEngine.playingId === `dp-${qNum}`
+  const hasAudio = Boolean(q.audioUrl || q.audioScript)
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden hover:border-slate-300 hover:shadow-2xs transition-all flex flex-col justify-between">
@@ -42,16 +43,17 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
                 ? 'bg-slate-100 text-slate-700 border-slate-200'
                 : isListening ? 'bg-blue-50 text-blue-700 border-blue-200'
                 : partNum === 5 ? 'bg-purple-50 text-purple-700 border-purple-200'
+                : partNum >= 6 ? 'bg-amber-50 text-amber-700 border-amber-200'
                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
             }`}>
-              {hideIndividualAudio ? `Câu hỏi ${qNum}` : isListening ? '🎧 Nghe' : partNum === 5 ? '✏️ Điền câu' : '📖 Đọc'}
+              {hideIndividualAudio ? `Câu hỏi ${qNum}` : isListening ? '🎧 Nghe' : partNum === 5 ? '✏️ Điền câu' : partNum >= 6 ? '📖 Đọc hiểu' : '📝 Trắc nghiệm'}
             </span>
             {q.groupAudioBadge && (
               <span className="hidden sm:block text-[10px] text-slate-400 truncate max-w-[160px]">{q.groupAudioBadge}</span>
             )}
           </div>
 
-          {!hideIndividualAudio && isListening && (
+          {!hideIndividualAudio && isListening && hasAudio && (
             <button
               type="button"
               onClick={() => {
@@ -103,9 +105,13 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
             {q.questionText || (partNum === 1 ? 'Quan sát hình ảnh và chọn mô tả đúng nhất.' : `Câu ${qNum}`)}
           </p>
 
-          {/* Đáp án trắc nghiệm A-B-C-D: chia lưới 2 cột gọn gàng */}
+          {/* Đáp án trắc nghiệm A-B-C-D: tự động chia 2 cột nếu đáp án ngắn, 1 cột nếu đáp án dài */}
           {opts.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${
+              opts.some(o => (typeof o === 'object' ? o.text : String(o || '')).length > 28)
+                ? 'grid-cols-1'
+                : 'grid-cols-1 sm:grid-cols-2'
+            }`}>
               {opts.map((opt, oi) => {
                 const key = typeof opt === 'object' ? (opt.key || opt.id || opt.label) : String.fromCharCode(65 + oi)
                 const text = typeof opt === 'object' ? opt.text : opt
@@ -159,11 +165,33 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
 
   const questions = useMemo(() => exam?.questions || [], [exam])
 
+  const isToeic = useMemo(() => {
+    const cat = (exam?.category || '').toUpperCase()
+    return cat.includes('TOEIC')
+  }, [exam?.category])
+
+  const hasAnyTranscript = useMemo(() => {
+    return questions.some(q => Boolean(q.audioScript && q.audioScript.trim()))
+  }, [questions])
+
+  const isQuestionListening = useCallback((q, partNum) => {
+    if (q.isListening !== undefined) return Boolean(q.isListening)
+    if (q.skill) return String(q.skill).toLowerCase() === 'listening'
+    if (q.audioUrl || q.audioScript) return true
+    if (isToeic) return partNum <= 4
+    return false
+  }, [isToeic])
+
   const partCounts = useMemo(() => {
     const c = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 }
     questions.forEach((q, i) => { const p = getPartNum(q, i); if (c[p] !== undefined) c[p]++ })
     return c
   }, [questions])
+
+  const visibleParts = useMemo(() => {
+    const withQuestions = PART_CONFIG.filter(p => (partCounts[p.id] || 0) > 0)
+    return withQuestions.length > 0 ? withQuestions : PART_CONFIG
+  }, [partCounts])
 
   const filteredQuestions = useMemo(() => {
     return questions.filter((q, i) => {
@@ -190,7 +218,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
       const partNum = getPartNum(q, i)
       const qNum = q.questionNumber || i + 1
       const passage = q.passageText?.trim() || null
-      const isListeningGroupPart = partNum === 3 || partNum === 4
+      const isListeningGroupPart = (isToeic && (partNum === 3 || partNum === 4)) || Boolean(q.groupAudioBadge || (q.audioUrl && q.groupRangeText))
 
       if (passage) {
         // ── 1. NHÓM BÀI ĐỌC (PART 6 & PART 7) ──
@@ -275,30 +303,55 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
     }
 
     return sections
-  }, [filteredQuestions])
+  }, [filteredQuestions, isToeic])
+
+  const sectionTitleMap = useMemo(() => {
+    const map = {}
+    if (Array.isArray(exam?.sections)) {
+      exam.sections.forEach(s => {
+        const pNum = s.partNumber || s.id
+        if (pNum && s.title) map[pNum] = s.title
+      })
+    }
+    return map
+  }, [exam?.sections])
 
   if (!exam) return null
 
   const partInfo = selectedPart !== 'ALL' ? PART_CONFIG.find(p => p.id === Number(selectedPart)) : null
-  const showListeningToggle = selectedPart === 'ALL' || Number(selectedPart) <= 4
+  const showTranscriptButton = hasAnyTranscript && (selectedPart === 'ALL' || Number(selectedPart) <= 4)
 
   return (
     <div className="flex flex-col min-h-[600px] bg-white">
 
-      {/* ── Top Navigation Bar: Nút quay lại danh sách ── */}
-      <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-slate-50/70">
-        <button
-          type="button"
-          onClick={() => { audioEngine.stop(); onClose() }}
-          className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-brand-600 transition-colors cursor-pointer group"
-        >
-          <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center group-hover:border-brand-300 group-hover:bg-brand-50 transition-all shadow-2xs">
-            <ArrowLeft size={14} className="text-slate-600 group-hover:text-brand-600" />
+      {/* ── Header thông tin đề thi & Cụm nút thao tác ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${
+              exam.status === 'published'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-slate-100 text-slate-500 border-slate-200'
+            }`}>
+              {exam.status === 'published' ? 'Đang hoạt động' : 'Bản nháp'}
+            </span>
+            {exam.cefrLevel && (
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                Cấp độ {exam.cefrLevel}
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              {exam.category || 'TOEIC'}
+            </span>
           </div>
-          <span>Quay lại danh sách đề thi</span>
-        </button>
+          <h1 className="text-xl font-bold text-slate-900 leading-snug">{exam.title}</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            {exam.totalQuestions ?? questions.length} câu hỏi &bull; {exam.durationMinutes || 120} phút làm bài
+          </p>
+        </div>
 
-        <div className="flex items-center gap-2">
+        {/* Cụm Action Buttons nằm gọn gàng bên phải của Header */}
+        <div className="flex items-center gap-2 shrink-0">
           {isTeacher && exam.status === 'published' && onAssignToClass && (
             <Button
               variant="outline"
@@ -311,45 +364,16 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
             </Button>
           )}
           {canManage && (
-            <Button variant="primary" size="sm" icon={Pencil}
-              onClick={() => { audioEngine.stop(); onEditClick(exam) }}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Pencil}
+              onClick={() => { audioEngine.stop(); onEditClick(exam) }}
+            >
               Chỉnh sửa đề thi
             </Button>
           )}
-          <button
-            onClick={() => { audioEngine.stop(); onClose() }}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
-            title="Đóng chi tiết"
-          >
-            <X size={18} />
-          </button>
         </div>
-      </div>
-
-      {/* ── Header thông tin đề thi ── */}
-      <div className="shrink-0 px-6 pt-5 pb-4 border-b border-slate-200">
-        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-          <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${
-            exam.status === 'published'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-slate-100 text-slate-500 border-slate-200'
-          }`}>
-            {exam.status === 'published' ? 'Đang hoạt động' : 'Bản nháp'}
-          </span>
-          {exam.cefrLevel && (
-            <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-              Cấp độ {exam.cefrLevel}
-            </span>
-          )}
-          <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            {exam.category || 'TOEIC'}
-          </span>
-        </div>
-        <h1 className="text-xl font-bold text-slate-900 leading-snug">{exam.title}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          {exam.totalQuestions ?? questions.length} câu hỏi &bull; {exam.durationMinutes || 120} phút làm bài
-          {exam.description && <span className="ml-2 text-slate-400">— {exam.description}</span>}
-        </p>
       </div>
 
       {/* ── 4 ô thống kê: bố cục lưới 4 cột gọn gàng ── */}
@@ -373,7 +397,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
       </div>
 
       {/* ── Part tabs + tìm kiếm ── */}
-      <div className="shrink-0 px-6 py-3 border-b border-slate-200 space-y-2.5 bg-white">
+      <div className="shrink-0 px-6 py-3 border-b border-slate-200 space-y-3 bg-white">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => setSelectedPart('ALL')}
@@ -385,7 +409,7 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
           >
             Tất cả <span className="ml-1 opacity-70">({questions.length})</span>
           </button>
-          {PART_CONFIG.map(p => {
+          {visibleParts.map(p => {
             const active = selectedPart === p.id
             return (
               <button
@@ -403,29 +427,39 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Tìm nội dung câu hỏi hoặc từ khóa trong đề..."
+              placeholder="Tìm nội dung câu hỏi, đáp án hoặc từ khóa trong đề..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-400 focus:bg-white transition-colors"
+              className="w-full pl-10 pr-9 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl placeholder:text-slate-400 text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/15 transition-all shadow-2xs"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs p-1 rounded-md hover:bg-slate-200/60 transition-colors cursor-pointer"
+                title="Xóa tìm kiếm"
+              >
+                ✕
+              </button>
+            )}
           </div>
-          {showListeningToggle && (
+          {showTranscriptButton && (
             <button
               type="button"
               onClick={() => setShowTranscript(v => !v)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer shadow-2xs ${
                 showTranscript
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/70'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Headphones size={12} />
-              {showTranscript ? 'Ẩn lời thoại' : 'Xem lời thoại'}
+              <Headphones size={14} className={showTranscript ? 'text-indigo-600' : 'text-slate-500'} />
+              <span>{showTranscript ? 'Ẩn lời thoại' : 'Xem lời thoại'}</span>
             </button>
           )}
         </div>
@@ -435,7 +469,9 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
       {partInfo && (
         <div className="shrink-0 px-6 py-2 bg-sky-50 border-b border-sky-100 flex items-center gap-1.5 text-xs text-sky-800">
           <partInfo.icon size={13} />
-          <span className="font-bold">{partInfo.name} — {partInfo.label}</span>
+          <span className="font-bold">
+            {sectionTitleMap[partInfo.id] || `${partInfo.name} — ${partInfo.label}`}
+          </span>
           <ChevronRight size={11} className="text-sky-400" />
           <span>{partCounts[partInfo.id] || 0} câu hỏi</span>
         </div>
@@ -457,16 +493,16 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
         ) : (
           layoutSections.map((sec, secIdx) => {
             if (sec.type === 'singleGrid') {
-              // Câu hỏi đơn (Part 1, 2, 3, 4, 5): Hiển thị Lưới 2 cột cân đối, không trống trải
+              // Câu hỏi đơn (Part 1, 2, 3, 4, 5): Hiển thị Lưới 3 card 1 row tối ưu diện tích, giảm cuộn trang
               return (
-                <div key={`grid-${secIdx}`} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div key={`grid-${secIdx}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   {sec.items.map(({ q, qNum, partNum }) => (
                     <QuestionItemCard
                       key={qNum}
                       q={q}
                       qNum={qNum}
                       partNum={partNum}
-                      isListening={partNum <= 4}
+                      isListening={isQuestionListening(q, partNum)}
                       showTranscript={showTranscript}
                       audioEngine={audioEngine}
                     />
@@ -629,10 +665,8 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
                     </div>
                   )}
 
-                  {/* Danh sách các câu hỏi đi kèm (Hiển thị dạng Grid) */}
-                  <div className={`p-4 bg-slate-50/40 grid gap-3.5 ${
-                    group.questions.length === 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'
-                  }`}>
+                  {/* Danh sách các câu hỏi đi kèm (Hiển thị dạng Grid 3 cột) */}
+                  <div className="p-4 bg-slate-50/40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                     {group.questions.map(({ q, qNum, partNum }) => (
                       <QuestionItemCard
                         key={qNum}
