@@ -676,7 +676,7 @@ function AiChatWidget() {
               <button
                 type="button"
                 onClick={handleNewChat}
-                className="flex items-center gap-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+                className="flex items-center gap-1 rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
                 title="Tạo cuộc trò chuyện mới"
               >
                 <Plus size={13} strokeWidth={2.5} />
@@ -735,7 +735,7 @@ function AiChatWidget() {
                   <button
                     type="button"
                     onClick={handleNewChat}
-                    className="mt-4 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-semibold text-xs shadow-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="mt-4 px-3.5 py-1.5 rounded-xl bg-brand-600 text-white font-semibold text-xs shadow-xs hover:bg-brand-700 transition-colors cursor-pointer"
                   >
                     Bắt đầu chat
                   </button>
@@ -941,7 +941,7 @@ function AiChatWidget() {
                     className={cn(
                       'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all cursor-pointer shadow-2xs mb-0.5',
                       input.trim() && !isLoading
-                        ? 'bg-slate-900 hover:bg-slate-800 text-white active:scale-95'
+                        ? 'bg-brand-600 hover:bg-brand-700 text-white active:scale-95'
                         : 'bg-slate-100 text-slate-400 cursor-not-allowed',
                     )}
                     title="Gửi tin nhắn"
@@ -971,7 +971,7 @@ function AiChatWidget() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="group relative flex h-13 w-13 items-center justify-center rounded-full shadow-lg transition-all duration-300 cursor-pointer active:scale-95 border-2 border-white bg-slate-900 hover:bg-slate-800 shadow-slate-900/25 hover:shadow-xl hover:-translate-y-1 hover:scale-105"
+          className="group relative flex h-13 w-13 items-center justify-center rounded-full shadow-lg transition-all duration-300 cursor-pointer active:scale-95 border-2 border-white bg-gradient-to-tr from-navy-800 via-brand-600 to-sky-400 hover:from-navy-700 hover:via-brand-500 hover:to-sky-300 shadow-brand-600/30 hover:shadow-xl hover:shadow-brand-500/40 hover:-translate-y-1 hover:scale-105"
           title="Teacher Cáo — Trợ lý AI học liệu & giảng dạy 24/7"
         >
           {/* Pulsing online status badge */}
@@ -980,7 +980,7 @@ function AiChatWidget() {
             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white shadow-xs" />
           </span>
 
-          <img src={loxeraFront} alt="Teacher Cáo" className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
+          <img src={loxeraFront} alt="Teacher Cáo" className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm" />
         </button>
       )}
     </div>

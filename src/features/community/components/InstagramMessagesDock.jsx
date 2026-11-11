@@ -3,7 +3,6 @@ import {
   Send,
   MessageCircle,
   X,
-  Minimize2,
   SquarePen,
   Search,
   ChevronLeft,
@@ -121,18 +120,6 @@ export default function InstagramMessagesDock({
   }, [conversations])
 
   // Lấy 3 avatar của các cuộc trò chuyện gần nhất để hiển thị trên nút dock (Avatar stack chuẩn Instagram)
-  const recentAvatars = useMemo(() => {
-    const avatars = []
-    for (const c of conversations) {
-      const src = getConversationAvatar?.(c)
-      if (src && !avatars.includes(src)) {
-        avatars.push(src)
-      }
-      if (avatars.length >= 3) break
-    }
-    return avatars
-  }, [conversations, getConversationAvatar])
-
   // Lọc danh sách cuộc trò chuyện theo ô tìm kiếm
   const filteredConversations = useMemo(() => {
     const q = conversationSearch.trim().toLowerCase()
@@ -197,46 +184,27 @@ export default function InstagramMessagesDock({
 
   return (
     <>
-      {/* ─── 1. NÚT NỔI DOCK TIN NHẮN (CHẾ ĐỘ THU GỌN - CHUẨN INSTAGRAM) ─── */}
+      {/* ─── 1. NÚT NỔI TIN NHẮN: cùng cỡ & thẳng cột với nút trợ lý AI (bottom-6 right-6), nằm ngay phía trên ─── */}
       {!isOpen && (
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-24 max-sm:bottom-20 max-sm:right-4 z-40 flex items-center gap-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 shadow-xl hover:shadow-2xl border border-slate-700/60 active:scale-95 transition-all cursor-pointer group"
-          title="Mở tin nhắn trực tiếp"
-          aria-label="Mở tin nhắn trực tiếp"
+          className="fixed bottom-[88px] right-6 max-sm:right-4 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-brand-500 hover:bg-brand-600 text-white border-2 border-white shadow-lg shadow-brand-500/30 transition-colors cursor-pointer"
+          title="Tin nhắn"
+          aria-label="Mở tin nhắn"
         >
-          {/* Icon tin nhắn phi thuyền giấy */}
-          <div className="relative flex items-center justify-center">
-            <Send size={16} className="-rotate-12 group-hover:scale-110 transition-transform text-white" />
-            {totalUnread > 0 && (
-              <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-sm border border-slate-900">
-                {totalUnread > 9 ? '9+' : totalUnread}
-              </span>
-            )}
-          </div>
-
-          <span className="text-xs font-bold tracking-wide">Tin nhắn</span>
-
-          {/* Stack 3 avatar tròn đè lên nhau */}
-          {recentAvatars.length > 0 && (
-            <div className="flex -space-x-2 overflow-hidden py-0.5 ml-0.5">
-              {recentAvatars.map((src, idx) => (
-                <img
-                  key={idx}
-                  src={src}
-                  alt="contact"
-                  className="inline-block h-5.5 w-5.5 rounded-full ring-2 ring-slate-900 object-cover bg-slate-200"
-                />
-              ))}
-            </div>
+          <MessageCircle size={22} strokeWidth={1.75} />
+          {totalUnread > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#DC2626] px-1 text-[11px] font-bold text-white border-2 border-white">
+              {totalUnread > 9 ? '9+' : totalUnread}
+            </span>
           )}
         </button>
       )}
 
       {/* ─── 2. CỬA SỔ DOCK NỔI (ĐỔI NỘI DUNG NGAY TRONG MODAL, CÓ NÚT QUAY LẠI) ─── */}
       {isOpen && (
-        <div className="fixed bottom-5 right-24 max-sm:bottom-4 max-sm:right-2 z-40 flex w-[360px] sm:w-[380px] max-w-[calc(100vw-1rem)] h-[540px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-4">
+        <div className="fixed bottom-6 right-6 max-sm:bottom-4 max-sm:right-2 z-[60] flex w-[360px] sm:w-[380px] max-w-[calc(100vw-1rem)] h-[540px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-4">
           
           {/* ════ VIEW 1: DANH SÁCH CUỘC TRÒ CHUYỆN ════ */}
           {view === 'list' && (
@@ -260,14 +228,6 @@ export default function InstagramMessagesDock({
                     title="Soạn tin nhắn mới"
                   >
                     <SquarePen size={17} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="Thu nhỏ cửa sổ tin nhắn"
-                  >
-                    <Minimize2 size={16} />
                   </button>
                   <button
                     type="button"
