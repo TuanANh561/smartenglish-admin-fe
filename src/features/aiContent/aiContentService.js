@@ -249,6 +249,8 @@ export async function saveGeminiContent({ type, title, content, level, questions
     createdBy: createdBy || 'Admin',
   }
 
+  // Lưu thất bại thì báo lỗi thật: trước đây lưu tạm vào trình duyệt rồi vẫn báo thành công,
+  // nội dung chỉ hiện trên máy đó và biến mất khi tải lại từ server.
   let record
   try {
     const res = await http.post('/admin/ai/contents', payload, {
@@ -256,15 +258,7 @@ export async function saveGeminiContent({ type, title, content, level, questions
     })
     record = normalizeRecord(res)
   } catch (err) {
-    console.warn('⚠️ Lỗi khi lưu lên backend CSDL, fallback lưu local:', err?.message)
-    record = normalizeRecord({
-      id: `AIC-${Date.now()}`,
-      ...payload,
-      status: 'PENDING_REVIEW',
-      source: 'Gemini',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
+    throw new Error(err?.message ? `Không lưu được nội dung: ${err.message}` : 'Không lưu được nội dung, vui lòng thử lại')
   }
 
   const records = getAIContentRecords()
