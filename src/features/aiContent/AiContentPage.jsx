@@ -292,12 +292,9 @@ function AiContentPage() {
   }
 
   const formatGeminiError = (error) => {
-    if (error.code === 'NO_API_KEY') return '❌ Backend chưa cấu hình GEMINI_API_KEY trong hệ thống'
-    if (error.code === 'RATE_LIMIT') return '❌ Gemini đang vượt giới hạn sử dụng. Vui lòng thử lại sau.'
-    if (error.code === 'TRUNCATED_RESPONSE') return '❌ Phản hồi bị cắt do giới hạn token — thử chủ đề ngắn hơn'
-    if (error.code === 'PARSE_ERROR') return '❌ Gemini trả về JSON không hợp lệ — mở F12 → Console để xem chi tiết'
-    if (error.code === 'SAFETY_BLOCK' || error.code === 'SAFETY_FILTER') return '❌ Gemini chặn nội dung — thử chủ đề khác'
-    return `❌ Lỗi Gemini: ${error.message}`
+    if (error.code === 'RATE_LIMIT') return 'AI đang quá tải, vui lòng thử lại sau ít phút'
+    if (error.code === 'SAFETY_BLOCK' || error.code === 'SAFETY_FILTER') return 'AI từ chối chủ đề này, hãy thử chủ đề khác'
+    return error.message || 'AI chưa tạo được nội dung, vui lòng thử lại'
   }
 
   const handleCreate = async () => {
@@ -305,32 +302,35 @@ function AiContentPage() {
       if (!draft.topic.trim()) { toast.error('Vui lòng nhập chủ đề nội dung'); return }
       setShowCreationForm(false)
       setIsGenerating(true)
-      setGeneratingStatus('Đang gửi yêu cầu sinh câu hỏi đến Gemini AI...')
+      setGeneratingStatus('Đang gửi yêu cầu đến AI...')
 
       const questionCount = Math.min(Math.max(Number(draft.questionCount) || 3, 1), 10)
+      const instructions = (draft.prompt || '').trim().slice(0, 1000)
       let result
       if (draft.type === 'reading') {
-        setGeneratingStatus('Đang sinh bài đọc và câu hỏi đọc hiểu (có thể mất 10-20s)...')
-        result = await generateReading({ topic: draft.topic, level: draft.level, questionCount })
+        setGeneratingStatus('Đang sinh bài đọc và câu hỏi...')
+        result = await generateReading({ topic: draft.topic, level: draft.level, questionCount, instructions })
       } else if (draft.type.includes('toeic') || draft.type.includes('cloze')) {
-        setGeneratingStatus('Đang sinh bài tập TOEIC chuẩn ETS (có thể mất 15-30s)...')
+        setGeneratingStatus('Đang sinh bài tập TOEIC...')
         result = await generateCloze({
           topic: draft.topic,
           level: draft.level,
           type: draft.type,
           questionCount,
+          instructions,
         })
       } else {
-        setGeneratingStatus('Đang sinh bộ câu hỏi Quiz trắc nghiệm chuẩn sư phạm (có thể mất 15-30s)...')
+        setGeneratingStatus('Đang sinh bộ câu hỏi...')
         result = await generateQuiz({
           topic: draft.topic,
           level: draft.level,
           questionCount,
           type: draft.type,
+          instructions,
         })
       }
 
-      setGeneratingStatus('Đang lưu nội dung vào CSDL...')
+      setGeneratingStatus('Đang lưu nội dung...')
       const finalTitle = `${draft.topic.trim()} - ${TYPE_LABELS[draft.type] || 'Nội dung AI'}`
       const saved = await saveGeminiContent({
         type: draft.type,

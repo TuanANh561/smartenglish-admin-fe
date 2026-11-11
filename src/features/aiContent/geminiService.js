@@ -19,7 +19,8 @@ export class GeminiServiceError extends Error {
  */
 async function callBackendAiContent(payload) {
   try {
-    const res = await api.post('/admin/ai/generate-content', { data: payload })
+    // Sinh 10 câu hỏi có thể mất hơn 30 giây (timeout mặc định của api)
+    const res = await api.post('/admin/ai/generate-content', { data: payload, timeout: 90000 })
     const data = res?.data !== undefined ? res.data : res
     if (data && (data.questions || data.text || data.title)) {
       return data
@@ -27,12 +28,16 @@ async function callBackendAiContent(payload) {
     throw new GeminiServiceError('Backend trả về nội dung AI không hợp lệ', 'INVALID_RESPONSE')
   } catch (error) {
     if (error instanceof GeminiServiceError) throw error
-    const status = error?.response?.status
+    // Lỗi từ api đã được chuẩn hoá thành { status, message }
+    const status = error?.status ?? error?.response?.status
     if (status === 401 || status === 403) {
       throw new GeminiServiceError('Bạn không có quyền sử dụng chức năng AI này', 'FORBIDDEN')
     }
     if (status === 429) {
       throw new GeminiServiceError('Đã vượt hạn mức AI. Vui lòng thử lại sau', 'RATE_LIMIT')
+    }
+    if (status === 0 && /thời gian chờ/i.test(error?.message || '')) {
+      throw new GeminiServiceError('AI phản hồi quá lâu, vui lòng thử lại với ít câu hỏi hơn', 'TIMEOUT')
     }
     throw new GeminiServiceError(error?.message || 'Dịch vụ AI tạm thời không khả dụng', 'BACKEND_UNAVAILABLE')
   }
@@ -41,12 +46,13 @@ async function callBackendAiContent(payload) {
 /**
  * Sinh bài đọc tiếng Anh kèm câu hỏi đọc hiểu
  */
-export async function generateReading({ topic, level = 'B2', questionCount = 3 }) {
+export async function generateReading({ topic, level = 'B2', questionCount = 3, instructions = '' }) {
   const data = await callBackendAiContent({
     type: 'reading',
     topic,
     level,
     questionCount,
+    instructions,
   })
 
   return {
@@ -65,12 +71,13 @@ export async function generateReading({ topic, level = 'B2', questionCount = 3 }
 /**
  * Sinh bài tập điền khuyết / TOEIC Part 5, Part 6, Part 7
  */
-export async function generateCloze({ topic, level = 'B2', type = 'toeic_part_5', questionCount = 3 }) {
+export async function generateCloze({ topic, level = 'B2', type = 'toeic_part_5', questionCount = 3, instructions = '' }) {
   const data = await callBackendAiContent({
     type,
     topic,
     level,
     questionCount,
+    instructions,
   })
 
   return {
@@ -89,12 +96,13 @@ export async function generateCloze({ topic, level = 'B2', type = 'toeic_part_5'
 /**
  * Sinh bộ câu hỏi trắc nghiệm kiểm tra (Grammar, Vocab, Placement, General)
  */
-export async function generateQuiz({ topic, level = 'B2', questionCount = 3, type = 'quiz_grammar' }) {
+export async function generateQuiz({ topic, level = 'B2', questionCount = 3, type = 'quiz_grammar', instructions = '' }) {
   const data = await callBackendAiContent({
     type,
     topic,
     level,
     questionCount,
+    instructions,
   })
 
   return {
