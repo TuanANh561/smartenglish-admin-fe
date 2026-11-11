@@ -34,7 +34,7 @@ export default function CourseFilters({
     categoryFilter !== 'all' ||
     cefrFilter !== 'all' ||
     statusFilter !== 'all' ||
-    authorFilter !== 'all'
+    authorFilter !== (isTeacher ? 'mine' : 'all')
 
   const handleResetFilters = () => {
     setSearch('')

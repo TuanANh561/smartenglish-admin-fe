@@ -83,7 +83,7 @@ export default function AssignExamToClassModal({ isOpen, onClose, exam }) {
         assignmentType: 'QUIZ',
         referenceId: exam.id,
         instructions: instructions.trim() || `Hoàn thành bài thi ID #${exam.id}`,
-        dueDate: dueDate ? `${dueDate}:00Z` : null,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         passingScore: Number(passingScore) || 5.0,
         isGraded: true,
       }

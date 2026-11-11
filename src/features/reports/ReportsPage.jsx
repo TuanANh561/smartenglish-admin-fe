@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   Eye,
+  FileText,
   Layers,
   Loader2,
   MessageSquare,
@@ -59,6 +60,7 @@ function ReportsPage() {
   const [selectedIds, setSelectedIds] = useState([])
   const [activeReport, setActiveReport] = useState(null)
   const [adminNote, setAdminNote] = useState('')
+  const [isReEvaluating, setIsReEvaluating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Load stats
@@ -146,9 +148,31 @@ function ReportsPage() {
     severityFilter !== 'all' ||
     contentTypeFilter !== 'all'
 
+  // Kiểm tra đối tượng bị báo cáo có phải là Quản trị viên (Admin Protection)
+  const isReportedUserAdmin = (report) => {
+    if (!report?.reportedUser) return false
+    const u = report.reportedUser
+    return (
+      u.isAdmin === true ||
+      String(u.role || '').toLowerCase() === 'admin' ||
+      String(u.role || '').toLowerCase() === 'role_admin' ||
+      String(u.role || '').toLowerCase() === 'super_admin' ||
+      String(u.handle || '').toLowerCase().includes('admin') ||
+      String(u.handle || '').toLowerCase().includes('quantrivien') ||
+      String(u.name || '').toLowerCase().includes('quản trị viên')
+    )
+  }
+
   // Resolve single report
   const handleResolveAction = async (action, actionLabel) => {
     if (!activeReport) return
+
+    // Admin Protection: Tuyệt đối không cho phép khóa tài khoản Quản trị viên
+    if (action === 'BAN_USER' && isReportedUserAdmin(activeReport)) {
+      toast.error('Không thể khóa tài khoản đối với Quản trị viên hệ thống (Admin Protection)!')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // 1. Gọi backend social-service xử lý báo cáo (tự động phân phối cảnh cáo hoặc khóa user và bắn notification/email)
@@ -157,8 +181,8 @@ function ReportsPage() {
         note: adminNote.trim() || undefined,
       })
 
-      // 2. Client-side guarantee: Nếu action là BAN_USER, đảm bảo khóa tài khoản qua auth-service
-      if (action === 'BAN_USER' && activeReport.reportedUser?.id) {
+      // 2. Client-side guarantee: Nếu action là BAN_USER, đảm bảo khóa tài khoản qua auth-service (nếu không phải Admin)
+      if (action === 'BAN_USER' && activeReport.reportedUser?.id && !isReportedUserAdmin(activeReport)) {
         try {
           await lockUser(activeReport.reportedUser.id)
         } catch (e) {
@@ -176,6 +200,7 @@ function ReportsPage() {
 
       setActiveReport(null)
       setAdminNote('')
+      setIsReEvaluating(false)
       loadReports()
       loadStats()
     } catch (err) {
@@ -192,14 +217,29 @@ function ReportsPage() {
       toast.error('Vui lòng chọn ít nhất 1 báo cáo')
       return
     }
+
+    let finalReportIds = selectedIds
+    if (action === 'BAN_USER') {
+      const selectedReports = reports.filter((r) => selectedIds.includes(r.id))
+      const hasAdmin = selectedReports.some(isReportedUserAdmin)
+      if (hasAdmin) {
+        toast.error('Phát hiện Quản trị viên trong danh sách chọn. Đã tự động loại bỏ để bảo vệ an toàn!')
+        finalReportIds = selectedReports.filter((r) => !isReportedUserAdmin(r)).map((r) => r.id)
+        if (finalReportIds.length === 0) {
+          toast.error('Không có người dùng hợp lệ để khóa (Tất cả đối tượng chọn đều là Quản trị viên)!')
+          return
+        }
+      }
+    }
+
     setIsSubmitting(true)
     try {
       await bulkResolveAdminReports({
-        reportIds: selectedIds,
+        reportIds: finalReportIds,
         action,
-        note: `Xử lý hàng loạt (${selectedIds.length} báo cáo)`,
+        note: `Xử lý hàng loạt (${finalReportIds.length} báo cáo)`,
       })
-      toast.success(`Đã thực hiện "${actionLabel}" cho ${selectedIds.length} báo cáo`)
+      toast.success(`Đã thực hiện "${actionLabel}" cho ${finalReportIds.length} báo cáo`)
       setSelectedIds([])
       loadReports()
       loadStats()
@@ -272,6 +312,48 @@ function ReportsPage() {
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">
         <Clock size={12} />
         {label || 'Đang chờ'}
+      </span>
+    )
+  }
+
+  const getActionTakenBadge = (action, label) => {
+    const act = (action || '').toUpperCase()
+    if (act === 'BAN_USER') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-200">
+          <Ban size={13} />
+          {label || 'Đã khóa tài khoản'}
+        </span>
+      )
+    }
+    if (act === 'HIDE_CONTENT') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
+          <ShieldAlert size={13} />
+          {label || 'Đã ẩn nội dung vi phạm'}
+        </span>
+      )
+    }
+    if (act === 'WARN_USER') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-100 px-2.5 py-1 text-xs font-bold text-yellow-800 border border-yellow-200">
+          <AlertTriangle size={13} />
+          {label || 'Đã gửi cảnh cáo'}
+        </span>
+      )
+    }
+    if (act === 'DISMISS') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200">
+          <Shield size={13} />
+          {label || 'Bỏ qua (Không vi phạm)'}
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
+        <CheckCircle2 size={13} />
+        {label || 'Đã hoàn tất xử lý'}
       </span>
     )
   }
@@ -655,7 +737,8 @@ function ReportsPage() {
                           type="button"
                           onClick={() => {
                             setActiveReport(item)
-                            setAdminNote(item.note || '')
+                            setAdminNote(item.note || item.resolutionNote || '')
+                            setIsReEvaluating(false)
                           }}
                           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors cursor-pointer"
                         >
@@ -688,135 +771,294 @@ function ReportsPage() {
         onClose={() => {
           setActiveReport(null)
           setAdminNote('')
+          setIsReEvaluating(false)
         }}
         title="Chi tiết & Xử lý báo cáo vi phạm"
         className="max-w-[520px]"
       >
-        {activeReport && (
-          <div className="space-y-5 text-sm">
-            {/* Header info */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="font-mono text-xs text-slate-400">ID: {activeReport.id}</span>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">{activeReport.reason}</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                {getSeverityBadge(activeReport.severity, activeReport.severityLabel)}
-                {getStatusBadge(activeReport.status, activeReport.statusLabel)}
-              </div>
-            </div>
+        {activeReport && (() => {
+          const isResolved =
+            Boolean(activeReport.status) &&
+            activeReport.status.toLowerCase() !== 'pending' &&
+            !isReEvaluating
 
-            {/* Thông tin đối tượng */}
-            <div className="rounded-xl bg-slate-50 p-4 space-y-2.5 border border-slate-100">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Người bị báo cáo:</span>
-                <span className="font-bold text-slate-900">
-                  {activeReport.reportedUser?.name} ({activeReport.reportedUser?.handle})
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Người gửi báo cáo:</span>
-                <span className="font-semibold text-slate-800">
-                  {activeReport.reporter?.name} ({activeReport.reporter?.handle})
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Phân loại nội dung:</span>
-                <span className="font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
-                  {activeReport.contentType}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Thời điểm gửi:</span>
-                <span className="font-mono text-slate-600">{formatDate(activeReport.createdAt)}</span>
-              </div>
-              {activeReport.reviewedAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Thời điểm xử lý:</span>
-                  <span className="font-mono text-emerald-600 font-semibold">{formatDate(activeReport.reviewedAt)}</span>
+          return (
+            <div className="space-y-5 text-sm">
+              {/* Header info */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <span className="font-mono text-xs text-slate-400">ID: {activeReport.id}</span>
+                  <h3 className="text-base font-bold text-slate-900 mt-0.5">{activeReport.reason}</h3>
                 </div>
+                <div className="flex items-center gap-2">
+                  {getSeverityBadge(activeReport.severity, activeReport.severityLabel)}
+                  {getStatusBadge(activeReport.status, activeReport.statusLabel)}
+                </div>
+              </div>
+
+              {/* Thông tin đối tượng */}
+              <div className="rounded-xl bg-slate-50 p-4 space-y-2.5 border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Người bị báo cáo:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-slate-900">
+                      {activeReport.reportedUser?.name} ({activeReport.reportedUser?.handle})
+                    </span>
+                    {isReportedUserAdmin(activeReport) && (
+                      <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200" title="Tài khoản Quản trị viên được bảo vệ (Admin Protection)">
+                        <ShieldCheck size={11} className="text-amber-700" />
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Người gửi báo cáo:</span>
+                  <span className="font-semibold text-slate-800">
+                    {activeReport.reporter?.name} ({activeReport.reporter?.handle})
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Phân loại nội dung:</span>
+                  <span className="font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
+                    {activeReport.contentType}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Thời điểm gửi:</span>
+                  <span className="font-mono text-slate-600">{formatDate(activeReport.createdAt)}</span>
+                </div>
+                {activeReport.reviewedAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Thời điểm xử lý:</span>
+                    <span className="font-mono text-emerald-600 font-semibold">{formatDate(activeReport.reviewedAt)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Trích dẫn nội dung vi phạm */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">
+                  Nội dung vi phạm được báo cáo:
+                </label>
+                <div className="rounded-xl border border-red-200 bg-red-50/40 p-3.5 text-slate-800 text-sm leading-relaxed font-sans italic">
+                  &ldquo;{activeReport.contentPreview || 'Không có bản trích dẫn nội dung'}&rdquo;
+                </div>
+              </div>
+
+              {isResolved ? (
+                <>
+                  {/* Ghi chú kiểm duyệt đã lưu (Khóa chỉnh sửa) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wide text-slate-600 flex items-center gap-1.5">
+                        <FileText size={13} className="text-slate-500" />
+                        Ghi chú kiểm duyệt đã lưu:
+                      </label>
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                        Đã khóa (Read-only)
+                      </span>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 text-sm text-slate-700 leading-relaxed min-h-[60px]">
+                      {activeReport.note?.trim() || activeReport.resolutionNote?.trim() ? (
+                        <span>{activeReport.note || activeReport.resolutionNote}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">Không có ghi chú bổ sung khi xử lý.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Khối Tổng Kết Quyết Định & Thao Tác */}
+                  <div className="space-y-3 pt-3 border-t border-slate-100">
+                    <div
+                      className={cn(
+                        'rounded-xl border p-4 space-y-3 transition-all',
+                        activeReport.status?.toLowerCase() === 'dismissed'
+                          ? 'bg-slate-50 border-slate-200 text-slate-800'
+                          : 'bg-emerald-50/70 border-emerald-200/90 text-emerald-950',
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-2xs',
+                            activeReport.status?.toLowerCase() === 'dismissed'
+                              ? 'bg-slate-200 text-slate-600'
+                              : 'bg-emerald-600 text-white',
+                          )}
+                        >
+                          {activeReport.status?.toLowerCase() === 'dismissed' ? (
+                            <Shield size={20} />
+                          ) : (
+                            <ShieldCheck size={20} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm">
+                            {activeReport.status?.toLowerCase() === 'dismissed'
+                              ? 'Báo cáo này đã được bỏ qua'
+                              : 'Báo cáo này đã được hoàn tất xử lý'}
+                          </h4>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            Quyết định xử lý đã được áp dụng và lưu vào nhật ký kiểm duyệt an toàn cộng đồng.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-white/90 p-3 border border-slate-200/70 text-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">Hành động đã thi hành:</span>
+                          {getActionTakenBadge(activeReport.actionTaken, activeReport.actionTakenLabel)}
+                        </div>
+                        {activeReport.reviewedAt && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 font-medium">Thời điểm thực hiện:</span>
+                            <span className="font-mono font-semibold text-slate-700">
+                              {formatDate(activeReport.reviewedAt)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">Người kiểm duyệt:</span>
+                          <span className="font-semibold text-slate-700">Quản trị viên hệ thống</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hàng nút bấm: Xét duyệt lại & Đóng */}
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        fullWidth
+                        icon={RefreshCw}
+                        onClick={() => setIsReEvaluating(true)}
+                        className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        Xét duyệt lại
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="primary"
+                        fullWidth
+                        onClick={() => {
+                          setActiveReport(null)
+                          setAdminNote('')
+                          setIsReEvaluating(false)
+                        }}
+                      >
+                        Đóng chi tiết
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Banner khi đang ở chế độ xét duyệt lại */}
+                  {isReEvaluating && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                        <span>
+                          <strong>Chế độ xét duyệt lại:</strong> Bạn có thể cập nhật ghi chú và áp dụng quyết định mới.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsReEvaluating(false)
+                          setAdminNote(activeReport.note || activeReport.resolutionNote || '')
+                        }}
+                        className="shrink-0 font-semibold text-amber-800 hover:text-amber-950 underline cursor-pointer"
+                      >
+                        Hủy thay đổi
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Ghi chú xử lý của Quản trị viên (Editable) */}
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-600 block mb-1.5">
+                      Ghi chú kiểm duyệt (Admin Note):
+                    </label>
+                    <textarea
+                      value={adminNote}
+                      onChange={(e) => setAdminNote(e.target.value)}
+                      placeholder="Nhập lý do xử lý hoặc căn cứ vi phạm..."
+                      rows={3}
+                      className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+
+                  {/* Các hành động xử lý vi phạm */}
+                  <div className="space-y-2 pt-3 border-t border-slate-100">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-900 block mb-2">
+                      Hành động xử lý của Quản trị viên:
+                    </span>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {/* 1. Bỏ qua */}
+                      <Button
+                        variant="secondary"
+                        fullWidth
+                        disabled={isSubmitting}
+                        onClick={() => handleResolveAction('DISMISS', 'Bỏ qua báo cáo (Không vi phạm)')}
+                      >
+                        Bỏ qua báo cáo
+                      </Button>
+
+                      {/* 2. Cảnh cáo người dùng */}
+                      <Button
+                        variant="secondary"
+                        fullWidth
+                        disabled={isSubmitting}
+                        className="text-amber-700 hover:bg-amber-50 border-amber-200"
+                        onClick={() => handleResolveAction('WARN_USER', 'Gửi cảnh cáo vi phạm tới người dùng')}
+                      >
+                        Gửi cảnh cáo
+                      </Button>
+
+                      {/* 3. Ẩn nội dung vi phạm */}
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        disabled={isSubmitting}
+                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                        icon={ShieldAlert}
+                        onClick={() => handleResolveAction('HIDE_CONTENT', 'Ẩn nội dung vi phạm khỏi cộng đồng')}
+                      >
+                        Ẩn nội dung vi phạm
+                      </Button>
+
+                      {/* 4. Khóa tài khoản (Có cơ chế Admin Protection) */}
+                      {isReportedUserAdmin(activeReport) ? (
+                        <div
+                          className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-center text-xs font-semibold text-amber-900 flex items-center justify-center gap-2 select-none"
+                          title="Đối tượng bị báo cáo là Quản trị viên hệ thống — Không thể áp dụng biện pháp khóa tài khoản"
+                        >
+                          <ShieldCheck size={16} className="text-amber-600 shrink-0" />
+                          <span>Quản trị viên được bảo vệ (Không thể khóa)</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          disabled={isSubmitting}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          icon={Ban}
+                          onClick={() => handleResolveAction('BAN_USER', 'Khóa tài khoản người dùng vi phạm')}
+                        >
+                          Khóa tài khoản
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
-
-            {/* Trích dẫn nội dung vi phạm */}
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">
-                Nội dung vi phạm được báo cáo:
-              </label>
-              <div className="rounded-xl border border-red-200 bg-red-50/40 p-3.5 text-slate-800 text-sm leading-relaxed font-sans italic">
-                &ldquo;{activeReport.contentPreview || 'Không có bản trích dẫn nội dung'}&rdquo;
-              </div>
-            </div>
-
-            {/* Ghi chú xử lý của Quản trị viên */}
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wide text-slate-600 block mb-1.5">
-                Ghi chú kiểm duyệt (Admin Note):
-              </label>
-              <textarea
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="Nhập lý do xử lý hoặc căn cứ vi phạm..."
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
-
-            {/* Các hành động xử lý vi phạm */}
-            <div className="space-y-2 pt-3 border-t border-slate-100">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-900 block mb-2">
-                Hành động xử lý của Quản trị viên:
-              </span>
-
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {/* 1. Bỏ qua */}
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  disabled={isSubmitting}
-                  onClick={() => handleResolveAction('DISMISS', 'Bỏ qua báo cáo (Không vi phạm)')}
-                >
-                  Bỏ qua báo cáo
-                </Button>
-
-                {/* 2. Cảnh cáo người dùng */}
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  disabled={isSubmitting}
-                  className="text-amber-700 hover:bg-amber-50 border-amber-200"
-                  onClick={() => handleResolveAction('WARN_USER', 'Gửi cảnh cáo vi phạm tới người dùng')}
-                >
-                  Gửi cảnh cáo
-                </Button>
-
-                {/* 3. Ẩn nội dung vi phạm */}
-                <Button
-                  variant="primary"
-                  fullWidth
-                  disabled={isSubmitting}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
-                  icon={ShieldAlert}
-                  onClick={() => handleResolveAction('HIDE_CONTENT', 'Ẩn nội dung vi phạm khỏi cộng đồng')}
-                >
-                  Ẩn nội dung vi phạm
-                </Button>
-
-                {/* 4. Khóa tài khoản */}
-                <Button
-                  variant="primary"
-                  fullWidth
-                  disabled={isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  icon={Ban}
-                  onClick={() => handleResolveAction('BAN_USER', 'Khóa tài khoản người dùng vi phạm')}
-                >
-                  Khóa tài khoản
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+          )
+        })()}
       </Drawer>
     </div>
   )

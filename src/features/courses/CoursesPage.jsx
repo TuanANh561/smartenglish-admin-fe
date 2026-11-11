@@ -35,9 +35,9 @@ const saveStoredCourseTrash = (list) => {
 export default function CoursesPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const normalizedRole = user?.role?.toLowerCase()
-  const isAdmin = normalizedRole === 'admin'
-  const isTeacher = normalizedRole === 'teacher'
+  const normalizedRole = String(user?.role || '').toLowerCase()
+  const isAdmin = normalizedRole.includes('admin')
+  const isTeacher = normalizedRole.includes('teacher')
   const defaultAuthorFilter = isTeacher ? 'mine' : 'all'
 
   // States
