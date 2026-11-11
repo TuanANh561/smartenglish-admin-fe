@@ -79,7 +79,6 @@ export default function LoginPage() {
   const sendOtpEmail = async (targetUser, token) => {
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString()
     setExpectedOtp(newOtp)
-    console.log('[SmartEnglish Auth] Mã xác thực OTP 2FA:', newOtp)
 
     const authToken = token || pendingAuth?.accessToken
     try {
@@ -96,11 +95,9 @@ export default function LoginPage() {
         },
       })
     } catch (err) {
-      console.warn('Cảnh báo gửi email OTP từ server:', err)
-      if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-        toast.error('Không thể gửi mã xác thực qua email: ' + (err.message || 'Lỗi server'))
-        throw err
-      }
+      // Không có kênh nào khác để lấy mã → báo lỗi rõ ràng thay vì để người dùng chờ mã không bao giờ tới
+      toast.error('Không thể gửi mã xác thực qua email: ' + (err.message || 'Lỗi server'))
+      throw err
     }
 
     return newOtp
