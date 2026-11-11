@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { setTokens, clearTokens, TOKEN_KEY } from '@/lib/api'
 
+const USER_KEY = 'se_admin_user'
+
 /**
  * Quản lý phiên làm việc của Quản trị viên / Giáo viên.
  * Thông tin user được lưu trong localStorage ('se_admin_user') và đồng bộ từ auth-service (/users/me).
@@ -9,7 +11,7 @@ import { setTokens, clearTokens, TOKEN_KEY } from '@/lib/api'
 const getStoredUser = () => {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem('se_admin_user')
+    const raw = localStorage.getItem(USER_KEY)
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -58,10 +60,30 @@ export const useAuthStore = create((set) => ({
   },
 }))
 
+const readUserId = (raw) => {
+  try {
+    return raw ? JSON.parse(raw)?.id ?? null : null
+  } catch {
+    return null
+  }
+}
+
 export const initAuthEventListener = () => {
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('se-admin:unauthorized', () => {
       useAuthStore.getState().clearSession()
+    })
+
+    // Đồng bộ phiên giữa các tab (localStorage dùng chung): tab khác đăng xuất hoặc đổi tài khoản
+    // thì tab này tải lại theo phiên hiện hành — tránh hiển thị admin nhưng gửi request bằng token giáo viên.
+    // Làm mới access token của cùng một user không làm tải lại.
+    window.addEventListener('storage', (event) => {
+      if (event.storageArea !== window.localStorage) return
+      const loggedOut = event.key === TOKEN_KEY && !event.newValue
+      const switchedUser = event.key === USER_KEY && readUserId(event.oldValue) !== readUserId(event.newValue)
+      if (event.key === null || loggedOut || switchedUser) {
+        window.location.reload()
+      }
     })
   }
 }
