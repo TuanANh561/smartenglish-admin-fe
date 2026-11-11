@@ -6,7 +6,7 @@
  * KHÔNG sử dụng bất kỳ Mock Data hay Fake Data nào.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import axios from 'axios'
+import { rawHttp } from '@/lib/api'
 
 const BASE_URL = '/admin/reports'
 
@@ -20,7 +20,7 @@ function getHeaders() {
 }
 
 export async function getAdminReports(params = {}) {
-  const res = await axios.get(BASE_URL, {
+  const res = await rawHttp.get(BASE_URL, {
     params,
     headers: getHeaders(),
   })
@@ -34,7 +34,7 @@ export async function getAdminReports(params = {}) {
 }
 
 export async function getAdminReportStats() {
-  const res = await axios.get(`${BASE_URL}/stats`, {
+  const res = await rawHttp.get(`${BASE_URL}/stats`, {
     headers: getHeaders(),
   })
   return res.data?.data || {
@@ -46,28 +46,28 @@ export async function getAdminReportStats() {
 }
 
 export async function getAdminReportById(id) {
-  const res = await axios.get(`${BASE_URL}/${id}`, {
+  const res = await rawHttp.get(`${BASE_URL}/${id}`, {
     headers: getHeaders(),
   })
   return res.data?.data
 }
 
 export async function resolveAdminReport(id, { action, note }) {
-  const res = await axios.put(`${BASE_URL}/${id}/resolve`, { action, note }, {
+  const res = await rawHttp.put(`${BASE_URL}/${id}/resolve`, { action, note }, {
     headers: getHeaders(),
   })
   return res.data
 }
 
 export async function bulkResolveAdminReports({ reportIds, action, note }) {
-  const res = await axios.post(`${BASE_URL}/bulk-action`, { reportIds, action, note }, {
+  const res = await rawHttp.post(`${BASE_URL}/bulk-action`, { reportIds, action, note }, {
     headers: getHeaders(),
   })
   return res.data
 }
 
 export async function submitPublicReport(payload) {
-  const res = await axios.post('/social/reports', payload, {
+  const res = await rawHttp.post('/social/reports', payload, {
     headers: getHeaders(),
   })
   return res.data

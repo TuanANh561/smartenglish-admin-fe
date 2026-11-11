@@ -6,8 +6,7 @@
  * 100% sử dụng dữ liệu Backend thật, không sử dụng mock hay fake data.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import axios from 'axios'
-import { api } from '@/lib/api'
+import { api, rawHttp } from '@/lib/api'
 
 const BASE = '/admin/audit-logs'
 
@@ -18,7 +17,7 @@ const BASE = '/admin/audit-logs'
  */
 async function callAuditApi(method, path, options = {}) {
   try {
-    const res = await axios({
+    const res = await rawHttp({
       method,
       url: path,
       params: options.params,

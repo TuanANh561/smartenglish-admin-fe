@@ -6,8 +6,7 @@
  * Hỗ trợ fallback tự động giữa Gateway (8080) và trực tiếp content-service (8082)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import axios from 'axios'
-import { api } from '@/lib/api'
+import { api, rawHttp } from '@/lib/api'
 
 const BASE = '/admin/pronunciation-lessons'
 
@@ -24,7 +23,7 @@ export const PRONUNCIATION_CATEGORIES = [
 async function callContentApi(method, path, options = {}) {
   // 1. Ưu tiên gọi qua Vite Proxy (url tương đối, Vite chuyển tiếp sang 8082 không bị chặn CORS)
   try {
-    const res = await axios({
+    const res = await rawHttp({
       method,
       url: path,
       params: options.params,

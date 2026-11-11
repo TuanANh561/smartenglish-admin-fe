@@ -33,7 +33,7 @@ export const http = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-http.interceptors.request.use((config) => {
+const attachAuthHeaders = (config) => {
   const token = getStoredToken(TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
   try {
@@ -56,7 +56,17 @@ http.interceptors.request.use((config) => {
     }
   }
   return config
-})
+}
+http.interceptors.request.use(attachAuthHeaders)
+
+/**
+ * Client gửi tới API Gateway (VITE_API_URL) kèm token như `http`, nhưng trả NGUYÊN response axios
+ * (không bóc vỏ ApiResponse). Dùng cho các feature tự đọc `res.data`. Không được gọi axios trực tiếp với
+ * đường dẫn tương đối: trên Vercel không có Vite proxy, request sẽ nhận về index.html thay vì dữ liệu.
+ */
+export const rawHttp = axios.create({ baseURL: safeBaseURL, timeout: 30000 })
+rawHttp.interceptors.request.use(attachAuthHeaders)
+
 
 http.interceptors.response.use(
   (response) => {
@@ -282,6 +292,8 @@ export const api = {
     return request('PATCH', endpoint, { ...dataOrOptions, ...options })
   },
   del: (endpoint, options) => request('DELETE', endpoint, options),
+  // Bí danh để các hàm gọi api[method] với method = 'delete' cũng hoạt động
+  delete: (endpoint, options) => request('DELETE', endpoint, options),
 }
 
 export default api
