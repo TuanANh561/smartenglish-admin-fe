@@ -9,7 +9,15 @@ import {
 
 describe('ai content soft delete', () => {
   beforeEach(() => {
-    vi.spyOn(http, 'post').mockRejectedValue(new Error('offline test fallback'))
+    // Backend lưu thành công và trả lại bản ghi; sửa/xóa vẫn thử nhánh dự phòng
+    vi.spyOn(http, 'post').mockImplementation((_url, payload) =>
+      Promise.resolve({
+        ...payload,
+        id: `AIC-test-${Math.random().toString(36).slice(2)}`,
+        status: 'PENDING_REVIEW',
+        createdAt: new Date().toISOString(),
+      }),
+    )
     vi.spyOn(http, 'put').mockRejectedValue(new Error('offline test fallback'))
     vi.spyOn(http, 'delete').mockRejectedValue(new Error('offline test fallback'))
   })
@@ -48,5 +56,14 @@ describe('ai content soft delete', () => {
 
     expect(restored.status).toBe('PENDING_REVIEW')
     expect(restored.deletedAt).toBeNull()
+  })
+
+  it('báo lỗi khi backend không lưu được, không âm thầm lưu tạm vào trình duyệt', async () => {
+    http.post.mockRejectedValueOnce(new Error('Máy chủ gặp sự cố'))
+    const before = getAIContentRecords().length
+    await expect(
+      saveGeminiContent({ type: 'quiz', title: 'Lưu lỗi', content: 'x', level: 'B1', questions: [], createdBy: 'Admin' }),
+    ).rejects.toThrow('Không lưu được nội dung')
+    expect(getAIContentRecords().length).toBe(before)
   })
 })
