@@ -76,7 +76,7 @@ export const transactionColumns = [
 
       if (isGrant && val === 0) {
         return (
-          <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200">
+          <span className="inline-flex items-center whitespace-nowrap rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200">
             Miễn phí (Cấp quyền)
           </span>
         )

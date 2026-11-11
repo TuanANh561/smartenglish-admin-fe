@@ -1,8 +1,6 @@
-import { useState } from 'react'
-import { CheckCircle2, ChevronRight, ShoppingBag, ArrowUpRight, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, ShoppingBag, ArrowUpRight, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
-import Badge from '@/components/ui/Badge'
 import Card, { CardHeader } from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
 import ErrorState from '@/components/ui/ErrorState'
@@ -75,10 +73,16 @@ export default function RecentTransactionsCard({
             description="Các đơn hàng thanh toán thành công qua SePay VietQR sẽ hiển thị thời gian thực tại đây."
           />
         ) : (
-          <div className="overflow-x-auto scrollbar-none">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] table-fixed text-left text-xs">
+              <colgroup>
+                <col />
+                <col className="w-[30%]" />
+                <col className="w-[17%]" />
+                <col className="w-[17%]" />
+              </colgroup>
               <thead>
-                <tr className="bg-canvas border-y border-line text-ink-muted">
+                <tr className="bg-canvas border-y border-line text-ink-muted whitespace-nowrap">
                   <th className="px-3 py-2 font-bold uppercase tracking-wider">Khách hàng</th>
                   <th className="px-2.5 py-2 font-bold uppercase tracking-wider">Gói đăng ký</th>
                   <th className="px-2.5 py-2 font-bold uppercase tracking-wider text-right">Số tiền</th>
@@ -115,7 +119,7 @@ export default function RecentTransactionsCard({
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50/80 border border-amber-200/70 px-2 py-0.5 text-[11px] font-semibold text-amber-800 max-w-[170px]">
+                        <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50/80 border border-amber-200/70 px-2 py-0.5 text-[11px] font-semibold text-amber-800 max-w-full">
                           <ShoppingBag size={12} className="shrink-0 text-amber-600" />
                           <span className="truncate" title={planTitle}>
                             {planTitle}
@@ -123,13 +127,16 @@ export default function RecentTransactionsCard({
                         </div>
                       </td>
 
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-3 py-3 text-right whitespace-nowrap">
                         <span className="font-extrabold text-emerald-600 text-xs tracking-tight">
                           +{formatCurrency(amount)}
                         </span>
                       </td>
 
-                      <td className="px-3.5 py-3 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                      <td
+                        className="px-3.5 py-3 text-right text-slate-400 text-[11px] whitespace-nowrap truncate"
+                        title={formatRelativeTime(occurredAt)}
+                      >
                         {formatRelativeTime(occurredAt)}
                       </td>
                     </tr>
