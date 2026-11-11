@@ -322,9 +322,20 @@ export default function ClassCoursesTab({
                               </div>
                             </div>
 
-                            <span className="shrink-0 text-xs font-semibold text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                              Vào bài &rarr;
-                            </span>
+                            {onCreateAssignmentWithCourse && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onCreateAssignmentWithCourse(course, lesson)
+                                }}
+                                className="shrink-0 rounded-lg p-1.5 text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer"
+                                title="Giao bài học này cho lớp"
+                                aria-label="Giao bài học này cho lớp"
+                              >
+                                <ClipboardList size={16} strokeWidth={1.75} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>

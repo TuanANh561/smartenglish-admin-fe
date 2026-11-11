@@ -43,6 +43,7 @@ export const ENDPOINTS = {
     resetDefaults: '/admin/roles/:id/reset-defaults',
     permissionGroups: '/admin/roles/permission-groups',
     permissions: '/admin/permissions',
+    matrix: '/admin/permissions/matrix',
     assign: '/admin/users/:id/roles',
   },
 
@@ -282,6 +283,10 @@ export const ENDPOINTS = {
     classMembers: '/api/v1/teacher/classes/:id/members',
     removeMember: '/api/v1/teacher/classes/:id/members/:userId',
     assignments: '/api/v1/teacher/classes/:id/assignments',
+    submitAssignment: '/api/v1/teacher/classes/assignments/:assignmentId/submit',
+    assignmentSubmissions: '/api/v1/teacher/classes/assignments/:assignmentId/submissions',
+    mySubmission: '/api/v1/teacher/classes/assignments/:assignmentId/my-submission',
+    gradeSubmission: '/api/v1/teacher/classes/assignments/submissions/:submissionId/grade',
     quota: '/api/v1/teacher/classes/quota',
   },
 }

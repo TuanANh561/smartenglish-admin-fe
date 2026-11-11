@@ -66,23 +66,23 @@ export const createAssignment = (classId, data) =>
   })
 
 export const submitAssignment = (assignmentId, data) =>
-  api.post('/api/v1/teacher/classes/assignments/{assignmentId}/submit', {
+  api.post(ENDPOINTS.teacher.submitAssignment, {
     path: { assignmentId },
     data,
   })
 
 export const getAssignmentSubmissions = (assignmentId) =>
-  api.get('/api/v1/teacher/classes/assignments/{assignmentId}/submissions', {
+  api.get(ENDPOINTS.teacher.assignmentSubmissions, {
     path: { assignmentId },
   })
 
 export const getMySubmission = (assignmentId) =>
-  api.get('/api/v1/teacher/classes/assignments/{assignmentId}/my-submission', {
+  api.get(ENDPOINTS.teacher.mySubmission, {
     path: { assignmentId },
   })
 
 export const gradeSubmission = (submissionId, data) =>
-  api.put('/api/v1/teacher/classes/assignments/submissions/{submissionId}/grade', {
+  api.put(ENDPOINTS.teacher.gradeSubmission, {
     path: { submissionId },
     data,
   })

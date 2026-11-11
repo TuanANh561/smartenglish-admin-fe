@@ -9,10 +9,13 @@ import {
   LayoutGrid,
   Pencil,
   Shield,
+  ShieldAlert,
+  Lock,
   Users,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
+import { usePermission } from '@/lib/rbac'
 import { formatTeacherName } from '../classConstants'
 import {
   addMember,
@@ -52,6 +55,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   const isTeacherOwner =
     currentCls?.teacherId != null && user?.id != null && String(currentCls.teacherId) === String(user.id)
   const canEditClass = isAdmin || isTeacherOwner
+  const canViewStudents = usePermission('view_students')
 
   // Data states
   const [members, setMembers] = useState([])
@@ -62,6 +66,14 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
   // Modal states
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false)
+  const [assignmentPreset, setAssignmentPreset] = useState(null)
+  // Chỉ giáo viên phụ trách lớp mới giao bài; quản trị viên chỉ xem/điều chỉnh thông tin lớp
+  const canAssign = isTeacherOwner && !isAdmin
+
+  const openCreateAssignment = (preset = null) => {
+    setAssignmentPreset(preset)
+    setIsCreateAssignmentOpen(true)
+  }
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   useEffect(() => {
@@ -247,8 +259,13 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
                   </span>
                 )}
                 {tab.key === 'students' && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-                    {members.length}
+                  <span className="flex items-center gap-1">
+                    {!isAdmin && !canViewStudents && (
+                      <Lock size={12} className="text-amber-500" title="Quyền xem bị khóa" />
+                    )}
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+                      {members.length}
+                    </span>
                   </span>
                 )}
                 {tab.key === 'assignments' && (
@@ -277,19 +294,39 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
           <ClassCoursesTab
             cls={currentCls}
             canEdit={canEditClass}
-            onCreateAssignmentWithCourse={() => setIsCreateAssignmentOpen(true)}
+            onCreateAssignmentWithCourse={
+              canAssign ? (course, lesson) => openCreateAssignment({ courseId: course.id, lesson }) : undefined
+            }
           />
         )}
 
         {activeTab === 'students' && (
-          <ClassStudentsTab
-            cls={currentCls}
-            members={members}
-            loading={loadingMembers}
-            onViewStudent={onViewStudent}
-            onAddStudent={() => setIsAddStudentOpen(true)}
-            onRemoveStudent={handleRemoveMember}
-          />
+          !isAdmin && !canViewStudents ? (
+            <div className="p-8 sm:p-14 text-center rounded-2xl border border-dashed border-red-200 bg-red-50/30 m-5">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600 mb-3 border border-red-200/80 shadow-2xs">
+                <ShieldAlert size={28} />
+              </div>
+              <h4 className="text-sm font-bold text-slate-900">
+                Quyền xem danh sách học viên hiện đang bị khóa
+              </h4>
+              <p className="mt-1 text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                Quản trị viên hệ thống đã tạm thời tắt quyền <strong>&ldquo;Xem danh sách học viên (view_students)&rdquo;</strong> cho vai trò Giáo viên.
+              </p>
+              <div className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200/80">
+                <Lock size={13} className="text-amber-600" />
+                <span>Liên hệ Quản trị viên hoặc vào mục Cấu hình phân quyền để bật lại quyền này.</span>
+              </div>
+            </div>
+          ) : (
+            <ClassStudentsTab
+              cls={currentCls}
+              members={members}
+              loading={loadingMembers}
+              onViewStudent={onViewStudent}
+              onAddStudent={() => setIsAddStudentOpen(true)}
+              onRemoveStudent={handleRemoveMember}
+            />
+          )
         )}
 
         {activeTab === 'assignments' && (
@@ -297,7 +334,11 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
             cls={currentCls}
             assignments={assignments}
             loading={loadingAssignments}
-            onCreateAssignmentClick={() => setIsCreateAssignmentOpen(true)}
+            onCreateAssignmentClick={canAssign ? () => openCreateAssignment() : undefined}
+            onSubmissionsChanged={() => {
+              loadAssignments()
+              loadMembers()
+            }}
           />
         )}
 
@@ -316,6 +357,7 @@ export default function ClassDetailView({ cls, onBack, onViewStudent }) {
       <CreateAssignmentModal
         isOpen={isCreateAssignmentOpen}
         onClose={() => setIsCreateAssignmentOpen(false)}
+        preset={assignmentPreset}
         cls={currentCls}
         onCreateAssignment={handleCreateAssignment}
       />

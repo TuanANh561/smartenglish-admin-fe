@@ -1,11 +1,34 @@
-import { BookOpen, Calendar, CheckCircle, Clock, FileText, Plus, ClipboardList } from 'lucide-react'
+import { useState } from 'react'
+import {
+  BookOpen,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Paperclip,
+  PenLine,
+  Plus,
+  X,
+} from 'lucide-react'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import AssignmentSubmissionsModal from './AssignmentSubmissionsModal'
+import AssignmentDetailModal from './AssignmentDetailModal'
 
 const TYPE_CONFIG = {
   HOMEWORK: { label: 'Bài tập', bg: '#eff6ff', text: '#2563eb' },
   QUIZ: { label: 'Trắc nghiệm', bg: '#ecfdf5', text: '#059669' },
+  WRITING: { label: 'Viết luận', bg: '#fef3c7', text: '#d97706' },
   ESSAY: { label: 'Viết luận', bg: '#fef3c7', text: '#d97706' },
   SPEAKING: { label: 'Luyện nói', bg: '#fdf2f8', text: '#db2777' },
+  ROLEPLAY: { label: 'Luyện nói', bg: '#fdf2f8', text: '#db2777' },
+  READING: { label: 'Đọc hiểu', bg: '#f0f9ff', text: '#0284c7' },
+  LISTENING: { label: 'Luyện nghe', bg: '#f5f3ff', text: '#7c3aed' },
+  VOCAB_DECK: { label: 'Từ vựng', bg: '#fff7ed', text: '#ea580c' },
+  GRAMMAR: { label: 'Ngữ pháp', bg: '#f0fdf4', text: '#16a34a' },
+  EXAM: { label: 'Đề thi', bg: '#ecfdf5', text: '#059669' },
 }
 
 export default function ClassAssignmentsTab({
@@ -13,7 +36,12 @@ export default function ClassAssignmentsTab({
   assignments = [],
   loading = false,
   onCreateAssignmentClick,
+  onSubmissionsChanged,
 }) {
+  const [previewFile, setPreviewFile] = useState(null)
+  const [reviewing, setReviewing] = useState(null)
+  const [viewing, setViewing] = useState(null)
+
   const formatDate = (d) => {
     if (!d) return 'Không có hạn chót'
     try {
@@ -29,6 +57,15 @@ export default function ClassAssignmentsTab({
     }
   }
 
+  const getViewerUrl = (url) => {
+    if (!url) return ''
+    const lower = url.toLowerCase()
+    if (lower.endsWith('.doc') || lower.endsWith('.docx') || lower.endsWith('.ppt') || lower.endsWith('.pptx') || lower.endsWith('.xls') || lower.endsWith('.xlsx')) {
+      return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
+    }
+    return url
+  }
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -39,14 +76,16 @@ export default function ClassAssignmentsTab({
             Tổng số {assignments.length} bài tập đã được giao cho lớp này
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreateAssignmentClick}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
-        >
-          <ClipboardList size={14} />
-          <span>Giao bài tập mới</span>
-        </button>
+        {onCreateAssignmentClick && (
+          <button
+            type="button"
+            onClick={onCreateAssignmentClick}
+            className="flex items-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-700 px-4 py-2 text-xs font-semibold text-white transition-colors shadow-xs cursor-pointer"
+          >
+            <ClipboardList size={14} />
+            <span>Giao bài tập mới</span>
+          </button>
+        )}
       </div>
 
       {/* List */}
@@ -60,16 +99,18 @@ export default function ClassAssignmentsTab({
             </span>
             <p className="text-sm font-medium text-slate-600">Chưa có bài tập nào được giao</p>
             <p className="text-xs text-slate-400 mt-1 mb-4">
-              Hãy giao bài tập về nhà, trắc nghiệm hoặc bài viết luận cho học viên
+              Hãy giao bài tập từ kho học liệu hệ thống hoặc tải lên file học liệu cho học viên
             </p>
-            <button
-              type="button"
-              onClick={onCreateAssignmentClick}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Plus size={14} />
-              <span>Giao bài ngay</span>
-            </button>
+            {onCreateAssignmentClick && (
+              <button
+                type="button"
+                onClick={onCreateAssignmentClick}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Plus size={14} />
+                <span>Giao bài ngay</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3.5">
@@ -88,7 +129,14 @@ export default function ClassAssignmentsTab({
                       >
                         {typeCfg.label}
                       </span>
-                      <h5 className="text-sm font-bold text-slate-900">{asm.title}</h5>
+                      <button
+                        type="button"
+                        onClick={() => setViewing(asm)}
+                        className="text-left text-sm font-bold text-slate-900 hover:text-brand-600 transition-colors cursor-pointer"
+                        title="Xem nội dung bài tập"
+                      >
+                        {asm.title}
+                      </button>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -96,6 +144,50 @@ export default function ClassAssignmentsTab({
                       <span>Hạn nộp: {formatDate(asm.dueDate)}</span>
                     </div>
                   </div>
+
+                  {/* Học liệu hệ thống hoặc File đính kèm */}
+                  {(asm.referenceTitle || asm.attachmentUrl) && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {asm.referenceTitle && (
+                        <div className="inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-1.5 text-xs text-brand-800">
+                          <BookOpen size={13} className="text-brand-600 shrink-0" />
+                          <span className="font-medium">{asm.referenceTitle}</span>
+                        </div>
+                      )}
+
+                      {asm.attachmentUrl && (
+                        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
+                          <Paperclip size={13} className="text-brand-600 shrink-0" />
+                          <span className="font-semibold truncate max-w-[240px]">
+                            {asm.attachmentName || 'Tài liệu bài tập đính kèm'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewFile({
+                                url: asm.attachmentUrl,
+                                name: asm.attachmentName || asm.title || 'Tài liệu bài tập',
+                              })
+                            }
+                            className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-brand-600 hover:bg-brand-50 transition-colors cursor-pointer"
+                          >
+                            <Eye size={12} />
+                            <span>Xem file</span>
+                          </button>
+                          <a
+                            href={asm.attachmentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download={asm.attachmentName || true}
+                            className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                          >
+                            <Download size={12} />
+                            <span>Tải về</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {asm.instructions && (
                     <p className="mt-3 text-xs text-slate-600 line-clamp-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
@@ -117,9 +209,18 @@ export default function ClassAssignmentsTab({
                       <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700 text-xs">
                         <CheckCircle size={12} />
                         <span>
-                          Đã nộp: {asm.submissionCount || 0} / {cls.studentCount || 0}
+                          Đã nộp: {asm.submissionCount || 0} / {cls?.studentCount || 0}
+                          {asm.submissionCount > 0 && ` · Đã chấm: ${asm.gradedCount || 0}`}
                         </span>
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => setReviewing(asm)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        <PenLine size={12} />
+                        <span>Chấm bài</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -128,6 +229,80 @@ export default function ClassAssignmentsTab({
           </div>
         )}
       </div>
+
+      <AssignmentDetailModal
+        assignment={viewing}
+        studentCount={cls?.studentCount}
+        onClose={() => setViewing(null)}
+        onOpenSubmissions={(asm) => {
+          setViewing(null)
+          setReviewing(asm)
+        }}
+        onPreviewFile={(file) => {
+          setViewing(null)
+          setPreviewFile(file)
+        }}
+      />
+
+      <AssignmentSubmissionsModal
+        assignment={reviewing}
+        onClose={() => setReviewing(null)}
+        onGraded={onSubmissionsChanged}
+      />
+
+      {/* Modal xem trước file học liệu ngay trên Web */}
+      {previewFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText size={17} className="text-brand-600 shrink-0" />
+                <h4 className="truncate text-sm font-bold text-slate-900">{previewFile.name}</h4>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewFile.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <ExternalLink size={13} />
+                  <span>Mở tab mới</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewFile(null)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 bg-slate-100">
+              {/\.(png|jpg|jpeg|gif|webp)$/i.test(previewFile.url) ? (
+                <div className="flex h-full items-center justify-center p-4 overflow-auto">
+                  <img
+                    src={previewFile.url}
+                    alt={previewFile.name}
+                    className="max-h-full max-w-full rounded-lg object-contain shadow-md"
+                  />
+                </div>
+              ) : /\.(mp3|wav|ogg)$/i.test(previewFile.url) ? (
+                <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+                  <audio controls src={previewFile.url} className="w-full max-w-md" />
+                </div>
+              ) : (
+                <iframe
+                  src={getViewerUrl(previewFile.url)}
+                  title={previewFile.name}
+                  className="h-full w-full border-0"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
