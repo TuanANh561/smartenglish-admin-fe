@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
+  Check,
   GraduationCap,
   RefreshCw,
   RotateCcw,
@@ -12,6 +13,7 @@ import {
   User,
   Users,
   Wallet,
+  X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
@@ -703,14 +705,25 @@ function FragmentGroup({ group, GroupIcon, roles, onToggle }) {
             const checked = isAdmin ? true : Boolean(r.permissions?.[item.key])
             return (
               <td key={`${r.id}-${item.key}`} className="py-3 px-4 text-center">
-                <div className="inline-flex justify-center">
-                  <Switch
-                    id={`matrix-${r.id}-${item.key}`}
-                    checked={checked}
-                    onChange={() => onToggle(r.id, item.key)}
-                    disabled={isAdmin}
-                  />
-                </div>
+                <button
+                  type="button"
+                  id={`matrix-${r.id}-${item.key}`}
+                  role="checkbox"
+                  aria-checked={checked}
+                  aria-label={`${item.label} - ${r.name || r.id}`}
+                  title={isAdmin ? 'Quản trị viên luôn có toàn quyền' : checked ? 'Đang cấp quyền' : 'Chưa cấp quyền'}
+                  onClick={() => onToggle(r.id, item.key)}
+                  disabled={isAdmin}
+                  className={cn(
+                    'inline-flex h-7 w-7 items-center justify-center rounded-lg border transition-colors',
+                    checked
+                      ? 'border-[#15803D]/30 bg-[#DCFCE7] text-[#15803D]'
+                      : 'border-line bg-white text-slate-400',
+                    isAdmin ? 'cursor-not-allowed opacity-60' : checked ? 'hover:border-[#15803D]' : 'hover:border-slate-300 hover:text-slate-500',
+                  )}
+                >
+                  {checked ? <Check size={16} strokeWidth={2.5} /> : <X size={16} strokeWidth={2.25} />}
+                </button>
               </td>
             )
           })}
