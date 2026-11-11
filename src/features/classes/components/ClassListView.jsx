@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Pencil, Plus, Search, Trash2, BookOpen, Crown, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
+import { Eye, Pencil, Plus, RefreshCw, Search, Trash2, BookOpen, Crown, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import { CLASS_STATUS, LEVEL_COLOR, formatTeacherName } from '../classConstants'
@@ -315,6 +316,20 @@ export default function ClassListView({ onViewClass }) {
                 <span>Nâng cấp thêm lớp</span>
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                loadClasses()
+                loadQuota()
+              }}
+              disabled={loading}
+              title="Làm mới"
+              aria-label="Làm mới danh sách lớp"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-60 transition-colors cursor-pointer"
+            >
+              <RefreshCw size={15} className={cn(loading && 'animate-spin')} />
+            </button>
 
             <button
               type="button"
