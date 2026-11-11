@@ -248,6 +248,26 @@ export default function LandingNavbar() {
                 <Download size={16} />
                 Tải App Miễn Phí
               </a>
+              {/* Nút đăng nhập bị ẩn cùng .se-desktop-cta ở màn hẹp → đưa vào menu di động */}
+              <a
+                href="/dang-nhap"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: '0.75rem',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  padding: '0.875rem',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                }}
+              >
+                Đăng nhập
+              </a>
             </div>
           </motion.div>
         )}
