@@ -5,7 +5,7 @@
  * Quản lý ngân hàng Quiz luyện tập (Micro-quiz, Ghép nối, Điền từ, Trắc nghiệm)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import axios from 'axios'
+import { rawHttp } from '@/lib/api'
 
 const BASE_URL = '/admin/quizzes'
 
@@ -28,7 +28,7 @@ export const QUESTION_TYPES = [
 
 export async function getAdminQuizzes(params = {}) {
   try {
-    const res = await axios.get(BASE_URL, { params })
+    const res = await rawHttp.get(BASE_URL, { params })
     return res.data?.data || []
   } catch (err) {
     console.warn('[quizServiceApi] Không thể kết nối learning-service, sử dụng fallback:', err.message)
@@ -37,36 +37,36 @@ export async function getAdminQuizzes(params = {}) {
 }
 
 export async function getAdminQuizById(id) {
-  const res = await axios.get(`${BASE_URL}/${id}`)
+  const res = await rawHttp.get(`${BASE_URL}/${id}`)
   return res.data?.data
 }
 
 export async function createAdminQuiz(payload) {
-  const res = await axios.post(BASE_URL, payload)
+  const res = await rawHttp.post(BASE_URL, payload)
   return res.data?.data
 }
 
 export async function updateAdminQuiz(id, payload) {
-  const res = await axios.put(`${BASE_URL}/${id}`, payload)
+  const res = await rawHttp.put(`${BASE_URL}/${id}`, payload)
   return res.data?.data
 }
 
 export async function deleteAdminQuiz(id) {
-  const res = await axios.delete(`${BASE_URL}/${id}`)
+  const res = await rawHttp.delete(`${BASE_URL}/${id}`)
   return res.data
 }
 
 export async function addQuestionToQuiz(quizId, questionPayload) {
-  const res = await axios.post(`${BASE_URL}/${quizId}/questions`, questionPayload)
+  const res = await rawHttp.post(`${BASE_URL}/${quizId}/questions`, questionPayload)
   return res.data?.data
 }
 
 export async function updateQuestionInQuiz(quizId, questionId, questionPayload) {
-  const res = await axios.put(`${BASE_URL}/${quizId}/questions/${questionId}`, questionPayload)
+  const res = await rawHttp.put(`${BASE_URL}/${quizId}/questions/${questionId}`, questionPayload)
   return res.data?.data
 }
 
 export async function deleteQuestionFromQuiz(quizId, questionId) {
-  const res = await axios.delete(`${BASE_URL}/${quizId}/questions/${questionId}`)
+  const res = await rawHttp.delete(`${BASE_URL}/${quizId}/questions/${questionId}`)
   return res.data
 }

@@ -1,33 +1,12 @@
-import { api, http } from '@/lib/api'
+import { api } from '@/lib/api'
 
-const DIRECT_AI_PRACTICE_URL = 'http://localhost:8084'
 
 /**
  * Gọi API với cơ chế tự động fallback giữa API Gateway (8080) và Direct Service (8084)
  */
 async function callApiWithFallback(method, path, options = {}) {
-  try {
-    // 1. Thử gọi qua API Gateway
-    return await api[method](path, options)
-  } catch (err) {
-    // 2. Nếu Gateway lỗi kết nối, thử gọi trực tiếp vào ai-practice-service (8084)
-    if (err.message?.includes('Network Error') || err.message?.includes('status 502') || !err.status) {
-      try {
-        const fullUrl = `${DIRECT_AI_PRACTICE_URL}${path}`
-        const res = await http.request({
-          method,
-          url: fullUrl,
-          params: options.params,
-          data: options.data,
-          headers: options.headers,
-        })
-        return res?.data !== undefined ? res.data : res
-      } catch (fallbackErr) {
-        throw fallbackErr
-      }
-    }
-    throw err
-  }
+  // Luôn đi qua API Gateway; không gọi thẳng localhost (trên môi trường deploy sẽ lỗi)
+  return api[method](path, options)
 }
 
 /**

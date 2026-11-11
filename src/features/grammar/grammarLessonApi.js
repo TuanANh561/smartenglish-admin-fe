@@ -5,8 +5,7 @@
  * Đã kết nối với Database PostgreSQL thật, KHÔNG sử dụng mock data.
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import axios from 'axios'
-import { api } from '@/lib/api'
+import { api, rawHttp } from '@/lib/api'
 
 const BASE = '/admin/grammar-lessons'
 
@@ -41,7 +40,7 @@ function normalizeLesson(item) {
 async function callContentApi(method, path, options = {}) {
   // 1. Ưu tiên gọi qua Vite Proxy
   try {
-    const res = await axios({
+    const res = await rawHttp({
       method,
       url: path,
       params: options.params,
