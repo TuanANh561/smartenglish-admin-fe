@@ -1,199 +1,131 @@
-# SmartEnglish AI — Admin Dashboard
+<p align="center">
+  <img src="public/loxera-logo.png" alt="Loxera English" width="96" />
+</p>
 
-[![React](https://img.shields.io/badge/React-19.2-61DAFB.svg?style=flat-square&logo=react)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF.svg?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4.svg?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Zustand](https://img.shields.io/badge/Zustand-v5-4338CA.svg?style=flat-square)](https://github.com/pmndrs/zustand)
-[![TanStack Query](https://img.shields.io/badge/TanStack%20Query-v5-FF4154.svg?style=flat-square&logo=reactquery&logoColor=white)](https://tanstack.com/query)
-[![TanStack Table](https://img.shields.io/badge/TanStack%20Table-v9-FF4154.svg?style=flat-square&logo=reacttable&logoColor=white)](https://tanstack.com/table)
-[![Recharts](https://img.shields.io/badge/Recharts-v2-22B5BF.svg?style=flat-square)](https://recharts.org)
-[![Axios](https://img.shields.io/badge/Axios-HTTP-5A29E4.svg?style=flat-square&logo=axios&logoColor=white)](https://axios-http.com)
+<h1 align="center">SmartEnglish AI — Web quản lý (Admin & Giáo viên)</h1>
 
-Repository chứa **Admin Frontend** của đồ án tốt nghiệp *Hệ thống học tập tiếng Anh thông minh tích hợp trí tuệ nhân tạo (SmartEnglish AI)*.
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square&logo=reactquery&logoColor=white" alt="TanStack Query" />
+  <img src="https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel" alt="Vercel" />
+</p>
 
-Ứng dụng web quản trị nội bộ dành cho Quản trị viên (Admin), cung cấp giao diện trực quan để vận hành hệ thống, quản lý người dùng, duyệt nội dung AI, quản lý kho học liệu (từ vựng, bài đọc, bài nghe, bài kiểm tra), quản lý gói cước & đối soát thanh toán.
+Trang web cho **quản trị viên** và **giáo viên** của hệ thống học tiếng Anh SmartEnglish AI (thương hiệu *Loxera English*).
+Học viên dùng ứng dụng di động ([`smartenglish-ai-mobile`](../smartenglish-ai-mobile)); mọi dữ liệu đi qua API Gateway của [`smartenglish-ai-backend`](../smartenglish-ai-backend).
 
 ---
 
-## 1. Kiến trúc & Vị trí trong hệ thống
+## 1. Vị trí trong hệ thống
 
 ```
-┌────────────────────────────────┐
-│   SmartEnglish Admin Frontend  │
-│    (React 19 + Vite + Tailwind)│
-│          ← Repo này            │
-└───────────────┬────────────────┘
-                │
-                │ REST API (JSON / FormData)
-                ▼
-┌────────────────────────────────────────────────────────┐
-│             SmartEnglish AI Backend                    │
-│      (Microservices Spring Boot 3 + Java 17)           │
-│                                                        │
-│ • API Gateway       : http://localhost:8080/api        │
-│ • Content Service   : http://localhost:8082            │
-│ • Auth Service      : http://localhost:8081            │
-│ • Learning Service  : http://localhost:8083            │
-│ • AI Service        : http://localhost:8084            │
-│ • Payment Service   : http://localhost:8085            │
-└────────────────────────────────────────────────────────┘
+ Web quản lý (React) ─┐
+                      ├──HTTPS──► API Gateway :8080 ──► các microservice (Eureka)
+ App học viên (Expo) ─┘                │
+                                       └──SockJS/STOMP /ws-chat──► social-service (chat realtime)
 ```
 
----
+- Chỉ gọi **một địa chỉ** là API Gateway (`VITE_API_URL`); Eureka / discovery-service là chuyện nội bộ của backend, web không cần cấu hình thêm.
+- Chat realtime đi qua gateway tại `${VITE_API_URL}/ws-chat` (có thể ghi đè bằng `VITE_WS_URL`).
+- Thông báo realtime nhận qua **SSE** từ notification-service.
 
-## 2. Công nghệ sử dụng
+## 2. Công nghệ
 
-- **Core Framework**: [React 19](https://react.dev/), [Vite 8](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (sử dụng `@theme` tokens tùy biến, tối ưu bảng màu Light Mode chuẩn mực)
-- **Quản lý trạng thái & Cache**: [Zustand](https://github.com/pmndrs/zustand), [TanStack Query v5 (React Query)](https://tanstack.com/query)
-- **Bảng biểu & Dữ liệu**: [TanStack Table v9](https://tanstack.com/table) (phân trang, sắp xếp đa tiêu chí, mở rộng dòng chi tiết, xuất CSV)
-- **Biểu đồ thống kê**: [Recharts](https://recharts.org/) (KPI Cards, Line/Bar Chart, Donut Breakdown tùy biến cao cấp)
-- **Form & Validation**: [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/)
-- **Biểu tượng & UI**: [Lucide React](https://lucide.dev/), [React Hot Toast](https://react-hot-toast.com/), [Monaco Editor](https://microsoft.github.io/monaco-editor/)
-- **Xử lý tệp & Import**: [PapaParse](https://www.papaparse.com/), React Dropzone
+| Nhóm | Thư viện | Dùng để |
+|---|---|---|
+| Nền tảng | React 19, Vite, React Router | SPA, định tuyến |
+| Giao diện | Tailwind CSS 4, lucide-react | Design system navy / brand, icon đơn sắc |
+| Dữ liệu | TanStack Query, Axios, Zustand | Gọi API + cache, tự refresh token khi 401, trạng thái đăng nhập |
+| Bảng / biểu đồ | TanStack Table, Recharts | Danh sách lớn có lọc/sắp xếp, thống kê doanh thu |
+| Form | react-hook-form, zod | Kiểm tra dữ liệu nhập |
+| Nhập/xuất file | xlsx, papaparse | Import từ vựng, đề thi từ Excel/CSV; xuất CSV |
+| Realtime | @stomp/stompjs, sockjs-client | Nhắn tin cộng đồng |
+| Kiểm thử | Vitest | Unit test |
 
----
+## 3. Chức năng
 
-## 3. Các chức năng chính đã triển khai
+### Dùng chung
 
-### 3.1. Tổng quan & Thống kê (`/`)
-- **Dashboard KPI**: Tổng người dùng hoạt động, học viên trả phí, tỷ lệ chuyển đổi, doanh thu thực tế.
-- **Biểu đồ xu hướng**: Tăng trưởng người dùng mới, tỷ trọng học viên theo cấp độ CEFR, doanh thu theo tháng.
-- **Bảng hoạt động gần đây**: Lịch sử thao tác, đăng ký và giao dịch thời gian thực.
+- **Trang giới thiệu** (`/`) — landing page giới thiệu ứng dụng; menu di động có nút Đăng nhập.
+- **Đăng nhập** (`/dang-nhap`) có bước xác thực OTP qua email; **mỗi trình duyệt một phiên** (đổi tài khoản ở tab khác thì các tab tự tải lại).
+- **Đăng ký giáo viên** (`/dang-ky-giao-vien`) — hồ sơ chờ quản trị viên duyệt.
+- **Cộng đồng** (`/app/cong-dong`) — bài đăng, kết bạn, hộp tin nhắn realtime.
+- **Hồ sơ, Cài đặt, Thông báo**.
 
-### 3.2. Quản lý kho học liệu (`/hoc-lieu/*`)
-- **Từ vựng (`/hoc-lieu/tu-vung`)**:
-  - Danh sách từ vựng kèm phát âm IPA, cấp độ CEFR, từ loại, audio phát âm trực tiếp.
-  - Thêm mới / Chỉnh sửa từ vựng kèm bộ câu hỏi bài tập củng cố trắc nghiệm đa năng.
-  - Hỗ trợ **Wizard Import file**: Tải file lên để trích xuất danh sách từ vựng hàng loạt vào hệ thống.
-- **Bài đọc hiểu (`/hoc-lieu/bai-doc`)**: Quản lý các bài đọc theo trình độ A1–C2, ngân hàng câu hỏi đọc hiểu đi kèm.
-- **Bài luyện nghe (`/hoc-lieu/bai-nghe`)**: Quản lý audio nghe, transcript tương tác và bộ câu hỏi trắc nghiệm theo bài nghe.
-- **Ngân hàng đề & bài kiểm tra (`/hoc-lieu/bai-kiem-tra`)**:
-  - Quản lý ngân hàng câu hỏi (trắc nghiệm, điền từ, nối từ, sắp xếp câu).
-  - Quản lý bộ đề thi (TOEIC, IELTS, bài kiểm tra định kỳ) dạng Card Grid trực quan.
+### Giáo viên
 
-### 3.3. Kiểm duyệt nội dung AI (`/noi-dung-ai`)
-- Quy trình duyệt nội dung do AI sinh ra (Từ vựng, Ví dụ, Đề thi) với các trạng thái: *Chờ duyệt, Phê duyệt, Từ chối*.
-- Bảng điều khiển cấu hình **System Prompt** và tham số AI (Temperature, Max tokens) với giao diện Dark Console chuyên nghiệp.
-- Công cụ chẩn đoán kết nối API Gemini trực tiếp từ giao diện Admin.
+| Trang | Nội dung |
+|---|---|
+| Lớp học `/app/lop-hoc` | Tạo lớp, mã tham gia, học viên, giáo trình; **giao bài** (chọn sẵn bài học khi giao từ tab Khoá học), xem chi tiết bài, **xem bài nộp & chấm điểm** |
+| Học liệu `/app/hoc-lieu/*` | Từ vựng, ngữ pháp, phát âm & kịch bản nói, khoá học, bài đọc, bài nghe, đề kiểm tra |
+| Nội dung AI `/app/noi-dung-ai` | Soạn bài/đề với AI; chỉ thấy nội dung **của mình và của hệ thống** |
+| Gói dịch vụ `/app/goi-dich-vu` | Xem gói, nâng cấp (không cho hạ cấp khi đang dùng gói cao hơn), **huỷ gói & yêu cầu hoàn tiền** |
 
-### 3.4. Quản lý học viên (`/hoc-vien`)
-- Danh sách học viên, lọc theo vai trò và trạng thái tài khoản.
-- Xem chi tiết lịch sử học tập, số khóa học đã tham gia, tiến độ hoàn thành và điểm kiểm tra.
-- Hỗ trợ xuất dữ liệu ra file CSV chuẩn UTF-8.
+### Quản trị viên
 
-### 3.5. Doanh thu, Gói cước & Đối soát (`/doanh-thu`, `/doi-soat`, `/goi-premium`)
-- **Doanh thu**: Thống kê doanh thu theo gói học, theo chu kỳ và phương thức thanh toán.
-- **Đối soát giao dịch**: Quản lý đơn hàng (VNPay, MoMo, Stripe), chi tiết lý do và phê duyệt / từ chối yêu cầu hoàn tiền.
-- **Gói cước & Coupon**: Cấu hình giá, tính năng các gói Premium và tạo mã khuyến mãi.
+| Trang | Nội dung |
+|---|---|
+| Tổng quan `/app` | Số liệu người dùng, học tập, doanh thu |
+| Người dùng `/app/nguoi-dung` | Danh sách, chi tiết, khoá/mở tài khoản, cấp gói trực tiếp |
+| Phân quyền `/app/phan-quyen` | Ma trận quyền theo vai trò (Khách / Học viên / Giáo viên / Quản trị) và phạm vi dữ liệu |
+| Doanh thu, Giao dịch, Đối soát | Đơn hàng SePay, đối soát giao dịch ngân hàng, duyệt hoàn tiền |
+| Báo cáo `/app/bao-cao` | Xử lý báo cáo vi phạm cộng đồng |
+| Nhật ký `/app/nhat-ky` | Lịch sử thao tác |
+| Lớp học | Xem và chỉnh thông tin lớp (không giao bài thay giáo viên) |
 
-### 3.6. Quản lý cộng đồng (`/cong-dong`)
-- Giám sát diễn đàn học tập, bài viết, bình luận của học viên.
-- Tích hợp cửa sổ chat hỗ trợ trực tuyến đa tác vụ nổi (Floating Chat Messenger).
-
----
-
-## 4. Cấu trúc thư mục dự án
+## 4. Cấu trúc thư mục
 
 ```
-smartenglish-admin/
-├── public/                 # Tài nguyên tĩnh
-├── src/
-│   ├── components/         # Các thành phần tái sử dụng
-│   │   ├── charts/         # Bộ biểu đồ Recharts tùy biến (Line, Bar, Donut, SparkLine)
-│   │   ├── layout/         # Khung giao diện (Sidebar, Topbar, AppShell, ProtectedRoute)
-│   │   └── ui/             # 19+ UI Primitives chuẩn (Button, Modal, Input, DataTable, Drawer...)
-│   ├── features/           # Phân chia theo từng phân hệ nghiệp vụ
-│   │   ├── aiContent/      # Duyệt nội dung & Cấu hình prompt AI
-│   │   ├── auth/           # Đăng nhập & Xác thực JWT
-│   │   ├── community/      # Quản trị cộng đồng & Chat
-│   │   ├── dashboard/      # Màn hình Dashboard tổng quan
-│   │   ├── listening/      # Quản lý bài nghe
-│   │   ├── premium/        # Quản lý gói cước & Coupon
-│   │   ├── quiz/           # Ngân hàng câu hỏi & Bộ đề thi
-│   │   ├── reading/        # Quản lý bài đọc
-│   │   ├── revenue/        # Thống kê doanh thu
-│   │   ├── students/       # Quản lý học viên
-│   │   ├── transactions/   # Đối soát giao dịch & Hoàn tiền
-│   │   └── vocabulary/     # Quản lý từ vựng & Import file
-│   ├── lib/
-│   │   ├── api.js          # HTTP Client Axios với interceptors JWT & chuyển mạch mock
-│   │   ├── endpoints.js    # Nơi khai báo tập trung tất cả đường dẫn API hệ thống
-│   │   ├── ipaHelper.js    # Tiện ích phát âm và hiển thị ký tự phiên âm IPA
-│   │   └── utils.js        # Tiện ích format tiền tệ, ngày tháng, phần trăm
-│   ├── mocks/              # Bộ dữ liệu mẫu giả lập phục vụ phát triển khi chưa có backend
-│   ├── store/              # Quản lý trạng thái xác thực và người dùng (Zustand)
-│   ├── index.css           # Định nghĩa Design System Tokens Tailwind 4
-│   ├── main.jsx            # Điểm khởi chạy ứng dụng React
-│   └── routes.jsx          # Cấu hình định tuyến toàn bộ ứng dụng
-├── package.json
-└── vite.config.js
+src/
+├── components/      # ui/ (Button, Modal, DataTable…), layout/ (AppShell, Sidebar, GuestOnlyRoute)
+├── features/        # mỗi nghiệp vụ một thư mục: classes, vocabulary, premium, community, permissions…
+├── pages/landing/   # trang giới thiệu (components/*)
+├── lib/             # api.js (axios + refresh token), endpoints.js (mọi URL API), rbac.js, utils.js
+├── store/           # authStore (Zustand)
+├── mocks/           # dữ liệu giả cho chế độ VITE_USE_MOCK=true
+└── routes.jsx
 ```
 
----
+Quy ước: mọi URL API khai báo ở `lib/endpoints.js`; feature không import axios trực tiếp; text giao diện tiếng Việt; màu lấy từ token trong `src/index.css` (xem `.claude/rules/design-system.md`).
 
-## 5. Hướng dẫn cài đặt & Khởi chạy
-
-### 5.1. Cài đặt phụ thuộc
-Yêu cầu môi trường máy có cài đặt **Node.js 18+** và **npm**:
+## 5. Cài đặt & chạy
 
 ```bash
-# 1. Di chuyển vào thư mục dự án
-cd smartenglish-admin
-
-# 2. Cài đặt các gói phụ thuộc
 npm install
+cp .env.example .env    # nếu chưa có .env
+npm run dev             # http://localhost:5173
 ```
 
-### 5.2. Cấu hình file `.env`
-Tạo tệp `.env` tại thư mục gốc của `smartenglish-admin`:
+Biến môi trường:
 
-```env
-# URL API Backend
-# - Khi chạy qua API Gateway: http://localhost:8080
-# - Khi chạy trực tiếp với Content Service: http://localhost:8082
-VITE_API_URL=http://localhost:8080
+| Biến | Ví dụ | Ý nghĩa |
+|---|---|---|
+| `VITE_API_URL` | `http://127.0.0.1:8080` | Địa chỉ API Gateway |
+| `VITE_USE_MOCK` | `false` | `true` = dùng dữ liệu giả trong `src/mocks`, không cần backend |
+| `VITE_WS_URL` | *(để trống)* | Ghi đè địa chỉ SockJS chat; mặc định `${VITE_API_URL}/ws-chat` |
 
-# Chế độ dữ liệu giả (Mock Mode):
-# - true : Sử dụng dữ liệu giả lập trong thư mục src/mocks (không cần backend)
-# - false: Kết nối gọi API máy chủ backend thực tế
-VITE_USE_MOCK=false
-```
+Lệnh khác:
 
-### 5.3. Khởi chạy môi trường phát triển
 ```bash
-npm run dev
-```
-Truy cập giao diện tại: [http://localhost:5173](http://localhost:5173)
-
-### 5.4. Các lệnh kiểm thử & Đóng gói
-```bash
-npm run lint         # Kiểm tra chuẩn mã nguồn bằng ESLint
-npm run test         # Chạy các bài kiểm thử tự động với Vitest
-npm run build        # Đóng gói bản phát hành sản phẩm (Production Bundle)
-npm run preview      # Xem trước bản đóng gói cục bộ
+npm run lint      # ESLint
+npm run test      # Vitest
+npm run build     # build production vào dist/
 ```
 
----
+## 6. Triển khai lên Vercel
 
-## 6. Cơ chế chuyển đổi Mock Data và API thật
+1. Import repo vào Vercel, **Root Directory** = `smartenglish-admin`. `vercel.json` đã cấu hình build và rewrite mọi đường dẫn về `index.html` (tránh 404 khi tải lại trang con).
+2. Khai báo `VITE_API_URL=https://api.<domain>` và `VITE_USE_MOCK=false`.
+3. Backend **bắt buộc chạy HTTPS** (trình duyệt chặn gọi `http://` từ trang `https://`) và proxy WebSocket cho đường dẫn `/ws-chat`.
 
-Hệ thống được thiết kế theo cơ chế **Clean Decoupling**:
-- Toàn bộ các URL API được tập trung duy nhất tại `src/lib/endpoints.js`.
-- Client `src/lib/api.js` tự động kiểm tra cờ `VITE_USE_MOCK`:
-  - Khi `VITE_USE_MOCK=true`: Các yêu cầu được chuyển hướng qua `src/mocks/handlers.js` để trả về dữ liệu mẫu có cấu trúc chuẩn như database backend.
-  - Khi `VITE_USE_MOCK=false`: Client sẽ gửi HTTP request thực tế đến URL `VITE_API_URL` kèm theo token `Bearer` xác thực.
-- Các component trong `src/features/*` không phụ thuộc vào mock, giúp việc chuyển sang backend thật diễn ra trơn tru mà không cần sửa đổi logic giao diện.
+## 7. Tài khoản kiểm thử
 
----
-
-## 7. Tài khoản kiểm thử mẫu (Test Accounts)
-
-Liên hệ TheAnhOXY để được cấp tài khoản thử nghiệm
-
----
+Liên hệ nhóm thực hiện để được cấp tài khoản thử nghiệm.
 
 ## 8. Thành viên thực hiện
 
 - **Nguyễn Thế Anh** — Sinh viên thực hiện
 - **Nguyễn Tuấn Anh** — Sinh viên thực hiện
+
+Giải đáp kỹ thuật (token, luồng thanh toán, chat, thông báo…): xem [`QUESTION.md`](../QUESTION.md).
