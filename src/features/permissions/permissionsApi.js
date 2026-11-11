@@ -21,3 +21,6 @@ export const resetRoleDefaults = (id) => api.post(ENDPOINTS.roles.resetDefaults,
 
 /** Lấy danh sách các nhóm quyền của hệ thống */
 export const getPermissionGroups = () => api.get(ENDPOINTS.roles.permissionGroups)
+
+/** Lấy ma trận phân quyền RBAC & Data Scope động từ backend */
+export const getPermissionMatrix = () => api.get(ENDPOINTS.roles.matrix)

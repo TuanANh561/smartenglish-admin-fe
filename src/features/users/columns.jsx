@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { Lock, Unlock, ChevronRight } from 'lucide-react'
+import { Lock, Unlock, ChevronRight, ShieldCheck } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import { cn, formatDate, formatRelativeTime, maskEmail } from '@/lib/utils'
@@ -105,31 +105,45 @@ export function buildUserColumns({ isAdmin = false, onToggleLock, onViewProfile,
       cell: (info) => {
         const user = info.row.original
         const isSelf = currentUser?.id === user.id
+        const isTargetAdmin =
+          String(user?.role || '').toLowerCase() === 'admin' ||
+          String(user?.role || '').toLowerCase() === 'role_admin' ||
+          String(user?.role || '').toLowerCase() === 'super_admin'
         const isActive = user.isActive
 
         return (
           <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
             {isAdmin && (
               isActive ? (
-                <button
-                  type="button"
-                  disabled={isSelf}
-                  onClick={() => onToggleLock?.(user)}
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer shadow-2xs',
-                    isSelf
-                      ? 'opacity-40 cursor-not-allowed bg-slate-100 text-ink-muted'
-                      : 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 hover:shadow-xs active:scale-95',
-                  )}
-                  title={
-                    isSelf
-                      ? 'Không thể tự khoá tài khoản quản trị viên của chính bạn'
-                      : 'Khoá tài khoản người dùng này'
-                  }
-                >
-                  <Lock size={13} strokeWidth={2} />
-                  Khoá tài khoản
-                </button>
+                isTargetAdmin ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 bg-slate-100 border border-slate-200 cursor-not-allowed select-none"
+                    title="Tài khoản Quản trị viên được bảo vệ tuyệt đối — Không thể khóa bởi Quản trị viên khác"
+                  >
+                    <ShieldCheck size={13} className="text-brand-600" />
+                    Được bảo vệ
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isSelf}
+                    onClick={() => onToggleLock?.(user)}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer shadow-2xs',
+                      isSelf
+                        ? 'opacity-40 cursor-not-allowed bg-slate-100 text-ink-muted'
+                        : 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 hover:shadow-xs active:scale-95',
+                    )}
+                    title={
+                      isSelf
+                        ? 'Không thể tự khoá tài khoản quản trị viên của chính bạn'
+                        : 'Khoá tài khoản người dùng này'
+                    }
+                  >
+                    <Lock size={13} strokeWidth={2} />
+                    Khoá tài khoản
+                  </button>
+                )
               ) : (
                 <button
                   type="button"

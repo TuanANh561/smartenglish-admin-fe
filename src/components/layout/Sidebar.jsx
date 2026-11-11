@@ -354,8 +354,19 @@ function SingleNavItem({ item, isCollapsed, unread, role }) {
 function Sidebar() {
   const user = useAuthStore((state) => state.user)
   const role = user?.role ?? 'admin'
+  const [, setPermTick] = useState(0)
   const navGroups = getVisibleNavGroups(role)
   const myId = Number(user?.id) || 1
+
+  useEffect(() => {
+    const onPermUpdate = () => setPermTick((t) => t + 1)
+    window.addEventListener('smartenglish:permissions-updated', onPermUpdate)
+    window.addEventListener('storage', onPermUpdate)
+    return () => {
+      window.removeEventListener('smartenglish:permissions-updated', onPermUpdate)
+      window.removeEventListener('storage', onPermUpdate)
+    }
+  }, [])
 
   const isCollapsed = useSidebarStore((s) => s.isCollapsed)
   const toggleSidebar = useSidebarStore((s) => s.toggleSidebar)

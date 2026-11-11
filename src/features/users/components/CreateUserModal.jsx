@@ -33,6 +33,10 @@ export default function CreateUserModal({ open, onClose, onSuccess }) {
       return toast.error('Mật khẩu khởi tạo tối thiểu 6 ký tự')
     }
 
+    if (formData.role === 'admin') {
+      return toast.error('Tài khoản Quản trị viên chỉ được cấp bởi Ban Kỹ thuật / Developer!')
+    }
+
     setIsSubmitting(true)
     try {
       await createUser({
@@ -103,8 +107,10 @@ export default function CreateUserModal({ open, onClose, onSuccess }) {
             >
               <option value="student">Học viên (Student)</option>
               <option value="teacher">Giáo viên (Teacher)</option>
-              <option value="admin">Quản trị viên (Admin)</option>
             </Select>
+            <p className="mt-1 text-[10px] text-slate-400 font-medium leading-tight">
+              * Để cấp quyền Quản trị viên (Admin), vui lòng liên hệ Ban Kỹ thuật / Developer.
+            </p>
           </div>
 
           <div>

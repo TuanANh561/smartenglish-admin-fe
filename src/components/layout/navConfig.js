@@ -18,6 +18,22 @@ import {
   Cpu,
   User,
 } from 'lucide-react'
+import { hasRolePermission } from '@/lib/rbac'
+
+const ROUTE_PERMISSION_MAP = {
+  '/app/lop-hoc': ['create_classes', 'view_students', 'assign_homework'],
+  '/app/hoc-lieu/khoa-hoc': ['create_lessons'],
+  '/app/hoc-lieu/bai-kiem-tra': ['publish_exams'],
+  '/app/noi-dung-ai': ['access_ai_tools'],
+  '/app/nhat-ky': ['view_audit_logs'],
+}
+
+function checkRoutePermission(to, normRole) {
+  if (!to || normRole === 'admin') return true
+  const requiredPerms = ROUTE_PERMISSION_MAP[to]
+  if (!requiredPerms || requiredPerms.length === 0) return true
+  return requiredPerms.some((perm) => hasRolePermission(normRole, perm))
+}
 
 export const ROLE_ACCESS = {
   admin: ['*'],
@@ -136,13 +152,15 @@ export function getVisibleNavGroups(role = 'admin') {
       .filter((item) => {
         if (item.children) {
           const children = (item.children || []).filter((child) =>
-            !child.roles || child.roles.map((r) => r.toLowerCase()).includes(normRole),
+            (!child.roles || child.roles.map((r) => r.toLowerCase()).includes(normRole)) &&
+            checkRoutePermission(child.to, normRole),
           )
 
           return children.length > 0
         }
 
-        return !item.roles || item.roles.map((r) => r.toLowerCase()).includes(normRole)
+        const roleMatch = !item.roles || item.roles.map((r) => r.toLowerCase()).includes(normRole)
+        return roleMatch && checkRoutePermission(item.to, normRole)
       })
       .map((item) => {
         const itemLabel = item.labelByRole?.[normRole] || (item.to === '/app/noi-dung-ai' && normRole === 'teacher' ? 'Tạo nội dung AI' : item.label)
