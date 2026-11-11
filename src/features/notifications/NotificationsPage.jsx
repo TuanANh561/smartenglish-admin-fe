@@ -23,6 +23,7 @@ import {
 import toast from 'react-hot-toast'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Pagination from '@/components/ui/Pagination'
 import Tabs from '@/components/ui/Tabs'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,7 @@ function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [schedules, setSchedules] = useState([])
   const [activities, setActivities] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -490,6 +491,7 @@ function NotificationsPage() {
             variant="secondary"
             icon={RefreshCw}
             onClick={loadData}
+            loading={loading}
             className="bg-white/10 hover:bg-white/20 text-white border-white/20"
           >
             Làm mới
@@ -582,7 +584,9 @@ function NotificationsPage() {
         {/* NỘI DUNG THEO TAB: LỊCH SỬ HOẠT ĐỘNG */}
         {activeTab === 'activities' ? (
           <div>
-            {pageActivityData.length === 0 ? (
+            {loading && pageActivityData.length === 0 ? (
+              <LoadingSpinner text="Đang tải lịch sử hoạt động..." className="py-12" />
+            ) : pageActivityData.length === 0 ? (
               <div className="p-12 text-center text-sm text-ink-muted">
                 Chưa có lịch sử hoạt động nào được ghi nhận.
               </div>
@@ -664,7 +668,9 @@ function NotificationsPage() {
         ) : (
           /* NỘI DUNG CÁC TAB THÔNG BÁO */
           <div>
-            {pageNotificationData.length === 0 ? (
+            {loading && pageNotificationData.length === 0 ? (
+              <LoadingSpinner text="Đang tải danh sách thông báo..." className="py-12" />
+            ) : pageNotificationData.length === 0 ? (
               <div className="p-12 text-center text-sm text-ink-muted">
                 Không có thông báo nào trong danh mục này.
               </div>

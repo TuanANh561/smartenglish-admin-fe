@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ClassListView from './components/ClassListView'
 import ClassDetailView from './components/ClassDetailView'
@@ -20,32 +20,52 @@ function TeacherClassesPage() {
   const [selectedClass, setSelectedClass] = useState(null)
   const [selectedStudent, setSelectedStudent] = useState(null)
 
-  // Tự động mở chi tiết lớp nếu có classId trên URL query param
+  const selectedClassRef = useRef(null)
   useEffect(() => {
-    if (classIdParam && (!selectedClass || String(selectedClass.id) !== String(classIdParam))) {
-      getClassDetail(classIdParam)
-        .then((res) => {
-          if (res) {
-            setSelectedClass(res)
-            setView('detail')
-          }
-        })
-        .catch(() => {
-          getTeacherClasses({ size: 100 })
-            .then((resList) => {
-              const items = resList?.items || resList?.content || (Array.isArray(resList) ? resList : [])
-              const found = items.find(
-                (c) => String(c.id) === String(classIdParam) || c.code === classIdParam,
-              )
-              if (found) {
-                setSelectedClass(found)
-                setView('detail')
-              }
-            })
-            .catch(() => {})
-        })
+    selectedClassRef.current = selectedClass
+  }, [selectedClass])
+  const prevClassIdRef = useRef(classIdParam)
+
+  // Mở chi tiết lớp theo classId trên URL; phản hồi về muộn sau khi đã rời trang thì bỏ qua
+  useEffect(() => {
+    const prevClassId = prevClassIdRef.current
+    prevClassIdRef.current = classIdParam
+
+    if (!classIdParam) {
+      // Nút Back của trình duyệt xoá classId → về danh sách
+      if (prevClassId) {
+        setSelectedClass(null)
+        setSelectedStudent(null)
+        setView('list')
+      }
+      return undefined
     }
-  }, [classIdParam, selectedClass])
+
+    const current = selectedClassRef.current
+    if (current && String(current.id) === String(classIdParam)) return undefined
+
+    let cancelled = false
+    const open = (found) => {
+      if (cancelled || !found) return
+      setSelectedClass(found)
+      setView('detail')
+    }
+
+    getClassDetail(classIdParam)
+      .then(open)
+      .catch(() => {
+        getTeacherClasses({ size: 100 })
+          .then((resList) => {
+            const items = resList?.items || resList?.content || (Array.isArray(resList) ? resList : [])
+            open(items.find((c) => String(c.id) === String(classIdParam) || c.code === classIdParam))
+          })
+          .catch(() => {})
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [classIdParam])
 
   const handleViewClass = (cls) => {
     setSelectedClass(cls)
@@ -67,7 +87,7 @@ function TeacherClassesPage() {
     setSelectedStudent(null)
     setView('list')
     if (classIdParam) {
-      setSearchParams({})
+      setSearchParams({}, { replace: true })
     }
   }
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import toast from 'react-hot-toast'
 import { setTokens, clearTokens, TOKEN_KEY } from '@/lib/api'
 
 const USER_KEY = 'se_admin_user'
@@ -70,8 +71,12 @@ const readUserId = (raw) => {
 
 export const initAuthEventListener = () => {
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-    window.addEventListener('se-admin:unauthorized', () => {
+    window.addEventListener('se-admin:unauthorized', (event) => {
+      const hadSession = Boolean(useAuthStore.getState().user)
       useAuthStore.getState().clearSession()
+      const reason = event?.detail?.reason
+      // Nhiều request cùng lỗi một lúc → chỉ hiện một thông báo
+      if (hadSession && reason) toast.error(reason, { id: 'session-ended', duration: 6000 })
     })
 
     // Đồng bộ phiên giữa các tab (localStorage dùng chung): tab khác đăng xuất hoặc đổi tài khoản

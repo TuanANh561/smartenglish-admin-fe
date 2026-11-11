@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
-import { BookOpen, CheckCircle, Info, Loader2, Sparkles, Layers, SpellCheck, GraduationCap } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
+import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { CONTENT_TYPE_OPTIONS, mapAiTypeToExamCategory, EXAM_CATEGORY_NAMES } from './aiContentConstants'
 
@@ -82,56 +83,22 @@ export default function AiCreationModal({
     <Modal
       open={isOpen}
       onClose={() => !isGenerating && onClose()}
-      title="Tạo nội dung học liệu & Đề thi AI"
-      className="max-w-4xl w-full p-6 max-h-[92vh] overflow-y-auto"
+      title="Tạo nội dung bằng AI"
+      className="max-w-3xl w-full p-6 max-h-[92vh] overflow-y-auto"
     >
       {isGenerating ? (
-        <div className="flex flex-col items-center justify-center gap-4 py-12">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-7 w-7 animate-spin shrink-0 text-brand-600" strokeWidth={2.25} />
-            <div>
-              <p className="font-bold text-base text-slate-800">Đang khởi tạo học liệu đề thi...</p>
-              <p className="text-xs text-slate-500">{generatingStatus}</p>
-            </div>
-          </div>
-          <div className="w-full max-w-md rounded-xl bg-slate-50 border border-slate-200/80 p-3.5 text-center text-xs text-slate-600 leading-relaxed">
-            AI đang biên soạn câu hỏi chuẩn CEFR, tạo 4 đáp án gây nhiễu hợp lý và viết lời giải thích song ngữ chi tiết. Vui lòng chờ 10-25 giây...
-          </div>
-        </div>
+        <LoadingSpinner text={generatingStatus || 'Đang tạo nội dung...'} className="py-12" />
       ) : (
-        <div className="space-y-4.5">
-          {/* ─── Role Destination Banner (Full width) ─── */}
-          <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
-            isAdmin
-              ? 'bg-indigo-50/70 border-indigo-200 text-indigo-900'
-              : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-          }`}>
-            <div className="flex items-center gap-2.5">
-              <span className="text-lg">{isAdmin ? '🌐' : '🏫'}</span>
-              <div>
-                <span className="font-bold">
-                  {isAdmin
-                    ? `Xuất bản tự động: Ngân hàng Đề thi & Quiz học viên (Mục: ${targetCategoryName})`
-                    : `Lưu vào: Thư viện Lớp học & Bài tập của Giáo viên (Mục: ${targetCategoryName})`}
-                </span>
-                <p className="text-[11px] opacity-80 mt-0.5">
-                  Nội dung sau khi được duyệt sẽ tự động đồng bộ sang Ngân hàng đề thi để học viên làm bài trực tiếp trên Mobile App.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Row 1: Thông số chính (3 cột ngang nhau) ─── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Select
-              label="Dạng bài / Thể loại Quiz"
+              label="Dạng bài"
               value={draft.type}
               onChange={(e) => {
                 const newType = e.target.value
                 setDraft((prev) => ({
                   ...prev,
                   type: newType,
-                  // Tự động gán gợi ý đầu tiên nếu topic đang trống
                   topic: prev.topic ? prev.topic : (TOPIC_SUGGESTIONS_BY_TYPE[newType]?.[0] || ''),
                 }))
               }}
@@ -146,132 +113,82 @@ export default function AiCreationModal({
               value={draft.level}
               onChange={(e) => setDraft((prev) => ({ ...prev, level: e.target.value }))}
             >
-              <option value="A1">A1 - Sơ cấp (Beginner)</option>
-              <option value="A2">A2 - Sơ trung cấp (Elementary)</option>
-              <option value="B1">B1 - Trung cấp (Intermediate)</option>
-              <option value="B2">B2 - Trung cao cấp (Upper-Inter)</option>
-              <option value="C1">C1 - Nâng cao (Advanced)</option>
-              <option value="C2">C2 - Thành thạo (Mastery)</option>
+              <option value="A1">A1 - Sơ cấp</option>
+              <option value="A2">A2 - Sơ trung cấp</option>
+              <option value="B1">B1 - Trung cấp</option>
+              <option value="B2">B2 - Trung cao cấp</option>
+              <option value="C1">C1 - Nâng cao</option>
+              <option value="C2">C2 - Thành thạo</option>
             </Select>
 
             <Select
-              label="Số lượng câu hỏi"
+              label="Số câu hỏi"
               value={String(draft.questionCount)}
               onChange={(e) => setDraft((prev) => ({ ...prev, questionCount: Number(e.target.value) }))}
             >
-              <option value={3}>3 câu hỏi (Luyện nhanh)</option>
-              <option value={4}>4 câu hỏi</option>
-              <option value={5}>5 câu hỏi (Khuyến nghị)</option>
-              <option value={10}>10 câu hỏi (Đề Mini Quiz)</option>
+              <option value={3}>3 câu</option>
+              <option value={4}>4 câu</option>
+              <option value={5}>5 câu</option>
+              <option value={10}>10 câu</option>
             </Select>
           </div>
 
-          {/* ─── Row: Chủ đề bài học / Nội dung chính (Full-width Row) ─── */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-700">Chủ đề bài thi / Nội dung kiểm tra *</label>
-              <span className="text-[11px] text-slate-400">Khớp với chủ đề Quiz học viên</span>
-            </div>
             <Input
+              label="Chủ đề *"
               placeholder={
                 draft.type.includes('grammar')
-                  ? 'VD: Câu điều kiện loại 2 và loại 3 đảo ngữ'
+                  ? 'VD: Câu điều kiện loại 2 và loại 3'
                   : draft.type.includes('vocab')
-                  ? 'VD: Du lịch & Dịch vụ khách sạn (Travel & Hospitality)'
+                  ? 'VD: Du lịch & Dịch vụ khách sạn'
                   : draft.type.includes('toeic')
-                  ? 'VD: Hợp đồng và chính sách thanh toán công ty'
-                  : 'VD: Giao tiếp hàng ngày hoặc AI trong giáo dục'
+                  ? 'VD: Hợp đồng và chính sách thanh toán'
+                  : 'VD: Giao tiếp hàng ngày'
               }
               value={draft.topic}
               onChange={(e) => setDraft((prev) => ({ ...prev, topic: e.target.value }))}
             />
-
-            {/* Quick suggestions chips spanning horizontally */}
-            <div className="mt-2.5">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] font-medium text-slate-500 shrink-0">Chủ đề đề xuất cho {targetCategoryName}:</span>
-                {activeSuggestions.map((topic, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setDraft((prev) => ({ ...prev, topic }))}
-                    className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
-                      draft.topic === topic
-                        ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold'
-                        : 'bg-slate-100 hover:bg-slate-200 border-slate-200/80 text-slate-600'
-                    }`}
-                  >
-                    + {topic}
-                  </button>
-                ))}
-              </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {activeSuggestions.map((topic) => (
+                <button
+                  key={topic}
+                  type="button"
+                  onClick={() => setDraft((prev) => ({ ...prev, topic }))}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                    draft.topic === topic
+                      ? 'border-brand-500 bg-brand-500/10 text-brand-600'
+                      : 'border-line bg-canvas text-ink-muted hover:border-slate-300 hover:text-ink',
+                  )}
+                >
+                  {topic}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* ─── Row: Yêu cầu sư phạm bổ sung (Full-width Row) ─── */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-700">Yêu cầu sư phạm bổ sung (Tùy chọn)</label>
-              <span className="text-[11px] text-slate-400">Tinh chỉnh trọng tâm bài tập</span>
+          <Textarea
+            label="Yêu cầu bổ sung (tùy chọn)"
+            placeholder="VD: Tập trung vào các bẫy ngữ pháp thường gặp"
+            rows={2}
+            maxLength={1000}
+            value={draft.prompt}
+            onChange={(e) => setDraft((prev) => ({ ...prev, prompt: e.target.value }))}
+            className="text-xs"
+          />
+
+          <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
+            <span className="text-xs text-ink-muted">
+              Lưu vào: {isAdmin ? 'Ngân hàng đề thi' : 'Thư viện lớp học'} · {targetCategoryName}
+            </span>
+            <div className="flex items-center gap-2.5">
+              <Button variant="secondary" onClick={onClose}>
+                Huỷ
+              </Button>
+              <Button onClick={onCreate} disabled={!draft.topic.trim()}>
+                Tạo nội dung
+              </Button>
             </div>
-            <Textarea
-              placeholder="VD: Thiết kế các câu hỏi có bẫy ngữ pháp phổ biến, giải thích ngắn gọn bằng tiếng Việt dễ hiểu cho học viên..."
-              rows={2}
-              value={draft.prompt}
-              onChange={(e) => setDraft((prev) => ({ ...prev, prompt: e.target.value }))}
-              className="text-xs"
-            />
-          </div>
-
-          {/* ─── Row 3: Cấu trúc kết quả tự động sinh (Chia 3 thẻ ngang) ─── */}
-          <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-3.5">
-            <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-              <Sparkles size={14} className="text-amber-500" />
-              Cấu trúc bài thi AI sẽ sinh và đồng bộ vào Ngân hàng Quiz:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-600">
-              <div className="rounded-lg bg-white p-2.5 border border-slate-200/70 shadow-2xs">
-                <span className="font-bold text-slate-800 block mb-0.5">1. Định dạng bài tập</span>
-                <span className="text-[11px] text-slate-500">
-                  {draft.type === 'reading'
-                    ? 'Đoạn văn đọc hiểu 120-180 từ chuẩn CEFR'
-                    : draft.type.includes('toeic_part_6')
-                    ? 'Đoạn văn điền khuyết với chỗ trống [131], [132]...'
-                    : draft.type.includes('toeic_part_7')
-                    ? 'Văn bản đọc hiểu thương mại chuẩn ETS Part 7'
-                    : 'Câu hỏi trắc nghiệm ngữ pháp / từ vựng ngữ cảnh thực tế'}
-                </span>
-              </div>
-
-              <div className="rounded-lg bg-white p-2.5 border border-slate-200/70 shadow-2xs">
-                <span className="font-bold text-slate-800 block mb-0.5">2. Bộ câu hỏi & Đáp án</span>
-                <span className="text-[11px] text-slate-500">
-                  {draft.questionCount} câu hỏi kèm 4 lựa chọn (A, B, C, D) có bẫy tư duy hợp lý
-                </span>
-              </div>
-
-              <div className="rounded-lg bg-white p-2.5 border border-slate-200/70 shadow-2xs">
-                <span className="font-bold text-slate-800 block mb-0.5">3. Giải thích song ngữ</span>
-                <span className="text-[11px] text-slate-500">
-                  Đáp án chuẩn xác kèm lời giải thích ngữ pháp và dịch nghĩa chi tiết bằng tiếng Việt
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Footer: Nút hành động ─── */}
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-            <Button variant="secondary" onClick={onClose} disabled={isGenerating}>
-              Huỷ
-            </Button>
-            <Button
-              onClick={onCreate}
-              disabled={!draft.topic.trim() || isGenerating}
-              loading={isGenerating}
-              className="bg-navy-800 hover:bg-navy-900 text-white px-5"
-            >
-              Bắt đầu tạo nội dung
-            </Button>
           </div>
         </div>
       )}

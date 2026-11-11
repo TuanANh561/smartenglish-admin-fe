@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AppShell from '@/components/layout/AppShell'
+import SelectionTranslator from '@/components/SelectionTranslator'
 import { stopAllAppAudio } from '@/lib/appAudioCoordinator'
 
 function AppShellLayout() {
@@ -47,6 +48,7 @@ function AppShellLayout() {
   return (
     <AppShell>
       <Outlet />
+      <SelectionTranslator />
     </AppShell>
   )
 }
