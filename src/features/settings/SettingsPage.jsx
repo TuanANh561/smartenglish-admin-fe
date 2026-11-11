@@ -26,6 +26,7 @@ import AdminAiTab from './components/AdminAiTab'
 import AdminSecurityTab from './components/AdminSecurityTab'
 import AdminPaymentTab from './components/AdminPaymentTab'
 import AdminEmailTab from './components/AdminEmailTab'
+import ComingSoonSection from './components/ComingSoonSection'
 
 export default function SettingsPage() {
   const {
@@ -125,32 +126,40 @@ export default function SettingsPage() {
           <Card className="p-6 border border-line bg-white shadow-xs space-y-6">
             {/* ── TEACHER TABS ────────────────────────────────────────── */}
             {isTeacher && activeTab === 'teaching' && (
-              <TeacherTeachingTab
-                settings={teacherSettings}
-                onUpdateField={updateTeacherField}
-              />
+              <ComingSoonSection>
+                <TeacherTeachingTab
+                  settings={teacherSettings}
+                  onUpdateField={updateTeacherField}
+                />
+              </ComingSoonSection>
             )}
 
             {isTeacher && activeTab === 'notifications' && (
-              <TeacherNotificationsTab
-                settings={teacherSettings}
-                onUpdateField={updateTeacherField}
-              />
+              <ComingSoonSection>
+                <TeacherNotificationsTab
+                  settings={teacherSettings}
+                  onUpdateField={updateTeacherField}
+                />
+              </ComingSoonSection>
             )}
 
             {isTeacher && activeTab === 'preferences' && (
-              <TeacherPreferencesTab
-                settings={teacherSettings}
-                onUpdateField={updateTeacherField}
-              />
+              <ComingSoonSection>
+                <TeacherPreferencesTab
+                  settings={teacherSettings}
+                  onUpdateField={updateTeacherField}
+                />
+              </ComingSoonSection>
             )}
 
             {isTeacher && activeTab === 'banking' && (
-              <TeacherBankingTab
-                currentUser={currentUser}
-                settings={teacherSettings}
-                onUpdateField={updateTeacherField}
-              />
+              <ComingSoonSection>
+                <TeacherBankingTab
+                  currentUser={currentUser}
+                  settings={teacherSettings}
+                  onUpdateField={updateTeacherField}
+                />
+              </ComingSoonSection>
             )}
 
             {/* ── ADMIN TABS ──────────────────────────────────────────── */}
@@ -190,8 +199,8 @@ export default function SettingsPage() {
             )}
 
             {/* ── BOTTOM ACTIONS ──────────────────────────────────────── */}
-            {/* Ẩn nút lưu khi ở tab coming soon (banking của teacher hoặc security của admin) */}
-            {!((isTeacher && activeTab === 'banking') || (!isTeacher && activeTab === 'security')) && (
+            {/* Cài đặt giáo viên chưa hiện thực → không có gì để lưu */}
+            {!isTeacher && activeTab !== 'security' && (
               <div className="flex items-center justify-end gap-3 pt-5 border-t border-line">
                 <Button variant="secondary" icon={RefreshCw} onClick={handleReset}>
                   Khôi phục mặc định

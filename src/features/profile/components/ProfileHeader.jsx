@@ -7,6 +7,7 @@ import {
   Phone,
   Sparkles,
   MessageSquare,
+  Edit3,
 } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 
@@ -17,6 +18,7 @@ export default function ProfileHeader({
   isUploadingAvatar,
   onAvatarFileChange,
   postsCount,
+  onSelectTab,
 }) {
   const fileInputRef = useRef(null)
 
@@ -116,17 +118,22 @@ export default function ProfileHeader({
                   </span>
                 )}
                 {postsCount !== null && postsCount !== undefined && (
-                  <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200/70">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab?.('overview')}
+                    className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200/70 hover:bg-brand-100 transition-colors cursor-pointer"
+                    title="Xem các bài viết trên dòng thời gian"
+                  >
                     <MessageSquare size={11} className="text-brand-600" />
-                    {postsCount} bài viết
-                  </span>
+                    <span>{postsCount} bài viết</span>
+                  </button>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Cột phải: Thẻ trạng thái & Hạn mức / Quyền hạn */}
-          <div className="shrink-0 self-stretch sm:self-center">
+          {/* Cột phải: Thẻ trạng thái & Nút chỉnh sửa hồ sơ */}
+          <div className="shrink-0 self-stretch sm:self-center flex items-center gap-2">
             {isTeacher ? (
               <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 shadow-2xs">
                 <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-50 text-brand-600 shrink-0">
@@ -156,6 +163,18 @@ export default function ProfileHeader({
                   </p>
                 </div>
               </div>
+            )}
+
+            {onSelectTab && (
+              <button
+                type="button"
+                onClick={() => onSelectTab('info')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors cursor-pointer"
+                title="Chỉnh sửa chi tiết hồ sơ cá nhân"
+              >
+                <Edit3 size={13} className="text-slate-500" />
+                <span className="hidden sm:inline">Chỉnh sửa hồ sơ</span>
+              </button>
             )}
           </div>
         </div>
