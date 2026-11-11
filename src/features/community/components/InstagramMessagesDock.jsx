@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { formatLastMessage } from './ChatConversationSidebar'
 import toast from 'react-hot-toast'
 import { http } from '@/lib/api'
+import PendingUploadBubble from './PendingUploadBubble'
 
 // Helper phân tích thời gian tin nhắn
 function parseMessageDate(m) {
@@ -592,6 +593,7 @@ function DockChatView({
 
   const messagesContainerRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const [pendingUploads, setPendingUploads] = useState([])
   const isUserScrolledUpRef = useRef(false)
   const prevMessagesLengthRef = useRef(0)
   const typingTimeoutRef = useRef(null)
@@ -708,7 +710,10 @@ function DockChatView({
     if (!file) return
     e.target.value = ''
 
-    const toastId = toast.loading('Đang tải ảnh lên AWS S3...')
+    const uploadId = `up-${Date.now()}`
+    const previewUrl = URL.createObjectURL(file)
+    setPendingUploads((prev) => [...prev, { id: uploadId, kind: 'IMAGE', name: file.name, previewUrl }])
+    setTimeout(() => handleScrollToBottom(), 50)
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -720,15 +725,17 @@ function DockChatView({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL ảnh hợp lệ')
 
-      toast.success('Đã tải ảnh lên AWS S3!', { id: toastId })
-      onSendMediaMessage?.(conversation.id, {
+      await onSendMediaMessage?.(conversation.id, {
         type: 'IMAGE',
         attachmentUrl: s3Url,
         content: `[Hình ảnh] ${file.name}`,
       })
     } catch (err) {
-      console.error('Lỗi upload ảnh lên AWS S3:', err)
-      toast.error('Không thể upload ảnh lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
+      console.error('Lỗi tải ảnh lên:', err)
+      toast.error('Không gửi được ảnh, vui lòng thử lại')
+    } finally {
+      setPendingUploads((prev) => prev.filter((u) => u.id !== uploadId))
+      URL.revokeObjectURL(previewUrl)
     }
   }
 
@@ -739,7 +746,9 @@ function DockChatView({
     e.target.value = ''
 
     const sizeStr = `${(file.size / 1024).toFixed(1)} KB`
-    const toastId = toast.loading(`Đang tải tệp ${file.name} lên AWS S3...`)
+    const uploadId = `up-${Date.now()}`
+    setPendingUploads((prev) => [...prev, { id: uploadId, kind: 'FILE', name: file.name }])
+    setTimeout(() => handleScrollToBottom(), 50)
 
     try {
       const formData = new FormData()
@@ -752,8 +761,7 @@ function DockChatView({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL tệp hợp lệ')
 
-      toast.success('Đã tải tệp lên AWS S3 thành công!', { id: toastId })
-      onSendMediaMessage?.(conversation.id, {
+      await onSendMediaMessage?.(conversation.id, {
         type: 'FILE',
         attachmentUrl: s3Url,
         attachmentName: file.name,
@@ -761,8 +769,10 @@ function DockChatView({
         content: `[Tệp đính kèm] ${file.name}`,
       })
     } catch (err) {
-      console.error('Lỗi upload tệp lên AWS S3:', err)
-      toast.error('Không thể tải tệp lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
+      console.error('Lỗi tải tệp lên:', err)
+      toast.error('Không gửi được tệp, vui lòng thử lại')
+    } finally {
+      setPendingUploads((prev) => prev.filter((u) => u.id !== uploadId))
     }
   }
 
@@ -1120,7 +1130,7 @@ function DockChatView({
                       </div>
                     ) : (
                       <div
-                        className={`relative rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-2xs transition-colors ${
+                        className={`relative rounded-2xl ${message.type === 'IMAGE' && message.attachmentUrl ? '!bg-transparent !border-0 !shadow-none !p-0 ' : ''}px-3 py-2 text-xs leading-relaxed shadow-2xs transition-colors ${
                           isMe
                             ? 'bg-slate-900 text-white rounded-br-xs'
                             : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-xs'
@@ -1150,7 +1160,7 @@ function DockChatView({
                             <img
                               src={message.attachmentUrl}
                               alt="Hình ảnh"
-                              className="max-h-48 max-w-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                              className="max-h-56 max-w-[240px] object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
                               onClick={() => window.open(message.attachmentUrl, '_blank')}
                             />
                           </div>
@@ -1223,7 +1233,7 @@ function DockChatView({
                           )}
                           <p
                             className={`text-[9px] ${
-                              isMe ? 'text-white/60' : 'text-slate-400'
+                              isMe && message.type !== 'IMAGE' ? 'text-white/60' : 'text-slate-400'
                             }`}
                           >
                             {message.time ||
@@ -1388,6 +1398,10 @@ function DockChatView({
                 </span>
               </div>
             )}
+
+          {pendingUploads.map((upload) => (
+            <PendingUploadBubble key={upload.id} upload={upload} />
+          ))}
 
           <div ref={messagesEndRef} className="h-0.5" />
         </div>

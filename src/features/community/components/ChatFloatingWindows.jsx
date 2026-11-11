@@ -17,6 +17,7 @@ import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
 import { http } from '@/lib/api'
+import PendingUploadBubble from './PendingUploadBubble'
 
 // Helper phân tích thời gian tin nhắn
 function parseMessageDate(m) {
@@ -97,6 +98,11 @@ export default function ChatFloatingWindows({
   const imageInputRef = useRef(null)
   const fileInputRef = useRef(null)
   const [activeUploadConvId, setActiveUploadConvId] = useState(null)
+  const [pendingUploads, setPendingUploads] = useState({}) // convId -> [{ id, kind, name, previewUrl }]
+  const addPending = (convId, upload) =>
+    setPendingUploads((prev) => ({ ...prev, [convId]: [...(prev[convId] || []), upload] }))
+  const removePending = (convId, id) =>
+    setPendingUploads((prev) => ({ ...prev, [convId]: (prev[convId] || []).filter((u) => u.id !== id) }))
 
   const handleImageSelected = async (e) => {
     const file = e.target.files?.[0]
@@ -104,7 +110,9 @@ export default function ChatFloatingWindows({
     e.target.value = ''
 
     const convId = activeUploadConvId
-    const toastId = toast.loading('Đang tải ảnh lên AWS S3...')
+    const uploadId = `up-${Date.now()}`
+    const previewUrl = URL.createObjectURL(file)
+    addPending(convId, { id: uploadId, kind: 'IMAGE', name: file.name, previewUrl })
 
     try {
       const formData = new FormData()
@@ -117,15 +125,17 @@ export default function ChatFloatingWindows({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL ảnh hợp lệ')
 
-      toast.dismiss(toastId)
       await onSendMediaMessage?.(convId, {
         type: 'IMAGE',
         attachmentUrl: s3Url,
         content: `[Hình ảnh] ${file.name}`,
       })
     } catch (err) {
-      console.error('Lỗi upload ảnh lên AWS S3:', err)
-      toast.error('Không thể upload ảnh lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
+      console.error('Lỗi tải ảnh lên:', err)
+      toast.error('Không gửi được ảnh, vui lòng thử lại')
+    } finally {
+      removePending(convId, uploadId)
+      URL.revokeObjectURL(previewUrl)
     }
   }
 
@@ -136,7 +146,8 @@ export default function ChatFloatingWindows({
 
     const convId = activeUploadConvId
     const sizeStr = `${(file.size / 1024).toFixed(1)} KB`
-    const toastId = toast.loading(`Đang tải tệp ${file.name} lên AWS S3...`)
+    const uploadId = `up-${Date.now()}`
+    addPending(convId, { id: uploadId, kind: 'FILE', name: file.name })
 
     try {
       const formData = new FormData()
@@ -149,7 +160,6 @@ export default function ChatFloatingWindows({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL tệp hợp lệ')
 
-      toast.dismiss(toastId)
       await onSendMediaMessage?.(convId, {
         type: 'FILE',
         attachmentUrl: s3Url,
@@ -158,8 +168,10 @@ export default function ChatFloatingWindows({
         content: `[Tệp đính kèm] ${file.name}`,
       })
     } catch (err) {
-      console.error('Lỗi upload tệp lên AWS S3:', err)
-      toast.error('Không thể tải tệp lên AWS S3: ' + (err?.message || 'Lỗi kết nối'), { id: toastId })
+      console.error('Lỗi tải tệp lên:', err)
+      toast.error('Không gửi được tệp, vui lòng thử lại')
+    } finally {
+      removePending(convId, uploadId)
     }
   }
 
@@ -239,6 +251,7 @@ export default function ChatFloatingWindows({
             getSenderAvatar={getSenderAvatar}
             onLoadOlderMessages={onLoadOlderMessages}
             isLoadingOlder={Boolean(loadingOlderMap[conversation.id])}
+            pendingUploads={pendingUploads[conversation.id] || []}
             onRequestImageUpload={() => {
               setActiveUploadConvId(conversation.id)
               imageInputRef.current?.click()
@@ -262,6 +275,7 @@ export default function ChatFloatingWindows({
 // ─────────────────────────────────────────────────────────────────────────────
 function FloatingChatWindowItem({
   conversation,
+  pendingUploads = [],
   index,
   totalWindows,
   myId,
@@ -697,7 +711,7 @@ function FloatingChatWindowItem({
                     </div>
                   ) : (
                     <div
-                      className={`relative rounded-2xl px-3.5 py-2 text-xs leading-relaxed shadow-xs transition-colors ${
+                      className={`relative rounded-2xl ${message.type === 'IMAGE' && message.attachmentUrl ? '!bg-transparent !border-0 !shadow-none !p-0 ' : ''}px-3.5 py-2 text-xs leading-relaxed shadow-xs transition-colors ${
                         isMe
                           ? 'bg-brand-600 text-white rounded-br-xs'
                           : 'bg-white border border-slate-200/80 text-navy-800 rounded-bl-xs'
@@ -727,7 +741,7 @@ function FloatingChatWindowItem({
                           <img
                             src={message.attachmentUrl}
                             alt="Hình ảnh đính kèm"
-                            className="max-h-56 max-w-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                            className="max-h-56 max-w-[240px] object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
                             onClick={() => window.open(message.attachmentUrl, '_blank')}
                           />
                         </div>
@@ -800,7 +814,7 @@ function FloatingChatWindowItem({
                         )}
                         <p
                           className={`text-[10px] ${
-                            isMe ? 'text-white/60' : 'text-slate-400'
+                            isMe && message.type !== 'IMAGE' ? 'text-white/60' : 'text-slate-400'
                           }`}
                         >
                           {message.time ||
@@ -965,6 +979,10 @@ function FloatingChatWindowItem({
                 </span>
               </div>
             )}
+
+          {pendingUploads.map((upload) => (
+            <PendingUploadBubble key={upload.id} upload={upload} />
+          ))}
 
           {/* Invisible target to pin bottom */}
           <div ref={messagesEndRef} className="h-0.5" />

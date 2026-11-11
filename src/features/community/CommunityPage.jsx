@@ -1191,7 +1191,6 @@ function CommunityPage() {
         }
         return [updated, ...prev.filter((c) => c.id !== conversationId)]
       })
-      toast.success('Đã gửi tệp thành công!')
     } catch (err) {
       console.error('Error sending media message:', err)
       toast.error('Lỗi khi gửi tệp')
