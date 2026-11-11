@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
@@ -51,6 +51,8 @@ export function useVocabulary() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
+  // Mã của request mới nhất: response của request cũ (VD: danh sách chính) không được ghi đè lên danh sách thùng rác
+  const latestRequestRef = useRef(0)
 
   // 1. Tải danh sách chủ đề từ CSDL
   const loadTopics = useCallback(async () => {
@@ -101,6 +103,7 @@ export function useVocabulary() {
       const sby = targetSort !== undefined ? targetSort : sortBy
       const isTrash = targetTrash !== undefined ? targetTrash : trashView
 
+      const requestId = ++latestRequestRef.current
       setIsLoading(true)
       try {
         const params = {
@@ -114,6 +117,7 @@ export function useVocabulary() {
         if (tid) params.topicId = tid
 
         const res = await api.get(ENDPOINTS.words.list, { params })
+        if (requestId !== latestRequestRef.current) return
         const items = res?.items || (Array.isArray(res) ? res : [])
         const currentTotal = res?.total ?? items.length
 
@@ -124,13 +128,18 @@ export function useVocabulary() {
           loadTopics()
         }
       } catch (err) {
+        if (requestId !== latestRequestRef.current) return
         console.error('Lỗi khi tải từ vựng:', err)
-        toast.error('Không thể kết nối đến máy chủ để lấy từ vựng')
+        // Không giữ lại danh sách của chế độ trước (VD: danh sách chính khi đang xem thùng rác)
+        setVocabList([])
+        setTotal(0)
+        setTotalPages(1)
+        toast.error(isTrash ? 'Không thể tải thùng rác từ vựng' : 'Không thể kết nối đến máy chủ để lấy từ vựng')
       } finally {
-        setIsLoading(false)
+        if (requestId === latestRequestRef.current) setIsLoading(false)
       }
     },
-    [search, page, partOfSpeech, topicId, sortBy, trashView, loadTopics, refreshTrashCount],
+    [search, page, partOfSpeech, topicId, sortBy, trashView, loadTopics],
   )
 
   useEffect(() => {
@@ -156,11 +165,17 @@ export function useVocabulary() {
   // 6. Chuyển đổi trạng thái Thùng rác
   const toggleTrash = (nextTrash) => {
     const nextVal = typeof nextTrash === 'boolean' ? nextTrash : !trashView
+    if (nextVal === trashView) return
+    // Xoá ngay danh sách đang hiển thị để không lẫn dữ liệu giữa kho chính và thùng rác;
+    // effect ở bước 4 sẽ tự tải lại khi trashView/page/search đổi (không gọi fetch tay để tránh request trùng)
+    setVocabList([])
+    setTotal(0)
+    setIsLoading(true)
     setTrashView(nextVal)
     setPage(1)
     setSearchInput('')
     setSearch('')
-    fetchWords(1, '', partOfSpeech, topicId, sortBy, nextVal)
+    refreshTrashCount()
   }
 
   // 7. Xóa tìm kiếm
