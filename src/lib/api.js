@@ -66,6 +66,12 @@ http.interceptors.request.use(attachAuthHeaders)
  */
 export const rawHttp = axios.create({ baseURL: safeBaseURL, timeout: 30000 })
 rawHttp.interceptors.request.use(attachAuthHeaders)
+rawHttp.interceptors.response.use(undefined, (error) => {
+  if (error.response?.status === 401 && error.response?.data?.code === 'SESSION_REVOKED') {
+    endSession(error.response.data.message)
+  }
+  return Promise.reject(error)
+})
 
 
 http.interceptors.response.use(
@@ -100,6 +106,7 @@ function toApiError(error) {
   }
   return {
     status: status ?? 0,
+    code: error.response?.data?.code ?? null,
     message:
       error.response?.data?.message ??
       messages[status] ??
@@ -143,6 +150,14 @@ const NO_RETRY_ENDPOINTS = new Set([
 ])
 
 let refreshPromise = null
+
+/** Xoá token và báo cho authStore đưa người dùng về trang đăng nhập (kèm lý do nếu có). */
+function endSession(reason) {
+  clearTokens()
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('se-admin:unauthorized', { detail: { reason } }))
+  }
+}
 
 /** Xin access token mới bằng refresh token đang lưu. Nhiều lệnh gọi cùng lúc dùng chung một lần xin. */
 function refreshAccessToken() {
@@ -229,22 +244,27 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       ...config,
     })
   } catch (error) {
+    // Phiên bị thu hồi (đăng nhập ở thiết bị khác): refresh token cũng đã vô hiệu, không thử làm mới
+    const sessionRevoked = error.code === 'SESSION_REVOKED'
     const canRetryWithRefresh =
       error.status === 401 &&
+      !sessionRevoked &&
       !isRetry &&
       !NO_RETRY_ENDPOINTS.has(endpoint) &&
       getStoredToken(REFRESH_TOKEN_KEY)
 
     if (canRetryWithRefresh) {
-      await refreshAccessToken()
+      try {
+        await refreshAccessToken()
+      } catch {
+        endSession(error.message)
+        throw error
+      }
       return request(method, endpoint, options, true)
     }
 
     if (error.status === 401) {
-      clearTokens()
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('se-admin:unauthorized'))
-      }
+      endSession(sessionRevoked ? error.message : null)
     }
     throw error
   }
