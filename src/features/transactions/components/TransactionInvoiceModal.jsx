@@ -452,20 +452,20 @@ export default function TransactionInvoiceModal({
         }
       }}
     >
-      {/* Container Modal */}
+      {/* Container Modal (Khung chuẩn tỷ lệ giấy A4 dọc) */}
       <div
-        className="relative w-full max-w-4xl max-h-[96vh] flex flex-col bg-slate-50 rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden cursor-default"
+        className="relative w-full max-w-[680px] max-h-[95vh] flex flex-col bg-slate-100 rounded-2xl shadow-2xl border border-slate-300 overflow-hidden cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Bar (Sticky Action Bar) */}
-        <div className="shrink-0 flex items-center justify-between px-5 py-2.5 bg-white border-b border-slate-200 no-print">
+        <div className="shrink-0 flex items-center justify-between px-5 py-3 bg-white border-b border-slate-200 no-print">
           <div className="flex items-center gap-2.5">
             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs">
               <FileCheck2 size={18} strokeWidth={2.2} />
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900">Chi tiết Hóa đơn & Giao dịch</h3>
+                <h3 className="text-sm font-bold text-slate-900">Hóa đơn điện tử (Khổ A4 dọc)</h3>
                 {isPaid && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200">
                     <CheckCircle2 size={11} strokeWidth={2.5} />
@@ -495,7 +495,7 @@ export default function TransactionInvoiceModal({
               icon={Download}
               onClick={handleDownloadPdf}
               disabled={isExportingPdf}
-              title="Tải trực tiếp file PDF hóa đơn về máy"
+              title="Tải trực tiếp file PDF hóa đơn khổ A4"
             >
               {isExportingPdf ? 'Đang tải PDF...' : 'Tải PDF'}
             </Button>
@@ -503,232 +503,257 @@ export default function TransactionInvoiceModal({
               type="button"
               onClick={() => onClose?.()}
               className="p-1.5 ml-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              title="Đóng hóa đơn (ESC hoặc click ra ngoài)"
+              title="Đóng hóa đơn (ESC)"
             >
               <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Modal Body / Printable Invoice Sheet */}
-        <div className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-2 sm:p-3 bg-slate-100/70 flex flex-col justify-center items-center">
+        {/* Modal Body: Tờ giấy A4 dọc (Portrait A4 Paper Sheet 210mm x 297mm) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-200/75 flex justify-center items-start">
           <div
             ref={printRef}
             id="printable-invoice"
-            className="w-full max-w-3xl bg-white rounded-xl shadow-xs border border-slate-200/90 p-3 sm:p-4 text-slate-800 printable-card select-text"
+            className="w-full max-w-[595px] min-h-[842px] bg-white shadow-xl border border-slate-300/90 px-7 py-8 sm:px-9 sm:py-10 text-slate-800 flex flex-col justify-between select-text"
           >
-            {/* Header: Company Info + e-Invoice Tag */}
-            <div className="border-b border-slate-200/80 pb-2">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-2xs">
-                      <GraduationCap size={15} className="text-white drop-shadow-xs" />
+            {/* PHẦN TRÊN & GIỮA TỜ GIẤY A4 */}
+            <div className="space-y-5">
+              {/* 1. Header Đơn vị bán hàng & Mẫu số Hóa đơn */}
+              <div className="flex items-start justify-between gap-4 border-b-2 border-slate-800 pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-brand-600 text-white shadow-2xs">
+                      <GraduationCap size={16} className="text-white" />
                     </div>
-                    <div>
-                      <span className="text-xs font-black tracking-tight text-navy-900 uppercase">
-                        SmartEnglish AI Platform
-                      </span>
-                    </div>
+                    <span className="text-sm font-black tracking-tight text-navy-900 uppercase">
+                      SMARTENGLISH AI PLATFORM
+                    </span>
                   </div>
-                  <p className="text-[10.5px] font-bold text-slate-800">
+                  <p className="text-[11px] font-bold text-slate-900 uppercase">
                     HỆ THỐNG GIÁO DỤC CÔNG NGHỆ SMARTENGLISH AI
                   </p>
-                  <p className="text-[10px] text-slate-500">
-                    Mã số thuế: <strong className="font-mono text-slate-700">010988XXXX</strong> • Địa chỉ: TP. Hồ Chí Minh
+                  <p className="text-[11px] text-slate-600">
+                    Mã số thuế: <strong className="font-mono text-slate-800">010988XXXX</strong>
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-600">
+                    Địa chỉ: Khu Công Nghệ Cao, TP. Hồ Chí Minh
+                  </p>
+                  <p className="text-[11px] text-slate-600">
                     Hotline: 1900 XXXX • Email: support@smartenglish.vn
                   </p>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <div className="border border-slate-200/90 rounded-lg px-2.5 py-1.5 bg-slate-50/80 text-left space-y-0.5 shadow-2xs">
-                    <div className="text-[9.5px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200/60 pb-0.5 mb-0.5">
-                      Hóa đơn điện tử
-                    </div>
-                    <div className="text-[10px] text-slate-600 flex justify-between gap-3">
-                      <span>Mẫu số:</span> <span className="font-mono font-bold text-slate-800">{inv.templateCode || '2'}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-600 flex justify-between gap-3">
-                      <span>Ký hiệu:</span> <span className="font-mono font-bold text-slate-800">{serial}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-600 flex justify-between gap-3">
-                      <span>Số HĐ:</span> <span className="font-mono font-bold text-brand-600">{invoiceNo}</span>
-                    </div>
+                <div className="shrink-0 border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-left space-y-1 min-w-[165px]">
+                  <div className="text-[9.5px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-200 pb-1">
+                    HÓA ĐƠN ĐIỆN TỬ
+                  </div>
+                  <div className="text-[11px] text-slate-600 flex justify-between gap-3">
+                    <span>Mẫu số:</span>
+                    <span className="font-mono font-bold text-slate-900">{inv.templateCode || '2'}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 flex justify-between gap-3">
+                    <span>Ký hiệu:</span>
+                    <span className="font-mono font-bold text-slate-900">{serial}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 flex justify-between gap-3">
+                    <span>Số HĐ:</span>
+                    <span className="font-mono font-bold text-brand-600">{invoiceNo}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Title Header */}
-              <div className="text-center mt-1 pt-0.5">
-                <h1 className="text-base sm:text-lg font-black uppercase text-navy-900 tracking-wide leading-none">
+              {/* 2. Tiêu đề HÓA ĐƠN BÁN HÀNG */}
+              <div className="text-center py-1">
+                <h1 className="text-xl font-black uppercase text-navy-900 tracking-wide">
                   HÓA ĐƠN BÁN HÀNG
                 </h1>
-                <p className="text-[10px] text-slate-500 italic mt-0.5">
+                <p className="text-[11px] text-slate-500 italic mt-1">
+                  (Bản thể hiện của hóa đơn điện tử)
+                </p>
+                <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   Ngày lập: {formatDate(issuedDate, 'dd/MM/yyyy HH:mm:ss')}
                 </p>
               </div>
-            </div>
 
-            {/* Customer & Transaction Info Cards */}
-            <div className="py-2 border-b border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {/* Thẻ người mua */}
-              <div className="rounded-lg border border-slate-200/80 bg-slate-50/70 p-2 space-y-0.5">
-                <div className="text-[9.5px] uppercase tracking-wider text-slate-400 font-bold">
-                  Thông tin khách hàng (Người mua)
+              {/* 3. Thông tin Người mua & Giao dịch (xếp dọc chuẩn mẫu giấy A4) */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2 text-xs">
+                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200/80 pb-2">
+                  <div>
+                    <span className="text-slate-500">Họ tên người mua: </span>
+                    <strong className="text-slate-900 font-bold text-xs">{customerName}</strong>
+                  </div>
+                  <span className="font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200 text-[10.5px]">
+                    {customerRole}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <span>{customerName}</span>
-                  <BadgeCheck size={13} className="text-brand-500 fill-brand-500/10" />
-                </div>
-                <div className="text-[10.5px] text-slate-600 flex items-center justify-between">
-                  <span>Email: <strong className="font-medium text-slate-800">{customerEmail}</strong></span>
-                  <span className="font-semibold text-brand-700 bg-brand-50 px-1.5 py-0.2 rounded border border-brand-100 text-[9.5px]">{customerRole}</span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11.5px] pt-0.5">
+                  <div>
+                    <span className="text-slate-500">Địa chỉ Email: </span>
+                    <strong className="text-slate-800 font-medium">{customerEmail}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Hình thức TT: </span>
+                    <strong className="text-slate-800 font-semibold">{paymentMethod}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Mã giao dịch: </span>
+                    <strong className="font-mono text-slate-800">{txnId}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Thời hạn gói: </span>
+                    <strong className="text-slate-800">
+                      {formatDate(issuedDate, 'dd/MM/yyyy')} → {formatDate(periodEnd, 'dd/MM/yyyy')}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              {/* Thẻ thanh toán */}
-              <div className="rounded-lg border border-slate-200/80 bg-slate-50/70 p-2 space-y-0.5">
-                <div className="text-[9.5px] uppercase tracking-wider text-slate-400 font-bold">
-                  Phương thức & Đối soát thanh toán
-                </div>
-                <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
-                  <CreditCard size={13} className="text-brand-600 shrink-0" />
-                  <span className="truncate">{paymentMethod}</span>
-                </div>
-                <div className="text-[10.5px] text-slate-600 flex items-center justify-between">
-                  <span>Mã GD: <strong className="font-mono text-slate-800">{txnId}</strong></span>
-                  <span>Hiệu lực: <strong className="text-slate-800">{formatDate(issuedDate, 'dd/MM/yyyy')} → {formatDate(periodEnd, 'dd/MM/yyyy')}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Line Items Table */}
-            <div className="pt-2">
-              <div className="overflow-x-auto rounded-lg border border-slate-200/90 shadow-2xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/90 border-b border-slate-200 font-bold text-slate-700 text-[10.5px]">
+              {/* 4. Bảng chi tiết hàng hóa, dịch vụ */}
+              <div className="overflow-hidden rounded-lg border border-slate-300">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 border-b border-slate-300 font-bold text-slate-700 text-[11px]">
                     <tr>
-                      <th className="py-1 px-2 text-center w-8">STT</th>
-                      <th className="py-1 px-2.5">Tên dịch vụ & Gói bản quyền</th>
-                      <th className="py-1 px-2 text-center w-20">Kỳ hạn</th>
-                      <th className="py-1 px-2 text-center w-10">SL</th>
-                      <th className="py-1 px-2 text-right w-20">Đơn giá</th>
-                      <th className="py-1 px-2 text-right w-16">Giảm giá</th>
-                      <th className="py-1 px-2.5 text-right w-24">Thành tiền</th>
+                      <th className="py-2.5 px-2.5 text-center w-10 border-r border-slate-200">STT</th>
+                      <th className="py-2.5 px-3 border-r border-slate-200">Tên hàng hóa, dịch vụ</th>
+                      <th className="py-2.5 px-2 text-center w-16 border-r border-slate-200">ĐVT</th>
+                      <th className="py-2.5 px-2 text-center w-12 border-r border-slate-200">SL</th>
+                      <th className="py-2.5 px-2.5 text-right w-24 border-r border-slate-200">Đơn giá</th>
+                      <th className="py-2.5 px-3 text-right w-28">Thành tiền</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-200">
                     <tr>
-                      <td className="py-1 px-2 text-center font-medium text-slate-500 text-[10.5px]">1</td>
-                      <td className="py-1 px-2.5">
-                        <div className="font-bold text-slate-900 text-[11px]">{planName}</div>
-                        <p className="text-[9.5px] text-slate-500 line-clamp-1">
-                          Bản quyền giảng dạy tiếng Anh thông minh với AI, quản lý học viên, tạo đề thi tự động.
+                      <td className="py-3 px-2.5 text-center font-medium text-slate-600 border-r border-slate-200">
+                        1
+                      </td>
+                      <td className="py-3 px-3 border-r border-slate-200">
+                        <div className="font-bold text-slate-900 text-xs">{planName}</div>
+                        <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                          Kỳ hạn: {billingCycle} • Bản quyền sử dụng nền tảng học & giảng dạy tiếng Anh thông minh SmartEnglish AI.
                         </p>
                       </td>
-                      <td className="py-1 px-2 text-center font-medium text-slate-700 text-[10.5px]">{billingCycle}</td>
-                      <td className="py-1 px-2 text-center font-medium text-slate-700 text-[10.5px]">1</td>
-                      <td className="py-1 px-2 text-right font-medium text-slate-700 text-[10.5px]">
+                      <td className="py-3 px-2 text-center text-slate-700 border-r border-slate-200">
+                        Gói
+                      </td>
+                      <td className="py-3 px-2 text-center font-semibold text-slate-800 border-r border-slate-200">
+                        1
+                      </td>
+                      <td className="py-3 px-2.5 text-right font-medium text-slate-800 border-r border-slate-200">
                         {formatCurrency(originalAmount)}
                       </td>
-                      <td className="py-1 px-2 text-right font-medium text-emerald-600 text-[10.5px]">
-                        {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : '0 đ'}
+                      <td className="py-3 px-3 text-right font-bold text-slate-900">
+                        {formatCurrency(originalAmount)}
                       </td>
-                      <td className="py-1 px-2.5 text-right font-bold text-slate-900 text-[11px]">
-                        {formatCurrency(amountFinal)}
-                      </td>
+                    </tr>
+                    {/* Dòng trống tạo cảm giác trang giấy hóa đơn A4 chuẩn */}
+                    <tr className="h-8">
+                      <td className="border-r border-slate-200" />
+                      <td className="border-r border-slate-200" />
+                      <td className="border-r border-slate-200" />
+                      <td className="border-r border-slate-200" />
+                      <td className="border-r border-slate-200" />
+                      <td />
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {/* Total Calculation & In-words: Ghép 2 cột song song để tối ưu chiều dọc hoàn hảo */}
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-end">
-                {/* Cột trái: Số tiền viết bằng chữ + ghi chú thuế */}
-                <div className="rounded-lg bg-slate-50/80 border border-slate-200/80 p-2 space-y-1">
-                  <div className="text-[10px] text-slate-700 leading-snug">
-                    <span className="font-bold text-slate-800">Số tiền viết bằng chữ:</span>{' '}
-                    <span className="italic text-slate-600">{amountInWords}</span>
+              {/* 5. Tổng hợp thanh toán & Số tiền bằng chữ */}
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <div className="w-full sm:w-72 space-y-1.5 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Cộng tiền dịch vụ:</span>
+                      <span className="font-semibold text-slate-800">{formatCurrency(originalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Chiết khấu / Giảm giá:</span>
+                      <span className="font-semibold text-emerald-600">
+                        {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : '0 đ'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Thuế suất GTGT (KCT*):</span>
+                      <span className="font-semibold text-slate-800">0 đ</span>
+                    </div>
+                    <div className="pt-2 border-t-2 border-slate-800 flex justify-between items-baseline">
+                      <span className="text-xs font-extrabold text-slate-900 uppercase">
+                        Tổng tiền thanh toán:
+                      </span>
+                      <span className="text-base font-black text-brand-600">
+                        {formatCurrency(amountFinal)}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[9px] text-slate-400 italic leading-tight">
-                    * Dịch vụ đào tạo giáo dục không chịu thuế GTGT. Hóa đơn hợp lệ theo quy định.
-                  </p>
                 </div>
 
-                {/* Cột phải: Chi tiết tổng thanh toán */}
-                <div className="space-y-0.5 text-[10.5px] sm:pl-3">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Cộng tiền dịch vụ:</span>
-                    <span className="font-semibold text-slate-800">{formatCurrency(originalAmount)}</span>
-                  </div>
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-emerald-600">
-                      <span>Chiết khấu ưu đãi:</span>
-                      <span className="font-semibold">-{formatCurrency(discountAmount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-slate-600">
-                    <span>Thuế suất GTGT:</span>
-                    <span className="font-semibold text-slate-800">0% (Không chịu thuế)</span>
-                  </div>
-                  <div className="pt-1 border-t border-slate-200 flex justify-between items-baseline">
-                    <span className="text-[11px] font-bold text-slate-900 uppercase">Tổng cộng thanh toán:</span>
-                    <span className="text-sm sm:text-base font-black text-emerald-600">
-                      {formatCurrency(amountFinal)}
-                    </span>
-                  </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-700">
+                  <span className="font-bold text-slate-900">Số tiền viết bằng chữ: </span>
+                  <span className="italic">{amountInWords}</span>
                 </div>
               </div>
             </div>
 
-            {/* Footer Signatures, Stamp & QR Verification */}
-            <div className="pt-2 mt-2 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-              {/* QR Tra cứu */}
-              <div className="flex items-center gap-2">
-                <div className="p-1 border border-slate-200/90 rounded-lg bg-white shadow-2xs shrink-0">
-                  <QRCodeCanvas
-                    value={`[HÓA ĐƠN ĐIỆN TỬ SMARTENGLISH AI]\nSố HĐ: ${invoiceNo} | Ký hiệu: ${serial}\nĐơn vị bán: HỆ THỐNG GIÁO DỤC CÔNG NGHỆ SMARTENGLISH AI\nMST: 010988XXXX | TP. Hồ Chí Minh\nNgười mua: ${customerName}\nEmail: ${customerEmail}\nGói: ${planName}\nTổng tiền: ${formatCurrency(amountFinal)}\nTrạng thái: ĐÃ THANH TOÁN (KÝ SỐ CA HỢP LỆ)\nTra cứu: https://smartenglish.vn/invoice`}
-                    size={42}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <p className="font-bold text-slate-800 text-[10.5px]">Mã tra cứu hóa đơn</p>
-                  <p className="font-mono text-[10px] text-brand-600 font-semibold">{invoiceNo}</p>
-                  <p className="text-[9px] text-slate-500 leading-tight">
-                    Quét mã QR để tra cứu tính toàn vẹn hóa đơn điện tử.
-                  </p>
-                </div>
-              </div>
+            {/* PHẦN CHÂN TRANG GIẤY A4: CHỮ KÝ SỐ & QR TRA CỨU */}
+            <div className="pt-6 mt-6 border-t border-slate-300 space-y-4">
+              <div className="grid grid-cols-2 gap-4 items-start">
+                {/* Cột trái: Người mua + Mã QR */}
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-900 uppercase">NGƯỜI MUA HÀNG</p>
+                    <p className="text-[10px] text-slate-400 italic">(Ký, ghi rõ họ tên)</p>
+                  </div>
 
-              {/* Dấu số điện tử */}
-              <div className="text-left sm:text-right space-y-0.5">
-                <div className="text-[10px] font-bold text-slate-900 uppercase">
-                  ĐƠN VỊ BÁN HÀNG
-                </div>
-                <div className="text-[9px] text-slate-500 italic">
-                  (Ký điện tử bởi SmartEnglish AI CA)
-                </div>
-
-                {/* Stamp */}
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-emerald-500/80 bg-emerald-50/70 text-emerald-800 shadow-2xs">
-                  <BadgeCheck size={15} className="text-emerald-600 shrink-0" />
-                  <div className="text-left">
-                    <div className="text-[9.5px] font-black tracking-wider uppercase text-emerald-900 leading-tight">
-                      ĐÃ THANH TOÁN • PAID
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <div className="p-1.5 border border-slate-200 rounded-lg bg-white shadow-2xs shrink-0">
+                      <QRCodeCanvas
+                        value={qrValue}
+                        size={56}
+                        level="M"
+                        includeMargin={false}
+                      />
                     </div>
-                    <div className="text-[8.5px] text-emerald-700 font-mono leading-tight">
-                      {formatDate(issuedDate, 'dd/MM/yyyy HH:mm')}
+                    <div className="space-y-0.5 text-[10px] text-slate-600">
+                      <p className="font-bold text-slate-800">Mã QR tra cứu HĐĐT</p>
+                      <p className="font-mono text-brand-600 font-bold">{invoiceNo}</p>
+                      <p className="text-[9.5px] text-slate-400 leading-tight">
+                        Quét QR để kiểm tra tính toàn vẹn.
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-[9px] text-slate-400">
-                  Chữ ký số điện tử hợp lệ
-                </p>
+                {/* Cột phải: Đơn vị bán hàng & Con dấu ký số */}
+                <div className="text-right space-y-2">
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-900 uppercase">ĐƠN VỊ BÁN HÀNG</p>
+                    <p className="text-[10px] text-slate-400 italic">
+                      (Ký điện tử bởi SmartEnglish AI CA)
+                    </p>
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 text-emerald-800 shadow-2xs">
+                    <BadgeCheck size={18} className="text-emerald-600 shrink-0" />
+                    <div className="text-left">
+                      <div className="text-[10px] font-black tracking-wider uppercase text-emerald-900 leading-tight">
+                        ĐÃ THANH TOÁN • PAID
+                      </div>
+                      <div className="text-[9.5px] text-emerald-700 font-mono leading-tight mt-0.5">
+                        Ký ngày: {formatDate(issuedDate, 'dd/MM/yyyy HH:mm')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[9.5px] text-slate-400">
+                    Chữ ký số điện tử hợp lệ
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-slate-200 pt-2.5 text-center text-[10px] text-slate-400 italic">
+                * Dịch vụ đào tạo giáo dục thuộc đối tượng không chịu thuế GTGT. Hóa đơn điện tử được khởi tạo từ hệ thống SmartEnglish AI.
               </div>
             </div>
           </div>

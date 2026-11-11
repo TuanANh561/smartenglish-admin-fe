@@ -19,6 +19,7 @@ import { DEFAULT_STUDENT_PLANS } from './constants/pricingConstants'
 import TeacherQuotaBanner from './components/TeacherQuotaBanner'
 import TeacherReferralCard from './components/TeacherReferralCard'
 import StudentMobilePreviewSection from './components/StudentMobilePreviewSection'
+import TeacherRefundModal from './components/TeacherRefundModal'
 
 function TeacherPackagesPage() {
   const user = useAuthStore((s) => s.user)
@@ -41,6 +42,8 @@ function TeacherPackagesPage() {
   const [loading, setLoading] = useState(true)
   const [subscribingId, setSubscribingId] = useState(null)
   const [cancellingRenewal, setCancellingRenewal] = useState(false)
+  const [isCancelPlanOpen, setIsCancelPlanOpen] = useState(false)
+  const [cancellingPlan, setCancellingPlan] = useState(false)
   const [isSepayModalOpen, setIsSepayModalOpen] = useState(false)
   const [sepayOrder, setSepayOrder] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -298,6 +301,23 @@ function TeacherPackagesPage() {
     }
   }
 
+  // Hủy gói ngay + gửi yêu cầu hoàn tiền (admin duyệt thủ công), backend gửi email xác nhận
+  const handleCancelPlan = async (form) => {
+    setCancellingPlan(true)
+    try {
+      await api.post('/payment/subscriptions/cancel-and-refund', { data: form })
+      toast.success('Đã hủy gói. Email xác nhận hoàn tiền đã được gửi.')
+      setIsCancelPlanOpen(false)
+      await loadData()
+      return true
+    } catch (err) {
+      toast.error(err?.message || 'Không thể hủy gói')
+      return false
+    } finally {
+      setCancellingPlan(false)
+    }
+  }
+
   const handleResumeRenewal = async () => {
     if (isAdmin) {
       toast.success('Đã bật lại tự động gia hạn (Mô phỏng).')
@@ -438,6 +458,7 @@ function TeacherPackagesPage() {
             cancellingRenewal={cancellingRenewal}
             onCancelRenewal={handleCancelRenewal}
             onResumeRenewal={handleResumeRenewal}
+            onCancelPlan={isAdmin ? undefined : () => setIsCancelPlanOpen(true)}
           />
 
           {/* Lưới 3 gói Giáo viên */}
@@ -479,6 +500,14 @@ function TeacherPackagesPage() {
           onSubscribeStudentPlan={handleSubscribeStudentPlan}
         />
       )}
+
+      <TeacherRefundModal
+        isOpen={isCancelPlanOpen}
+        onClose={() => setIsCancelPlanOpen(false)}
+        planName={effectiveQuota?.planName}
+        isSubmitting={cancellingPlan}
+        onSubmit={handleCancelPlan}
+      />
 
       {/* Modal Quét mã VietQR SePay Napas 24/7 */}
       <SepayVietQrPaymentModal
