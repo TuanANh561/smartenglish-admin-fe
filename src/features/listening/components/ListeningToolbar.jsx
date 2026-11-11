@@ -25,10 +25,11 @@ export default function ListeningToolbar({
   onOpenCreate,
   onReload,
 }) {
+  const defaultOwnership = isTeacher ? 'mine' : 'all'
   const hasFilters = Boolean(
     search.trim() ||
     category !== 'all' ||
-    ownershipFilter !== 'all' ||
+    ownershipFilter !== defaultOwnership ||
     topic !== 'all' ||
     (accent && accent !== 'all')
   )
@@ -36,7 +37,7 @@ export default function ListeningToolbar({
   const clearFilters = () => {
     setSearch('')
     setCategory('all')
-    setOwnershipFilter('all')
+    setOwnershipFilter(defaultOwnership)
     setTopic('all')
     if (setAccent) setAccent('all')
     setPage(1)
@@ -80,13 +81,21 @@ export default function ListeningToolbar({
             setPage(1)
           }}
           size="sm"
-          containerClassName="w-36 shrink-0"
-          options={[
-            { value: 'all', label: `Nguồn: Tất cả (${totalLessons})` },
-            { value: 'mine', label: `Của tôi (${myLessonsCount})` },
-            { value: 'system', label: 'SmartEnglish' },
-            ...(isTeacher ? [{ value: 'others', label: 'Giáo viên khác' }] : []),
-          ]}
+          containerClassName="w-40 shrink-0"
+          options={
+            isTeacher
+              ? [
+                  { value: 'mine', label: `Nguồn: Của tôi (${myLessonsCount})` },
+                  { value: 'all', label: `Nguồn: Tất cả (${totalLessons})` },
+                  { value: 'system', label: 'SmartEnglish' },
+                  { value: 'others', label: 'Giáo viên khác' },
+                ]
+              : [
+                  { value: 'all', label: `Nguồn: Tất cả (${totalLessons})` },
+                  { value: 'mine', label: `Nguồn: Của tôi (${myLessonsCount})` },
+                  { value: 'system', label: 'SmartEnglish' },
+                ]
+          }
         />
 
         {/* Lọc Chủ đề */}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Eye, Plus, Search, Trash2, UserPlus } from 'lucide-react'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Pagination from '@/components/ui/Pagination'
+import { formatRelativeTime } from '@/lib/utils'
 import { ProgressBar, ScoreBadge, StudentAvatar } from '../ClassSharedComponents'
 
 export default function ClassStudentsTab({
@@ -87,7 +88,11 @@ export default function ClassStudentsTab({
                   avatarColor: student.avatarColor || '#2563eb',
                   avgScore: student.avgScore ?? null,
                   progress: student.progress ?? 0,
-                  lastSeen: student.lastSeen || (student.joinedAt ? `Gia nhập: ${new Date(student.joinedAt).toLocaleDateString('vi-VN')}` : '--'),
+                  lastSeen: student.lastSeen
+                    ? `Nộp bài ${formatRelativeTime(student.lastSeen)}`
+                    : student.joinedAt
+                      ? `Gia nhập: ${new Date(student.joinedAt).toLocaleDateString('vi-VN')}`
+                      : '--',
                 }
 
                 return (

@@ -28,12 +28,16 @@ export default function AdminDirectGrantModal({
       ? [
           {
             id: 2,
+            planId: 2,
+            defaultDays: 30,
             name: 'Teacher Pro (Gói Chuyên Nghiệp)',
             desc: '15 lớp học, 300 học viên/lớp, AI không giới hạn',
             enumCode: 'TEACHER_PRO',
           },
           {
             id: 3,
+            planId: 3,
+            defaultDays: 30,
             name: 'School & Center (Doanh nghiệp/Trường học)',
             desc: 'Không giới hạn lớp & học viên, hỗ trợ kỹ thuật 1-1',
             enumCode: 'SCHOOL_CENTER',
@@ -42,18 +46,24 @@ export default function AdminDirectGrantModal({
       : [
           {
             id: 1,
+            planId: 2,
+            defaultDays: 30,
             name: 'Học Viên Premium Tháng',
             desc: 'Gia sư AI 1-1, Chấm phát âm từng âm vị, Mock Test chuẩn CEFR',
             enumCode: 'PREMIUM_MONTHLY',
           },
           {
             id: 2,
+            planId: 2,
+            defaultDays: 365,
             name: 'Học Viên Premium Năm (Tiết kiệm 30%)',
             desc: 'Toàn bộ quyền lợi VIP 12 tháng, Luyện phản xạ giao tiếp 24/7',
             enumCode: 'PREMIUM_YEARLY',
           },
           {
             id: 4,
+            planId: 4,
+            defaultDays: 3650,
             name: 'Học Viên Trọn Đời (Lifetime VIP)',
             desc: 'Sở hữu vĩnh viễn không giới hạn toàn bộ tính năng và khóa học',
             enumCode: 'LIFETIME',
@@ -61,7 +71,7 @@ export default function AdminDirectGrantModal({
         ]
   }, [isTeacher])
 
-  const [selectedPlanId, setSelectedPlanId] = useState(isTeacher ? 2 : 2)
+  const [selectedPlanId, setSelectedPlanId] = useState(isTeacher ? 2 : 1)
   const [durationDays, setDurationDays] = useState(30)
   const [grantMode, setGrantMode] = useState('PAID') // 'PAID' | 'FREE'
   const [customAmount, setCustomAmount] = useState('')
@@ -106,8 +116,8 @@ export default function AdminDirectGrantModal({
         : 'Cấp quyền trải nghiệm / Học bổng trực tiếp từ Quản trị viên'
 
       // 1. Gọi backend payment-service để cấp quyền và lưu Order Audit log thật
-      await adminGrantPlan(targetUser.id, {
-        planId: selectedPlanId,
+      const grantResult = await adminGrantPlan(targetUser.id, {
+        planId: selectedPlanObj?.planId ?? selectedPlanId,
         durationDays,
         reason: reason.trim() || defaultReason,
         customerName: targetUser.displayName || targetUser.username,
@@ -120,18 +130,9 @@ export default function AdminDirectGrantModal({
       })
 
       // 2. Xác định ngày hết hạn mới để cập nhật đồng bộ sang auth-service
-      let newExpiresAt = new Date()
-      if (
-        hasActivePlan &&
-        targetUser.planExpiresAt &&
-        new Date(targetUser.planExpiresAt) > new Date()
-      ) {
-        newExpiresAt = new Date(
-          new Date(targetUser.planExpiresAt).getTime() + durationDays * 24 * 60 * 60 * 1000,
-        )
-      } else {
-        newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
-      }
+      const newExpiresAt = grantResult?.currentPeriodEnd
+        ? new Date(grantResult.currentPeriodEnd)
+        : new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
 
       // 3. Đồng bộ trực tiếp sang auth-service (REST PATCH)
       try {
@@ -256,7 +257,10 @@ export default function AdminDirectGrantModal({
             {availablePlans.map((p) => (
               <div
                 key={p.id}
-                onClick={() => setSelectedPlanId(p.id)}
+                onClick={() => {
+                  setSelectedPlanId(p.id)
+                  setDurationDays(p.defaultDays)
+                }}
                 className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
                   selectedPlanId === p.id
                     ? 'border-brand-500 bg-brand-50/40 ring-1 ring-brand-500'

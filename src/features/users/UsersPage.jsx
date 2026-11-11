@@ -62,13 +62,24 @@ export default function UsersPage() {
   const registrations = registrationsQuery.data?.items ?? []
   const pendingRegsCount = registrations.filter((r) => r.status === 'pending').length
 
-  // Thao tác khóa / mở khóa người dùng
+  // Thao tác khóa / mở khóa người dùng (Có cơ chế bảo vệ Admin Protection)
   const handleToggleLock = useCallback(
     (user) => {
       if (user.id === currentUser?.id) {
         toast.error('Bạn không thể tự khóa tài khoản quản trị viên của chính mình!')
         return
       }
+
+      const isTargetAdmin =
+        String(user.role || '').toLowerCase() === 'admin' ||
+        String(user.role || '').toLowerCase() === 'role_admin' ||
+        String(user.role || '').toLowerCase() === 'super_admin'
+
+      if (user.isActive && isTargetAdmin) {
+        toast.error('Không thể khóa tài khoản của Quản trị viên hệ thống (Admin Protection)!')
+        return
+      }
+
       setLockTarget(user)
     },
     [currentUser?.id],
@@ -76,6 +87,18 @@ export default function UsersPage() {
 
   const handleConfirmLockToggle = async () => {
     if (!lockTarget) return
+
+    const isTargetAdmin =
+      String(lockTarget.role || '').toLowerCase() === 'admin' ||
+      String(lockTarget.role || '').toLowerCase() === 'role_admin' ||
+      String(lockTarget.role || '').toLowerCase() === 'super_admin'
+
+    if (lockTarget.isActive && isTargetAdmin) {
+      toast.error('Không thể khóa tài khoản của Quản trị viên hệ thống (Admin Protection)!')
+      setLockTarget(null)
+      return
+    }
+
     setIsProcessing(true)
 
     try {

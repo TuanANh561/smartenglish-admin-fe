@@ -11,6 +11,7 @@ export default function AiContentToolbar({
   setStatusFilter,
   authorFilter,
   setAuthorFilter,
+  isTeacher = false,
   searchTerm,
   setSearchTerm,
   onOpenCreationModal,
@@ -23,7 +24,7 @@ export default function AiContentToolbar({
   isGenerating,
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs">
       {/* ─── 1 Single Clean Row: Search + Dropdown Filters + Actions (Chuẩn Benchmark) ─── */}
       <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4">
         {/* Left: Ô tìm kiếm không viền (borderless) */}
@@ -74,12 +75,20 @@ export default function AiContentToolbar({
             value={authorFilter}
             onChange={(e) => setAuthorFilter(e.target.value)}
             size="sm"
-            containerClassName="w-36 shrink-0"
-            options={[
-              { value: 'all', label: 'Nguồn: Tất cả' },
-              { value: 'mine', label: 'Của tôi' },
-              { value: 'others', label: 'Tác giả khác' },
-            ]}
+            containerClassName="w-40 shrink-0"
+            options={
+              isTeacher
+                ? [
+                    { value: 'mine', label: 'Nguồn: Của tôi' },
+                    { value: 'system', label: 'Nguồn: Hệ thống' },
+                    { value: 'all', label: 'Nguồn: Tất cả' },
+                  ]
+                : [
+                    { value: 'all', label: 'Nguồn: Tất cả' },
+                    { value: 'mine', label: 'Nguồn: Của tôi' },
+                    { value: 'others', label: 'Tác giả khác' },
+                  ]
+            }
           />
 
           {/* Nút Làm mới / Tải lại */}

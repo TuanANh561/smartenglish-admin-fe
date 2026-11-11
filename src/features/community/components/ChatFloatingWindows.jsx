@@ -117,8 +117,8 @@ export default function ChatFloatingWindows({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL ảnh hợp lệ')
 
-      toast.success('Đã tải ảnh lên AWS S3!', { id: toastId })
-      onSendMediaMessage?.(convId, {
+      toast.dismiss(toastId)
+      await onSendMediaMessage?.(convId, {
         type: 'IMAGE',
         attachmentUrl: s3Url,
         content: `[Hình ảnh] ${file.name}`,
@@ -149,8 +149,8 @@ export default function ChatFloatingWindows({
       const s3Url = res?.data?.url || res?.url
       if (!s3Url) throw new Error('Máy chủ không trả về URL tệp hợp lệ')
 
-      toast.success('Đã tải tệp lên AWS S3 thành công!', { id: toastId })
-      onSendMediaMessage?.(convId, {
+      toast.dismiss(toastId)
+      await onSendMediaMessage?.(convId, {
         type: 'FILE',
         attachmentUrl: s3Url,
         attachmentName: file.name,

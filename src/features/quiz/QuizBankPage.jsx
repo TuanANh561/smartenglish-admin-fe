@@ -34,7 +34,7 @@ const PAGE_SIZE = 8
 export default function QuizBankPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const isTeacher = user?.role?.toLowerCase() === 'teacher'
+  const isTeacher = String(user?.role || '').toLowerCase().includes('teacher')
   const defaultAuthorFilter = isTeacher ? 'mine' : 'all'
 
   // ── Tab State: 'exams' (content-service) vs 'quizzes' (learning-service) ───

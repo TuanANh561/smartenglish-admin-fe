@@ -36,6 +36,18 @@ export const http = axios.create({
 http.interceptors.request.use((config) => {
   const token = getStoredToken(TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
+  try {
+    const rawUser = getStorage()?.getItem('se_admin_user')
+    if (rawUser) {
+      const parsedUser = JSON.parse(rawUser)
+      if (parsedUser?.id && !config.headers['X-User-Id']) {
+        config.headers['X-User-Id'] = String(parsedUser.id)
+      }
+      if (parsedUser?.role && !config.headers['X-User-Role']) {
+        config.headers['X-User-Role'] = String(parsedUser.role).toUpperCase()
+      }
+    }
+  } catch (_) {}
   // Nếu dữ liệu gửi đi là FormData, xóa Content-Type để trình duyệt tự động sinh multipart boundary chuẩn
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
     if (config.headers) {
@@ -168,6 +180,8 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/listening-lessons') ||
       endpoint.startsWith('/admin/exams') ||
       endpoint.startsWith('/admin/quizzes') ||
+      endpoint.startsWith('/admin/roles') ||
+      endpoint.startsWith('/admin/permissions') ||
       endpoint.startsWith('/content/listening') ||
       endpoint.startsWith('/admin/ai') ||
       endpoint.startsWith('/ai-practice') ||

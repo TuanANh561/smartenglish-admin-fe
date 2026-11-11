@@ -60,6 +60,60 @@ function stripEmojis(str) {
   return String(str).replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim()
 }
 
+const TARGET_TYPE_VI_MAP = {
+  friend_request_received: 'Lời mời kết bạn',
+  friend_accepted: 'Kết bạn',
+  chat_message: 'Tin nhắn',
+  payment_receipt: 'Biên lai thanh toán',
+  subscription_success: 'Gói dịch vụ',
+  exam_created: 'Đề thi',
+  assignment_submitted: 'Bài tập nộp',
+  assignment_created: 'Bài tập lớp học',
+  class_join_request: 'Yêu cầu vào lớp',
+  class_created: 'Lớp học',
+  course_created: 'Khóa học',
+  violation_warning: 'Cảnh báo cộng đồng',
+  course: 'Khóa học',
+  reading_passage: 'Bài đọc',
+  listening_lesson: 'Bài nghe',
+  grammar_lesson: 'Bài ngữ pháp',
+  vocabulary: 'Từ vựng',
+  exam: 'Đề thi',
+  user: 'Tài khoản',
+  teacher_registration: 'Hồ sơ giáo viên',
+  system_settings: 'Cấu hình hệ thống',
+  auth: 'Xác thực bảo mật',
+  ai_content: 'Học liệu AI',
+  general: 'Hoạt động hệ thống',
+}
+
+function formatTargetType(rawType) {
+  if (!rawType) return 'Hoạt động'
+  const key = String(rawType).trim().toLowerCase()
+  if (TARGET_TYPE_VI_MAP[key]) return TARGET_TYPE_VI_MAP[key]
+  // Nếu đã là tiếng Việt có dấu hoặc chữ thường đẹp thì giữ nguyên
+  if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(rawType)) {
+    return String(rawType).trim()
+  }
+  return String(rawType).replace(/_/g, ' ')
+}
+
+function cleanTargetId(rawId) {
+  if (rawId === null || rawId === undefined) return ''
+  const s = String(rawId).trim().replace(/^#+/, '')
+  if (!s || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'null') return ''
+  return s
+}
+
+function formatUserHandle(userStr) {
+  if (!userStr) return ''
+  const s = String(userStr).trim().replace(/^@+/, '')
+  if (!s) return ''
+  // Nếu là email (đã có @ bên trong) hoặc chuỗi mô tả có khoảng trắng thì hiển thị trực tiếp, không gắn thêm @ ở đầu
+  if (s.includes('@') || s.includes(' ')) return s
+  return `@${s}`
+}
+
 function isWithinDateRange(timestampMs, dateRange) {
   if (dateRange === 'all') return true
   const now = Date.now()
@@ -80,7 +134,7 @@ function AuditLogPage() {
 
   // Bộ lọc
   const [dateRange, setDateRange] = useState('all')
-  const [userRole, setUserRole] = useState(isTeacher ? 'teacher' : 'all')
+  const [userRole, setUserRole] = useState('all')
   const [actionType, setActionType] = useState('all')
   const [severity, setSeverity] = useState('all')
   const [search, setSearch] = useState('')
@@ -93,15 +147,195 @@ function AuditLogPage() {
     setIsLoading(true)
     try {
       if (isTeacher) {
-        // Chỉ tải dữ liệu của chính giáo viên hiện tại (user.id)
-        const [actsRes, ordersRes] = await Promise.allSettled([
+        const teacherName = user?.displayName || 'Giáo viên'
+        const teacherEmail = user?.email || 'teacher'
+        const teacherInitials = getInitials(teacherName)
+        const currentUserId = Number(user?.id)
+
+        // Tải dữ liệu hoạt động thực tế của giáo viên từ các phân hệ
+        const [actsRes, ordersRes, classesRes, coursesRes, examsRes] = await Promise.allSettled([
           getUserActivities({ userId: user?.id, page: 0, size: 50 }),
           api.get('/payment/user/orders', { params: { userId: user?.id } }),
+          api.get('/api/v1/teacher/classes', { params: { page: 0, size: 30 } }),
+          api.get('/admin/courses'),
+          api.get('/admin/exams', { params: { page: 0, size: 50 } }),
         ])
 
         const teacherLogs = []
 
-        // 1. Chuyển đổi đơn hàng từ payment-service (chính của giáo viên)
+        // 1. Chuyển đổi các Lớp học & Bài tập do Giáo viên tạo và giao
+        const rawClasses = classesRes.status === 'fulfilled' ? classesRes.value : null
+        const classesList = Array.isArray(rawClasses?.content)
+          ? rawClasses.content
+          : Array.isArray(rawClasses?.data?.content)
+          ? rawClasses.data.content
+          : Array.isArray(rawClasses?.data)
+          ? rawClasses.data
+          : Array.isArray(rawClasses)
+          ? rawClasses
+          : []
+
+        classesList.forEach((cls) => {
+          const d = cls.createdAt ? new Date(cls.createdAt) : new Date()
+          const classCode = cls.code || `CLS-${cls.id}`
+          teacherLogs.push({
+            id: `class-${cls.id}`,
+            logCode: `CLS-${cls.id}`,
+            timestamp: formatTimestamp(d),
+            rawTime: d.getTime(),
+            userName: teacherName,
+            user: teacherEmail,
+            userInitials: teacherInitials,
+            userRole: 'teacher',
+            userRoleLabel: 'Giáo viên',
+            avatarColor: '#2563EB',
+            actionType: 'create',
+            action: `Quản lý lớp học: ${cls.name}`,
+            actionLabel: `Khởi tạo & quản lý lớp học "${cls.name}"`,
+            targetType: 'Lớp học',
+            targetId: classCode,
+            reason: `Lớp học mã ${classCode} (${cls.studentCount ?? 0} học viên, ${cls.assignmentCount ?? 0} bài tập)`,
+            ipAddress: '127.0.0.1',
+            device: 'Web Teacher Console',
+            severity: 'normal',
+            details: {
+              classId: cls.id,
+              className: cls.name,
+              classCode,
+              studentCount: cls.studentCount ?? 0,
+            },
+          })
+        })
+
+        // Tải danh sách bài tập đã giao của tối đa 5 lớp học gần nhất
+        if (classesList.length > 0) {
+          const assignmentPromises = classesList.slice(0, 5).map((cls) =>
+            api
+              .get(`/api/v1/teacher/classes/${cls.id}/assignments`, { params: { page: 0, size: 20 } })
+              .then((res) => ({ cls, res }))
+              .catch(() => null)
+          )
+          const assignmentResults = await Promise.all(assignmentPromises)
+          assignmentResults.filter(Boolean).forEach(({ cls, res }) => {
+            const asgList = Array.isArray(res?.content)
+              ? res.content
+              : Array.isArray(res?.data?.content)
+              ? res.data.content
+              : Array.isArray(res?.data)
+              ? res.data
+              : Array.isArray(res)
+              ? res
+              : []
+            asgList.forEach((asg) => {
+              const d = asg.createdAt ? new Date(asg.createdAt) : new Date()
+              teacherLogs.push({
+                id: `asg-${asg.id}`,
+                logCode: `ASG-${asg.id}`,
+                timestamp: formatTimestamp(d),
+                rawTime: d.getTime(),
+                userName: teacherName,
+                user: teacherEmail,
+                userInitials: teacherInitials,
+                userRole: 'teacher',
+                userRoleLabel: 'Giáo viên',
+                avatarColor: '#4F46E5',
+                actionType: 'create',
+                action: `Giao bài tập: ${asg.title}`,
+                actionLabel: `Đã giao bài tập "${asg.title}" cho lớp ${cls.name}`,
+                targetType: 'Bài tập lớp học',
+                targetId: String(asg.id),
+                reason: asg.description || `Hạn nộp: ${asg.dueAt ? new Date(asg.dueAt).toLocaleString('vi-VN') : 'Không giới hạn'}`,
+                ipAddress: '127.0.0.1',
+                device: 'Web Teacher Console',
+                severity: 'normal',
+                details: {
+                  assignmentId: asg.id,
+                  title: asg.title,
+                  type: asg.type,
+                  className: cls.name,
+                  dueAt: asg.dueAt,
+                },
+              })
+            })
+          })
+        }
+
+        // 2. Chuyển đổi Khóa học & Đề thi do chính Giáo viên biên soạn
+        const rawCourses = coursesRes.status === 'fulfilled' ? coursesRes.value : []
+        const coursesList = Array.isArray(rawCourses?.data)
+          ? rawCourses.data
+          : Array.isArray(rawCourses?.content)
+          ? rawCourses.content
+          : Array.isArray(rawCourses)
+          ? rawCourses
+          : []
+        coursesList
+          .filter((c) => Number(c.createdBy || c.authorId) === currentUserId)
+          .forEach((c) => {
+            const d = c.updatedAt || c.createdAt ? new Date(c.updatedAt || c.createdAt) : new Date()
+            teacherLogs.push({
+              id: `course-${c.id}`,
+              logCode: `CRS-${c.id}`,
+              timestamp: formatTimestamp(d),
+              rawTime: d.getTime(),
+              userName: teacherName,
+              user: teacherEmail,
+              userInitials: teacherInitials,
+              userRole: 'teacher',
+              userRoleLabel: 'Giáo viên',
+              avatarColor: '#0284C7',
+              actionType: 'create',
+              action: `Biên soạn khóa học: ${c.title}`,
+              actionLabel: `Biên soạn khóa học "${c.title}"`,
+              targetType: 'Khóa học',
+              targetId: String(c.code || c.id),
+              reason: `Cấp độ ${c.cefrLevel || 'B1'} • Trạng thái: ${c.isPublished ? 'Đã xuất bản' : 'Bản nháp'}`,
+              ipAddress: '127.0.0.1',
+              device: 'Web Teacher Console',
+              severity: 'normal',
+              details: { courseId: c.id, title: c.title, cefrLevel: c.cefrLevel },
+            })
+          })
+
+        const rawExams = examsRes.status === 'fulfilled' ? examsRes.value : []
+        const examsList = Array.isArray(rawExams?.content)
+          ? rawExams.content
+          : Array.isArray(rawExams?.data?.content)
+          ? rawExams.data.content
+          : Array.isArray(rawExams?.data)
+          ? rawExams.data
+          : Array.isArray(rawExams)
+          ? rawExams
+          : []
+        examsList
+          .filter((e) => Number(e.createdBy || e.authorId) === currentUserId)
+          .forEach((e) => {
+            const d = e.updatedAt || e.createdAt ? new Date(e.updatedAt || e.createdAt) : new Date()
+            teacherLogs.push({
+              id: `exam-${e.id}`,
+              logCode: `EXM-${e.id}`,
+              timestamp: formatTimestamp(d),
+              rawTime: d.getTime(),
+              userName: teacherName,
+              user: teacherEmail,
+              userInitials: teacherInitials,
+              userRole: 'teacher',
+              userRoleLabel: 'Giáo viên',
+              avatarColor: '#7C3AED',
+              actionType: 'create',
+              action: `Biên soạn đề thi: ${e.title}`,
+              actionLabel: `Tạo đề thi "${e.title}"`,
+              targetType: 'Đề thi',
+              targetId: String(e.id),
+              reason: `Thời lượng ${e.durationMinutes || 45} phút • Cấp độ ${e.level || 'B1'}`,
+              ipAddress: '127.0.0.1',
+              device: 'Web Teacher Console',
+              severity: 'normal',
+              details: { examId: e.id, title: e.title, level: e.level },
+            })
+          })
+
+        // 3. Chuyển đổi đơn hàng từ payment-service (chính của giáo viên)
         const rawOrders = ordersRes.status === 'fulfilled' ? ordersRes.value : []
         const ordersList = Array.isArray(rawOrders)
           ? rawOrders
@@ -115,16 +349,16 @@ function AuditLogPage() {
             const d = o.createdAt ? new Date(o.createdAt) : new Date()
             const planTitle = stripEmojis(o.planName || 'Gói Giảng Viên Pro')
             const amountStr = o.amount ? `${Number(o.amount).toLocaleString('vi-VN')}đ` : '20.000đ'
-            const orderCode = o.orderCode || `ORD-${o.id}`
+            const orderCode = cleanTargetId(o.orderCode || `ORD-${o.id}`)
 
             teacherLogs.push({
               id: `order-${o.id || orderCode}`,
               logCode: orderCode,
               timestamp: formatTimestamp(d),
               rawTime: d.getTime(),
-              userName: user?.displayName || 'Thầy Nguyễn Tuấn Anh',
-              user: user?.email || 'teacher',
-              userInitials: getInitials(user?.displayName),
+              userName: teacherName,
+              user: teacherEmail,
+              userInitials: teacherInitials,
               userRole: 'teacher',
               userRoleLabel: 'Giáo viên',
               avatarColor: '#10B981',
@@ -151,7 +385,7 @@ function AuditLogPage() {
             })
           })
 
-        // 2. Chuyển đổi hoạt động từ notification-service (UserActivityLog của giáo viên)
+        // 4. Chuyển đổi hoạt động từ notification-service (phân biệt đúng Người thực hiện & Đối tượng)
         const actsData = actsRes.status === 'fulfilled' ? actsRes.value : null
         const actContent = Array.isArray(actsData?.content)
           ? actsData.content
@@ -163,10 +397,10 @@ function AuditLogPage() {
           const d = act.createdAt ? new Date(act.createdAt) : new Date()
           const typeLower = (act.activityType || '').toLowerCase()
           let actType = 'create'
-          if (typeLower.includes('pay') || typeLower.includes('receipt')) actType = 'payment'
-          else if (typeLower.includes('submit')) actType = 'submit'
-          else if (typeLower.includes('ai')) actType = 'ai'
-          else if (typeLower.includes('grade')) actType = 'grade'
+          if (typeLower.includes('pay') || typeLower.includes('receipt') || typeLower.includes('subscription')) actType = 'payment'
+          else if (typeLower.includes('submit') || typeLower.includes('grade')) actType = 'update'
+          else if (typeLower.includes('ai')) actType = 'create'
+          else if (typeLower.includes('friend') || typeLower.includes('chat')) actType = 'approve'
 
           let metaObj = {}
           try {
@@ -174,41 +408,85 @@ function AuditLogPage() {
             else if (act.metadata) metaObj = act.metadata
           } catch {}
 
-          let targetTypeLabel = act.activityType || 'HOẠT ĐỘNG'
-          if (typeLower === 'payment_receipt') targetTypeLabel = 'Biên lai'
-          else if (typeLower === 'subscription_success') targetTypeLabel = 'Gói dịch vụ'
-          else if (typeLower === 'exam_created') targetTypeLabel = 'Đề thi'
-          else if (typeLower === 'assignment_submitted') targetTypeLabel = 'Bài nộp'
-
-          const cleanTitle = stripEmojis(act.title || 'Hoạt động cá nhân')
+          const cleanTitle = stripEmojis(act.title || 'Hoạt động hệ thống')
           const cleanDesc = stripEmojis(act.description || '')
+
+          // Xác định chính xác Người thực hiện (Actor) & Vai trò dựa trên loại sự kiện
+          let actorName = teacherName
+          let actorHandle = teacherEmail
+          let actorRole = 'teacher'
+          let actorRoleLabel = 'Giáo viên'
+          let actorDevice = act.deviceInfo || 'Web Teacher Console'
+          let avatarColor = actType === 'payment' ? '#10B981' : '#3B82F6'
+
+          if (typeLower === 'friend_request_received') {
+            const parsedSender =
+              metaObj.requesterName ||
+              metaObj.senderName ||
+              cleanTitle.replace(/\s*đã gửi lời mời kết bạn.*/i, '').trim() ||
+              'Thành viên'
+            actorName = parsedSender
+            actorHandle = metaObj.requesterEmail || 'Cộng đồng SmartEnglish'
+            actorRole = 'student'
+            actorRoleLabel = 'Thành viên'
+            actorDevice = 'SmartEnglish Community'
+            avatarColor = '#0EA5E9'
+          } else if (typeLower === 'friend_accepted') {
+            const parsedFriend =
+              metaObj.friendName ||
+              cleanTitle.replace(/\s*đã chấp nhận lời mời kết bạn.*/i, '').trim() ||
+              'Thành viên'
+            actorName = parsedFriend
+            actorHandle = metaObj.friendEmail || 'Cộng đồng SmartEnglish'
+            actorRole = 'student'
+            actorRoleLabel = 'Thành viên'
+            actorDevice = 'SmartEnglish Community'
+            avatarColor = '#10B981'
+          } else if (typeLower === 'chat_message') {
+            actorName = metaObj.senderName || 'Thành viên'
+            actorHandle = 'Tin nhắn trực tuyến'
+            actorRole = 'student'
+            actorRoleLabel = 'Thành viên'
+            actorDevice = 'SmartEnglish Chat'
+            avatarColor = '#6366F1'
+          } else if (typeLower === 'assignment_submitted' || typeLower === 'class_join_request') {
+            actorName = metaObj.studentName || metaObj.requesterName || 'Học viên'
+            actorHandle = metaObj.studentEmail || 'Học viên lớp học'
+            actorRole = 'student'
+            actorRoleLabel = 'Học viên'
+            actorDevice = 'SmartEnglish Mobile / Web'
+            avatarColor = '#10B981'
+          }
+
+          const targetTypeLabel = formatTargetType(act.activityType)
+          const rawTargetId = metaObj.invoiceNo || metaObj.orderCode || act.id
 
           teacherLogs.push({
             id: `act-${act.id}`,
             logCode: `LOG-${act.id}`,
             timestamp: formatTimestamp(d),
             rawTime: d.getTime(),
-            userName: user?.displayName || 'Thầy Nguyễn Tuấn Anh',
-            user: user?.email || 'teacher',
-            userInitials: getInitials(user?.displayName),
-            userRole: 'teacher',
-            userRoleLabel: 'Giáo viên',
-            avatarColor: actType === 'payment' ? '#10B981' : '#3B82F6',
+            userName: actorName,
+            user: actorHandle,
+            userInitials: getInitials(actorName),
+            userRole: actorRole,
+            userRoleLabel: actorRoleLabel,
+            avatarColor,
             actionType: actType,
             action: cleanTitle,
             actionLabel: cleanTitle,
             targetService: isTeacher ? undefined : 'notification-service',
             targetType: targetTypeLabel,
-            targetId: metaObj.invoiceNo || metaObj.orderCode || `#${act.id}`,
+            targetId: cleanTargetId(rawTargetId),
             reason: cleanDesc,
             ipAddress: act.ipAddress || '127.0.0.1',
-            device: act.deviceInfo || 'Web Teacher Console',
+            device: actorDevice,
             severity: 'normal',
             details: metaObj,
           })
         })
 
-        // 3. Nếu chưa có hoạt động nào khác, bổ sung các mốc hoạt động mặc định của tài khoản giáo viên
+        // 5. Nếu chưa có hoạt động nào khác, bổ sung mốc phiên đăng nhập hiện tại
         if (teacherLogs.length === 0) {
           const defaultDate = new Date()
           teacherLogs.push({
@@ -216,9 +494,9 @@ function AuditLogPage() {
             logCode: 'AUTH-01',
             timestamp: formatTimestamp(defaultDate),
             rawTime: defaultDate.getTime(),
-            userName: user?.displayName || 'Giáo viên',
-            user: user?.email || 'teacher',
-            userInitials: getInitials(user?.displayName),
+            userName: teacherName,
+            user: teacherEmail,
+            userInitials: teacherInitials,
             userRole: 'teacher',
             userRoleLabel: 'Giáo viên',
             avatarColor: '#1B3A57',
@@ -226,8 +504,8 @@ function AuditLogPage() {
             action: 'Đăng nhập hệ thống giảng dạy',
             actionLabel: 'Đăng nhập hệ thống quản lý giảng dạy thành công',
             targetService: isTeacher ? undefined : 'auth-service',
-            targetType: 'PHIÊN LÀM VIỆC',
-            targetId: `#${user?.id || 1}`,
+            targetType: 'Phiên làm việc',
+            targetId: cleanTargetId(user?.id || 1),
             reason: 'Khởi tạo phiên làm việc giảng viên trên Web Console',
             ipAddress: '127.0.0.1',
             device: 'Web Teacher Console',
@@ -240,22 +518,25 @@ function AuditLogPage() {
           })
         }
 
-        // Loại bỏ trùng lặp nếu cả hai bên ghi nhận cùng orderCode / actionLabel
+        // Loại bỏ trùng lặp theo actionLabel + targetId
         const unique = []
         const seen = new Set()
         teacherLogs
           .sort((a, b) => b.rawTime - a.rawTime)
           .forEach((item) => {
-            const key = item.actionLabel + (item.targetId || '')
+            const key = `${item.actionLabel}|${item.targetId || ''}`
             if (!seen.has(key)) {
               seen.add(key)
               unique.push(item)
             }
           })
 
-        // Lọc theo bộ lọc client-side (Date, actionType, severity, search)
+        // Lọc theo bộ lọc client-side (Date, userRole, actionType, severity, search)
         const filtered = unique.filter((item) => {
           if (!isWithinDateRange(item.rawTime, dateRange)) return false
+          if (userRole !== 'all' && (item.userRole || '').toLowerCase() !== userRole.toLowerCase()) {
+            return false
+          }
           if (actionType !== 'all') {
             const itAct = (item.actionType || '').toLowerCase()
             if (!itAct.includes(actionType)) return false
@@ -265,6 +546,7 @@ function AuditLogPage() {
             const q = search.trim().toLowerCase()
             const matches =
               (item.actionLabel || '').toLowerCase().includes(q) ||
+              (item.targetType || '').toLowerCase().includes(q) ||
               (item.targetId || '').toLowerCase().includes(q) ||
               (item.reason || '').toLowerCase().includes(q) ||
               (item.ipAddress || '').toLowerCase().includes(q) ||
@@ -282,7 +564,7 @@ function AuditLogPage() {
         setTotal(totalCount)
         setTotalPages(Math.max(1, Math.ceil(totalCount / PAGE_SIZE)))
       } else {
-        // Nếu là Admin hệ thống, tải nhật ký quản trị từ auth-service
+        // Nếu là Admin hệ thống, tải nhật ký quản trị từ auth-service và chuẩn hóa tiếng Việt
         const data = await getAuditLogs({
           page,
           size: PAGE_SIZE,
@@ -292,7 +574,12 @@ function AuditLogPage() {
           severity,
           search,
         })
-        setLogs(data.items || [])
+        const normalizedItems = (data.items || []).map((item) => ({
+          ...item,
+          targetType: formatTargetType(item.targetType),
+          targetId: cleanTargetId(item.targetId),
+        }))
+        setLogs(normalizedItems)
         setTotal(data.total || 0)
         setTotalPages(data.totalPages || 1)
       }
@@ -310,7 +597,7 @@ function AuditLogPage() {
 
   const handleResetFilters = () => {
     setDateRange('all')
-    setUserRole(isTeacher ? 'teacher' : 'all')
+    setUserRole('all')
     setActionType('all')
     setSeverity('all')
     setSearch('')
@@ -505,28 +792,30 @@ function AuditLogPage() {
               ]}
             />
 
-            {/* Lọc Vai trò (Chỉ hiển thị đầy đủ cho Admin, với Giáo viên cố định xem hoạt động giáo viên) */}
-            {!isTeacher ? (
-              <Select
-                value={userRole}
-                onChange={(e) => {
-                  setUserRole(e.target.value)
-                  setPage(1)
-                }}
-                size="sm"
-                containerClassName="w-44 shrink-0"
-                options={[
-                  { value: 'all', label: 'Vai trò: Tất cả' },
-                  { value: 'admin', label: 'Quản trị viên (Admin)' },
-                  { value: 'teacher', label: 'Giáo viên (Teacher)' },
-                  { value: 'student', label: 'Học viên (Student)' },
-                ]}
-              />
-            ) : (
-              <span className="rounded-xl border border-brand-200 bg-brand-50/70 px-3 py-2 text-sm font-medium text-brand-700">
-                Vai trò: Giáo viên
-              </span>
-            )}
+            {/* Lọc Người thực hiện / Vai trò */}
+            <Select
+              value={userRole}
+              onChange={(e) => {
+                setUserRole(e.target.value)
+                setPage(1)
+              }}
+              size="sm"
+              containerClassName="w-44 shrink-0"
+              options={
+                isTeacher
+                  ? [
+                      { value: 'all', label: 'Thực hiện: Tất cả' },
+                      { value: 'teacher', label: 'Của tôi (Giáo viên)' },
+                      { value: 'student', label: 'Học viên & Thành viên' },
+                    ]
+                  : [
+                      { value: 'all', label: 'Vai trò: Tất cả' },
+                      { value: 'admin', label: 'Quản trị viên (Admin)' },
+                      { value: 'teacher', label: 'Giáo viên (Teacher)' },
+                      { value: 'student', label: 'Học viên (Student)' },
+                    ]
+              }
+            />
 
             {/* Lọc Loại thao tác */}
             <Select
@@ -673,7 +962,7 @@ function AuditLogPage() {
                           <span>UTC+7</span>
                           {log.logCode && (
                             <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500 font-medium">
-                              #{log.logCode}
+                              #{cleanTargetId(log.logCode)}
                             </span>
                           )}
                         </span>
@@ -708,7 +997,7 @@ function AuditLogPage() {
                             </span>
                             {log.user && (
                               <span className="text-xs text-slate-400">
-                                @{log.user}
+                                {formatUserHandle(log.user)}
                               </span>
                             )}
                           </div>
@@ -731,7 +1020,8 @@ function AuditLogPage() {
                             )}
                             {log.targetType && (
                               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 font-medium">
-                                {log.targetType} {log.targetId ? `#${log.targetId}` : ''}
+                                {formatTargetType(log.targetType)}{' '}
+                                {cleanTargetId(log.targetId) ? `#${cleanTargetId(log.targetId)}` : ''}
                               </span>
                             )}
                             {log.reason && (
@@ -811,7 +1101,7 @@ function AuditLogPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <p className="font-mono text-slate-400 text-xs">
-                  {activeLog.logCode ? `#${activeLog.logCode}` : `ID: ${activeLog.id}`}
+                  {activeLog.logCode ? `#${cleanTargetId(activeLog.logCode)}` : `ID: ${activeLog.id}`}
                 </p>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   {stripEmojis(activeLog.actionLabel || activeLog.action)}
@@ -829,7 +1119,7 @@ function AuditLogPage() {
                 <span className="font-bold text-slate-800 text-sm mt-0.5 block">
                   {activeLog.userName || activeLog.user}
                 </span>
-                <span className="text-xs text-slate-500 font-medium">@{activeLog.user}</span>
+                <span className="text-xs text-slate-500 font-medium">{formatUserHandle(activeLog.user)}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-xs uppercase font-bold tracking-wider">
@@ -871,7 +1161,8 @@ function AuditLogPage() {
                   )}
                   {activeLog.targetType && (
                     <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700 font-semibold">
-                      {activeLog.targetType} {activeLog.targetId ? `#${activeLog.targetId}` : ''}
+                      {formatTargetType(activeLog.targetType)}{' '}
+                      {cleanTargetId(activeLog.targetId) ? `#${cleanTargetId(activeLog.targetId)}` : ''}
                     </span>
                   )}
                 </div>

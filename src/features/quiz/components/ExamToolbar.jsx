@@ -67,12 +67,20 @@ export default function ExamToolbar({
               value={authorFilter}
               onChange={(e) => onAuthorFilterChange(e.target.value)}
               size="sm"
-              containerClassName="w-36 shrink-0"
-              options={[
-                { value: 'all', label: `Nguồn: Tất cả (${totalExamsCount})` },
-                { value: 'system', label: `Hệ thống (${systemCount})` },
-                { value: 'mine', label: `Của tôi (${myCount})` },
-              ]}
+              containerClassName="w-40 shrink-0"
+              options={
+                isTeacher
+                  ? [
+                      { value: 'mine', label: `Nguồn: Của tôi (${myCount})` },
+                      { value: 'system', label: `Hệ thống (${systemCount})` },
+                      { value: 'all', label: `Nguồn: Tất cả (${totalExamsCount})` },
+                    ]
+                  : [
+                      { value: 'all', label: `Nguồn: Tất cả (${totalExamsCount})` },
+                      { value: 'system', label: `Hệ thống (${systemCount})` },
+                      { value: 'mine', label: `Nguồn: Của tôi (${myCount})` },
+                    ]
+              }
             />
           )}
 

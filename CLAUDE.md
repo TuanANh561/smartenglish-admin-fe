@@ -36,3 +36,7 @@ npx vitest run   # test
 - **Tiếng Việt** cho mọi text hiển thị trong UI.
 - **Không tự ý đổi palette.** Màu duy nhất được dùng nằm ở `rules/design-system.md`.
 - Không thêm dependency mới nếu `package.json` đã có thứ tương đương.
+
+## Chống lặp lỗi UI
+
+Trước khi sửa giao diện, đọc `../.claude/skills/smartenglish-ui-consistency-guard/SKILL.md` (icon đơn sắc, thang cỡ chữ, loading thống nhất, không chú thích thừa) và chạy checklist mục 5 của file đó trước khi báo xong.

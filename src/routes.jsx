@@ -6,6 +6,7 @@ import AiContentPage from '@/features/aiContent/AiContentPage'
 import AiConfigPage from '@/features/aiConfig/AiConfigPage'
 import AuditLogPage from '@/features/auditLog/AuditLogPage'
 import LoginPage from '@/features/auth/LoginPage'
+import GuestOnlyRoute from '@/components/layout/GuestOnlyRoute'
 import RegisterTeacherPage from '@/features/auth/RegisterTeacherPage'
 import TeacherClassesPage from '@/features/classes/TeacherClassesPage'
 import CommunityPage from '@/features/community/CommunityPage'
@@ -43,7 +44,7 @@ import UiKitchenSink from '@/pages/UiKitchenSink'
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
-  { path: '/dang-nhap', element: <LoginPage /> },
+  { path: '/dang-nhap', element: <GuestOnlyRoute><LoginPage /></GuestOnlyRoute> },
   { path: '/dang-ky-giao-vien', element: <RegisterTeacherPage /> },
   {
     path: '/app',

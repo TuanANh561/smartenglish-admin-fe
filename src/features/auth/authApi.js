@@ -5,12 +5,20 @@ import { ENDPOINTS } from '@/lib/endpoints'
  * Lớp gọi dữ liệu xác thực.
  */
 
-export const login = (payload) => {
+export const login = async (payload) => {
   const body = {
     emailOrUsername: payload.emailOrUsername || payload.email || payload.username,
     password: payload.password,
   }
-  return api.post(ENDPOINTS.auth.login, { data: body })
+  try {
+    return await api.post('/auth/login', { data: body })
+  } catch (err) {
+    // Fallback sang /auth/admin/login nếu đăng nhập bằng username không chứa @
+    if (!String(body.emailOrUsername || '').includes('@') || err?.status === 404) {
+      return await api.post(ENDPOINTS.auth.login, { data: body })
+    }
+    throw err
+  }
 }
 
 export const logout = () => {

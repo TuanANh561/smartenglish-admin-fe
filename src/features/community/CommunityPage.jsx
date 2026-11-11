@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Search, FileText, MessageCircle, X } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 import CreateGroupModal from './components/CreateGroupModal'
 import PostComposer from './components/PostComposer'
 import PostCard from './components/PostCard'
-import ChatConversationSidebar from './components/ChatConversationSidebar'
 import ChatFloatingWindows from './components/ChatFloatingWindows'
+import InstagramMessagesDock from './components/InstagramMessagesDock'
 import TrendingTopicsCard from './components/TrendingTopicsCard'
 import SuggestedUsersCard from './components/SuggestedUsersCard'
-import InstagramMessagesDock from './components/InstagramMessagesDock'
 import SharePostModal from './components/SharePostModal'
 import FindFriendsModal from './components/FindFriendsModal'
 import PostCommentModal from './components/PostCommentModal'
 import PostImageViewerModal from './components/PostImageViewerModal'
 import CommunitySearchResults from './components/CommunitySearchResults'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import Drawer from '@/components/ui/Drawer'
 import { sanitizeAvatarUrl } from '@/components/ui/Avatar'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useCommunitySearchStore } from '@/store/communitySearchStore'
 import { useTopbarStore } from '@/store/topbarStore'
 import { http } from '@/lib/api'
-import { formatRelativeTime, cn } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils'
 import {
   subscribeToConversation,
   connectSocket,
@@ -114,16 +112,6 @@ function CommunityPage() {
     [myId],
   )
 
-  const contacts = useMemo(() => {
-    return realUsers.map((u) => ({
-      id: u.id,
-      name: u.displayName || u.username,
-      avatar: sanitizeAvatarUrl(u.avatarUrl || u.avatar) || '',
-      roleLabel: u.role === 'teacher' ? 'Giáo viên' : u.role === 'admin' ? 'Quản trị viên' : 'Học viên',
-      role: u.role,
-    }))
-  }, [realUsers])
-
   const availableUsersForGroup = useMemo(() => {
     return realUsers
       .filter((u) => u.id !== myId)
@@ -138,7 +126,6 @@ function CommunityPage() {
   }, [realUsers, myId])
 
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
-  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
   // Share post modal state
   const [sharingPost, setSharingPost] = useState(null)
@@ -151,7 +138,6 @@ function CommunityPage() {
   const [isFindFriendsOpen, setIsFindFriendsOpen] = useState(false)
 
   // Chat and Conversation state
-  const [conversationSearch, setConversationSearch] = useState('')
   const [activeConversationId, setActiveConversationId] = useState(null)
   const [openConversationIds, setOpenConversationIds] = useState([])
   const openConversationIdsRef = useRef(openConversationIds)
@@ -709,13 +695,6 @@ function CommunityPage() {
     return list.slice(0, 6)
   }, [posts])
 
-  const filteredConversations = useMemo(() => {
-    const keyword = conversationSearch.trim().toLowerCase()
-    return conversations.filter((conversation) =>
-      !keyword || (conversation.participantName || conversation.name || '').toLowerCase().includes(keyword),
-    )
-  }, [conversationSearch, conversations])
-
   // Lấy avatar thực tế hiện tại của cuộc trò chuyện từ CSDL (auth-service)
   const getConversationAvatar = useCallback(
     (conversation) => {
@@ -881,19 +860,18 @@ function CommunityPage() {
 
   // Mở cửa sổ chat nổi ngoài màn hình (ChatFloatingWindows) khi bấm từ Sidebar
   const handleOpenConversation = async (conversationId) => {
-    setIsMobileChatOpen(false)
     setOpenConversationIds((prev) =>
       [...prev.filter((id) => id !== conversationId), conversationId].slice(-3),
     )
     await activateAndSyncConversation(conversationId)
   }
 
-  // Chọn cuộc trò chuyện trong Instagram Messages Dock (THAY ĐỔI NỘI DUNG NGAY TRONG MODAL, KHÔNG TẠO POPUP NGOÀI)
+  // Chọn cuộc trò chuyện trong dock tin nhắn (đổi nội dung ngay trong dock, không mở popup ngoài)
   const handleSelectConversationInDock = async (conversationId) => {
     await activateAndSyncConversation(conversationId)
   }
 
-  // Bắt đầu chat với người dùng mới trong Dock (ĐỔI GIAO DIỆN TRONG CHÍNH MODAL)
+  // Bắt đầu chat với người dùng mới ngay trong dock
   const handleStartChatInDock = async (targetUser) => {
     const targetUserId = Number(targetUser.id)
     const existing = conversations.find(
@@ -1188,6 +1166,12 @@ function CommunityPage() {
       setConversations((prev) => {
         const target = prev.find((c) => c.id === conversationId)
         if (!target) return prev
+        const alreadyExists = target.messages?.some(
+          (m) =>
+            (savedMsg?.id && String(m.id) === String(savedMsg.id)) ||
+            (mediaData?.attachmentUrl && m.attachmentUrl === mediaData.attachmentUrl),
+        )
+        if (alreadyExists) return prev
         const updated = {
           ...target,
           lastMessage: payload.content,
@@ -1279,6 +1263,10 @@ function CommunityPage() {
       setConversations((prev) => {
         const target = prev.find((c) => c.id === targetConversationId)
         if (!target) return prev
+        const alreadyExists = target.messages?.some(
+          (m) => savedMsg?.id && String(m.id) === String(savedMsg.id),
+        )
+        if (alreadyExists) return prev
         const updated = {
           ...target,
           lastMessage: '[Chia sẻ bài viết]',
@@ -1869,7 +1857,7 @@ function CommunityPage() {
         loadingOlderMap={loadingOlderMap}
       />
 
-      {/* ─── INSTAGRAM-STYLE FLOATING MESSAGES DOCK (Nút nổi & Cửa sổ tin nhắn góc dưới phải) ─── */}
+      {/* ─── DOCK TIN NHẮN (nút nổi 'Tin nhắn' & cửa sổ hội thoại góc dưới phải) ─── */}
       <InstagramMessagesDock
         conversations={conversations}
         availableUsers={availableUsersForGroup}
@@ -1890,90 +1878,6 @@ function CommunityPage() {
         onSelectConversationInDock={handleSelectConversationInDock}
         onStartChatInDock={handleStartChatInDock}
       />
-
-      {/* ─── NÚT NỔI CHAT & CỘNG ĐỒNG DÀNH CHO MOBILE (< LG) ─── */}
-      {openConversationIds.length === 0 && (
-        <button
-          type="button"
-          onClick={() => setIsMobileChatOpen(true)}
-          className="fixed bottom-24 right-6 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:from-brand-700 hover:to-indigo-700 active:scale-95 transition-all lg:hidden cursor-pointer group border-2 border-white"
-          title="Mở tin nhắn & cộng đồng"
-          aria-label="Mở tin nhắn & cộng đồng"
-        >
-          <MessageCircle size={24} className="group-hover:scale-110 transition-transform" />
-          {totalUnreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-black text-white shadow-md border-2 border-white animate-pulse">
-              {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
-            </span>
-          )}
-        </button>
-      )}
-
-      {/* ─── DRAWER TIỆN ÍCH TRÒ CHUYỆN & CHỦ ĐỀ TRÊN MOBILE (< LG) ─── */}
-      <Drawer
-        open={isMobileChatOpen}
-        onClose={() => setIsMobileChatOpen(false)}
-        title="Trò chuyện & Tiện ích"
-        size="default"
-      >
-        <div className="space-y-4 pb-6">
-          <ChatConversationSidebar
-            conversations={conversations}
-            filteredConversations={filteredConversations}
-            contacts={contacts}
-            conversationSearch={conversationSearch}
-            setConversationSearch={setConversationSearch}
-            getConversationAvatar={getConversationAvatar}
-            onOpenConversation={(id) => {
-              setIsMobileChatOpen(false)
-              handleOpenConversation(id)
-            }}
-            onOpenCreateGroup={() => {
-              setIsMobileChatOpen(false)
-              setIsCreateGroupOpen(true)
-            }}
-            onOpenFindFriends={() => {
-              setIsMobileChatOpen(false)
-              setIsFindFriendsOpen(true)
-            }}
-            pendingRequestsCount={pendingRequests.length}
-            myId={myId}
-          />
-
-          {/* Ô tìm kiếm trong Drawer */}
-          <div className="relative w-full">
-            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Tìm bài viết, giáo viên..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-9 text-sm text-slate-800 placeholder:text-slate-400 placeholder:text-sm focus:bg-white focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 shadow-2xs transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-full hover:bg-slate-200 transition-colors"
-                title="Xóa nội dung tìm kiếm"
-                aria-label="Xóa nội dung tìm kiếm"
-              >
-                <X size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Chủ đề thảo luận */}
-          <TrendingTopicsCard
-            topics={trendingTopics}
-            selectedTag={selectedTag}
-            onSelectTag={(tag) => {
-              setSelectedTag(tag)
-              setIsMobileChatOpen(false)
-            }}
-          />
-        </div>
-      </Drawer>
 
       {/* Modal tạo nhóm mới */}
       <CreateGroupModal

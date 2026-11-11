@@ -39,8 +39,9 @@ function extractCefr(levelStr) {
 
 function ListeningPage() {
   const user = useAuthStore((s) => s.user)
-  const isTeacher = user?.role === 'teacher'
-  const isAdmin = user?.role === 'admin'
+  const isTeacher = String(user?.role || '').toLowerCase().includes('teacher')
+  const isAdmin = String(user?.role || '').toLowerCase().includes('admin')
+  const defaultOwnershipFilter = isTeacher ? 'mine' : 'all'
   const navigate = useNavigate()
 
   const [lessons, setLessons] = useState([])
@@ -49,7 +50,11 @@ function ListeningPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [stats, setStats] = useState({ total: 0, published: 0, draft: 0, trash: 0 })
 
-  const [ownershipFilter, setOwnershipFilter] = useState('all')
+  const [ownershipFilter, setOwnershipFilter] = useState(defaultOwnershipFilter)
+
+  useEffect(() => {
+    setOwnershipFilter(defaultOwnershipFilter)
+  }, [defaultOwnershipFilter, user?.id])
   const [category, setCategory] = useState('all')
   const [topic, setTopic] = useState('all')
   const [accent, setAccent] = useState('all')

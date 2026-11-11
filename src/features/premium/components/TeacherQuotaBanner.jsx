@@ -11,6 +11,7 @@ export function TeacherQuotaBanner({
   cancellingRenewal,
   onCancelRenewal,
   onResumeRenewal,
+  onCancelPlan,
 }) {
   if (isAdmin) {
     return (
@@ -113,6 +114,17 @@ export function TeacherQuotaBanner({
             )}
           </div>
 
+          {effectiveQuota?.isPremium && onCancelPlan && (
+            <div className="mt-2.5">
+              <button
+                type="button"
+                onClick={onCancelPlan}
+                className="text-xs text-[#B91C1C] underline hover:text-[#991B1B] cursor-pointer transition-colors"
+              >
+                Hủy gói & hoàn tiền
+              </button>
+            </div>
+          )}
           {effectiveQuota?.isPremium && effectiveQuota.autoRenew === true && (
             <div className="mt-2.5">
               <button

@@ -15,6 +15,7 @@ import {
   Check,
   User as UserIcon,
   MessageSquare,
+  ShieldCheck,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Avatar from '@/components/ui/Avatar'
@@ -232,11 +233,22 @@ export default function UserProfileDetailPage() {
     }
   }, [user?.id])
 
+  const isTargetAdmin =
+    String(user?.role || '').toLowerCase() === 'admin' ||
+    String(user?.role || '').toLowerCase() === 'role_admin' ||
+    String(user?.role || '').toLowerCase() === 'super_admin'
+
   // Thao tác Khóa / Mở khóa tài khoản
   const handleToggleLock = async () => {
     if (!user) return
     if (isSelf) {
       toast.error('Không thể tự khóa tài khoản quản trị của chính bạn!')
+      return
+    }
+
+    // Admin Protection: Tuyệt đối không cho phép khóa tài khoản Admin
+    if (user.isActive && isTargetAdmin) {
+      toast.error('Không thể khóa tài khoản Quản trị viên hệ thống (Admin Protection)!')
       return
     }
 
@@ -325,18 +337,28 @@ export default function UserProfileDetailPage() {
             </div>
           )}
 
-          {/* Nút Khóa / Mở khóa tài khoản ở góc trên bên phải cover banner */}
+          {/* Nút Khóa / Mở khóa tài khoản ở góc trên bên phải cover banner (Có cơ chế Admin Protection) */}
           {isAdmin && !isSelf && (
             <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
-              <Button
-                variant={user.isActive ? 'danger' : 'success'}
-                size="sm"
-                icon={user.isActive ? Lock : Unlock}
-                onClick={() => setIsConfirmLockOpen(true)}
-                className="shadow-sm backdrop-blur-xs font-semibold"
-              >
-                {user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-              </Button>
+              {isTargetAdmin && user.isActive ? (
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900/70 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-amber-300 border border-amber-400/30 shadow-md select-none"
+                  title="Tài khoản Quản trị viên được bảo vệ tuyệt đối — Không thể khóa bởi Quản trị viên khác"
+                >
+                  <ShieldCheck size={15} className="text-amber-400" />
+                  <span>Quản trị viên được bảo vệ</span>
+                </div>
+              ) : (
+                <Button
+                  variant={user.isActive ? 'danger' : 'success'}
+                  size="sm"
+                  icon={user.isActive ? Lock : Unlock}
+                  onClick={() => setIsConfirmLockOpen(true)}
+                  className="shadow-sm backdrop-blur-xs font-semibold"
+                >
+                  {user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                </Button>
+              )}
             </div>
           )}
         </div>

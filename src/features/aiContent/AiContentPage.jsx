@@ -28,14 +28,23 @@ import { TYPE_LABELS } from './components/aiContentConstants'
 import AiDetailView from './components/AiDetailView'
 import AiEditView from './components/AiEditView'
 import AiContentCard from './components/AiContentCard'
+import AiGeneratingCard from './components/AiGeneratingCard'
 import AiCreationModal from './components/AiCreationModal'
 import AiContentToolbar from './components/AiContentToolbar'
 
+const SYSTEM_AUTHORS = new Set(['', 'ai system', 'system', 'admin', 'hệ thống', 'quản trị viên'])
+
 function AiContentPage() {
   const user = useAuthStore((state) => state.user)
+  const isTeacher = String(user?.role || '').toLowerCase().includes('teacher')
+  const defaultAuthorFilter = isTeacher ? 'mine' : 'all'
   const [activeTab, setActiveTab] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [authorFilter, setAuthorFilter] = useState('all')
+  const [authorFilter, setAuthorFilter] = useState(defaultAuthorFilter)
+
+  useEffect(() => {
+    setAuthorFilter(defaultAuthorFilter)
+  }, [defaultAuthorFilter, user?.id])
   const [searchTerm, setSearchTerm] = useState('')
   const [items, setItems] = useState(() => getAIContentRecords())
   const [isLoading, setIsLoading] = useState(false)
@@ -79,12 +88,21 @@ function AiContentPage() {
   const isOwnedByCurrentUser = useMemo(() => {
     return (item) => {
       if (!user) return true
-      const current = normalizeOwner(user.displayName || user.email || 'admin')
-      const created = normalizeOwner(item?.createdBy || '')
+      const candidates = [
+        normalizeOwner(user.displayName),
+        normalizeOwner(user.email),
+        normalizeOwner(user.username),
+        normalizeOwner(user.id),
+      ].filter(Boolean)
+      const created = normalizeOwner(item?.createdBy || item?.authorName || item?.authorEmail || '')
       const approved = normalizeOwner(item?.approvedBy || '')
-      return created === current || approved === current
+      return candidates.some((c) => c === created || c === approved)
     }
   }, [user])
+
+  // Nội dung hệ thống: do AI/quản trị viên tạo (createdBy rỗng hoặc là tài khoản hệ thống)
+  const isSystemItem = (item) =>
+    SYSTEM_AUTHORS.has(normalizeOwner(item?.createdBy || item?.authorName || ''))
 
   const trashCount = useMemo(
     () => items.filter((item) => item.status === 'DELETED').length,
@@ -119,12 +137,17 @@ function AiContentPage() {
         const matchesType = matchCategoryFilter(activeTab, itemType)
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter
         const isMine = isOwnedByCurrentUser(item)
+        const isSystem = isSystemItem(item)
+        // Giáo viên chỉ được thấy nội dung của mình và của hệ thống, không thấy của giáo viên khác
+        if (isTeacher && !isMine && !isSystem) return false
         const matchesOwner =
           authorFilter === 'all'
             ? true
             : authorFilter === 'mine'
               ? isMine
-              : !isMine
+              : authorFilter === 'system'
+                ? isSystem
+                : !isMine
         const keyword = searchTerm.trim().toLowerCase()
         const matchesSearch =
           !keyword ||
@@ -133,7 +156,8 @@ function AiContentPage() {
 
         return matchesType && matchesStatus && matchesOwner && matchesSearch
       }),
-    [items, activeTab, statusFilter, authorFilter, searchTerm, isOwnedByCurrentUser, showTrash],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, activeTab, statusFilter, authorFilter, searchTerm, isOwnedByCurrentUser, showTrash, isTeacher],
   )
 
   const pendingCount = useMemo(
@@ -318,6 +342,20 @@ function AiContentPage() {
         createdBy: user?.displayName || user?.email || 'Admin',
       })
 
+      // Đưa card mới tạo vào đầu danh sách ngay lập tức để người dùng thấy
+      if (saved) {
+        setItems((prev) => [saved, ...prev.filter((i) => i.id !== saved.id)])
+      }
+      setShowTrash(false)
+      setStatusFilter('all')
+      setAuthorFilter('all')
+      if (activeTab !== 'all') {
+        const itemType = (saved?.rawType || saved?.type || '').toLowerCase()
+        if (!matchCategoryFilter(activeTab, itemType)) {
+          setActiveTab('all')
+        }
+      }
+
       await refresh()
       setIsGenerating(false)
       setGeneratingStatus('')
@@ -328,7 +366,7 @@ function AiContentPage() {
         level: 'B2',
         questionCount: 5,
       })
-      toast.success(`Đã tạo "${saved.title}" (${saved.questions?.length || 0} câu hỏi) thành công!`)
+      toast.success(`Đã tạo "${saved?.title || finalTitle}" (${saved?.questions?.length || result.questions?.length || 0} câu hỏi) thành công!`)
     } catch (error) {
       setIsGenerating(false)
       setGeneratingStatus('')
@@ -384,21 +422,6 @@ function AiContentPage() {
         generatingStatus={generatingStatus}
       />
 
-      {/* Generating Banner */}
-      {isGenerating && (
-        <Card className="border-primary/20 bg-primary/5 p-4 shadow-sm animate-pulse">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin shrink-0 text-brand-600" />
-            <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                AI đang xử lý yêu cầu...
-              </p>
-              <p className="text-xs text-muted-foreground">{generatingStatus}</p>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Banner thông báo khi ở chế độ thùng rác */}
       {showTrash && (
         <div className="flex items-center justify-between bg-amber-50/90 border border-amber-200 rounded-2xl px-6 py-3 text-xs text-amber-800 shadow-2xs">
@@ -417,6 +440,7 @@ function AiContentPage() {
         setStatusFilter={setStatusFilter}
         authorFilter={authorFilter}
         setAuthorFilter={setAuthorFilter}
+        isTeacher={isTeacher}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         showTrash={showTrash}
@@ -434,7 +458,7 @@ function AiContentPage() {
         <Card className="flex flex-col items-center justify-center p-8">
           <LoadingSpinner text="Đang tải học liệu..." className="py-6" />
         </Card>
-      ) : visibleItems.length === 0 ? (
+      ) : visibleItems.length === 0 && !isGenerating ? (
         <Card className="p-8">
           <EmptyState
             title={
@@ -453,6 +477,14 @@ function AiContentPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Card Đang Tạo Bởi AI - Luôn hiển thị ở vị trí đầu tiên trong danh sách */}
+          {isGenerating && (
+            <AiGeneratingCard
+              draft={draft}
+              status={generatingStatus}
+            />
+          )}
+
           {visibleItems.map((item) => (
             <AiContentCard
               key={item.id}

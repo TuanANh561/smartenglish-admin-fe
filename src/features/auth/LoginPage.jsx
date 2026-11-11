@@ -95,7 +95,7 @@ export default function LoginPage() {
         },
       })
     } catch (err) {
-      console.error('Lỗi gửi email OTP từ server:', err)
+      // Không có kênh nào khác để lấy mã → báo lỗi rõ ràng thay vì để người dùng chờ mã không bao giờ tới
       toast.error('Không thể gửi mã xác thực qua email: ' + (err.message || 'Lỗi server'))
       throw err
     }

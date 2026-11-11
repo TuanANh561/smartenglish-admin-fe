@@ -17,10 +17,8 @@ export default function SudoUnlockModal({
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
-    console.log('SUDO MODAL handleSubmit called with:', password)
     if (!password.trim()) return
     const success = await onUnlock(password)
-    console.log('SUDO MODAL onUnlock result:', success)
     if (success) {
       setPassword('')
     }

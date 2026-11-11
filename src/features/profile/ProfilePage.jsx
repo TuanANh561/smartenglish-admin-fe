@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { User, Lock, MessageSquare } from 'lucide-react'
+import { User, Lock, MessageSquare, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useProfile } from './hooks/useProfile'
 import ProfileHeader from './components/ProfileHeader'
+import ProfileOverviewTab from './components/ProfileOverviewTab'
 import ProfileInfoTab from './components/ProfileInfoTab'
 import ProfileSecurityTab from './components/ProfileSecurityTab'
 import ProfilePostsTab from './components/ProfilePostsTab'
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('info') // 'info' | 'posts' | 'security'
+  const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'info' | 'posts' | 'security'
   const [myPostsCount, setMyPostsCount] = useState(null)
 
   const {
@@ -35,10 +36,25 @@ export default function ProfilePage() {
         isUploadingAvatar={isUploadingAvatar}
         onAvatarFileChange={handleUploadAvatarFile}
         postsCount={myPostsCount}
+        onSelectTab={setActiveTab}
       />
 
-      {/* ── TABS CHUYỂN ĐỔI HIỆN ĐẠI ───────────────────────────────── */}
+      {/* ── TABS CHUYỂN ĐỔI HIỆN ĐẠI (FACEBOOK PROFILE STYLE) ────────── */}
       <div className="flex items-center gap-1.5 border-b border-slate-200 pb-px overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab('overview')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer shrink-0',
+            activeTab === 'overview'
+              ? 'border-brand-600 text-brand-700 bg-brand-50/30 rounded-t-lg'
+              : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg',
+          )}
+        >
+          <Sparkles size={15} />
+          <span>Tổng quan</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('info')}
@@ -95,6 +111,17 @@ export default function ProfilePage() {
       </div>
 
       {/* ── TAB CONTENT ───────────────────────────────────────────── */}
+      {activeTab === 'overview' && (
+        <ProfileOverviewTab
+          currentUser={currentUser}
+          profileData={profileData}
+          isTeacher={isTeacher}
+          postsCount={myPostsCount}
+          onEditInfo={() => setActiveTab('info')}
+          onPostCountChange={setMyPostsCount}
+        />
+      )}
+
       {activeTab === 'info' && (
         <ProfileInfoTab
           currentUser={currentUser}

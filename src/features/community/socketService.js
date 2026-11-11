@@ -6,7 +6,10 @@ import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { TOKEN_KEY } from '@/lib/api'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8088/ws-chat'
+// Mặc định đi qua API Gateway (route /ws-chat/** → social-service) để chỉ cần public một domain khi deploy
+const WS_URL =
+  import.meta.env.VITE_WS_URL ||
+  `${(import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080').replace(/\/+$/, '')}/ws-chat`
 
 let stompClient = null
 const subscriptions = new Map()
