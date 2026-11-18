@@ -1011,27 +1011,28 @@
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "A room's air-conditioning system is not working"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A presentation file is missing"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A flight from Tokyo is delayed"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A conference room is double-booked"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Người đàn ông hỏi đội kỹ thuật đã sửa hệ thống HVAC ở phòng họp B chưa và người phụ nữ nói chưa xong.",
+      "point": 5,
+      "explanationVi": "Người đàn ông hỏi đội kỹ thuật đã sửa hệ thống HVAC ở phòng họp B chưa và người phụ nữ nói chưa xong."
     },
     {
       "id": "q33",
@@ -1042,32 +1043,33 @@
       "groupRangeText": "Nhóm câu 32–34",
       "groupAudioBadge": "Hội thoại câu 32–34",
       "audioScript": "Man: Good morning, Clara. Did the facility management team fix the HVAC system in conference room B? Woman: Not quite yet, Mark. The technician mentioned they need a replacement thermal sensor from Germany. Man: That's problematic because our international partners from Tokyo are arriving at two o'clock. Woman: Let's relocate the presentation to executive suite 402 on the top floor—it has great climate control and a panoramic screen.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "Why is the man concerned?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "A budget is too small"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "A technician is unavailable"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Some visitors are arriving soon"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "A replacement part is too expensive"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Anh ấy lo vì đối tác quốc tế từ Tokyo sẽ đến lúc hai giờ.",
+      "point": 5,
+      "explanationVi": "Anh ấy lo vì đối tác quốc tế từ Tokyo sẽ đến lúc hai giờ."
     },
     {
       "id": "q34",
@@ -1078,32 +1080,33 @@
       "groupRangeText": "Nhóm câu 32–34",
       "groupAudioBadge": "Hội thoại câu 32–34",
       "audioScript": "Man: Good morning, Clara. Did the facility management team fix the HVAC system in conference room B? Woman: Not quite yet, Mark. The technician mentioned they need a replacement thermal sensor from Germany. Man: That's problematic because our international partners from Tokyo are arriving at two o'clock. Woman: Let's relocate the presentation to executive suite 402 on the top floor—it has great climate control and a panoramic screen.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the woman suggest doing?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Ordering a part from a local supplier"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Postponing the presentation"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Calling the international partners"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Moving to a different room"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Cô ấy đề nghị chuyển buổi thuyết trình sang phòng executive suite 402.",
+      "point": 5,
+      "explanationVi": "Cô ấy đề nghị chuyển buổi thuyết trình sang phòng executive suite 402."
     },
     {
       "id": "q35",
@@ -1114,32 +1117,33 @@
       "groupRangeText": "Nhóm câu 35–37",
       "groupAudioBadge": "Hội thoại câu 35–37",
       "audioScript": "Woman: Excuse me, sir. I'm looking for the trade show registry booth for renewable energy exhibitors. Man: Welcome to the convention center! Registration is on level 2 right past the escalators. Woman: Great. Do you know if exhibitor badges grant access to the keynote luncheon? Man: Yes, your QR code will be scanned at the banquet entrance for complimentary dining.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Where most likely are the speakers?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "In a hotel lobby"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "At a convention center"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "At an airport"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "In a restaurant"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Người đàn ông chào: \"Welcome to the convention center!\".",
+      "point": 5,
+      "explanationVi": "Người đàn ông chào: \"Welcome to the convention center!\"."
     },
     {
       "id": "q36",
@@ -1150,32 +1154,33 @@
       "groupRangeText": "Nhóm câu 35–37",
       "groupAudioBadge": "Hội thoại câu 35–37",
       "audioScript": "Woman: Excuse me, sir. I'm looking for the trade show registry booth for renewable energy exhibitors. Man: Welcome to the convention center! Registration is on level 2 right past the escalators. Woman: Great. Do you know if exhibitor badges grant access to the keynote luncheon? Man: Yes, your QR code will be scanned at the banquet entrance for complimentary dining.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "Where is the registration area?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Next to the main entrance"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "In the banquet hall"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "On level 2"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Outside the building"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Quầy đăng ký ở tầng 2, ngay sau thang cuốn.",
+      "point": 5,
+      "explanationVi": "Quầy đăng ký ở tầng 2, ngay sau thang cuốn."
     },
     {
       "id": "q37",
@@ -1186,32 +1191,33 @@
       "groupRangeText": "Nhóm câu 35–37",
       "groupAudioBadge": "Hội thoại câu 35–37",
       "audioScript": "Woman: Excuse me, sir. I'm looking for the trade show registry booth for renewable energy exhibitors. Man: Welcome to the convention center! Registration is on level 2 right past the escalators. Woman: Great. Do you know if exhibitor badges grant access to the keynote luncheon? Man: Yes, your QR code will be scanned at the banquet entrance for complimentary dining.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the man say about the exhibitor badges?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "They must be printed in advance"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "They cost an additional fee"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "They expire at noon"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "They give access to a luncheon"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Mã QR trên thẻ sẽ được quét ở cửa tiệc để dùng bữa miễn phí.",
+      "point": 5,
+      "explanationVi": "Mã QR trên thẻ sẽ được quét ở cửa tiệc để dùng bữa miễn phí."
     },
     {
       "id": "q38",
@@ -1222,32 +1228,33 @@
       "groupRangeText": "Nhóm câu 38–40",
       "groupAudioBadge": "Hội thoại câu 38–40",
       "audioScript": "Man: Brenda, our quarterly retail sales report shows a 15 percent dip in foot traffic at the downtown boutique. Woman: I noticed that too, Kevin. Construction on the light rail line has blocked pedestrian walkways for the past month. Man: Should we launch an online promotional campaign offering free next-day delivery? Woman: That's a great initiative. I will coordinate with the social media team immediately.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What are the speakers mainly discussing?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "A drop in the number of store visitors"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "The opening of a new store"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A shortage of staff"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A delayed delivery"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Báo cáo cho thấy lượng khách đến cửa hàng trung tâm giảm 15%.",
+      "point": 5,
+      "explanationVi": "Báo cáo cho thấy lượng khách đến cửa hàng trung tâm giảm 15%."
     },
     {
       "id": "q39",
@@ -1258,32 +1265,33 @@
       "groupRangeText": "Nhóm câu 38–40",
       "groupAudioBadge": "Hội thoại câu 38–40",
       "audioScript": "Man: Brenda, our quarterly retail sales report shows a 15 percent dip in foot traffic at the downtown boutique. Woman: I noticed that too, Kevin. Construction on the light rail line has blocked pedestrian walkways for the past month. Man: Should we launch an online promotional campaign offering free next-day delivery? Woman: That's a great initiative. I will coordinate with the social media team immediately.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "According to the woman, what caused the problem?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Higher prices"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Bad weather"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Nearby construction work"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "A competitor's sale"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Việc thi công tuyến đường sắt nhẹ đã chặn lối đi bộ suốt một tháng.",
+      "point": 5,
+      "explanationVi": "Việc thi công tuyến đường sắt nhẹ đã chặn lối đi bộ suốt một tháng."
     },
     {
       "id": "q40",
@@ -1294,32 +1302,33 @@
       "groupRangeText": "Nhóm câu 38–40",
       "groupAudioBadge": "Hội thoại câu 38–40",
       "audioScript": "Man: Brenda, our quarterly retail sales report shows a 15 percent dip in foot traffic at the downtown boutique. Woman: I noticed that too, Kevin. Construction on the light rail line has blocked pedestrian walkways for the past month. Man: Should we launch an online promotional campaign offering free next-day delivery? Woman: That's a great initiative. I will coordinate with the social media team immediately.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the woman do next?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Close the boutique early"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Hire more employees"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Revise the sales report"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Contact the social media team"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Cô ấy nói sẽ phối hợp với nhóm mạng xã hội ngay lập tức.",
+      "point": 5,
+      "explanationVi": "Cô ấy nói sẽ phối hợp với nhóm mạng xã hội ngay lập tức."
     },
     {
       "id": "q41",
@@ -1330,32 +1339,33 @@
       "groupRangeText": "Nhóm câu 41–43",
       "groupAudioBadge": "Hội thoại câu 41–43",
       "audioScript": "Woman: Dr. Vance, the lab test results for the high-durability ceramic coating are ready for your review. Man: Excellent, Elena. Did the coating withstand the thermal stress above 800 degrees Celsius? Woman: It performed remarkably well with zero micro-fractures detected. Man: Wonderful news. Please compile the stress-strain diagrams into our patent application draft.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Who most likely is the man?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "A sales manager"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A research scientist"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A patent lawyer"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A factory inspector"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Anh ấy được gọi là Dr. Vance và đang xem kết quả thử nghiệm lớp phủ gốm trong phòng thí nghiệm.",
+      "point": 5,
+      "explanationVi": "Anh ấy được gọi là Dr. Vance và đang xem kết quả thử nghiệm lớp phủ gốm trong phòng thí nghiệm."
     },
     {
       "id": "q42",
@@ -1366,32 +1376,33 @@
       "groupRangeText": "Nhóm câu 41–43",
       "groupAudioBadge": "Hội thoại câu 41–43",
       "audioScript": "Woman: Dr. Vance, the lab test results for the high-durability ceramic coating are ready for your review. Man: Excellent, Elena. Did the coating withstand the thermal stress above 800 degrees Celsius? Woman: It performed remarkably well with zero micro-fractures detected. Man: Wonderful news. Please compile the stress-strain diagrams into our patent application draft.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What does the woman report?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "A test was successful"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Some samples were damaged"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "A machine overheated"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "A deadline was missed"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "A",
+      "explanation": "Lớp phủ chịu nhiệt rất tốt, không phát hiện vết nứt nào.",
+      "point": 5,
+      "explanationVi": "Lớp phủ chịu nhiệt rất tốt, không phát hiện vết nứt nào."
     },
     {
       "id": "q43",
@@ -1402,32 +1413,33 @@
       "groupRangeText": "Nhóm câu 41–43",
       "groupAudioBadge": "Hội thoại câu 41–43",
       "audioScript": "Woman: Dr. Vance, the lab test results for the high-durability ceramic coating are ready for your review. Man: Excellent, Elena. Did the coating withstand the thermal stress above 800 degrees Celsius? Woman: It performed remarkably well with zero micro-fractures detected. Man: Wonderful news. Please compile the stress-strain diagrams into our patent application draft.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the man ask the woman to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Repeat an experiment"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Order more materials"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Add some diagrams to a document"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Schedule a meeting"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Anh ấy nhờ đưa các biểu đồ ứng suất vào bản nháp hồ sơ bằng sáng chế.",
+      "point": 5,
+      "explanationVi": "Anh ấy nhờ đưa các biểu đồ ứng suất vào bản nháp hồ sơ bằng sáng chế."
     },
     {
       "id": "q44",
@@ -1438,32 +1450,33 @@
       "groupRangeText": "Nhóm câu 44–46",
       "groupAudioBadge": "Hội thoại câu 44–46",
       "audioScript": "Man: Hello, I'm calling from Skyline Logistics regarding parcel tracking number 9942. Woman: Yes, Mr. Thorne. Our records indicate your industrial valves were cleared by customs this morning. Man: Terrific. Will they be delivered to our assembly facility in Detroit by Thursday? Woman: Yes, our expedited freight truck is scheduled for delivery before 10 A.M.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Why is the man calling?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "To place an order"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "To check on a shipment"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "To report damaged goods"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "To change a delivery address"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Anh ấy gọi về mã theo dõi bưu kiện số 9942.",
+      "point": 5,
+      "explanationVi": "Anh ấy gọi về mã theo dõi bưu kiện số 9942."
     },
     {
       "id": "q45",
@@ -1474,32 +1487,33 @@
       "groupRangeText": "Nhóm câu 44–46",
       "groupAudioBadge": "Hội thoại câu 44–46",
       "audioScript": "Man: Hello, I'm calling from Skyline Logistics regarding parcel tracking number 9942. Woman: Yes, Mr. Thorne. Our records indicate your industrial valves were cleared by customs this morning. Man: Terrific. Will they be delivered to our assembly facility in Detroit by Thursday? Woman: Yes, our expedited freight truck is scheduled for delivery before 10 A.M.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What does the woman say happened this morning?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "A truck broke down"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "A payment was received"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Some items cleared customs"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "A package was returned"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Lô van công nghiệp đã được thông quan sáng nay.",
+      "point": 5,
+      "explanationVi": "Lô van công nghiệp đã được thông quan sáng nay."
     },
     {
       "id": "q46",
@@ -1510,32 +1524,33 @@
       "groupRangeText": "Nhóm câu 44–46",
       "groupAudioBadge": "Hội thoại câu 44–46",
       "audioScript": "Man: Hello, I'm calling from Skyline Logistics regarding parcel tracking number 9942. Woman: Yes, Mr. Thorne. Our records indicate your industrial valves were cleared by customs this morning. Man: Terrific. Will they be delivered to our assembly facility in Detroit by Thursday? Woman: Yes, our expedited freight truck is scheduled for delivery before 10 A.M.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "When will the delivery be made?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "This afternoon"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "On Wednesday evening"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Early next week"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "On Thursday before 10 A.M."
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Xe tải hỏa tốc sẽ giao trước 10 giờ sáng thứ Năm.",
+      "point": 5,
+      "explanationVi": "Xe tải hỏa tốc sẽ giao trước 10 giờ sáng thứ Năm."
     },
     {
       "id": "q47",
@@ -1546,32 +1561,33 @@
       "groupRangeText": "Nhóm câu 47–49",
       "groupAudioBadge": "Hội thoại câu 47–49",
       "audioScript": "Woman: Patrick, did you hear that our software enterprise is opening a branch in Dublin next spring? Man: Yes, Megan! They are currently looking for senior systems architects to lead the European cloud team. Woman: Are you thinking about applying for a transfer? Man: I certainly am. The deadline for internal applicants is next Friday, so I am updating my portfolio tonight.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What are the speakers mainly discussing?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "A company holiday"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A new branch office"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A software release"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A client visit"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Công ty sắp mở chi nhánh ở Dublin vào mùa xuân tới.",
+      "point": 5,
+      "explanationVi": "Công ty sắp mở chi nhánh ở Dublin vào mùa xuân tới."
     },
     {
       "id": "q48",
@@ -1582,32 +1598,33 @@
       "groupRangeText": "Nhóm câu 47–49",
       "groupAudioBadge": "Hội thoại câu 47–49",
       "audioScript": "Woman: Patrick, did you hear that our software enterprise is opening a branch in Dublin next spring? Man: Yes, Megan! They are currently looking for senior systems architects to lead the European cloud team. Woman: Are you thinking about applying for a transfer? Man: I certainly am. The deadline for internal applicants is next Friday, so I am updating my portfolio tonight.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What position is the company trying to fill?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Senior systems architect"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Marketing director"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Sales representative"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Office manager"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "A",
+      "explanation": "Họ đang tìm kiến trúc sư hệ thống cấp cao cho nhóm đám mây châu Âu.",
+      "point": 5,
+      "explanationVi": "Họ đang tìm kiến trúc sư hệ thống cấp cao cho nhóm đám mây châu Âu."
     },
     {
       "id": "q49",
@@ -1618,32 +1635,33 @@
       "groupRangeText": "Nhóm câu 47–49",
       "groupAudioBadge": "Hội thoại câu 47–49",
       "audioScript": "Woman: Patrick, did you hear that our software enterprise is opening a branch in Dublin next spring? Man: Yes, Megan! They are currently looking for senior systems architects to lead the European cloud team. Woman: Are you thinking about applying for a transfer? Man: I certainly am. The deadline for internal applicants is next Friday, so I am updating my portfolio tonight.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the man do tonight?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Book a flight"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Call a recruiter"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Update his portfolio"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Prepare a presentation"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Hạn nộp đơn nội bộ là thứ Sáu tới nên tối nay anh ấy cập nhật hồ sơ năng lực.",
+      "point": 5,
+      "explanationVi": "Hạn nộp đơn nội bộ là thứ Sáu tới nên tối nay anh ấy cập nhật hồ sơ năng lực."
     },
     {
       "id": "q50",
@@ -1654,32 +1672,33 @@
       "groupRangeText": "Nhóm câu 50–52",
       "groupAudioBadge": "Hội thoại câu 50–52",
       "audioScript": "Man: Hi, Sarah. The catering invoice for our annual gala dinner seems higher than the preliminary quote. Woman: Let me inspect the itemized breakdown, Jason. Ah, it appears they added a surcharge for the vegan dessert buffet. Man: But our contract specified that specialized dietary requirements were included without penalty. Woman: You're right. I will contact their billing department right away to issue a credit adjustment.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What problem does the man mention?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "An event was canceled"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "An invoice is higher than expected"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A dessert was not served"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A contract cannot be found"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Hóa đơn tiệc cao hơn báo giá sơ bộ.",
+      "point": 5,
+      "explanationVi": "Hóa đơn tiệc cao hơn báo giá sơ bộ."
     },
     {
       "id": "q51",
@@ -1690,32 +1709,33 @@
       "groupRangeText": "Nhóm câu 50–52",
       "groupAudioBadge": "Hội thoại câu 50–52",
       "audioScript": "Man: Hi, Sarah. The catering invoice for our annual gala dinner seems higher than the preliminary quote. Woman: Let me inspect the itemized breakdown, Jason. Ah, it appears they added a surcharge for the vegan dessert buffet. Man: But our contract specified that specialized dietary requirements were included without penalty. Woman: You're right. I will contact their billing department right away to issue a credit adjustment.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What caused the problem?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "An extra charge was added"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "More guests attended"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "A deposit was not paid"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Tax was calculated twice"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "A",
+      "explanation": "Bên cung cấp đã cộng thêm phụ phí cho quầy tráng miệng thuần chay.",
+      "point": 5,
+      "explanationVi": "Bên cung cấp đã cộng thêm phụ phí cho quầy tráng miệng thuần chay."
     },
     {
       "id": "q52",
@@ -1726,32 +1746,33 @@
       "groupRangeText": "Nhóm câu 50–52",
       "groupAudioBadge": "Hội thoại câu 50–52",
       "audioScript": "Man: Hi, Sarah. The catering invoice for our annual gala dinner seems higher than the preliminary quote. Woman: Let me inspect the itemized breakdown, Jason. Ah, it appears they added a surcharge for the vegan dessert buffet. Man: But our contract specified that specialized dietary requirements were included without penalty. Woman: You're right. I will contact their billing department right away to issue a credit adjustment.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the woman do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Find a new caterer"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Pay the remaining balance"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Revise the guest list"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Contact a billing department"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Cô ấy sẽ liên hệ bộ phận thanh toán để điều chỉnh khoản tín dụng.",
+      "point": 5,
+      "explanationVi": "Cô ấy sẽ liên hệ bộ phận thanh toán để điều chỉnh khoản tín dụng."
     },
     {
       "id": "q53",
@@ -1762,32 +1783,33 @@
       "groupRangeText": "Nhóm câu 53–55",
       "groupAudioBadge": "Hội thoại câu 53–55",
       "audioScript": "Woman: Welcome to Apex Automotive, Mr. Gomez. Are you here to inspect the hybrid fleet vehicles? Man: Yes, our courier delivery service is looking to replace thirty gasoline vans with eco-friendly models. Woman: Our electric-hybrid models offer up to 45 miles per gallon and qualify for municipal clean-energy tax rebates. Man: That sounds promising. Could we take one for a test drive around the business park?",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Where most likely does the woman work?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "At a car dealership"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "At a delivery company"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "At a tax office"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "At a gas station"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Cô ấy chào khách đến Apex Automotive để xem xe hybrid.",
+      "point": 5,
+      "explanationVi": "Cô ấy chào khách đến Apex Automotive để xem xe hybrid."
     },
     {
       "id": "q54",
@@ -1798,32 +1820,33 @@
       "groupRangeText": "Nhóm câu 53–55",
       "groupAudioBadge": "Hội thoại câu 53–55",
       "audioScript": "Woman: Welcome to Apex Automotive, Mr. Gomez. Are you here to inspect the hybrid fleet vehicles? Man: Yes, our courier delivery service is looking to replace thirty gasoline vans with eco-friendly models. Woman: Our electric-hybrid models offer up to 45 miles per gallon and qualify for municipal clean-energy tax rebates. Man: That sounds promising. Could we take one for a test drive around the business park?",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What is the man's company planning to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Open a new office"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Hire more drivers"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Replace some vehicles"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Reduce its delivery routes"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Công ty chuyển phát muốn thay ba mươi xe tải chạy xăng bằng xe thân thiện môi trường.",
+      "point": 5,
+      "explanationVi": "Công ty chuyển phát muốn thay ba mươi xe tải chạy xăng bằng xe thân thiện môi trường."
     },
     {
       "id": "q55",
@@ -1834,32 +1857,33 @@
       "groupRangeText": "Nhóm câu 53–55",
       "groupAudioBadge": "Hội thoại câu 53–55",
       "audioScript": "Woman: Welcome to Apex Automotive, Mr. Gomez. Are you here to inspect the hybrid fleet vehicles? Man: Yes, our courier delivery service is looking to replace thirty gasoline vans with eco-friendly models. Woman: Our electric-hybrid models offer up to 45 miles per gallon and qualify for municipal clean-energy tax rebates. Man: That sounds promising. Could we take one for a test drive around the business park?",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the man ask to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Receive a discount"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Take a test drive"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "See a brochure"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Speak to a manager"
         }
       ],
       "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "explanation": "Anh ấy hỏi có thể lái thử một chiếc quanh khu thương mại không.",
+      "point": 5,
+      "explanationVi": "Anh ấy hỏi có thể lái thử một chiếc quanh khu thương mại không."
     },
     {
       "id": "q56",
@@ -1870,32 +1894,33 @@
       "groupRangeText": "Nhóm câu 56–58",
       "groupAudioBadge": "Hội thoại câu 56–58",
       "audioScript": "Man: Rachel, we need to schedule a training workshop for all employees on the new customer relationship software. Woman: How about hosting two interactive sessions next Tuesday and Wednesday morning? Man: That would avoid overwhelming the support desk. Could you reserve the computer training lab? Woman: I will log into the facility portal and book it before lunch.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What does the man want to schedule?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "A product launch"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A client meeting"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A software training workshop"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A job interview"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Anh ấy cần xếp lịch buổi đào tạo phần mềm quản lý khách hàng mới.",
+      "point": 5,
+      "explanationVi": "Anh ấy cần xếp lịch buổi đào tạo phần mềm quản lý khách hàng mới."
     },
     {
       "id": "q57",
@@ -1906,32 +1931,33 @@
       "groupRangeText": "Nhóm câu 56–58",
       "groupAudioBadge": "Hội thoại câu 56–58",
       "audioScript": "Man: Rachel, we need to schedule a training workshop for all employees on the new customer relationship software. Woman: How about hosting two interactive sessions next Tuesday and Wednesday morning? Man: That would avoid overwhelming the support desk. Could you reserve the computer training lab? Woman: I will log into the facility portal and book it before lunch.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "Why does the man like the woman's suggestion?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "It would reduce costs"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "It would keep the support desk from being overwhelmed"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "It would allow remote attendance"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "It fits the trainer's schedule"
         }
       ],
       "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "explanation": "Chia hai buổi giúp bộ phận hỗ trợ không bị quá tải.",
+      "point": 5,
+      "explanationVi": "Chia hai buổi giúp bộ phận hỗ trợ không bị quá tải."
     },
     {
       "id": "q58",
@@ -1942,32 +1968,33 @@
       "groupRangeText": "Nhóm câu 56–58",
       "groupAudioBadge": "Hội thoại câu 56–58",
       "audioScript": "Man: Rachel, we need to schedule a training workshop for all employees on the new customer relationship software. Woman: How about hosting two interactive sessions next Tuesday and Wednesday morning? Man: That would avoid overwhelming the support desk. Could you reserve the computer training lab? Woman: I will log into the facility portal and book it before lunch.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the woman do before lunch?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Send an e-mail to all employees"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Install some software"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Call a trainer"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Reserve a room online"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Cô ấy sẽ vào cổng đặt phòng để giữ phòng máy tính trước giờ trưa.",
+      "point": 5,
+      "explanationVi": "Cô ấy sẽ vào cổng đặt phòng để giữ phòng máy tính trước giờ trưa."
     },
     {
       "id": "q59",
@@ -1978,32 +2005,33 @@
       "groupRangeText": "Nhóm câu 59–61",
       "groupAudioBadge": "Hội thoại câu 59–61",
       "audioScript": "Woman: Excuse me, Mr. Henderson. The publishing firm contacted us regarding your upcoming biography release. Man: Did they finalize the cover artwork and print typography? Woman: Yes, and they would like you to participate in a promotional book signing tour across five major cities. Man: My schedule is quite packed in November, but I can manage the events if they are held on weekends.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Who most likely is the man?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "An author"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A graphic designer"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A printer"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "A travel agent"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Nhà xuất bản liên hệ về cuốn tiểu sử sắp phát hành của ông.",
+      "point": 5,
+      "explanationVi": "Nhà xuất bản liên hệ về cuốn tiểu sử sắp phát hành của ông."
     },
     {
       "id": "q60",
@@ -2014,32 +2042,33 @@
       "groupRangeText": "Nhóm câu 59–61",
       "groupAudioBadge": "Hội thoại câu 59–61",
       "audioScript": "Woman: Excuse me, Mr. Henderson. The publishing firm contacted us regarding your upcoming biography release. Man: Did they finalize the cover artwork and print typography? Woman: Yes, and they would like you to participate in a promotional book signing tour across five major cities. Man: My schedule is quite packed in November, but I can manage the events if they are held on weekends.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What does the publishing firm want the man to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Revise a chapter"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Go on a book signing tour"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Approve a budget"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Give a radio interview"
         }
       ],
       "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "explanation": "Họ muốn ông tham gia chuyến ký sách quảng bá ở năm thành phố.",
+      "point": 5,
+      "explanationVi": "Họ muốn ông tham gia chuyến ký sách quảng bá ở năm thành phố."
     },
     {
       "id": "q61",
@@ -2050,32 +2079,33 @@
       "groupRangeText": "Nhóm câu 59–61",
       "groupAudioBadge": "Hội thoại câu 59–61",
       "audioScript": "Woman: Excuse me, Mr. Henderson. The publishing firm contacted us regarding your upcoming biography release. Man: Did they finalize the cover artwork and print typography? Woman: Yes, and they would like you to participate in a promotional book signing tour across five major cities. Man: My schedule is quite packed in November, but I can manage the events if they are held on weekends.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the man say about November?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "He prefers weekday events"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "He will be on vacation"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "He has a busy schedule"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "He wants to visit more cities"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Ông nói lịch tháng Mười Một rất kín, chỉ sắp xếp được nếu tổ chức cuối tuần.",
+      "point": 5,
+      "explanationVi": "Ông nói lịch tháng Mười Một rất kín, chỉ sắp xếp được nếu tổ chức cuối tuần."
     },
     {
       "id": "q62",
@@ -2086,32 +2116,33 @@
       "groupRangeText": "Nhóm câu 62–64",
       "groupAudioBadge": "Hội thoại câu 62–64",
       "audioScript": "Man: Sandra, have you evaluated the cost efficiency of switching our packaging to biodegradable bamboo fiber? Woman: Yes, David. While the raw material costs 8 percent more, we will save significantly on international shipping tariffs. Man: Plus, our customer feedback surveys show overwhelming support for eco-friendly practices. Woman: Exactly. I will present the complete cost-benefit analysis at tomorrow's directors meeting.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What are the speakers discussing?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "Changing a packaging material"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "Hiring a consultant"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "Opening an overseas factory"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "Raising product prices"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Họ bàn việc chuyển sang bao bì sợi tre phân hủy sinh học.",
+      "point": 5,
+      "explanationVi": "Họ bàn việc chuyển sang bao bì sợi tre phân hủy sinh học."
     },
     {
       "id": "q63",
@@ -2122,32 +2153,33 @@
       "groupRangeText": "Nhóm câu 62–64",
       "groupAudioBadge": "Hội thoại câu 62–64",
       "audioScript": "Man: Sandra, have you evaluated the cost efficiency of switching our packaging to biodegradable bamboo fiber? Woman: Yes, David. While the raw material costs 8 percent more, we will save significantly on international shipping tariffs. Man: Plus, our customer feedback surveys show overwhelming support for eco-friendly practices. Woman: Exactly. I will present the complete cost-benefit analysis at tomorrow's directors meeting.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "According to the woman, how will the company save money?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "By buying supplies in bulk"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "By using local suppliers"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "By reducing staff"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "By paying lower shipping tariffs"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Dù nguyên liệu đắt hơn 8%, công ty tiết kiệm nhiều thuế vận chuyển quốc tế.",
+      "point": 5,
+      "explanationVi": "Dù nguyên liệu đắt hơn 8%, công ty tiết kiệm nhiều thuế vận chuyển quốc tế."
     },
     {
       "id": "q64",
@@ -2158,32 +2190,33 @@
       "groupRangeText": "Nhóm câu 62–64",
       "groupAudioBadge": "Hội thoại câu 62–64",
       "audioScript": "Man: Sandra, have you evaluated the cost efficiency of switching our packaging to biodegradable bamboo fiber? Woman: Yes, David. While the raw material costs 8 percent more, we will save significantly on international shipping tariffs. Man: Plus, our customer feedback surveys show overwhelming support for eco-friendly practices. Woman: Exactly. I will present the complete cost-benefit analysis at tomorrow's directors meeting.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the woman do tomorrow?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Conduct a customer survey"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Present an analysis at a meeting"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Visit a supplier"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Sign a contract"
         }
       ],
       "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "explanation": "Cô ấy sẽ trình bày phân tích chi phí - lợi ích tại cuộc họp ban giám đốc.",
+      "point": 5,
+      "explanationVi": "Cô ấy sẽ trình bày phân tích chi phí - lợi ích tại cuộc họp ban giám đốc."
     },
     {
       "id": "q65",
@@ -2194,32 +2227,33 @@
       "groupRangeText": "Nhóm câu 65–67",
       "groupAudioBadge": "Hội thoại câu 65–67",
       "audioScript": "Woman: Good afternoon, Zenith Hotel reservations. How may I assist you today? Man: Hello, I reserved three executive suites under the name of Horizon BioTech for October 12th, but I need to push the check-in date back by two days. Woman: Certainly, sir. Let me pull up your booking code... Yes, we have availability for those adjusted dates without any modification fee. Man: That is a relief. Please send the updated confirmation to my corporate email.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "Where does the woman most likely work?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "At a travel agency"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "At a hotel"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "At a biotechnology company"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "At an airline"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Cô ấy nghe máy: \"Zenith Hotel reservations\".",
+      "point": 5,
+      "explanationVi": "Cô ấy nghe máy: \"Zenith Hotel reservations\"."
     },
     {
       "id": "q66",
@@ -2230,32 +2264,33 @@
       "groupRangeText": "Nhóm câu 65–67",
       "groupAudioBadge": "Hội thoại câu 65–67",
       "audioScript": "Woman: Good afternoon, Zenith Hotel reservations. How may I assist you today? Man: Hello, I reserved three executive suites under the name of Horizon BioTech for October 12th, but I need to push the check-in date back by two days. Woman: Certainly, sir. Let me pull up your booking code... Yes, we have availability for those adjusted dates without any modification fee. Man: That is a relief. Please send the updated confirmation to my corporate email.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "What does the man want to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Cancel a booking"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Upgrade a room"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Change a check-in date"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Add more guests"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Anh ấy muốn lùi ngày nhận phòng thêm hai ngày.",
+      "point": 5,
+      "explanationVi": "Anh ấy muốn lùi ngày nhận phòng thêm hai ngày."
     },
     {
       "id": "q67",
@@ -2266,32 +2301,33 @@
       "groupRangeText": "Nhóm câu 65–67",
       "groupAudioBadge": "Hội thoại câu 65–67",
       "audioScript": "Woman: Good afternoon, Zenith Hotel reservations. How may I assist you today? Man: Hello, I reserved three executive suites under the name of Horizon BioTech for October 12th, but I need to push the check-in date back by two days. Woman: Certainly, sir. Let me pull up your booking code... Yes, we have availability for those adjusted dates without any modification fee. Man: That is a relief. Please send the updated confirmation to my corporate email.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What does the man ask the woman to send?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "An invoice"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "A map"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "A discount code"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "An updated confirmation"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Anh ấy nhờ gửi xác nhận đặt phòng mới vào email công ty.",
+      "point": 5,
+      "explanationVi": "Anh ấy nhờ gửi xác nhận đặt phòng mới vào email công ty."
     },
     {
       "id": "q68",
@@ -2302,32 +2338,33 @@
       "groupRangeText": "Nhóm câu 68–70",
       "groupAudioBadge": "Hội thoại câu 68–70",
       "audioScript": "Man: Teresa, our inventory audit revealed a discrepancy in our warehouse barcode scanners. Woman: What happened, Liam? Are several handheld units missing? Man: We are short six wireless terminals in aisle 14 after the overnight pallet shipment. Woman: Let me review the security camera footage from the loading dock during the midnight shift.",
-      "questionText": "What problem do the speakers discuss?",
+      "questionText": "What problem does the man report?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "An equipment malfunction"
+          "text": "Some scanners are missing"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A budget deficit"
+          "text": "A shipment arrived late"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight cancellation"
+          "text": "A camera is broken"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A scheduling conflict"
+          "text": "An aisle is blocked"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Người nói đang trao đổi về vấn đề kỹ thuật thiết bị.",
-      "point": 5
+      "explanation": "Kiểm kê phát hiện thiếu máy quét mã vạch trong kho.",
+      "point": 5,
+      "explanationVi": "Kiểm kê phát hiện thiếu máy quét mã vạch trong kho."
     },
     {
       "id": "q69",
@@ -2338,32 +2375,33 @@
       "groupRangeText": "Nhóm câu 68–70",
       "groupAudioBadge": "Hội thoại câu 68–70",
       "audioScript": "Man: Teresa, our inventory audit revealed a discrepancy in our warehouse barcode scanners. Woman: What happened, Liam? Are several handheld units missing? Man: We are short six wireless terminals in aisle 14 after the overnight pallet shipment. Woman: Let me review the security camera footage from the loading dock during the midnight shift.",
-      "questionText": "What does the woman suggest doing?",
+      "questionText": "How many devices are missing?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Postponing a contract signing"
+          "text": "Four"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Relocating to another room"
+          "text": "Six"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Hiring external contractors"
+          "text": "Twelve"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Purchasing new software"
+          "text": "Fourteen"
         }
       ],
       "correctAnswer": "B",
-      "explanation": "Người phụ nữ đưa ra gợi ý chuyển sang địa điểm/phòng họp khác.",
-      "point": 5
+      "explanation": "Thiếu sáu thiết bị không dây ở lối 14 (14 là số lối đi, không phải số máy).",
+      "point": 5,
+      "explanationVi": "Thiếu sáu thiết bị không dây ở lối 14 (14 là số lối đi, không phải số máy)."
     },
     {
       "id": "q70",
@@ -2374,32 +2412,33 @@
       "groupRangeText": "Nhóm câu 68–70",
       "groupAudioBadge": "Hội thoại câu 68–70",
       "audioScript": "Man: Teresa, our inventory audit revealed a discrepancy in our warehouse barcode scanners. Woman: What happened, Liam? Are several handheld units missing? Man: We are short six wireless terminals in aisle 14 after the overnight pallet shipment. Woman: Let me review the security camera footage from the loading dock during the midnight shift.",
-      "questionText": "What will the man most likely do next?",
+      "questionText": "What will the woman do next?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Prepare presentation slides"
+          "text": "Order replacement units"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Contact an international partner"
+          "text": "Call the police"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Submit an expense claim"
+          "text": "Review security camera footage"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Update a portfolio"
+          "text": "Count the inventory again"
         }
       ],
-      "correctAnswer": "B",
-      "explanation": "Bước tiếp theo người nam sẽ liên hệ đối tác thông báo.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Cô ấy sẽ xem lại camera an ninh ở khu bốc dỡ trong ca đêm.",
+      "point": 5,
+      "explanationVi": "Cô ấy sẽ xem lại camera an ninh ở khu bốc dỡ trong ca đêm."
     },
     {
       "id": "q71",
@@ -2410,32 +2449,33 @@
       "groupRangeText": "Nhóm câu 71–73",
       "groupAudioBadge": "Bài nói câu 71–73",
       "audioScript": "Good morning, transit riders. This is an announcement from Central Metro. Due to essential track modernization between Oakridge and Waterfront stations, outbound trains on the Blue Line will operate on a single track today. Commuters should anticipate travel delays of approximately 15 to 20 minutes. Shuttle buses are waiting at Oakridge Station to transport passengers directly to the civic stadium. We apologize for the inconvenience and thank you for your patience.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "What is the announcement mainly about?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "A new train line"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "A ticket price increase"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "An event at a stadium"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "Track repair work"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Thông báo nói về việc nâng cấp đường ray giữa ga Oakridge và Waterfront.",
+      "point": 5,
+      "explanationVi": "Thông báo nói về việc nâng cấp đường ray giữa ga Oakridge và Waterfront."
     },
     {
       "id": "q72",
@@ -2446,32 +2486,33 @@
       "groupRangeText": "Nhóm câu 71–73",
       "groupAudioBadge": "Bài nói câu 71–73",
       "audioScript": "Good morning, transit riders. This is an announcement from Central Metro. Due to essential track modernization between Oakridge and Waterfront stations, outbound trains on the Blue Line will operate on a single track today. Commuters should anticipate travel delays of approximately 15 to 20 minutes. Shuttle buses are waiting at Oakridge Station to transport passengers directly to the civic stadium. We apologize for the inconvenience and thank you for your patience.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "How long might passengers be delayed?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "About 5 minutes"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "15 to 20 minutes"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "About 30 minutes"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "One hour"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Hành khách nên dự tính trễ khoảng 15 đến 20 phút.",
+      "point": 5,
+      "explanationVi": "Hành khách nên dự tính trễ khoảng 15 đến 20 phút."
     },
     {
       "id": "q73",
@@ -2482,32 +2523,33 @@
       "groupRangeText": "Nhóm câu 71–73",
       "groupAudioBadge": "Bài nói câu 71–73",
       "audioScript": "Good morning, transit riders. This is an announcement from Central Metro. Due to essential track modernization between Oakridge and Waterfront stations, outbound trains on the Blue Line will operate on a single track today. Commuters should anticipate travel delays of approximately 15 to 20 minutes. Shuttle buses are waiting at Oakridge Station to transport passengers directly to the civic stadium. We apologize for the inconvenience and thank you for your patience.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What is available at Oakridge Station?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Shuttle buses"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "Free parking"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Bicycle rentals"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Ticket refunds"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "A",
+      "explanation": "Xe buýt đưa đón đang chờ ở ga Oakridge.",
+      "point": 5,
+      "explanationVi": "Xe buýt đưa đón đang chờ ở ga Oakridge."
     },
     {
       "id": "q74",
@@ -2518,32 +2560,33 @@
       "groupRangeText": "Nhóm câu 74–76",
       "groupAudioBadge": "Bài nói câu 74–76",
       "audioScript": "Attention all staff members of Horizon Pharmaceuticals. Tomorrow at 10 A.M., our IT cybersecurity department will be deploying an enterprise-wide cloud firewall upgrade. During this 45-minute window, access to the internal client database and email servers will be temporarily suspended. Please ensure all critical files are saved to your local encrypted hard drives before 9:45 A.M. Contact extension 404 if you encounter any software issues after the update.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "What will happen tomorrow at 10 A.M.?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "A security system upgrade"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "A staff meeting"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "An office relocation"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "A training session"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "explanation": "Bộ phận an ninh mạng sẽ triển khai nâng cấp tường lửa đám mây.",
+      "point": 5,
+      "explanationVi": "Bộ phận an ninh mạng sẽ triển khai nâng cấp tường lửa đám mây."
     },
     {
       "id": "q75",
@@ -2554,32 +2597,33 @@
       "groupRangeText": "Nhóm câu 74–76",
       "groupAudioBadge": "Bài nói câu 74–76",
       "audioScript": "Attention all staff members of Horizon Pharmaceuticals. Tomorrow at 10 A.M., our IT cybersecurity department will be deploying an enterprise-wide cloud firewall upgrade. During this 45-minute window, access to the internal client database and email servers will be temporarily suspended. Please ensure all critical files are saved to your local encrypted hard drives before 9:45 A.M. Contact extension 404 if you encounter any software issues after the update.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What are listeners asked to do?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "Change their passwords"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "Shut down their computers"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "Save important files beforehand"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "Work from home"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Nhân viên cần lưu tệp quan trọng vào ổ cứng mã hóa trước 9:45.",
+      "point": 5,
+      "explanationVi": "Nhân viên cần lưu tệp quan trọng vào ổ cứng mã hóa trước 9:45."
     },
     {
       "id": "q76",
@@ -2590,32 +2634,33 @@
       "groupRangeText": "Nhóm câu 74–76",
       "groupAudioBadge": "Bài nói câu 74–76",
       "audioScript": "Attention all staff members of Horizon Pharmaceuticals. Tomorrow at 10 A.M., our IT cybersecurity department will be deploying an enterprise-wide cloud firewall upgrade. During this 45-minute window, access to the internal client database and email servers will be temporarily suspended. Please ensure all critical files are saved to your local encrypted hard drives before 9:45 A.M. Contact extension 404 if you encounter any software issues after the update.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "Why should listeners call extension 404?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "To register for a session"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "To report software problems"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "To request a new device"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "To reset a password"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Gọi số máy lẻ 404 nếu gặp sự cố phần mềm sau khi cập nhật.",
+      "point": 5,
+      "explanationVi": "Gọi số máy lẻ 404 nếu gặp sự cố phần mềm sau khi cập nhật."
     },
     {
       "id": "q77",
@@ -2626,32 +2671,33 @@
       "groupRangeText": "Nhóm câu 77–79",
       "groupAudioBadge": "Bài nói câu 77–79",
       "audioScript": "Welcome to the annual North American Green Energy Forum. My name is Arthur Pendelton, and I am honored to introduce our keynote speaker, Dr. Evelyn Reyes. Dr. Reyes has spent the last decade spearheading solar microgrid installations across developing agricultural communities. Her revolutionary battery storage prototypes have reduced diesel generator reliance by over 70 percent. Today, she will present her latest research on scalable urban solar grids. Please give her a warm welcome.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "What is the purpose of the talk?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "To introduce a speaker"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "To present an award"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "To describe a new product"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "To open a factory"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "explanation": "Người nói giới thiệu diễn giả chính, Tiến sĩ Evelyn Reyes.",
+      "point": 5,
+      "explanationVi": "Người nói giới thiệu diễn giả chính, Tiến sĩ Evelyn Reyes."
     },
     {
       "id": "q78",
@@ -2662,32 +2708,33 @@
       "groupRangeText": "Nhóm câu 77–79",
       "groupAudioBadge": "Bài nói câu 77–79",
       "audioScript": "Welcome to the annual North American Green Energy Forum. My name is Arthur Pendelton, and I am honored to introduce our keynote speaker, Dr. Evelyn Reyes. Dr. Reyes has spent the last decade spearheading solar microgrid installations across developing agricultural communities. Her revolutionary battery storage prototypes have reduced diesel generator reliance by over 70 percent. Today, she will present her latest research on scalable urban solar grids. Please give her a warm welcome.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What has Dr. Reyes worked on?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "Wind turbines"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "Electric vehicles"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "Solar microgrids"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "Water purification"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Bà dẫn đầu việc lắp đặt lưới điện mặt trời siêu nhỏ.",
+      "point": 5,
+      "explanationVi": "Bà dẫn đầu việc lắp đặt lưới điện mặt trời siêu nhỏ."
     },
     {
       "id": "q79",
@@ -2698,32 +2745,33 @@
       "groupRangeText": "Nhóm câu 77–79",
       "groupAudioBadge": "Bài nói câu 77–79",
       "audioScript": "Welcome to the annual North American Green Energy Forum. My name is Arthur Pendelton, and I am honored to introduce our keynote speaker, Dr. Evelyn Reyes. Dr. Reyes has spent the last decade spearheading solar microgrid installations across developing agricultural communities. Her revolutionary battery storage prototypes have reduced diesel generator reliance by over 70 percent. Today, she will present her latest research on scalable urban solar grids. Please give her a warm welcome.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "According to the speaker, what has Dr. Reyes's work reduced?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Construction costs"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "The use of diesel generators"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Food waste"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Commuting times"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Pin lưu trữ của bà giảm hơn 70% sự phụ thuộc vào máy phát diesel.",
+      "point": 5,
+      "explanationVi": "Pin lưu trữ của bà giảm hơn 70% sự phụ thuộc vào máy phát diesel."
     },
     {
       "id": "q80",
@@ -2734,32 +2782,33 @@
       "groupRangeText": "Nhóm câu 80–82",
       "groupAudioBadge": "Bài nói câu 80–82",
       "audioScript": "Hello, Mr. Tanaka. This is Clara from Riverside Dental Clinic calling to confirm your dental hygiene checkup and whitening treatment scheduled for Thursday at 3 P.M. Please remember to bring your updated dental insurance card and arrive 10 minutes early to verify your medical history form. If you need to reschedule, please contact our front desk at 555-0192 at least 24 hours in advance. We look forward to seeing you.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Why is the speaker calling?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "To confirm an appointment"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "To request a payment"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "To announce new business hours"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "To recommend a specialist"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "explanation": "Phòng khám gọi xác nhận lịch khám thứ Năm lúc 3 giờ chiều.",
+      "point": 5,
+      "explanationVi": "Phòng khám gọi xác nhận lịch khám thứ Năm lúc 3 giờ chiều."
     },
     {
       "id": "q81",
@@ -2770,32 +2819,33 @@
       "groupRangeText": "Nhóm câu 80–82",
       "groupAudioBadge": "Bài nói câu 80–82",
       "audioScript": "Hello, Mr. Tanaka. This is Clara from Riverside Dental Clinic calling to confirm your dental hygiene checkup and whitening treatment scheduled for Thursday at 3 P.M. Please remember to bring your updated dental insurance card and arrive 10 minutes early to verify your medical history form. If you need to reschedule, please contact our front desk at 555-0192 at least 24 hours in advance. We look forward to seeing you.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What should Mr. Tanaka bring?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "A prescription"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "A payment receipt"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "An insurance card"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "A photo ID"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Ông cần mang thẻ bảo hiểm nha khoa mới.",
+      "point": 5,
+      "explanationVi": "Ông cần mang thẻ bảo hiểm nha khoa mới."
     },
     {
       "id": "q82",
@@ -2806,32 +2856,33 @@
       "groupRangeText": "Nhóm câu 80–82",
       "groupAudioBadge": "Bài nói câu 80–82",
       "audioScript": "Hello, Mr. Tanaka. This is Clara from Riverside Dental Clinic calling to confirm your dental hygiene checkup and whitening treatment scheduled for Thursday at 3 P.M. Please remember to bring your updated dental insurance card and arrive 10 minutes early to verify your medical history form. If you need to reschedule, please contact our front desk at 555-0192 at least 24 hours in advance. We look forward to seeing you.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What should Mr. Tanaka do if he needs to reschedule?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Send an e-mail"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "Call at least 24 hours in advance"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Use the clinic's Web site"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Arrive 10 minutes early"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Cần gọi quầy lễ tân trước ít nhất 24 giờ.",
+      "point": 5,
+      "explanationVi": "Cần gọi quầy lễ tân trước ít nhất 24 giờ."
     },
     {
       "id": "q83",
@@ -2842,32 +2893,33 @@
       "groupRangeText": "Nhóm câu 83–85",
       "groupAudioBadge": "Bài nói câu 83–85",
       "audioScript": "Thank you for listening to Morning Business Beat on WXLR Radio. Retail giant Summit Outfitters made headlines today by announcing plans to transition 100 percent of its clothing line to recycled fabrics by 2026. CEO Marcus Fletcher stated that consumer demand for ethical fashion has driven their market share up by 18 percent this fiscal quarter. In response, Summit's stock rose 4.5 points in early morning trading on the New York exchange.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "What did Summit Outfitters announce?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "A merger with a competitor"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "A plan to use recycled fabrics"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "The appointment of a new CEO"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "The closure of some stores"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Công ty sẽ chuyển 100% dòng quần áo sang vải tái chế vào năm 2026.",
+      "point": 5,
+      "explanationVi": "Công ty sẽ chuyển 100% dòng quần áo sang vải tái chế vào năm 2026."
     },
     {
       "id": "q84",
@@ -2878,32 +2930,33 @@
       "groupRangeText": "Nhóm câu 83–85",
       "groupAudioBadge": "Bài nói câu 83–85",
       "audioScript": "Thank you for listening to Morning Business Beat on WXLR Radio. Retail giant Summit Outfitters made headlines today by announcing plans to transition 100 percent of its clothing line to recycled fabrics by 2026. CEO Marcus Fletcher stated that consumer demand for ethical fashion has driven their market share up by 18 percent this fiscal quarter. In response, Summit's stock rose 4.5 points in early morning trading on the New York exchange.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "According to Marcus Fletcher, what has increased the company's market share?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "Lower prices"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "Online advertising"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "Demand for ethical fashion"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "New store locations"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Nhu cầu thời trang có đạo đức giúp thị phần tăng 18%.",
+      "point": 5,
+      "explanationVi": "Nhu cầu thời trang có đạo đức giúp thị phần tăng 18%."
     },
     {
       "id": "q85",
@@ -2914,32 +2967,33 @@
       "groupRangeText": "Nhóm câu 83–85",
       "groupAudioBadge": "Bài nói câu 83–85",
       "audioScript": "Thank you for listening to Morning Business Beat on WXLR Radio. Retail giant Summit Outfitters made headlines today by announcing plans to transition 100 percent of its clothing line to recycled fabrics by 2026. CEO Marcus Fletcher stated that consumer demand for ethical fashion has driven their market share up by 18 percent this fiscal quarter. In response, Summit's stock rose 4.5 points in early morning trading on the New York exchange.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What happened to Summit's stock?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Trading was briefly suspended"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "It fell 18 points"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "It remained unchanged"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "It increased in value"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Cổ phiếu tăng 4,5 điểm trong phiên sáng.",
+      "point": 5,
+      "explanationVi": "Cổ phiếu tăng 4,5 điểm trong phiên sáng."
     },
     {
       "id": "q86",
@@ -2950,32 +3004,33 @@
       "groupRangeText": "Nhóm câu 86–88",
       "groupAudioBadge": "Bài nói câu 86–88",
       "audioScript": "Attention shoppers at Kensington Department Store. For the next two hours only, we are hosting a flash promotion in our home furnishing gallery on the third floor. All premium memory-foam mattresses, ergonomic desk chairs, and designer floor lamps are discounted by an additional 30 percent off their marked clearance prices. Furthermore, store rewards cardholders will earn double bonus points on every purchase made before 5 P.M.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Where is the announcement being made?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "At a furniture factory"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "At a department store"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "At a hotel"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "At a supermarket"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "\"Attention shoppers at Kensington Department Store.\"",
+      "point": 5,
+      "explanationVi": "\"Attention shoppers at Kensington Department Store.\""
     },
     {
       "id": "q87",
@@ -2986,32 +3041,33 @@
       "groupRangeText": "Nhóm câu 86–88",
       "groupAudioBadge": "Bài nói câu 86–88",
       "audioScript": "Attention shoppers at Kensington Department Store. For the next two hours only, we are hosting a flash promotion in our home furnishing gallery on the third floor. All premium memory-foam mattresses, ergonomic desk chairs, and designer floor lamps are discounted by an additional 30 percent off their marked clearance prices. Furthermore, store rewards cardholders will earn double bonus points on every purchase made before 5 P.M.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "How long will the promotion last?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "Two hours"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "One day"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "A weekend"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "One week"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "explanation": "Khuyến mãi chỉ diễn ra trong hai giờ tới.",
+      "point": 5,
+      "explanationVi": "Khuyến mãi chỉ diễn ra trong hai giờ tới."
     },
     {
       "id": "q88",
@@ -3022,32 +3078,33 @@
       "groupRangeText": "Nhóm câu 86–88",
       "groupAudioBadge": "Bài nói câu 86–88",
       "audioScript": "Attention shoppers at Kensington Department Store. For the next two hours only, we are hosting a flash promotion in our home furnishing gallery on the third floor. All premium memory-foam mattresses, ergonomic desk chairs, and designer floor lamps are discounted by an additional 30 percent off their marked clearance prices. Furthermore, store rewards cardholders will earn double bonus points on every purchase made before 5 P.M.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What will rewards cardholders receive?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Free delivery"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "A gift card"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Double points"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "A free lamp"
         }
       ],
       "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "explanation": "Chủ thẻ thành viên được nhân đôi điểm thưởng trước 5 giờ chiều.",
+      "point": 5,
+      "explanationVi": "Chủ thẻ thành viên được nhân đôi điểm thưởng trước 5 giờ chiều."
     },
     {
       "id": "q89",
@@ -3058,32 +3115,33 @@
       "groupRangeText": "Nhóm câu 89–91",
       "groupAudioBadge": "Bài nói câu 89–91",
       "audioScript": "Good afternoon, team. I called this emergency meeting to review our safety protocols at the chemical synthesis plant. Over the weekend, an automated pressure valve malfunctioned in distillation chamber 3. Fortunately, the secondary vapor scrubber contained the fumes without injury. Starting tomorrow morning, all shift supervisors must conduct a mandatory inspection checklist before each 8-hour rotation.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Where do the listeners most likely work?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "At a hospital"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "At a chemical plant"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "At a construction site"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "At a hardware store"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Cuộc họp về quy trình an toàn tại nhà máy tổng hợp hóa chất.",
+      "point": 5,
+      "explanationVi": "Cuộc họp về quy trình an toàn tại nhà máy tổng hợp hóa chất."
     },
     {
       "id": "q90",
@@ -3094,32 +3152,33 @@
       "groupRangeText": "Nhóm câu 89–91",
       "groupAudioBadge": "Bài nói câu 89–91",
       "audioScript": "Good afternoon, team. I called this emergency meeting to review our safety protocols at the chemical synthesis plant. Over the weekend, an automated pressure valve malfunctioned in distillation chamber 3. Fortunately, the secondary vapor scrubber contained the fumes without injury. Starting tomorrow morning, all shift supervisors must conduct a mandatory inspection checklist before each 8-hour rotation.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What happened over the weekend?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "A worker was injured"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "A shift was canceled"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "A fire alarm went off"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "A valve stopped working properly"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Một van áp suất tự động bị trục trặc ở buồng chưng cất số 3; không ai bị thương.",
+      "point": 5,
+      "explanationVi": "Một van áp suất tự động bị trục trặc ở buồng chưng cất số 3; không ai bị thương."
     },
     {
       "id": "q91",
@@ -3130,32 +3189,33 @@
       "groupRangeText": "Nhóm câu 89–91",
       "groupAudioBadge": "Bài nói câu 89–91",
       "audioScript": "Good afternoon, team. I called this emergency meeting to review our safety protocols at the chemical synthesis plant. Over the weekend, an automated pressure valve malfunctioned in distillation chamber 3. Fortunately, the secondary vapor scrubber contained the fumes without injury. Starting tomorrow morning, all shift supervisors must conduct a mandatory inspection checklist before each 8-hour rotation.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What must supervisors do starting tomorrow?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Complete an inspection checklist"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "Work longer shifts"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Attend a training course"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Replace some equipment"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "A",
+      "explanation": "Trưởng ca phải làm danh sách kiểm tra bắt buộc trước mỗi ca 8 tiếng.",
+      "point": 5,
+      "explanationVi": "Trưởng ca phải làm danh sách kiểm tra bắt buộc trước mỗi ca 8 tiếng."
     },
     {
       "id": "q92",
@@ -3166,32 +3226,33 @@
       "groupRangeText": "Nhóm câu 92–94",
       "groupAudioBadge": "Bài nói câu 92–94",
       "audioScript": "Welcome aboard flight 348 with nonstop service from Chicago to London Heathrow. We are currently cruising at an altitude of 36,000 feet with smooth tailwinds. In a few moments, our flight attendants will move through the aisles offering complimentary hot beverages and dinner service. Our inflight entertainment catalog features over 200 movies accessible on your personal seatback screens. Sit back, relax, and enjoy your transatlantic journey.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Where is the announcement being made?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "On an airplane"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "At a train station"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "At an airport gate"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "On a cruise ship"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "explanation": "\"Welcome aboard flight 348\" - thông báo trên máy bay.",
+      "point": 5,
+      "explanationVi": "\"Welcome aboard flight 348\" - thông báo trên máy bay."
     },
     {
       "id": "q93",
@@ -3202,32 +3263,33 @@
       "groupRangeText": "Nhóm câu 92–94",
       "groupAudioBadge": "Bài nói câu 92–94",
       "audioScript": "Welcome aboard flight 348 with nonstop service from Chicago to London Heathrow. We are currently cruising at an altitude of 36,000 feet with smooth tailwinds. In a few moments, our flight attendants will move through the aisles offering complimentary hot beverages and dinner service. Our inflight entertainment catalog features over 200 movies accessible on your personal seatback screens. Sit back, relax, and enjoy your transatlantic journey.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What will the flight attendants do soon?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "Collect customs forms"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "Serve drinks and dinner"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "Demonstrate safety equipment"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "Sell duty-free goods"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Tiếp viên sẽ phục vụ đồ uống nóng miễn phí và bữa tối.",
+      "point": 5,
+      "explanationVi": "Tiếp viên sẽ phục vụ đồ uống nóng miễn phí và bữa tối."
     },
     {
       "id": "q94",
@@ -3238,32 +3300,33 @@
       "groupRangeText": "Nhóm câu 92–94",
       "groupAudioBadge": "Bài nói câu 92–94",
       "audioScript": "Welcome aboard flight 348 with nonstop service from Chicago to London Heathrow. We are currently cruising at an altitude of 36,000 feet with smooth tailwinds. In a few moments, our flight attendants will move through the aisles offering complimentary hot beverages and dinner service. Our inflight entertainment catalog features over 200 movies accessible on your personal seatback screens. Sit back, relax, and enjoy your transatlantic journey.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What does the speaker say about the entertainment?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "It requires paid headphones"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "It is temporarily unavailable"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "It includes more than 200 movies"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "It must be downloaded in advance"
         }
       ],
       "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "explanation": "Danh mục giải trí có hơn 200 bộ phim trên màn hình ghế.",
+      "point": 5,
+      "explanationVi": "Danh mục giải trí có hơn 200 bộ phim trên màn hình ghế."
     },
     {
       "id": "q95",
@@ -3274,32 +3337,33 @@
       "groupRangeText": "Nhóm câu 95–97",
       "groupAudioBadge": "Bài nói câu 95–97",
       "audioScript": "Good morning, book lovers. I am delighted to announce that bestselling historical novelist Julian Sterling will be visiting our bookstore next Thursday at 6:30 P.M. He will read selected excerpts from his newly released thriller, 'The Venetian Cipher', and participate in a question-and-answer session with readers. Autographed hardcovers will be available for purchase at the front counter. Seating is limited, so please reserve your admission ticket online.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Who is Julian Sterling?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "A bookstore owner"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "A literary critic"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "A publisher"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "A novelist"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Ông là tiểu thuyết gia lịch sử có sách bán chạy.",
+      "point": 5,
+      "explanationVi": "Ông là tiểu thuyết gia lịch sử có sách bán chạy."
     },
     {
       "id": "q96",
@@ -3310,32 +3374,33 @@
       "groupRangeText": "Nhóm câu 95–97",
       "groupAudioBadge": "Bài nói câu 95–97",
       "audioScript": "Good morning, book lovers. I am delighted to announce that bestselling historical novelist Julian Sterling will be visiting our bookstore next Thursday at 6:30 P.M. He will read selected excerpts from his newly released thriller, 'The Venetian Cipher', and participate in a question-and-answer session with readers. Autographed hardcovers will be available for purchase at the front counter. Seating is limited, so please reserve your admission ticket online.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What will happen next Thursday?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "A reading and question-and-answer session"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "A writing workshop"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "A store's grand opening"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "A book sale"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "explanation": "Ông sẽ đọc trích đoạn sách mới và giao lưu hỏi đáp.",
+      "point": 5,
+      "explanationVi": "Ông sẽ đọc trích đoạn sách mới và giao lưu hỏi đáp."
     },
     {
       "id": "q97",
@@ -3346,32 +3411,33 @@
       "groupRangeText": "Nhóm câu 95–97",
       "groupAudioBadge": "Bài nói câu 95–97",
       "audioScript": "Good morning, book lovers. I am delighted to announce that bestselling historical novelist Julian Sterling will be visiting our bookstore next Thursday at 6:30 P.M. He will read selected excerpts from his newly released thriller, 'The Venetian Cipher', and participate in a question-and-answer session with readers. Autographed hardcovers will be available for purchase at the front counter. Seating is limited, so please reserve your admission ticket online.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "Why are listeners encouraged to reserve tickets online?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Tickets are cheaper online"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "Seating is limited"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "The event may be moved"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Prices will rise soon"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "B",
+      "explanation": "Số ghế có hạn nên cần đặt vé trước.",
+      "point": 5,
+      "explanationVi": "Số ghế có hạn nên cần đặt vé trước."
     },
     {
       "id": "q98",
@@ -3382,32 +3448,33 @@
       "groupRangeText": "Nhóm câu 98–100",
       "groupAudioBadge": "Bài nói câu 98–100",
       "audioScript": "This is a message for all participants in the City Center Charity Marathon. Registration packet pickup begins this Friday at the sports arena exhibition hall. You must present a valid government-issued photo ID and your race confirmation email to claim your bib number and timing chip. On race day, public parking around the park will be restricted, so we strongly encourage runners to use the designated park-and-ride shuttles.",
-      "questionText": "What is the purpose of the announcement?",
+      "questionText": "Who is the message intended for?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "To report service delays"
+          "text": "Race participants"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "To introduce a keynote speaker"
+          "text": "Event volunteers"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "To promote a store sale"
+          "text": "Event sponsors"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "To announce a corporate policy"
+          "text": "Park employees"
         }
       ],
       "correctAnswer": "A",
-      "explanation": "Mục đích chính của bài nói là thông báo thông tin quan trọng tới người nghe.",
-      "point": 5
+      "explanation": "Thông báo gửi tới người tham gia cuộc chạy marathon từ thiện.",
+      "point": 5,
+      "explanationVi": "Thông báo gửi tới người tham gia cuộc chạy marathon từ thiện."
     },
     {
       "id": "q99",
@@ -3418,32 +3485,33 @@
       "groupRangeText": "Nhóm câu 98–100",
       "groupAudioBadge": "Bài nói câu 98–100",
       "audioScript": "This is a message for all participants in the City Center Charity Marathon. Registration packet pickup begins this Friday at the sports arena exhibition hall. You must present a valid government-issued photo ID and your race confirmation email to claim your bib number and timing chip. On race day, public parking around the park will be restricted, so we strongly encourage runners to use the designated park-and-ride shuttles.",
-      "questionText": "What problem or feature is mentioned?",
+      "questionText": "What must people bring to pick up their race packets?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "A technical maintenance issue"
+          "text": "A registration fee"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "A discounted price rate"
+          "text": "A medical certificate"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "A flight schedule change"
+          "text": "A photo ID and a confirmation e-mail"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "A security procedure"
+          "text": "A printed map"
         }
       ],
-      "correctAnswer": "A",
-      "explanation": "Chi tiết được nhắc đến liên quan đến vấn đề kỹ thuật hoặc đặc tính sự kiện.",
-      "point": 5
+      "correctAnswer": "C",
+      "explanation": "Cần giấy tờ tùy thân có ảnh và email xác nhận đăng ký.",
+      "point": 5,
+      "explanationVi": "Cần giấy tờ tùy thân có ảnh và email xác nhận đăng ký."
     },
     {
       "id": "q100",
@@ -3454,32 +3522,33 @@
       "groupRangeText": "Nhóm câu 98–100",
       "groupAudioBadge": "Bài nói câu 98–100",
       "audioScript": "This is a message for all participants in the City Center Charity Marathon. Registration packet pickup begins this Friday at the sports arena exhibition hall. You must present a valid government-issued photo ID and your race confirmation email to claim your bib number and timing chip. On race day, public parking around the park will be restricted, so we strongly encourage runners to use the designated park-and-ride shuttles.",
-      "questionText": "What are listeners advised to do?",
+      "questionText": "What are runners encouraged to do on race day?",
       "options": [
         {
           "key": "A",
           "label": "A",
-          "text": "Contact customer support"
+          "text": "Arrive one hour early"
         },
         {
           "key": "B",
           "label": "B",
-          "text": "Arrive ahead of schedule"
+          "text": "Park near the arena"
         },
         {
           "key": "C",
           "label": "C",
-          "text": "Take an alternative route"
+          "text": "Bring their own water"
         },
         {
           "key": "D",
           "label": "D",
-          "text": "Reserve a ticket online"
+          "text": "Use shuttle buses"
         }
       ],
-      "correctAnswer": "C",
-      "explanation": "Người nghe được khuyến cáo thực hiện phương án thay thế phù hợp.",
-      "point": 5
+      "correctAnswer": "D",
+      "explanation": "Bãi đỗ quanh công viên bị hạn chế nên nên đi xe đưa đón park-and-ride.",
+      "point": 5,
+      "explanationVi": "Bãi đỗ quanh công viên bị hạn chế nên nên đi xe đưa đón park-and-ride."
     },
     {
       "id": "q101",

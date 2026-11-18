@@ -1,458 +1,297 @@
-import { useState } from 'react'
-import {
-  Upload,
-  FileJson,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Download,
-  Clock,
-  Layers,
-  Zap,
-  Loader2,
-  Sparkles,
-  Check,
-} from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Check, Download, FileSpreadsheet, Loader2, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import { createExam } from '../examApi'
+import Modal from '@/components/ui/Modal'
+import { cn } from '@/lib/utils'
+import { EXAM_CATEGORIES, createExam, validateExam } from '../examApi'
+import { downloadExcelTemplate, readExamFile } from '../examImport'
 
+// Chỉ giữ đề mẫu đã soát đúng cấu trúc; đề lỗi (Test 2, 4, 7) đã gỡ khỏi danh sách.
 const PRESET_LIST = [
-  {
-    id: 'ets-2024-07',
-    title: 'TOEIC Test 7',
-    fileName: 'toeic_ets_2024_test_07.json',
-    badge: 'Độc lập 200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Đề thi 200 câu Test 7 hoàn toàn mới, 0 trùng lặp, gom nhóm chuẩn hội thoại & bài đọc, giải thích chi tiết tiếng Việt',
-  },
-  {
-    id: 'ets-2024-06',
-    title: 'TOEIC Test 6',
-    fileName: 'toeic_ets_2024_test_06.json',
-    badge: '200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Đề thi 200 câu số 6 đầy đủ Audio, hình ảnh, bài đọc và đáp án chi tiết',
-  },
-  {
-    id: 'ets-2024-05',
-    title: 'TOEIC Test 5',
-    fileName: 'toeic_ets_2024_test_05.json',
-    badge: '200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Đề thi 200 câu số 5 với đầy đủ Audio, lời thoại đa giọng Nam - Nữ và giải thích chi tiết',
-  },
-  {
-    id: 'ets-2024-04',
-    title: 'TOEIC Test 4',
-    fileName: 'toeic_ets_2024_test_04.json',
-    badge: '200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Đề thi 200 câu số 4 đầy đủ Audio, hình ảnh, bài đọc và giải thích chi tiết',
-  },
-  {
-    id: 'ets-2024-03',
-    title: 'TOEIC Test 3',
-    fileName: 'toeic_ets_2024_test_03.json',
-    badge: '200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Đề thi 200 câu mới nhất kèm âm thanh, hình ảnh và lời thoại chi tiết',
-  },
-  {
-    id: 'ets-2024-02',
-    title: 'TOEIC Test 2',
-    fileName: 'toeic_ets_2024_test_02.json',
-    badge: '200 câu',
-    questionsCount: 200,
-    duration: 120,
-    desc: 'Bộ đề thi chuẩn 200 câu đầy đủ hình ảnh Part 1 và giải thích đáp án',
-  },
-  {
-    id: 'ets-mini-01',
-    title: 'TOEIC Mini Test 1',
-    fileName: 'toeic_mini_test_01.json',
-    badge: 'Rút gọn',
-    questionsCount: 50,
-    duration: 45,
-    desc: 'Đề thi rút gọn 50 câu kiểm tra nhanh 2 kỹ năng Nghe và Đọc',
-  },
+  { id: 'ets-2024-06', title: 'TOEIC Test 6', fileName: 'toeic_ets_2024_test_06.json', questionsCount: 200, duration: 120 },
+  { id: 'ets-2024-05', title: 'TOEIC Test 5', fileName: 'toeic_ets_2024_test_05.json', questionsCount: 200, duration: 120 },
+  { id: 'ets-2024-03', title: 'TOEIC Test 3', fileName: 'toeic_ets_2024_test_03.json', questionsCount: 200, duration: 120 },
+  { id: 'ets-mini-01', title: 'TOEIC Mini Test 1', fileName: 'toeic_mini_test_01.json', questionsCount: 50, duration: 45 },
 ]
 
+const ISSUE_PREVIEW = 6
+
+function IssueList({ title, tone, items }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!items?.length) return null
+  const shown = expanded ? items : items.slice(0, ISSUE_PREVIEW)
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Badge tone={tone}>{items.length}</Badge>
+        <span className="text-sm font-medium text-navy-700">{title}</span>
+      </div>
+      <ul className="space-y-1 pl-1 text-sm text-ink">
+        {shown.map((issue, i) => (
+          <li key={`${issue.code}-${i}`} className="leading-snug">{issue.message}</li>
+        ))}
+      </ul>
+      {items.length > ISSUE_PREVIEW && (
+        <button type="button" onClick={() => setExpanded((v) => !v)} className="text-sm text-brand-500 hover:underline cursor-pointer">
+          {expanded ? 'Thu gọn' : `Xem thêm ${items.length - ISSUE_PREVIEW} mục`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ValidationPanel({ validation, validating, validateError }) {
+  if (validating) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-ink-muted">
+        <Loader2 size={18} strokeWidth={1.75} className="animate-spin text-brand-500" />
+        Đang kiểm tra đề...
+      </div>
+    )
+  }
+  if (validateError) {
+    return (
+      <p className="rounded-lg bg-[#FEF3C7] px-3 py-2 text-sm text-[#A16207]">
+        Chưa kiểm tra được với máy chủ ({validateError}). Chỉ có thể lưu bản nháp.
+      </p>
+    )
+  }
+  if (!validation) return null
+
+  const parts = Object.entries(validation.partCounts || {})
+  const answers = Object.entries(validation.answerCounts || {})
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
+        <Badge tone={validation.valid ? 'success' : 'danger'}>
+          {validation.valid ? 'Đủ điều kiện xuất bản' : 'Còn lỗi, chỉ lưu được bản nháp'}
+        </Badge>
+        <span>{validation.totalQuestions} câu</span>
+        {parts.length > 0 && <span className="text-ink-muted">{parts.map(([p, n]) => `P${p}: ${n}`).join(' · ')}</span>}
+      </div>
+      {answers.length > 0 && (
+        <p className="text-sm text-ink-muted">Phân bố đáp án đúng: {answers.map(([k, n]) => `${k} ${n}`).join(' · ')}</p>
+      )}
+      <IssueList title="Lỗi cần sửa" tone="danger" items={validation.errors} />
+      <IssueList title="Cảnh báo" tone="warning" items={validation.warnings} />
+      {validation.duplicates?.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-sm font-medium text-navy-700">Trùng với đề đã có</span>
+          <ul className="space-y-1 pl-1 text-sm text-ink">
+            {validation.duplicates.map((d) => (
+              <li key={d.id}>#{d.id} {d.title} ({d.status === 'published' ? 'đã xuất bản' : 'bản nháp'}): {d.sharedQuestions} câu giống nhau</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ExamImportModal({ isOpen, onClose, onSuccess }) {
-  const [activeTab, setActiveTab] = useState('preset') // 'preset' | 'json'
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [parsedData, setParsedData] = useState(null)
-  const [parseError, setParseError] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState('preset')
+  const [selectedPresetId, setSelectedPresetId] = useState(null)
+  const [fileName, setFileName] = useState('')
+  const [exam, setExam] = useState(null)
+  const [loadError, setLoadError] = useState(null)
+  const [validation, setValidation] = useState(null)
+  const [validating, setValidating] = useState(false)
+  const [validateError, setValidateError] = useState(null)
+  const [submitting, setSubmitting] = useState(null)
+  const requestRef = useRef(0)
 
-  const [selectedPresetId, setSelectedPresetId] = useState('ets-2024-07')
-  const [customExamTitle, setCustomExamTitle] = useState('TOEIC Test 7')
+  const reset = () => {
+    requestRef.current += 1
+    setValidating(false)
+    setExam(null)
+    setLoadError(null)
+    setValidation(null)
+    setValidateError(null)
+  }
 
-  const handleSelectPreset = (preset) => {
+  // Chỉ nhận kết quả của lần chọn gần nhất (bấm đề khác khi lần trước chưa xong)
+  const runValidation = async (data) => {
+    const requestId = ++requestRef.current
+    setExam(data)
+    setValidation(null)
+    setValidateError(null)
+    setValidating(true)
+    try {
+      const result = await validateExam(data)
+      if (requestId === requestRef.current) setValidation(result)
+    } catch (err) {
+      if (requestId === requestRef.current) setValidateError(err?.message || 'lỗi không xác định')
+    } finally {
+      if (requestId === requestRef.current) setValidating(false)
+    }
+  }
+
+  const handleSelectPreset = async (preset) => {
     setSelectedPresetId(preset.id)
-    setCustomExamTitle(preset.title)
-  }
-
-  if (!isOpen) return null
-
-  // Handle JSON file selection
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setSelectedFile(file)
-    setParseError(null)
-    setParsedData(null)
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result)
-        if (!json.title || !Array.isArray(json.questions)) {
-          throw new Error('File JSON không đúng cấu trúc đề thi (cần có title và questions).')
-        }
-        setParsedData(json)
-      } catch (err) {
-        setParseError(err.message || 'File JSON không hợp lệ.')
-      }
-    }
-    reader.readAsText(file)
-  }
-
-  // Pre-load sample file helper
-  const handleLoadSample = async (testNum) => {
-    setIsSubmitting(true)
+    reset()
     try {
-      let fileName = `toeic_ets_2024_test_0${testNum}.json`
-      if (testNum === 'mini') fileName = 'toeic_mini_test_01.json'
-
-      const response = await fetch(`/samples/${fileName}`)
-      if (!response.ok) {
-        throw new Error('Không thể tải file mẫu từ máy chủ.')
-      }
+      const response = await fetch(`/samples/${preset.fileName}`)
+      if (!response.ok) throw new Error('Không tải được đề mẫu.')
       const data = await response.json()
-      setParsedData(data)
-      toast.success(`Đã nạp file mẫu: ${data.title}! (${data.questions?.length || 0} câu)`)
+      await runValidation({ ...data, title: preset.title })
     } catch (err) {
-      toast.error('Không thể tải file mẫu: ' + (err.message || ''))
-    } finally {
-      setIsSubmitting(false)
+      setLoadError(err.message)
     }
   }
 
-  // Submit parsed JSON to Backend API
-  const handleConfirmImport = async () => {
-    if (!parsedData) return
-    setIsSubmitting(true)
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setFileName(file.name)
+    reset()
     try {
-      await createExam(parsedData)
-      toast.success(`Đã nạp thành công đề thi "${parsedData.title}" (${parsedData.totalQuestions || parsedData.questions.length} câu)!`)
-      onSuccess?.()
-      onClose()
+      await runValidation(await readExamFile(file))
     } catch (err) {
-      toast.error('Lỗi khi lưu đề thi vào hệ thống: ' + (err?.message || ''))
-    } finally {
-      setIsSubmitting(false)
+      setLoadError(err.message || 'Không đọc được file.')
     }
   }
 
-  // Nạp từ kho đề có sẵn
-  const handleStartPresetImport = async () => {
-    setIsSubmitting(true)
+  const handleSave = async (status) => {
+    if (!exam || submitting) return
+    setSubmitting(status)
     try {
-      const found = PRESET_LIST.find((p) => p.id === selectedPresetId)
-      const fileName = found ? found.fileName : 'toeic_ets_2024_test_06.json'
-
-      const response = await fetch(`/samples/${fileName}`)
-      if (!response.ok) throw new Error(`Không thể tải dữ liệu đề thi mẫu: ${fileName}`)
-
-      const examData = await response.json()
-      if (customExamTitle?.trim()) {
-        examData.title = customExamTitle.trim()
-      }
-
-      const created = await createExam(examData)
-      const count = created.totalQuestions || created.questions?.length || examData.questions?.length
-
-      toast.success(`Đã nạp thành công: "${created.title}" (${count} câu đủ 7 phần)!`)
+      const created = await createExam({ ...exam, questions: validation?.questions ?? exam.questions, status })
+      toast.success(status === 'published'
+        ? `Đã nhập và xuất bản "${created.title}"`
+        : `Đã lưu bản nháp "${created.title}"`)
       onSuccess?.()
       onClose()
     } catch (err) {
-      console.error('[ImportModal] Error:', err)
-      toast.error(err?.response?.data?.message || err?.message || 'Không thể nạp đề thi.')
+      toast.error(err?.message || 'Không lưu được đề thi.')
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(null)
     }
+  }
+
+  const switchTab = (tab) => {
+    setActiveTab(tab)
+    setSelectedPresetId(null)
+    setFileName('')
+    reset()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4.5 bg-slate-50/70">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center shadow-xs">
-              <Upload size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Nhập Đề Thi Vào Ngân Hàng
-              </h3>
-              <p className="text-xs text-slate-500">
-                Thêm đề thi TOEIC chuẩn 200 câu từ kho mẫu hoặc tải lên file JSON
-              </p>
+    <Modal open={isOpen} onClose={submitting ? undefined : onClose} title="Nhập đề thi" className="max-w-3xl p-0 [&>div:first-child]:px-6 [&>div:first-child]:pt-5">
+      <div className="flex gap-6 border-b border-line px-6">
+        {[['preset', 'Đề mẫu có sẵn'], ['file', 'Tải file lên']].map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => switchTab(key)}
+            className={cn(
+              'border-b-2 py-2.5 text-sm font-medium cursor-pointer transition-colors',
+              activeTab === key ? 'border-brand-500 text-brand-500' : 'border-transparent text-ink-muted hover:text-ink',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-h-[65vh] space-y-5 overflow-y-auto px-6 py-5">
+        {activeTab === 'preset' ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PRESET_LIST.map((preset) => {
+              const selected = selectedPresetId === preset.id
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleSelectPreset(preset)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border p-3 text-left cursor-pointer transition-colors',
+                    selected ? 'border-brand-500 bg-canvas' : 'border-line hover:border-brand-200',
+                  )}
+                >
+                  <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border', selected ? 'border-brand-500 bg-brand-500 text-white' : 'border-line text-transparent')}>
+                    <Check size={12} strokeWidth={2} />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-medium text-navy-700">{preset.title}</span>
+                    <span className="block text-sm text-ink-muted">{preset.questionsCount} câu · {preset.duration} phút</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line bg-canvas p-6 hover:border-brand-400">
+              <Upload size={18} strokeWidth={1.75} className="text-brand-500" />
+              <span className="text-sm font-medium text-navy-700">{fileName || 'Chọn file đề thi'}</span>
+              <span className="text-sm text-ink-muted">JSON, Excel (.xlsx, .xls) hoặc CSV</span>
+              <input type="file" accept=".json,.xlsx,.xls,.csv" className="hidden" onChange={handleFileChange} />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" size="sm" icon={FileSpreadsheet} onClick={downloadExcelTemplate}>Tải mẫu Excel</Button>
+              <a href="/samples/toeic_ets_2024_test_03.json" download="mau_de_thi.json" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs text-ink hover:bg-canvas hover:text-brand-500">
+                <Download size={18} strokeWidth={1.75} />
+                Tải mẫu JSON
+              </a>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        )}
 
-        {/* Tab Switcher */}
-        <div className="flex border-b border-slate-100 px-6 bg-white gap-6">
-          <button
-            onClick={() => setActiveTab('preset')}
-            className={`py-3 text-xs font-bold border-b-2 flex items-center gap-2 cursor-pointer transition-colors ${
-              activeTab === 'preset'
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Sparkles size={16} />
-            <span>Kho đề chuẩn có sẵn</span>
-          </button>
+        {loadError && <p className="rounded-lg bg-[#FEE2E2] px-3 py-2 text-sm text-[#B91C1C]">{loadError}</p>}
 
-          <button
-            onClick={() => setActiveTab('json')}
-            className={`py-3 text-xs font-bold border-b-2 flex items-center gap-2 cursor-pointer transition-colors ${
-              activeTab === 'json'
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <FileJson size={16} />
-            <span>Tải lên file JSON</span>
-          </button>
-        </div>
-
-        {/* Body Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">
-          {activeTab === 'preset' ? (
-            /* ─── TAB 1: KHO ĐỀ CÓ SẴN ─── */
-            <div className="space-y-3.5">
-              <div className="space-y-2">
-                {PRESET_LIST.map((preset) => {
-                  const isSelected = selectedPresetId === preset.id
-                  return (
-                    <div
-                      key={preset.id}
-                      onClick={() => handleSelectPreset(preset)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                        isSelected
-                          ? 'border-brand-500 bg-brand-50/30 ring-1 ring-brand-400'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                            isSelected ? 'bg-brand-600 text-white' : 'border border-slate-300 text-transparent'
-                          }`}
-                        >
-                          <Check size={12} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800">{preset.title}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                            <span>{preset.questionsCount} câu</span>
-                            <span>&bull;</span>
-                            <span>{preset.duration} phút</span>
-                            <span>&bull;</span>
-                            <span className="text-slate-400 line-clamp-1">{preset.desc}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md border border-brand-100 shrink-0">
-                        {preset.badge}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tên đề thi hiển thị:
-                </label>
-                <input
-                  type="text"
-                  value={customExamTitle}
-                  onChange={(e) => setCustomExamTitle(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs"
-                  placeholder="Ví dụ: TOEIC Test 1"
-                />
+        {exam && (
+          <div className="space-y-4 rounded-lg border border-line p-4">
+            <div>
+              <label className="mb-1 block text-sm text-ink-muted" htmlFor="import-title">Tên đề thi</label>
+              <input
+                id="import-title"
+                value={exam.title || ''}
+                onChange={(e) => setExam({ ...exam, title: e.target.value })}
+                className="w-full rounded-lg border border-line px-3 py-2 text-sm text-ink focus:border-brand-500 focus:outline-none"
+              />
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-muted">
+                <select
+                  aria-label="Loại đề"
+                  value={exam.category || ''}
+                  onChange={(e) => runValidation({ ...exam, category: e.target.value })}
+                  className="rounded-lg border border-line px-2 py-1.5 text-sm text-ink focus:border-brand-500 focus:outline-none"
+                >
+                  {!exam.category && <option value="">Chọn loại đề</option>}
+                  {EXAM_CATEGORIES.filter((c) => c.value !== 'ALL').map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                <span>{exam.durationMinutes || 120} phút · Trình độ {exam.cefrLevel || 'B1'}</span>
               </div>
             </div>
-          ) : (
-            /* ─── TAB 2: TẢI LÊN FILE JSON ─── */
-            <div className="space-y-4">
-              {/* Dropzone */}
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 hover:border-brand-400 hover:bg-brand-50/20 transition-all cursor-pointer bg-slate-50/50">
-                <FileJson size={36} className="text-brand-500 mb-2" />
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedFile ? selectedFile.name : 'Chọn file JSON đề thi TOEIC'}
-                </span>
-                <span className="text-xs text-slate-400 mt-1">
-                  Hỗ trợ file cấu trúc chuẩn .json 200 câu
-                </span>
-                <input
-                  type="file"
-                  accept=".json,application/json"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
-
-              {/* Sample Files Quick Picker */}
-              <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-500" />
-                  Dùng nhanh file mẫu:
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleLoadSample(4)}
-                    className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    Test 04
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleLoadSample(6)}
-                    className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    Test 06
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleLoadSample('mini')}
-                    className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    Mini Test
-                  </button>
-                  <a
-                    href="/samples/toeic_ets_2024_test_04.json"
-                    download="toeic_sample_200_questions.json"
-                    className="px-2 py-1 text-xs font-semibold text-slate-500 hover:text-brand-700 flex items-center gap-1 transition-colors"
-                    title="Tải file JSON mẫu về máy tính"
-                  >
-                    <Download size={13} />
-                    Tải file mẫu
-                  </a>
-                </div>
-              </div>
-
-              {/* Parse Error Box */}
-              {parseError && (
-                <div className="flex items-start gap-2.5 bg-red-50 p-3.5 rounded-xl border border-red-200 text-xs text-red-700">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-600" />
-                  <span>{parseError}</span>
-                </div>
-              )}
-
-              {/* Preview Box if Valid */}
-              {parsedData && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold">
-                    <CheckCircle2 size={16} className="text-emerald-600" />
-                    <span>Dữ liệu hợp lệ ({parsedData.questions?.length || parsedData.totalQuestions} câu)</span>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-3.5 border border-slate-100 space-y-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                        Tên đề thi hiển thị:
-                      </label>
-                      <input
-                        type="text"
-                        value={parsedData.title || ''}
-                        onChange={(e) => setParsedData({ ...parsedData, title: e.target.value })}
-                        className="w-full text-xs font-bold text-slate-900 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-brand-500 shadow-2xs"
-                        placeholder="Ví dụ: TOEIC Test 1"
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 line-clamp-2">{parsedData.description}</p>
-
-                    <div className="flex flex-wrap gap-2 pt-1 text-xs">
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold rounded-md border border-blue-100">
-                        {parsedData.category}
-                      </span>
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-semibold rounded-md">
-                        Cấp độ: {parsedData.cefrLevel || 'B2'}
-                      </span>
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-semibold rounded-md flex items-center gap-1">
-                        <Clock size={12} /> {parsedData.durationMinutes || 120} phút
-                      </span>
-                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-semibold rounded-md flex items-center gap-1 border border-emerald-100">
-                        <Layers size={12} /> {parsedData.totalQuestions || parsedData.questions?.length} câu hỏi
-                      </span>
-                      <span className="px-2 py-0.5 bg-amber-50 text-amber-700 font-semibold rounded-md flex items-center gap-1 border border-amber-100">
-                        <Zap size={12} /> +{parsedData.xpReward || 150} XP
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer Actions */}
-        <div className="border-t border-slate-100 px-6 py-4 bg-slate-50 flex items-center justify-end gap-2.5">
-          <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Hủy
-          </Button>
-
-          {activeTab === 'json' ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleConfirmImport}
-              disabled={!parsedData || isSubmitting}
-            >
-              {isSubmitting ? 'Đang nạp đề...' : 'Xác nhận Nạp đề thi'}
-            </Button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleStartPresetImport}
-              disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={14} strokeWidth={2.25} className="animate-spin shrink-0" />
-                  <span>Đang nạp đề...</span>
-                </>
-              ) : (
-                <>
-                  <Zap size={14} />
-                  <span>Nạp Đề Thi Vào Hệ Thống</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
+            <ValidationPanel validation={validation} validating={validating} validateError={validateError} />
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className="flex items-center justify-end gap-2 border-t border-line px-6 py-4">
+        <Button variant="secondary" size="sm" onClick={onClose} disabled={Boolean(submitting)}>Hủy</Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => handleSave('draft')}
+          loading={submitting === 'draft'}
+          disabled={!exam || validating || !exam.title?.trim() || !exam.category || Boolean(submitting)}
+        >
+          Lưu bản nháp
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => handleSave('published')}
+          loading={submitting === 'published'}
+          disabled={!validation?.valid || validating || !exam?.title?.trim() || !exam?.category || Boolean(submitting)}
+        >
+          Lưu và xuất bản
+        </Button>
+      </div>
+    </Modal>
   )
 }

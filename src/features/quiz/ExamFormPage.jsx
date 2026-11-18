@@ -78,7 +78,7 @@ export default function ExamFormPage() {
     durationMinutes: 120,
     passingScore: 550,
     xpReward: 150,
-    status: 'published',
+    status: 'draft',
   })
 
   const [questions, setQuestions] = useState([])
@@ -369,7 +369,7 @@ export default function ExamFormPage() {
         passingScore: form.passingScore ? Number(form.passingScore) : 0,
         xpReward: form.xpReward ? Number(form.xpReward) : 150,
         questions: formattedQuestions,
-        status: form.status || 'published',
+        status: form.status || 'draft',
         authorName: user?.displayName || user?.username || (user?.role === 'teacher' ? 'Giáo viên' : 'Quản trị viên Hệ thống'),
         authorEmail: user?.email || '',
         createdBy: user?.id,
