@@ -280,7 +280,7 @@ export default function QuizBankPage() {
     setIsSeeding(true)
     try {
       await seedToeic200ExamApi()
-      toast.success('Đã nạp thành công bộ đề TOEIC 2024 Full 200 câu (đủ 7 Parts) vào ngân hàng đề!')
+      toast.success('Đã tạo bản nháp đề TOEIC 200 câu, hãy thêm câu hỏi trước khi xuất bản')
       loadExams()
     } catch (err) {
       toast.error('Lỗi khi nạp đề TOEIC 200 câu: ' + (err.message || ''))

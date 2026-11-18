@@ -38,7 +38,7 @@ export function buildExamPayload(data) {
     xpReward: Number(data.xpReward) || 100,
     sections: Array.isArray(data.sections) ? data.sections : [],
     questions: Array.isArray(data.questions) ? data.questions : [],
-    status: data.status || 'published',
+    status: data.status || undefined,
     authorName: data.authorName || 'Quản trị viên Hệ thống',
     authorEmail: data.authorEmail || 'admin@smartenglish.vn',
   }
@@ -78,7 +78,14 @@ async function callApi(method, path, options = {}) {
     }
     return payload
   } catch (err) {
-    // 2. Fallback qua api client (API Gateway)
+    // Máy chủ đã trả lời (400/409/500...) thì báo lỗi luôn, không gửi lại lần hai qua gateway (tránh tạo đề trùng)
+    if (err?.response) {
+      const serverError = new Error(err.response.data?.message || err.message)
+      serverError.status = err.response.status
+      serverError.response = err.response
+      throw serverError
+    }
+    // 2. Chỉ lỗi mạng mới thử lại qua api client (API Gateway)
     try {
       const res = await api[method](path, options)
       return res?.data !== undefined ? res.data : res
@@ -130,9 +137,17 @@ export async function getExamById(id) {
 }
 
 export async function createExam(data) {
-  const payload = buildExamPayload(data)
+  const payload = { ...buildExamPayload(data), status: data.status || 'draft' }
   const res = await callApi('post', BASE, { data: payload })
   return normalizeExam(res)
+}
+
+/** Backend chuẩn hoá + kiểm tra đề (cấu trúc TOEIC, đáp án, đề trùng) mà không lưu. */
+export async function validateExam(data, excludeId) {
+  return callApi('post', `${BASE}/validate`, {
+    data: buildExamPayload(data),
+    params: excludeId ? { excludeId } : undefined,
+  })
 }
 
 export async function updateExam(id, data) {
@@ -187,7 +202,7 @@ export async function seedToeic200ExamApi() {
     totalQuestions: 200,
     passingScore: 650,
     xpReward: 200,
-    status: 'published',
+    status: 'draft',
   })
 }
 
