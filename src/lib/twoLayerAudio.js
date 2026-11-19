@@ -18,9 +18,8 @@ import {
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-// Cấu hình phát âm thanh: Tạm thời khóa Tầng 1 (URL Audio ngoài do link chưa chính xác)
-// Chỉ sử dụng Tầng 2 (Web Speech API) đọc trực tiếp từ script/nội dung câu hỏi
-export const ENABLE_LAYER_1 = false
+// Tầng 1 (file audio thật) luôn được ưu tiên; chỉ khi câu không có file hoặc file lỗi mới đọc bằng giọng máy
+export const ENABLE_LAYER_1 = true
 
 let activeAudioElement = null
 let activeSpeechController = null

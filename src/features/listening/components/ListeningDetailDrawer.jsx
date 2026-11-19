@@ -40,6 +40,7 @@ export default function ListeningDetailDrawer({
   isTeacher,
   isPlaying,
   currentTime = 0,
+  playbackDuration = 0,
   onPlayToggle,
   onSeek,
   onAssignToClass,
@@ -61,18 +62,37 @@ export default function ListeningDetailDrawer({
     }
   }, [])
 
-  const totalDuration = useMemo(() => parseDuration(lesson?.duration), [lesson?.duration])
-  const effectiveDuration = Math.max(totalDuration, currentTime || 0)
-  const safeCurrentTime = isPlaying ? Math.max(0, currentTime) : 0
-  const remainingTime = Math.max(0, effectiveDuration - safeCurrentTime)
-  const progressPercent = effectiveDuration > 0 ? Math.min(100, (safeCurrentTime / effectiveDuration) * 100) : 0
-
   // Kiểm tra xem bài nghe có file audio thực tế từ Backend hay không (loại bỏ trường hợp nhầm link ảnh)
   const hasAudio = Boolean(
     lesson?.audioUrl &&
       String(lesson.audioUrl).trim().length > 0 &&
       !String(lesson.audioUrl).match(/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i),
   )
+
+  // Đọc thời lượng thật của file ngay khi mở bài (chỉ tải metadata, không tải cả file)
+  const [fileDuration, setFileDuration] = useState(0)
+  useEffect(() => {
+    setFileDuration(0)
+    if (!hasAudio) return undefined
+    const probe = new Audio()
+    probe.preload = 'metadata'
+    probe.onloadedmetadata = () => setFileDuration(Number.isFinite(probe.duration) ? probe.duration : 0)
+    probe.src = String(lesson.audioUrl).trim()
+    return () => {
+      probe.onloadedmetadata = null
+      probe.removeAttribute('src')
+      probe.load()
+    }
+  }, [hasAudio, lesson?.audioUrl])
+
+  const metaDuration = useMemo(() => parseDuration(lesson?.duration), [lesson?.duration])
+  const knownDuration = playbackDuration || fileDuration
+  const effectiveDuration = knownDuration || Math.max(metaDuration, currentTime || 0)
+  const [dragTime, setDragTime] = useState(null)
+  const safeCurrentTime = dragTime ?? (isPlaying ? Math.max(0, currentTime) : 0)
+  const remainingTime = Math.max(0, effectiveDuration - safeCurrentTime)
+  const progressPercent = effectiveDuration > 0 ? Math.min(100, (safeCurrentTime / effectiveDuration) * 100) : 0
+  const durationLabel = knownDuration ? formatTime(knownDuration) : lesson?.duration || '--:--'
   const categoryInfo = CATEGORY_MAP[lesson?.category] || {
     label: lesson?.category || 'Luyện nghe',
     bg: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -84,18 +104,32 @@ export default function ListeningDetailDrawer({
       ? 'SmartEnglish'
       : lesson?.authorName || 'Giáo viên'
 
-  const handleProgressBarClick = (e) => {
-    if (!hasAudio) return
+  const timeAtPointer = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width))
-    const target = Math.floor(ratio * totalDuration)
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    return ratio * effectiveDuration
+  }
+
+  // Bấm hoặc kéo thanh tiến độ: khi kéo chỉ di chuyển con trỏ, thả tay mới tua audio
+  const handlePointerDown = (e) => {
+    if (!hasAudio || effectiveDuration <= 0) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    setDragTime(timeAtPointer(e))
+  }
+  const handlePointerMove = (e) => {
+    if (dragTime === null) return
+    setDragTime(timeAtPointer(e))
+  }
+  const handlePointerUp = (e) => {
+    if (dragTime === null) return
+    const target = timeAtPointer(e)
+    setDragTime(null)
     onSeek?.(target)
   }
 
   const handleSkip = (seconds) => {
     if (!hasAudio) return
-    onSeek?.(safeCurrentTime + seconds)
+    onSeek?.(Math.min(effectiveDuration, Math.max(0, safeCurrentTime + seconds)))
   }
 
   // Lập bản đồ màu sắc cố định theo từng người nói (không đổi màu lung tung qua mỗi dòng)
@@ -198,7 +232,7 @@ export default function ListeningDetailDrawer({
           </div>
           <h1 className="text-xl font-bold text-slate-900 leading-snug">{lesson.title}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Thời lượng: <strong>{lesson.duration || '01:00'}</strong> &bull; Tác giả: {authorDisplay}
+            Thời lượng: <strong>{durationLabel}</strong> &bull; Tác giả: {authorDisplay}
           </p>
         </div>
 
@@ -260,7 +294,7 @@ export default function ListeningDetailDrawer({
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Thời lượng: <strong>{lesson.duration || '01:00'}</strong> · {hasAudio ? 'Âm thanh chuẩn' : 'Giọng đọc AI'}
+                  Thời lượng: <strong>{durationLabel}</strong> · {hasAudio ? 'Âm thanh chuẩn' : 'Giọng đọc AI'}
                 </p>
               </div>
             </div>
@@ -291,15 +325,23 @@ export default function ListeningDetailDrawer({
           {/* Thanh tiến độ phát */}
           <div className="space-y-1.5 pt-1">
             <div
-              onClick={handleProgressBarClick}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={() => setDragTime(null)}
+              role="slider"
+              aria-label="Thanh tua bài nghe"
+              aria-valuemin={0}
+              aria-valuemax={Math.round(effectiveDuration)}
+              aria-valuenow={Math.round(safeCurrentTime)}
               className={cn(
-                'group relative h-2 w-full rounded-full bg-slate-200 transition-all',
-                hasAudio ? 'cursor-pointer hover:h-2.5' : 'cursor-default',
+                'group relative h-2 w-full touch-none select-none rounded-full bg-slate-200',
+                hasAudio ? 'cursor-pointer' : 'cursor-default',
               )}
-              title={hasAudio ? 'Bấm để tua nhanh' : 'Tiến trình phát'}
+              title={hasAudio ? 'Bấm hoặc kéo để tua' : 'Tiến trình phát'}
             >
               <div
-                className="relative h-full rounded-full bg-gradient-to-r from-brand-600 to-indigo-600 transition-[width] duration-300 ease-linear"
+                className="relative h-full rounded-full bg-brand-500"
                 style={{ width: `${progressPercent}%` }}
               >
                 {hasAudio && (
@@ -309,7 +351,7 @@ export default function ListeningDetailDrawer({
             </div>
 
             <div className="flex items-center justify-between text-xs font-medium text-slate-500 px-0.5">
-              <span className="font-mono text-slate-700 font-bold">{formatTime(currentTime)}</span>
+              <span className="font-mono text-slate-700 font-bold">{formatTime(safeCurrentTime)}</span>
               {hasAudio && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-slate-400">Còn lại:</span>

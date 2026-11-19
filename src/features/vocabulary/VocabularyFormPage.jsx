@@ -71,6 +71,8 @@ export default function VocabularyFormPage() {
     audioUrl: '',
   })
 
+  // Từ mà form.audioUrl thuộc về: sửa chữ khác đi thì không phát file của từ cũ
+  const [audioWord, setAudioWord] = useState('')
   const [questions, setQuestions] = useState([])
   const [openQuestionIdx, setOpenQuestionIdx] = useState(null)
   const [dbTopics, setDbTopics] = useState([])
@@ -111,6 +113,7 @@ export default function VocabularyFormPage() {
               antonyms: data.antonyms || '',
               audioUrl: data.audioUrl || data.audioUsUrl || data.audioUkUrl || '',
             })
+            setAudioWord(data.word || '')
             if (data.exercises && Array.isArray(data.exercises)) {
               setQuestions(data.exercises)
             }
@@ -191,6 +194,7 @@ export default function VocabularyFormPage() {
           exampleVi: cleanDisplayMeaning(data.exampleVi) || prev.exampleVi,
           audioUrl: data.audioUrl || prev.audioUrl,
         }))
+        if (data.audioUrl) setAudioWord(data.word || '')
         toast.success(`Đã tra cứu & điền dữ liệu cho "${data.word}"`, { id: tId })
       } else {
         toast.error('Không tìm thấy dữ liệu từ điển cho từ này', { id: tId })
@@ -347,6 +351,11 @@ export default function VocabularyFormPage() {
                     value={form.pronunciation}
                     onChange={(newIpa) => setForm((prev) => ({ ...prev, pronunciation: newIpa }))}
                     sourceWord={form.word}
+                    audioUrl={
+                      audioWord && audioWord.trim().toLowerCase() === (form.word || '').trim().toLowerCase()
+                        ? form.audioUrl
+                        : ''
+                    }
                     onWordCorrect={(corrected) => setForm((prev) => ({ ...prev, word: corrected }))}
                     placeholder="VD: /ˌser.ənˈdɪp.ɪ.ti/"
                   />

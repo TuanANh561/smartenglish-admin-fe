@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Info, Trash2, Volume2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { speakWord, speakWithWebSpeech } from '@/lib/ipaHelper'
+import { speakWord } from '@/lib/ipaHelper'
 
 export default function ImportStepReview({
   parsedItems,
@@ -308,10 +308,10 @@ function TableRow({ item, importType, isSelected, onToggleSelect, onDelete }) {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  speakWithWebSpeech(item.word)
+                  speakWord(item.word, item.audioUrl || item.audioUsUrl || null)
                 }}
                 className="rounded p-1 text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors cursor-pointer shrink-0"
-                title="Nghe phát âm từ vựng (Web Speech API)"
+                title="Nghe phát âm từ vựng"
               >
                 <Volume2 size={13} />
               </button>

@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 import {
   IPA_KEYBOARD_GROUPS,
   generateIpaWithSpellCheck,
-  speakWithWebSpeech,
+  speakWord,
   stopAudio,
 } from '@/lib/ipaHelper'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
@@ -28,10 +28,12 @@ export default function IpaInputField({
   label = 'Phiên âm IPA',
   required = false,
   className = '',
+  audioUrl: audioUrlProp = '',
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(false)
-  const [audioUrl, setAudioUrl] = useState(null)
+  // File phát âm lấy được khi tra cứu, gắn với đúng từ đã tra để không phát nhầm khi từ bị sửa
+  const [lookupAudio, setLookupAudio] = useState({ word: '', url: '' })
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const inputRef = useRef(null)
   const lastAutoFetchedWordRef = useRef('')
@@ -64,7 +66,7 @@ export default function IpaInputField({
       const result = await generateIpaWithSpellCheck(trimmedWord)
 
       if (result.audioUrl) {
-        setAudioUrl(result.audioUrl)
+        setLookupAudio({ word: (result.correctedWord || trimmedWord).toLowerCase(), url: result.audioUrl })
       }
 
       // 1. If typo detected, auto correct word
@@ -141,7 +143,8 @@ export default function IpaInputField({
       return
     }
     setIsPlayingAudio(true)
-    speakWithWebSpeech(wordToSpeak, () => setIsPlayingAudio(false))
+    const lookupUrl = lookupAudio.word === wordToSpeak.toLowerCase() ? lookupAudio.url : ''
+    speakWord(wordToSpeak, lookupUrl || audioUrlProp || null, () => setIsPlayingAudio(false))
   }
 
   // Insert IPA symbol at cursor position
