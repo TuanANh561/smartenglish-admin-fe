@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
-import { speakWithWebSpeech, stopAudio } from '@/lib/ipaHelper'
+import { speakWord, stopAudio } from '@/lib/ipaHelper'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
 import {
@@ -201,7 +201,7 @@ export function useVocabulary() {
       toast('Đã dừng phát âm')
     } else {
       setPlayingId(item.id)
-      speakWithWebSpeech(item.word, () => {
+      speakWord(item.word, item.audioUrl || item.audioUsUrl || item.audioUkUrl || null, () => {
         setPlayingId((curr) => (curr === item.id ? null : curr))
       })
       setTimeout(() => {

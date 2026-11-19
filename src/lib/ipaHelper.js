@@ -855,7 +855,22 @@ export function speakDialogue(dialogueText, options = {}, onEnd = null) {
  *     + Đọc các câu hỏi: "Question number 1: [câu hỏi]", ngừng ~1.5 giây, "Question number 2: [câu hỏi]", ngừng ~1.5 giây...
  *     + TUYỆT ĐỐI KHÔNG đọc các đáp án trắc nghiệm (A, B, C, D) của phần hội thoại theo đúng quy định đề thi TOEIC.
  */
-export function playListeningLessonFull(lesson, onEnd = null) {
+/**
+ * Tua file audio bài nghe đang phát tới giây `seconds`. Trả về false nếu không có file đang phát
+ * (giọng đọc máy không tua được).
+ */
+export function seekListeningAudio(seconds) {
+  if (!currentAudio) return false
+  const max = Number.isFinite(currentAudio.duration) ? currentAudio.duration : Infinity
+  try {
+    currentAudio.currentTime = Math.max(0, Math.min(max, seconds))
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function playListeningLessonFull(lesson, onEnd = null, { onProgress, onFallback, startAt = 0 } = {}) {
   stopAudio()
   claimAppAudio('ipa-audio', stopAudio)
   dialogueStopRequested = false
@@ -875,6 +890,26 @@ export function playListeningLessonFull(lesson, onEnd = null) {
       currentAudio = audio
       registerAudioElement(audio)
 
+      const report = () => {
+        if (sessionId !== activePlaySessionId || !onProgress) return
+        onProgress({
+          currentTime: audio.currentTime,
+          duration: Number.isFinite(audio.duration) ? audio.duration : 0,
+        })
+      }
+      audio.onloadedmetadata = () => {
+        if (startAt > 0) {
+          try {
+            audio.currentTime = Math.min(startAt, audio.duration || startAt)
+          } catch {
+            // Trình duyệt chưa cho tua thì phát từ đầu
+          }
+        }
+        report()
+      }
+      audio.ontimeupdate = report
+      audio.onseeked = report
+
       audio.onended = () => {
         if (currentAudio === audio) {
           currentAudio = null
@@ -886,6 +921,7 @@ export function playListeningLessonFull(lesson, onEnd = null) {
 
       audio.onerror = () => {
         if (sessionId === activePlaySessionId) {
+          onFallback?.()
           playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
         }
       }
@@ -897,6 +933,7 @@ export function playListeningLessonFull(lesson, onEnd = null) {
             return
           }
           if (sessionId === activePlaySessionId) {
+            onFallback?.()
             playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
           }
         })
@@ -907,6 +944,7 @@ export function playListeningLessonFull(lesson, onEnd = null) {
     }
   }
 
+  onFallback?.()
   playListeningScriptWithWebSpeech(lesson, sessionId, onEnd)
 }
 

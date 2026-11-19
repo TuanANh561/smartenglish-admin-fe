@@ -7,7 +7,7 @@ import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
 import { useTopbarStore } from '@/store/topbarStore'
-import { parseDuration, playListeningLessonFull, stopAudio } from '@/lib/ipaHelper'
+import { parseDuration, playListeningLessonFull, seekListeningAudio, stopAudio } from '@/lib/ipaHelper'
 import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 import ListeningDetailDrawer from './components/ListeningDetailDrawer'
 import ListeningToolbar from './components/ListeningToolbar'
@@ -74,7 +74,7 @@ function ListeningPage() {
       setCustomHeader({
         onBack: () => {
           stopAudio()
-          setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+          setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null })
           setActiveLesson(null)
         },
         backText: 'Quay lại',
@@ -91,12 +91,13 @@ function ListeningPage() {
   const [playback, setPlayback] = useState({
     playingId: null,
     currentTime: 0,
-    duration: 35,
+    duration: 0,
+    source: null,
   })
 
-  // Timer đồng bộ thời gian phát thực tế (không tự ngắt khi vượt quá duration để đọc hết kịch bản)
+  // File audio thật tự báo vị trí qua onProgress; chỉ giọng đọc máy mới cần đếm giây ước lượng
   useEffect(() => {
-    if (!playback.playingId) return
+    if (!playback.playingId || playback.source !== 'tts') return
 
     const timer = setInterval(() => {
       setPlayback((prev) => {
@@ -108,18 +109,18 @@ function ListeningPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [playback.playingId])
+  }, [playback.playingId, playback.source])
 
   // Ngắt âm thanh và reset tiến trình khi đổi bộ lọc, chuyển trang, hoặc đổi tab Thùng rác
   useEffect(() => {
     stopAudio()
-    setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+    setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null })
   }, [page, search, category, topic, accent, trashView, ownershipFilter])
 
   // Ngắt toàn bộ âm thanh khi người dùng rời khỏi trang hoặc bộ điều phối toàn cục yêu cầu
   useEffect(() => {
     const unregister = registerAudioStopHandler(() => {
-      setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+      setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null })
     })
     return () => {
       unregister()
@@ -206,26 +207,51 @@ function ListeningPage() {
     if (!item) return
 
     if (playback.playingId === item.id) {
-      setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+      setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null })
       stopAudio()
       toast('Đã dừng phát bài nghe')
     } else {
-      const durSec = parseDuration(item.duration) || item.durationSec || 30
-      setPlayback({ playingId: item.id, currentTime: 0, duration: durSec })
-
-      playListeningLessonFull(item, () => {
-        setPlayback({ playingId: null, currentTime: 0, duration: 0 })
-      })
+      startPlayback(item)
       toast.success(`Đang phát: "${item.title}"`)
     }
   }
 
-  const handleSeek = (newTime) => {
-    setPlayback((prev) => {
-      if (!prev.playingId) return prev
-      const safeTime = Math.max(0, Math.min(prev.duration, newTime))
-      return { ...prev, currentTime: safeTime }
-    })
+  const startPlayback = (item, startAt = 0) => {
+    setPlayback({ playingId: item.id, currentTime: startAt, duration: 0, source: 'file' })
+    playListeningLessonFull(
+      item,
+      () => setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null }),
+      {
+        startAt,
+        onProgress: ({ currentTime, duration }) =>
+          setPlayback((prev) =>
+            prev.playingId === item.id ? { ...prev, currentTime, duration: duration || prev.duration } : prev,
+          ),
+        onFallback: () =>
+          setPlayback((prev) =>
+            prev.playingId === item.id
+              ? { ...prev, source: 'tts', currentTime: 0, duration: parseDuration(item.duration) }
+              : prev,
+          ),
+      },
+    )
+  }
+
+  // Tua file audio thật; nếu bài chưa phát thì phát luôn từ vị trí được chọn
+  const handleSeek = (item, newTime) => {
+    if (!item) return
+    const target = Math.max(0, newTime)
+    if (playback.playingId !== item.id) {
+      startPlayback(item, target)
+      return
+    }
+    if (playback.source !== 'file') return
+    if (seekListeningAudio(target)) {
+      setPlayback((prev) => ({
+        ...prev,
+        currentTime: prev.duration > 0 ? Math.min(prev.duration, target) : target,
+      }))
+    }
   }
 
   const handleOpenCreate = () => navigate('/app/hoc-lieu/bai-nghe/tao-moi')
@@ -327,7 +353,7 @@ function ListeningPage() {
             lesson={activeLesson}
             onClose={() => {
               stopAudio()
-              setPlayback({ playingId: null, currentTime: 0, duration: 0 })
+              setPlayback({ playingId: null, currentTime: 0, duration: 0, source: null })
               setActiveLesson(null)
             }}
             isTeacher={isTeacher}
@@ -335,7 +361,8 @@ function ListeningPage() {
             canManage={canManage(activeLesson)}
             isPlaying={playback.playingId === activeLesson?.id}
             currentTime={playback.playingId === activeLesson?.id ? playback.currentTime : 0}
-            onSeek={handleSeek}
+            playbackDuration={playback.playingId === activeLesson?.id ? playback.duration : 0}
+            onSeek={(t) => handleSeek(activeLesson, t)}
             onPlayToggle={handlePlayToggle}
             onAssignToClass={handleAssignToClass}
             onEditClick={handleEditClick}
