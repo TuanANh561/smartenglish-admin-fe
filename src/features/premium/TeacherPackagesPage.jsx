@@ -8,7 +8,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { getTeacherQuotaStatus } from '../classes/classApi'
-import { getAdminPlans } from './api/premiumApi'
+import { getAdminPlans, getPublicPlans } from './api/premiumApi'
+import ErrorState from '@/components/ui/ErrorState'
 import SepayVietQrPaymentModal from './components/SepayVietQrPaymentModal'
 import TeacherPlanCard from './components/TeacherPlanCard'
 import AdminAssistedSubscriptionToolbar from './components/AdminAssistedSubscriptionToolbar'
@@ -40,6 +41,7 @@ function TeacherPackagesPage() {
   const [plans, setPlans] = useState([])
   const [studentPlans, setStudentPlans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [plansError, setPlansError] = useState(null)
   const [subscribingId, setSubscribingId] = useState(null)
   const [cancellingRenewal, setCancellingRenewal] = useState(false)
   const [isCancelPlanOpen, setIsCancelPlanOpen] = useState(false)
@@ -66,8 +68,12 @@ function TeacherPackagesPage() {
     try {
       const [quotaRes, plansRes] = await Promise.allSettled([
         getTeacherQuotaStatus(),
-        getAdminPlans(),
+        // Giáo viên không có quyền gọi API quản trị → dùng danh sách gói công khai dành cho giáo viên
+        isAdmin
+          ? getAdminPlans()
+          : getPublicPlans('TEACHER').then((list) => ({ teacherPlans: Array.isArray(list) ? list : [] })),
       ])
+      setPlansError(plansRes.status === 'rejected' ? plansRes.reason : null)
 
       if (quotaRes.status === 'fulfilled' && quotaRes.value) {
         setQuota(quotaRes.value)
@@ -215,6 +221,7 @@ function TeacherPackagesPage() {
       const res = await api.post('/payment/subscriptions/subscribe', {
         data: {
           planId,
+          planCode: plan.id,
           paymentMethod: 'SEPAY',
           billingCycle: billingCycle.toUpperCase(),
           customerName: user?.displayName || user?.name || user?.fullName || 'Giáo viên SmartEnglish',
@@ -462,6 +469,14 @@ function TeacherPackagesPage() {
           />
 
           {/* Lưới 3 gói Giáo viên */}
+          {plans.length === 0 && (
+            <div className="rounded-xl border border-line bg-white">
+              <ErrorState
+                error={{ message: plansError?.message || 'Chưa tải được danh sách gói dịch vụ.' }}
+                onRetry={loadData}
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {plans.map((plan, pIdx) => (
               <TeacherPlanCard
