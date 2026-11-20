@@ -10,6 +10,15 @@ export const getAdminPlans = async () => {
 }
 
 /**
+ * Lấy danh sách gói đang mở bán theo đối tượng (giáo viên / học viên), không cần quyền quản trị
+ * @param {'TEACHER'|'STUDENT'} target
+ */
+export const getPublicPlans = async (target) => {
+  const res = await api.get(ENDPOINTS.plans.list, { params: { target } })
+  return res.data || res
+}
+
+/**
  * Lấy dữ liệu KPI thống kê thật từ database
  */
 export const getAdminStats = async () => {
