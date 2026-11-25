@@ -2,6 +2,7 @@ import { Volume2, Play, Pencil, Trash2, RotateCcw, BookOpen, Sparkles, Search } 
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
 import { vocabularyColumns } from '../columns'
+import OwnerBadge from '@/features/contentReview/OwnerBadge'
 
 /**
  * Bảng dữ liệu danh sách từ vựng, hỗ trợ cả 2 chế độ hiển thị (Danh sách chính & Thùng rác).
@@ -19,6 +20,7 @@ export function VocabTable({
   onPermanentDelete,
   onAutoImport,
   isImporting = false,
+  isMine,
 }) {
   return (
     <div className="w-full overflow-x-auto">
@@ -147,7 +149,9 @@ export function VocabTable({
                 </td>
                 {/* Thao tác */}
                 <td className="px-4 py-3 text-right whitespace-nowrap">
-                  {trashView ? (
+                  {isMine && !isMine(vocab) ? (
+                    <OwnerBadge mine={false} />
+                  ) : trashView ? (
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
@@ -174,6 +178,7 @@ export function VocabTable({
                     </div>
                   ) : (
                     <div className="flex items-center justify-end gap-1 text-slate-400">
+                      {isMine ? <OwnerBadge mine /> : null}
                       <button
                         type="button"
                         onClick={(e) => onEdit(vocab)}

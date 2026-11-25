@@ -15,10 +15,12 @@ import ListeningTableRow from './components/ListeningTableRow'
 import {
   deleteListeningLesson,
   getListeningLessons,
+  getListeningLessonById,
   getListeningStatistics,
   permanentDeleteListeningLesson,
   restoreListeningLesson,
 } from './listeningLessonApi'
+import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 
 const PAGE_SIZE = 8
 
@@ -159,15 +161,17 @@ function ListeningPage() {
     fetchLessons()
   }, [fetchLessons])
 
+  const own = useOwnership('LISTENING_LESSON')
+  const mineMode = isTeacher && ownershipFilter === 'mine' && !trashView
+  const mine = useMyItems('LISTENING_LESSON', own.ownedIds, getListeningLessonById, {
+    enabled: mineMode,
+    search,
+    fields: ['title', 'description', 'topic'],
+  })
+
   const checkOwnership = (item) => {
     if (!user || !item) return false
-    if (isTeacher) {
-      return (
-        item.authorEmail === user.email ||
-        item.authorName === user.displayName ||
-        item.authorName === 'Hoàng Thị Mai'
-      )
-    }
+    if (isTeacher) return own.isMine(item) || (Boolean(item.authorEmail) && item.authorEmail === user.email)
     return (
       item.authorEmail === user.email ||
       item.authorEmail === 'system@smartenglish.vn' ||
@@ -184,7 +188,11 @@ function ListeningPage() {
 
   // Lọc thêm theo quyền sở hữu trên client (nếu giáo viên chọn 'Của tôi' hoặc 'Hệ thống')
   const displayedLessons = useMemo(() => {
-    if (ownershipFilter === 'all') return lessons
+    if (mineMode) return mine.items
+    if (ownershipFilter === 'all') {
+      // Giáo viên: bài của mình lên đầu
+      return isTeacher ? [...lessons.filter(checkOwnership), ...lessons.filter((x) => !checkOwnership(x))] : lessons
+    }
     return lessons.filter((item) => {
       const isOwned = checkOwnership(item)
       const isSystem =
@@ -195,7 +203,7 @@ function ListeningPage() {
       if (ownershipFilter === 'others') return !isOwned && !isSystem
       return true
     })
-  }, [lessons, ownershipFilter, user])
+  }, [lessons, ownershipFilter, user, mineMode, mine.items, own.isMine, isTeacher])
 
   // Cơ chế phát âm thanh chuẩn theo yêu cầu:
   // - Bất kể có audio hay không có audio, đọc hết toàn bộ script đến khi kết thúc
@@ -419,7 +427,7 @@ function ListeningPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? (
+                {(mineMode ? mine.isLoading : loading) ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center">
                       <LoadingSpinner text="Đang tải danh sách bài nghe từ máy chủ..." />
@@ -458,6 +466,7 @@ function ListeningPage() {
           </div>
 
           {/* Phân trang */}
+          {!mineMode && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
             <p className="text-xs text-slate-500">
               Hiển thị <strong>{total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}</strong>-
@@ -466,6 +475,7 @@ function ListeningPage() {
             </p>
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
+          )}
         </div>
       )}
 

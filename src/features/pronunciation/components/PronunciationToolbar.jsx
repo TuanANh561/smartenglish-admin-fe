@@ -3,6 +3,7 @@ import Select from '@/components/ui/Select'
 import { Plus, RefreshCw, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { PRONUNCIATION_CATEGORIES } from '../pronunciationLessonApi'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
+import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
 
 const CEFR_LEVELS = ['Tất cả', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const STATUS_OPTIONS = [
@@ -24,6 +25,8 @@ export default function PronunciationToolbar({
   onToggleTrash,
   trashCount = 0,
   onOpenCreate,
+  ownerFilter,
+  onOwnerFilterChange,
   onReload,
   onRefresh,
 }) {
@@ -84,6 +87,7 @@ export default function PronunciationToolbar({
           />
         )}
 
+        {ownerFilter ? <OwnershipSelect value={ownerFilter} onChange={onOwnerFilterChange} /> : null}
         <PendingReviewButton type="PRONUNCIATION_LESSON" />
 
         {/* Thêm bài phát âm (Icon-only) */}

@@ -150,6 +150,7 @@ export const ENDPOINTS = {
   contentReviews: {
     list: '/admin/content-reviews',
     pendingCount: '/admin/content-reviews/pending-count',
+    owned: '/admin/content-reviews/owned',
     detail: '/admin/content-reviews/:id',
     approve: '/admin/content-reviews/:id/approve',
     reject: '/admin/content-reviews/:id/reject',

@@ -31,6 +31,7 @@ import AiContentCard from './components/AiContentCard'
 import AiGeneratingCard from './components/AiGeneratingCard'
 import AiCreationModal from './components/AiCreationModal'
 import AiContentToolbar from './components/AiContentToolbar'
+import { useOwnership } from '@/features/contentReview/useOwnership'
 
 const SYSTEM_AUTHORS = new Set(['', 'ai system', 'system', 'admin', 'hệ thống', 'quản trị viên'])
 
@@ -85,9 +86,11 @@ function AiContentPage() {
   }, [])
 
   const normalizeOwner = (value) => String(value ?? '').trim().toLowerCase()
+  const ownership = useOwnership('AI_CONTENT')
   const isOwnedByCurrentUser = useMemo(() => {
     return (item) => {
       if (!user) return true
+      if (ownership.isMine(item)) return true
       const candidates = [
         normalizeOwner(user.displayName),
         normalizeOwner(user.email),
@@ -98,7 +101,7 @@ function AiContentPage() {
       const approved = normalizeOwner(item?.approvedBy || '')
       return candidates.some((c) => c === created || c === approved)
     }
-  }, [user])
+  }, [user, ownership])
 
   // Nội dung hệ thống: do AI/quản trị viên tạo (createdBy rỗng hoặc là tài khoản hệ thống)
   const isSystemItem = (item) =>

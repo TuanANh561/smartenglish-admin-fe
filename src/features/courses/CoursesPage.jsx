@@ -10,6 +10,7 @@ import CourseFilters from './components/CourseFilters'
 import CourseGrid from './components/CourseGrid'
 import CourseTable from './components/CourseTable'
 import DeleteCourseModal from './components/DeleteCourseModal'
+import { useOwnership } from '@/features/contentReview/useOwnership'
 
 const COURSE_TRASH_STORAGE_KEY = 'SMART_ENGLISH_COURSE_TRASH'
 
@@ -86,9 +87,11 @@ export default function CoursesPage() {
   }, [defaultAuthorFilter, user?.id])
 
   // Kiểm tra quyền sở hữu
+  const ownership = useOwnership('COURSE')
   const checkOwnership = (course) => {
     if (!user) return false
     if (isTeacher) {
+      if (ownership.isMine(course)) return true
       const isCreatorId = course.createdBy != null && user.id != null && Number(course.createdBy) === Number(user.id)
       const isCreatorEmail = course.authorEmail && user.email && course.authorEmail.toLowerCase() === user.email.toLowerCase()
       const isCreatorName = course.authorName && user.displayName && course.authorName.toLowerCase() === user.displayName.toLowerCase()
@@ -145,7 +148,7 @@ export default function CoursesPage() {
 
       return matchAuthor && matchCategory && matchCefr && matchStatus && matchSearch
     })
-  }, [courses, trashCourses, trashView, search, categoryFilter, cefrFilter, statusFilter, authorFilter, user])
+  }, [courses, trashCourses, trashView, search, categoryFilter, cefrFilter, statusFilter, authorFilter, user, ownership])
 
   // Phân trang
   const total = filteredCourses.length

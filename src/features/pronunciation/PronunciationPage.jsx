@@ -33,6 +33,7 @@ import { registerAudioStopHandler } from '@/lib/appAudioCoordinator'
 
 import PronunciationToolbar from './components/PronunciationToolbar'
 import PronunciationTableRow from './components/PronunciationTableRow'
+import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 import PronunciationDetailDrawer from './components/PronunciationDetailDrawer'
 
 // Speaking Scenario components
@@ -48,6 +49,7 @@ import {
 import {
   PRONUNCIATION_CATEGORIES,
   getPronunciationLessons,
+  getPronunciationLessonById,
   getPronunciationTrashCount,
   createPronunciationLesson,
   updatePronunciationLesson,
@@ -116,11 +118,20 @@ export default function PronunciationPage() {
   const [ipaTotalPages, setIpaTotalPages] = useState(1)
   const [ipaTotalCount, setIpaTotalCount] = useState(0)
   const [search, setSearch] = useState('')
+
   const [selectedCategory, setSelectedCategory] = useState('Tất cả phân loại')
   const [selectedLevel, setSelectedLevel] = useState('Tất cả')
   const [selectedStatus, setSelectedStatus] = useState('all')
 
   const [trashView, setTrashView] = useState(false)
+  const own = useOwnership('PRONUNCIATION_LESSON')
+  const [ownerFilter, setOwnerFilter] = useState(own.defaultFilter)
+  const mineMode = own.isTeacher && ownerFilter === 'mine' && !trashView
+  const mine = useMyItems('PRONUNCIATION_LESSON', own.ownedIds, getPronunciationLessonById, {
+    enabled: mineMode,
+    search,
+    fields: ['title', 'titleVi', 'titleEn', 'ipaSymbol', 'targetText'],
+  })
   const [trashCount, setTrashCount] = useState(0)
 
   const [activeLesson, setActiveLesson] = useState(null)
@@ -447,6 +458,8 @@ export default function PronunciationPage() {
 
   const isTeacher = user?.role === 'teacher'
 
+  const ipaRows = mineMode ? mine.items : own.applyFilter(lessons, ownerFilter)
+
   return (
     <div className="space-y-5">
       {/* Teacher quota notification if applicable */}
@@ -571,11 +584,13 @@ export default function PronunciationPage() {
               refreshTrashCount()
             }}
             onOpenCreate={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
+            ownerFilter={own.isTeacher ? ownerFilter : null}
+            onOwnerFilterChange={setOwnerFilter}
           />
 
-          {isLoadingIpa ? (
+          {(mineMode ? mine.isLoading : isLoadingIpa) ? (
             <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
-          ) : lessons.length === 0 ? (
+          ) : ipaRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
                 {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
@@ -622,10 +637,11 @@ export default function PronunciationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {lessons.map((item) => (
+                  {ipaRows.map((item) => (
                     <PronunciationTableRow
                       key={item.id}
                       item={item}
+                      owner={own.isTeacher ? (own.isMine(item) ? 'mine' : 'other') : null}
                       isTrash={trashView}
                       isPlaying={playingAudioId === item.id}
                       onPlayAudio={handlePlayAudio}
@@ -643,6 +659,7 @@ export default function PronunciationPage() {
           )}
 
           {/* IPA Pagination */}
+          {!mineMode && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
             <p className="text-xs text-slate-500">
               Hiển thị <strong>{ipaTotalCount === 0 ? 0 : (ipaPage - 1) * PAGE_SIZE + 1}</strong>-
@@ -651,6 +668,7 @@ export default function PronunciationPage() {
             </p>
             <Pagination page={ipaPage} totalPages={ipaTotalPages} onChange={setIpaPage} />
           </div>
+          )}
         </div>
       )}
 
