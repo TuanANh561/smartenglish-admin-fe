@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useTopbarStore } from '@/store/topbarStore'
 import {
   deleteLessonApi,
+  adaptBackendCourse,
   fetchCourseByIdApi,
   fetchLessonsByCourseApi,
   updateCourseApi,
@@ -16,6 +17,9 @@ import CourseDetailBanner from './components/detail/CourseDetailBanner'
 import CourseOverviewTab from './components/detail/CourseOverviewTab'
 import CourseCurriculumTab from './components/detail/CourseCurriculumTab'
 import MediaPreviewModal from './components/detail/MediaPreviewModal'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import MaterialEmptyState from '@/features/contentReview/MaterialEmptyState'
+import { fetchContentReviewDetail } from '@/features/contentReview/contentReviewApi'
 
 const TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -34,6 +38,8 @@ function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [course, setCourse] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingRequest, setPendingRequest] = useState(null)
+  const pendingId = String(id || '').startsWith('pending-') ? String(id).slice('pending-'.length) : null
   const [expandedChapters, setExpandedChapters] = useState({})
 
   // Xem trước Video hoặc File/Tài liệu trực tiếp
@@ -58,6 +64,22 @@ function CourseDetailPage() {
 
   const loadCourseData = useCallback(async () => {
     setIsLoading(true)
+    if (pendingId) {
+      // Khoá học mới đang chờ duyệt: dựng lại từ nội dung giáo viên đã gửi
+      try {
+        const request = await fetchContentReviewDetail(pendingId)
+        const payload = request?.payload && typeof request.payload === 'object' ? request.payload : null
+        const cData = payload ? adaptBackendCourse({ ...payload, id }) : null
+        setPendingRequest(request || null)
+        setCourse(cData)
+        if (cData?.chapters) setExpandedChapters(Object.fromEntries(cData.chapters.map((ch) => [ch.id, true])))
+      } catch {
+        setCourse(null)
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
     try {
       let cData = await fetchCourseByIdApi(id)
 
@@ -121,7 +143,7 @@ function CourseDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [id])
+  }, [id, pendingId])
 
   useEffect(() => {
     loadCourseData()
@@ -164,7 +186,7 @@ function CourseDetailPage() {
 
   // Quyền quản lý: Chỉ chính chủ sở hữu khóa học mới có quyền sửa/thêm/xóa.
   // Khóa học của giáo viên: Admin vào xem hoàn toàn ở chế độ XEM (Read-only).
-  const canManage = isOwned
+  const canManage = isOwned && !pendingId
 
   const toggleChapter = (chapterId) => {
     setExpandedChapters((prev) => ({
@@ -229,8 +251,15 @@ function CourseDetailPage() {
     )
   }, [course])
 
-  if (isLoading || !course) {
+  if (isLoading) {
     return <LoadingSpinner text="Đang tải thông tin khóa học..." className="py-24" />
+  }
+  if (!course) {
+    return (
+      <div className="rounded-2xl border border-slate-200/90 bg-white">
+        <MaterialEmptyState label="khóa học" mode="search" />
+      </div>
+    )
   }
 
   return (
@@ -265,6 +294,10 @@ function CourseDetailPage() {
           onReloadCourse={loadCourseData}
         />
       )}
+
+      {pendingRequest ? (
+        <PendingDecisionBar request={pendingRequest} onDone={() => navigate('/app/hoc-lieu/khoa-hoc')} />
+      ) : null}
 
       {/* Modal Xem Trực Tiếp Video hoặc Tệp Đính Kèm */}
       <MediaPreviewModal

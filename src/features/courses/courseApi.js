@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 
@@ -236,9 +237,11 @@ export async function fetchCourseTreeApi() {
  * Lấy chi tiết một khóa học theo ID từ API Backend
  */
 export async function fetchCourseByIdApi(id) {
-  const res = await api.get(ENDPOINTS.courses.detail, { path: { id } })
-  const rawCourse = res?.data || res
-  return adaptBackendCourse(rawCourse)
+  return loadPendingOr(id, async () => {
+    const res = await api.get(ENDPOINTS.courses.detail, { path: { id } })
+    const rawCourse = res?.data || res
+    return adaptBackendCourse(rawCourse)
+  }, adaptBackendCourse)
 }
 
 /**
@@ -256,7 +259,7 @@ export async function createCourseApi(courseData) {
  */
 export async function updateCourseApi(id, courseData) {
   const payload = adaptFrontendCourseToBackend(courseData)
-  const res = await api.put(ENDPOINTS.courses.update, { path: { id }, data: payload })
+  const res = await savePendingOr(id, payload, () => api.put(ENDPOINTS.courses.update, { path: { id }, data: payload }))
   const rawCourse = res?.data || res
   return adaptBackendCourse(rawCourse)
 }

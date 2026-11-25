@@ -1,4 +1,7 @@
 import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Send, Sparkles, Target, Trash2 } from 'lucide-react'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 import { formatDate } from '@/lib/utils'
 
 const LEVEL_COLOR = {
@@ -44,12 +47,14 @@ export default function ExamCard({
   const levelStyle  = LEVEL_COLOR[item.cefrLevel] || LEVEL_COLOR.B1
   const categoryCfg = CATEGORY_MAP[item.category] || CATEGORY_MAP.GENERAL
   const statusBadge = STATUS_BADGE[item.status]    || STATUS_BADGE.published
+  const pending = item.__pending
+  const isNew = isPendingNew(item)
   const questionCount = item.totalQuestions ?? (item.questions?.length || 0)
 
   return (
     <div
       onClick={() => !isTrash && onCardClick(item)}
-      className={`group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md ${
+      className={`group relative flex flex-col justify-between rounded-2xl border ${pending ? 'border-[#FDE68A] bg-[#FFFBEB]' : 'border-slate-200/90 bg-white'} p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md ${
         !isTrash ? 'cursor-pointer' : ''
       }`}
     >
@@ -87,7 +92,9 @@ export default function ExamCard({
           </div>
 
           {/* Status or Trash badge */}
-          {isTrash ? (
+          {pending ? (
+            <PendingStatusBadge request={pending} />
+          ) : isTrash ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-semibold text-red-600">
               <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
               Đã xóa
@@ -182,7 +189,9 @@ export default function ExamCard({
           className="flex items-center gap-1 shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
-          {isTrash ? (
+          {isNew ? (
+            <PendingViewButton item={item} onClick={() => onCardClick(item)} onEdit={() => onEditClick(null, item)} />
+          ) : isTrash ? (
             <>
               <button
                 type="button"

@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 /**
  * pronunciationLessonApi.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -78,8 +79,10 @@ export async function getPronunciationLessons(params = {}) {
  * Lấy chi tiết bài phát âm theo ID
  */
 export async function getPronunciationLessonById(id) {
-  const res = await callContentApi('get', `${BASE}/${id}`)
-  return res?.data !== undefined ? res.data : res
+  return loadPendingOr(id, async () => {
+    const res = await callContentApi('get', `${BASE}/${id}`)
+    return res?.data !== undefined ? res.data : res
+  })
 }
 
 /**
@@ -106,7 +109,7 @@ export async function createPronunciationLesson(data) {
  * @param {Object} data  —  PronunciationLessonRequestDTO
  */
 export async function updatePronunciationLesson(id, data) {
-  const res = await callContentApi('put', `${BASE}/${id}`, { data })
+  const res = await savePendingOr(id, data, () => callContentApi('put', `${BASE}/${id}`, { data }))
   return res?.data !== undefined ? res.data : res
 }
 

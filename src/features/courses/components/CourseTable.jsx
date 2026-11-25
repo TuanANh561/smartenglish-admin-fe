@@ -1,6 +1,8 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 import { Eye, Lock, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
 import Badge from '@/components/ui/Badge'
 import { formatNumber } from '@/lib/utils'
 
@@ -16,8 +18,9 @@ export default function CourseTable({
   isAdmin,
   isTrash = false,
   onRestore,
-  showPending = false,
+  emptyState = null,
 }) {
+  const navigate = useNavigate()
   return (
     <div className="w-full rounded-xl border border-line bg-white shadow-xs">
       <table className="w-full text-left text-xs text-ink-base border-collapse table-fixed">
@@ -39,23 +42,16 @@ export default function CourseTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
-          <PendingRequestRows type="COURSE" colSpan={9} hidden={!showPending || isTrash} />
           {courses.length === 0 ? (
             <tr>
-              <td colSpan={9} className="py-12 text-center text-slate-400">
-                <Trash2 size={24} className="mx-auto mb-2 text-slate-300" />
-                <p className="font-semibold text-slate-700 text-xs">
-                  {isTrash ? 'Thùng rác đang trống' : 'Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.'}
-                </p>
-                {isTrash && (
-                  <p className="text-[11px] text-slate-400 mt-0.5">Chưa có khóa học nào bị chuyển vào thùng rác</p>
-                )}
-              </td>
+              <td colSpan={9}>{emptyState}</td>
             </tr>
           ) : (
             courses.map((course) => {
-              const isOwner = checkOwnership(course)
-              const canEdit = isAdmin || isOwner
+              const pending = course.__pending
+              const isNew = isPendingNew(course)
+              const isOwner = !isNew && checkOwnership(course)
+              const canEdit = !isNew && (isAdmin || isOwner)
               const isSystemCourse =
                 Number(course.createdBy) === 1 ||
                 Number(course.id) <= 4 ||
@@ -64,7 +60,7 @@ export default function CourseTable({
               return (
                 <tr
                   key={course.id}
-                  className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                  className={`transition-colors group cursor-pointer ${pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/80'}`}
                   onClick={() => onEdit && onEdit(course.id, 'view')}
                 >
                   {/* Thumbnail */}
@@ -141,7 +137,9 @@ export default function CourseTable({
 
                   {/* Status */}
                   <td className="py-2.5 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                    {isTrash ? (
+                    {pending ? (
+                      <PendingStatusBadge request={pending} />
+                    ) : isTrash ? (
                       <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                         <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                         Đã xóa
@@ -170,13 +168,18 @@ export default function CourseTable({
 
                   {/* Date */}
                   <td className="py-2.5 px-3 text-ink-muted text-[11px] whitespace-nowrap">
-                    {course.updatedAt || '—'}
+                    {pending ? '—' : course.updatedAt || '—'}
                   </td>
 
                   {/* Actions */}
                   <td className="py-2.5 px-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      {isTrash ? (
+                      {isNew ? (
+                        <PendingViewButton item={course}
+                          onClick={() => navigate(`/app/hoc-lieu/khoa-hoc/${course.id}`)}
+                          onEdit={() => navigate(`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`)}
+                        />
+                      ) : isTrash ? (
                         <>
                           {/* Khôi phục */}
                           <button

@@ -151,7 +151,7 @@ function QuestionItemCard({ q, qNum, partNum, isListening, showTranscript, audio
   )
 }
 
-export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick, isTeacher, onAssignToClass }) {
+export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick, isTeacher, onAssignToClass, footer }) {
   const audioEngine = useTwoLayerAudio()
   const [selectedPart, setSelectedPart] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -688,6 +688,8 @@ export default function ExamDetailPanel({ exam, onClose, canManage, onEditClick,
           })
         )}
       </div>
+
+      {footer ? <div className="shrink-0 px-6 pb-5">{footer}</div> : null}
 
       {/* ── Footer ── */}
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2.5 flex items-center justify-between text-xs text-slate-500">

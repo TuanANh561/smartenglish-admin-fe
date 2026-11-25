@@ -102,6 +102,7 @@ export default function ExamFormPage() {
       .then((data) => {
         if (!isMounted || !data) return
         if (
+          !data.__pending &&
           user &&
           user.role !== 'admin' &&
           ((data.authorEmail && data.authorEmail !== user.email) ||

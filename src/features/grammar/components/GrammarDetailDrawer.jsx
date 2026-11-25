@@ -12,7 +12,7 @@ const LEVEL_TONE = {
   C2: 'danger',
 }
 
-export default function GrammarDetailDrawer({ activeLesson, onClose, onEdit }) {
+export default function GrammarDetailDrawer({ activeLesson, onClose, onEdit, footer }) {
   if (!activeLesson) return null
 
   return (
@@ -123,6 +123,7 @@ export default function GrammarDetailDrawer({ activeLesson, onClose, onEdit }) {
         )}
 
         {/* Action Bar in Drawer */}
+        {footer ?? (onEdit ? (
         <div className="flex items-center gap-2 pt-4 border-t border-line">
           <Button
             variant="secondary"
@@ -137,6 +138,7 @@ export default function GrammarDetailDrawer({ activeLesson, onClose, onEdit }) {
             Chỉnh sửa bài học
           </Button>
         </div>
+        ) : null)}
       </div>
     </Drawer>
   )

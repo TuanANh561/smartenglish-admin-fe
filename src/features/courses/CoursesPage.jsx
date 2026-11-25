@@ -1,7 +1,8 @@
 import { ENDPOINTS } from '@/lib/endpoints'
 import { api } from '@/lib/api'
 import JsonImportModal from '@/components/ui/JsonImportModal'
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import { usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RotateCcw, Trash2 } from 'lucide-react'
@@ -9,7 +10,7 @@ import toast from 'react-hot-toast'
 import Pagination from '@/components/ui/Pagination'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuthStore } from '@/store/authStore'
-import { deleteCourseApi, fetchCoursesApi, updateCourseApi } from './courseApi'
+import { adaptBackendCourse, deleteCourseApi, fetchCoursesApi, updateCourseApi } from './courseApi'
 import CourseFilters from './components/CourseFilters'
 import CourseGrid from './components/CourseGrid'
 import CourseTable from './components/CourseTable'
@@ -175,7 +176,24 @@ export default function CoursesPage() {
   const total = filteredCourses.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const start = (page - 1) * PAGE_SIZE
-  const pageData = filteredCourses.slice(start, start + PAGE_SIZE)
+  const { requests: pendingRequests } = usePendingRequests('COURSE', { enabled: !trashView })
+  const pageData = withPending(filteredCourses.slice(start, start + PAGE_SIZE), pendingRequests, adaptBackendCourse, {
+    showNew: !trashView && authorFilter !== 'system' && page === 1,
+    search,
+  })
+  const courseEmptyState = (
+    <MaterialEmptyState
+      label="khóa học"
+      mode={emptyMode({
+        trash: trashView,
+        search: search.trim(),
+        filtered: categoryFilter !== 'all' || cefrFilter !== 'all' || statusFilter !== 'all' || authorFilter === 'system',
+        mine: authorFilter === 'mine',
+      })}
+      onCreate={() => navigate('/app/hoc-lieu/khoa-hoc/tao-moi')}
+      onBack={() => handleToggleTrash(false)}
+    />
+  )
 
   // 3. Bật / Tắt trạng thái xuất bản (Publish toggle)
   const handleTogglePublish = async (course) => {
@@ -321,7 +339,7 @@ export default function CoursesPage() {
           isAdmin={isAdmin}
           isTrash={trashView}
           onRestore={handleRestoreCourse}
-          showPending={authorFilter !== 'system'}
+          emptyState={courseEmptyState}
         />
       ) : (
         <CourseGrid
@@ -332,6 +350,7 @@ export default function CoursesPage() {
           isAdmin={isAdmin}
           isTrash={trashView}
           onRestore={handleRestoreCourse}
+          emptyState={courseEmptyState}
         />
       )}
 

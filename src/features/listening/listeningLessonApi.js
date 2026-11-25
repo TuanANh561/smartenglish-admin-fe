@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 /**
  * listeningLessonApi.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -10,7 +11,7 @@ import { api } from '@/lib/api'
 
 const BASE = '/admin/listening-lessons'
 
-function normalizeLesson(item) {
+export function normalizeLesson(item) {
   if (!item) return item
   const lvl = item.cefrLevel || item.level || 'B1'
   return {
@@ -85,9 +86,11 @@ export async function getListeningLessons(params = {}) {
  * Lấy chi tiết bài nghe theo ID
  */
 export async function getListeningLessonById(id) {
-  const res = await api.get(`${BASE}/${id}`)
-  const data = res?.data !== undefined ? res.data : res
-  return normalizeLesson(data)
+  return loadPendingOr(id, async () => {
+    const res = await api.get(`${BASE}/${id}`)
+    const data = res?.data !== undefined ? res.data : res
+    return normalizeLesson(data)
+  }, normalizeLesson)
 }
 
 /**
@@ -107,7 +110,7 @@ export async function createListeningLesson(lessonData, authorInfo = {}) {
  * Cập nhật bài nghe
  */
 export async function updateListeningLesson(id, lessonData) {
-  const res = await api.put(`${BASE}/${id}`, { data: lessonData })
+  const res = await savePendingOr(id, lessonData, () => api.put(`${BASE}/${id}`, { data: lessonData }))
   const data = res?.data !== undefined ? res.data : res
   return normalizeLesson(data)
 }

@@ -1,5 +1,7 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
-import { Volume2, Play, Pencil, Trash2, RotateCcw, BookOpen, Plus, Search } from 'lucide-react'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
+import { Volume2, Play, Pencil, Trash2, RotateCcw, Plus } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
@@ -26,9 +28,11 @@ export function VocabTable({
   onlineResult = null,
   isLookingUp = false,
   lookupActive = false,
-  showPending = false,
+  emptyState = null,
+  onView,
 }) {
   const showOnline = lookupActive && vocabList.length === 0
+  const span = vocabularyColumns.length + 3
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full min-w-[860px] text-left text-sm table-fixed">
@@ -52,6 +56,9 @@ export function VocabTable({
                 </th>
               )
             })}
+            <th className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500 w-[120px] whitespace-nowrap">
+              Trạng thái
+            </th>
             <th className="py-3 px-1.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500 w-[60px] whitespace-nowrap">
               Audio
             </th>
@@ -61,10 +68,9 @@ export function VocabTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          <PendingRequestRows type="WORD" colSpan={vocabularyColumns.length + 2} hidden={!showPending || trashView} />
           {isLoading || (showOnline && isLookingUp) ? (
             <tr>
-              <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
+              <td colSpan={span} className="px-4 py-12 text-center">
                 <LoadingSpinner
                   text={
                     showOnline && isLookingUp
@@ -80,16 +86,12 @@ export function VocabTable({
             <tr className="bg-slate-50/50">
               {vocabularyColumns.map((col) => (
                 <td key={`online-${col.accessorKey}`} className="px-3.5 py-3 text-sm overflow-hidden">
-                  {col.accessorKey === 'word' ? (
-                    <div className="space-y-1">
-                      {col.cell({ getValue: () => onlineResult.word, row: { original: onlineResult } })}
-                      <Badge tone="warning" className="whitespace-nowrap">Chưa có trong kho</Badge>
-                    </div>
-                  ) : (
-                    col.cell({ getValue: () => onlineResult[col.accessorKey], row: { original: onlineResult } })
-                  )}
+                  {col.cell({ getValue: () => onlineResult[col.accessorKey], row: { original: onlineResult } })}
                 </td>
               ))}
+              <td className="px-2 py-3 text-center whitespace-nowrap">
+                <Badge tone="neutral">Chưa có trong kho</Badge>
+              </td>
               <td className="px-1.5 py-3 text-center">
                 <button
                   onClick={(e) => onPlayAudio(e, { ...onlineResult, id: 'online' })}
@@ -117,38 +119,15 @@ export function VocabTable({
             </tr>
           ) : vocabList.length === 0 ? (
             <tr>
-              <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
-                <div className="max-w-md mx-auto text-center space-y-3">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                    {trashView ? <Trash2 size={24} /> : search ? <Search size={22} className="text-brand-600" /> : <BookOpen size={24} />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">
-                      {trashView
-                        ? search
-                          ? `Không tìm thấy từ vựng nào trong thùng rác cho "${search}"`
-                          : 'Thùng rác đang trống'
-                        : search
-                        ? `Không tìm thấy từ vựng nào cho "${search}"`
-                        : 'Kho từ vựng hiện đang trống'}
-                    </p>
-                    {trashView && (
-                      <p className="text-xs text-slate-400 mt-1">
-                        Chưa có từ vựng nào bị chuyển vào thùng rác
-                      </p>
-                    )}
-                    {showOnline && (
-                      <p className="text-xs text-slate-500 mt-1">
-                        Từ điển online cũng không có kết quả. Kiểm tra lại chính tả.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </td>
+              <td colSpan={span}>{emptyState}</td>
             </tr>
           ) : (
             vocabList.map((vocab) => (
-              <tr key={vocab.id} className="hover:bg-slate-50/50 transition-colors group">
+              <tr
+                key={vocab.id}
+                onClick={() => !trashView && onView?.(vocab)}
+                className={`transition-colors group ${!trashView ? 'cursor-pointer' : ''} ${vocab.__pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/50'}`}
+              >
                 {vocabularyColumns.map((col) => {
                   let tdPad = 'px-3.5 text-left'
                   if (col.accessorKey === 'word') tdPad = 'px-4 text-left'
@@ -167,8 +146,18 @@ export function VocabTable({
                     </td>
                   )
                 })}
+                {/* Trạng thái */}
+                <td className="px-2 py-3 text-center whitespace-nowrap">
+                  {vocab.__pending ? (
+                    <PendingStatusBadge request={vocab.__pending} />
+                  ) : trashView ? (
+                    <span className="text-xs font-medium text-red-500">Đã xóa</span>
+                  ) : (
+                    <Badge tone="success">Công khai</Badge>
+                  )}
+                </td>
                 {/* Audio */}
-                <td className="px-1.5 py-3 text-center">
+                <td className="px-1.5 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={(e) => onPlayAudio(e, vocab)}
                     className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors cursor-pointer ${
@@ -182,8 +171,10 @@ export function VocabTable({
                   </button>
                 </td>
                 {/* Thao tác */}
-                <td className="px-4 py-3 text-right whitespace-nowrap">
-                  {isMine && !isMine(vocab) ? (
+                <td className="px-4 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  {isPendingNew(vocab) ? (
+                    <PendingViewButton item={vocab} onClick={() => onView?.(vocab)} onEdit={() => onEdit(vocab)} />
+                  ) : isMine && !isMine(vocab) ? (
                     <OwnerBadge mine={false} />
                   ) : trashView ? (
                     <div className="flex items-center justify-end gap-1">

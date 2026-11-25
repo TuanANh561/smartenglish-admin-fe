@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 /**
  * grammarLessonApi.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ export const DEFAULT_GRAMMAR_TOPICS = [
   'Cụm giới từ & Liên từ',
 ]
 
-function normalizeLesson(item) {
+export function normalizeLesson(item) {
   if (!item) return item
   const lvl = item.cefrLevel || item.level || 'B1'
   return {
@@ -136,9 +137,11 @@ export async function getGrammarTopics() {
  * Lấy chi tiết bài học ngữ pháp theo ID
  */
 export async function getGrammarLessonById(id) {
-  const res = await callContentApi('get', `${BASE}/${id}`)
-  const item = res?.data !== undefined ? res.data : res
-  return normalizeLesson(item)
+  return loadPendingOr(id, async () => {
+    const res = await callContentApi('get', `${BASE}/${id}`)
+    const item = res?.data !== undefined ? res.data : res
+    return normalizeLesson(item)
+  }, normalizeLesson)
 }
 
 /**
@@ -192,7 +195,7 @@ export async function updateGrammarLesson(id, data) {
     authorEmail: data.authorEmail,
   }
 
-  const res = await callContentApi('put', `${BASE}/${id}`, { data: payload })
+  const res = await savePendingOr(id, payload, () => callContentApi('put', `${BASE}/${id}`, { data: payload }))
   const updated = res?.data !== undefined ? res.data : res
   return normalizeLesson(updated)
 }

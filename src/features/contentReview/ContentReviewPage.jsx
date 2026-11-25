@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck } from "lucide-react";
 import toast from "react-hot-toast";
@@ -27,6 +27,7 @@ import {
 import ClassReviewsPanel from "./ClassReviewsPanel";
 import ReviewPreview from "./ReviewPreview";
 import { PENDING_COUNT_KEY } from "./usePendingReviewCount";
+import { PENDING_ROUTE } from "./usePendingRequests";
 
 const RESOURCE_LABEL = {
   COURSE: "Khoá học",
@@ -87,6 +88,16 @@ function ContentReviewPage() {
   const [status, setStatus] = useState("PENDING");
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState(null);
+  const navigate = useNavigate();
+  // Học liệu mới đang chờ: mở đúng trang chi tiết của loại học liệu đó (như sau khi được duyệt).
+  // Yêu cầu sửa / xoá / nhập hàng loạt: xem phần so sánh thay đổi trong ngăn bên phải.
+  const openRequest = (r) => {
+    if (r.status === "PENDING" && r.action === "CREATE") {
+      if (r.resourceType === "COURSE") return navigate(`/app/hoc-lieu/khoa-hoc/pending-${r.id}`);
+      if (PENDING_ROUTE[r.resourceType]) return navigate(`${PENDING_ROUTE[r.resourceType]}?pending=${r.id}`);
+    }
+    setOpenId(r.id);
+  };
   const [rejecting, setRejecting] = useState(null);
   const [reason, setReason] = useState("");
 
@@ -262,7 +273,7 @@ function ContentReviewPage() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => setOpenId(r.id)}
+                            onClick={() => openRequest(r)}
                           >
                             {isAdmin && r.status === "PENDING"
                               ? "Xem và duyệt"

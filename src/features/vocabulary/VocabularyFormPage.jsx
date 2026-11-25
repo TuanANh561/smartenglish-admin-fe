@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
@@ -96,7 +97,7 @@ export default function VocabularyFormPage() {
   useEffect(() => {
     if (isEditing) {
       setIsLoading(true)
-      api.get(ENDPOINTS.words.detail, { path: { id } })
+      loadPendingOr(id, () => api.get(ENDPOINTS.words.detail, { path: { id } }))
         .then((data) => {
           if (data) {
             setForm({
@@ -237,7 +238,7 @@ export default function VocabularyFormPage() {
 
     try {
       if (isEditing) {
-        await api.put(ENDPOINTS.words.update, { path: { id }, data: payload })
+        await savePendingOr(id, payload, () => api.put(ENDPOINTS.words.update, { path: { id }, data: payload }))
         toast.success(`Đã cập nhật từ "${form.word}"`)
       } else {
         await api.post(ENDPOINTS.words.create, { data: payload })

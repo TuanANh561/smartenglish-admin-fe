@@ -1,5 +1,8 @@
 import { Award, BookOpen, Clock, Copy, Eye, FileText, HelpCircle, Pencil, RotateCcw, Send, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 
 const LEVEL_COLOR = {
   A1:  { bg: '#f0fdf4', text: '#15803d' },
@@ -44,11 +47,13 @@ export default function ExamTableRow({
   const levelStyle  = LEVEL_COLOR[item.cefrLevel] || LEVEL_COLOR.B1
   const categoryCfg = CATEGORY_MAP[item.category] || CATEGORY_MAP.GENERAL
   const statusBadge = STATUS_BADGE[item.status]    || STATUS_BADGE.published
+  const pending = item.__pending
+  const isNew = isPendingNew(item)
 
   return (
     <tr
       onClick={() => !isTrash && onRowClick(item)}
-      className={`group transition-colors hover:bg-slate-50/60 ${!isTrash ? 'cursor-pointer' : ''}`}
+      className={`group transition-colors ${pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/60'} ${!isTrash ? 'cursor-pointer' : ''}`}
     >
       {/* Tên đề thi & mô tả */}
       <td className="px-4 py-3 overflow-hidden">
@@ -99,7 +104,9 @@ export default function ExamTableRow({
 
       {/* Trạng thái */}
       <td className="px-3 py-3 text-center whitespace-nowrap">
-        {!isTrash ? (
+        {pending ? (
+          <PendingStatusBadge request={pending} />
+        ) : !isTrash ? (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); canManage && onTogglePublish(item) }}
@@ -135,7 +142,9 @@ export default function ExamTableRow({
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
-          {isTrash ? (
+          {isNew ? (
+            <PendingViewButton item={item} onClick={() => onRowClick(item)} onEdit={() => onEditClick(null, item)} />
+          ) : isTrash ? (
             <>
               <button
                 type="button"

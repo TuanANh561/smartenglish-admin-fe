@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 /**
  * examApi.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ export function buildExamPayload(data) {
   }
 }
 
-function normalizeExam(item) {
+export function normalizeExam(item) {
   if (!item) return item
   return {
     ...item,
@@ -132,8 +133,7 @@ export async function getExams(params = {}) {
 }
 
 export async function getExamById(id) {
-  const res = await callApi('get', `${BASE}/${id}`)
-  return normalizeExam(res)
+  return loadPendingOr(id, async () => normalizeExam(await callApi('get', `${BASE}/${id}`)), normalizeExam)
 }
 
 export async function createExam(data) {
@@ -152,7 +152,7 @@ export async function validateExam(data, excludeId) {
 
 export async function updateExam(id, data) {
   const payload = buildExamPayload(data)
-  const res = await callApi('put', `${BASE}/${id}`, { data: payload })
+  const res = await savePendingOr(id, payload, () => callApi('put', `${BASE}/${id}`, { data: payload }))
   return normalizeExam(res)
 }
 

@@ -1,3 +1,4 @@
+import { loadPendingOr, savePendingOr } from '@/features/contentReview/contentReviewApi'
 /**
  * readingApi.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -12,7 +13,7 @@ const BASE = '/admin/reading-passages'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
-function normalizePassage(item) {
+export function normalizePassage(item) {
   if (!item) return item
   return {
     ...item,
@@ -87,9 +88,11 @@ export async function getReadingTrashCount() {
 // ─── Get by ID ────────────────────────────────────────────────────────────────
 
 export async function getReadingPassageById(id) {
-  const res = await api.get(`${BASE}/${id}`)
-  const item = res?.data !== undefined ? res.data : res
-  return normalizePassage(item)
+  return loadPendingOr(id, async () => {
+    const res = await api.get(`${BASE}/${id}`)
+    const item = res?.data !== undefined ? res.data : res
+    return normalizePassage(item)
+  }, normalizePassage)
 }
 
 // ─── Create ───────────────────────────────────────────────────────────────────
@@ -105,7 +108,7 @@ export async function createReadingPassage(data) {
 
 export async function updateReadingPassage(id, data) {
   const payload = buildPayload(data)
-  const res = await api.put(`${BASE}/${id}`, { data: payload })
+  const res = await savePendingOr(id, payload, () => api.put(`${BASE}/${id}`, { data: payload }))
   const updated = res?.data !== undefined ? res.data : res
   return normalizePassage(updated)
 }

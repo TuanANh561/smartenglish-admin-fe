@@ -1,3 +1,6 @@
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 import { BookOpen, Copy, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import OwnerBadge from '@/features/contentReview/OwnerBadge'
@@ -23,6 +26,8 @@ export default function GrammarTableRow({
   onTogglePublish,
   owner = null, // null: quản trị viên; 'mine' | 'other': giáo viên
 }) {
+  const pending = item.__pending
+  const isNew = isPendingNew(item)
   const locked = owner === 'other'
   const isPublished = item.status === 'published'
   const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.B1
@@ -30,7 +35,7 @@ export default function GrammarTableRow({
   return (
     <tr
       onClick={() => onView(item)}
-      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+      className={`group transition-colors cursor-pointer ${pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/50'}`}
     >
       {/* Tên bài học */}
       <td className="px-3.5 py-3 overflow-hidden">
@@ -76,7 +81,9 @@ export default function GrammarTableRow({
 
       {/* Trạng thái */}
       <td className="px-3 py-3 whitespace-nowrap">
-        {isTrash || locked ? (
+        {pending ? (
+          <PendingStatusBadge request={pending} />
+        ) : isTrash || locked ? (
           isTrash ? (
           <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
@@ -116,8 +123,8 @@ export default function GrammarTableRow({
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
-          {owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
-          {isTrash && locked ? null : isTrash ? (
+          {isNew ? <PendingViewButton item={item} onClick={() => onView(item)} onEdit={() => onEdit(null, item)} /> : owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
+          {isNew || (isTrash && locked) ? null : isTrash ? (
             <>
               <button
                 type="button"

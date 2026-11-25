@@ -1,4 +1,6 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import { isPendingNew, useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -204,7 +206,26 @@ export default function QuizBankPage() {
   const total = filteredExams.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const start = (page - 1) * PAGE_SIZE
-  const exams = filteredExams.slice(start, start + PAGE_SIZE)
+  const { requests: pendingRequests } = usePendingRequests('EXAM', { enabled: !trashView && activeTab === 'exams' })
+  const exams = withPending(filteredExams.slice(start, start + PAGE_SIZE), pendingRequests, normalizeExam, {
+    showNew: !trashView && authorFilter !== 'system' && page === 1,
+    search,
+  })
+  useOpenPendingFromQuery(exams, setActiveExam)
+  const emptyState = (
+    <MaterialEmptyState
+      label="bài thi"
+      mode={emptyMode({
+        trash: trashView,
+        search: search.trim(),
+        filtered: selectedCategory !== 'ALL' || selectedLevel !== 'ALL' || selectedStatus !== 'all' || authorFilter === 'system',
+        mine: authorFilter === 'mine',
+      })}
+      onCreate={() => navigate('/app/hoc-lieu/bai-kiem-tra/tao-moi')}
+      onBack={() => handleToggleTrash(false)}
+      createLabel="Tạo đề thi"
+    />
+  )
 
   // Filter handlers
   const handleSearch = (v) => { setSearch(v); setPage(1) }
@@ -414,8 +435,19 @@ export default function QuizBankPage() {
           <ExamDetailPanel
             exam={activeExam}
             onClose={() => setActiveExam(null)}
-            canManage={canManage(activeExam)}
+            canManage={!isPendingNew(activeExam) && canManage(activeExam)}
             onEditClick={handleEditClick}
+            footer={
+              activeExam.__pending ? (
+                <PendingDecisionBar
+                  request={activeExam.__pending}
+                  onDone={() => {
+                    setActiveExam(null)
+                    loadExams()
+                  }}
+                />
+              ) : null
+            }
             isTeacher={isTeacher}
             onAssignToClass={(item) => setAssignExamTarget(item)}
           />
@@ -467,18 +499,17 @@ export default function QuizBankPage() {
           <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3 w-[38%] whitespace-nowrap">Bài thi / Đề kiểm tra</th>
+                <th className="px-4 py-3 w-[33%] whitespace-nowrap">Bài thi / Đề kiểm tra</th>
                 <th className="px-3 py-3 w-[11%] whitespace-nowrap">Thể loại</th>
-                <th className="px-2 py-3 text-center w-[6%] whitespace-nowrap">Cấp độ</th>
-                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Trạng thái</th>
-                <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">Thời lượng</th>
-                <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Số câu</th>
+                <th className="px-2 py-3 text-center w-[7%] whitespace-nowrap">Cấp độ</th>
+                <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">Trạng thái</th>
+                <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">Thời lượng</th>
+                <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">Số câu</th>
                 <th className="px-3 py-3 text-center w-[9%] whitespace-nowrap">Ngày tạo</th>
                 <th className="px-4 py-3 text-right w-[11%] whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <PendingRequestRows type="EXAM" colSpan={8} hidden={trashView || authorFilter === 'system' || activeTab !== 'exams'} />
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">
@@ -487,23 +518,7 @@ export default function QuizBankPage() {
                 </tr>
               ) : exams.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-14 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
-                        {trashView ? (
-                          <Trash2 size={24} className="text-slate-400" />
-                        ) : (
-                          <FileText size={24} className="text-slate-400" />
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-slate-600">
-                        {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài thi nào'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {trashView ? 'Chưa có bài thi nào bị xóa' : 'Thử thay đổi bộ lọc hoặc tạo đề thi mới'}
-                      </p>
-                    </div>
-                  </td>
+                  <td colSpan={8}>{emptyState}</td>
                 </tr>
               ) : (
                 exams.map((item) => (
@@ -534,23 +549,7 @@ export default function QuizBankPage() {
                 <LoadingSpinner text="Đang tải danh sách bài thi & kiểm tra..." />
               </div>
             ) : exams.length === 0 ? (
-              <div className="py-14 text-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
-                    {trashView ? (
-                      <Trash2 size={24} className="text-slate-400" />
-                    ) : (
-                      <FileText size={24} className="text-slate-400" />
-                    )}
-                  </div>
-                  <p className="text-sm font-medium text-slate-600">
-                    {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài thi nào'}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {trashView ? 'Chưa có bài thi nào bị xóa' : 'Thử thay đổi bộ lọc hoặc tạo đề thi mới'}
-                  </p>
-                </div>
-              </div>
+              emptyState
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {exams.map((item) => (
