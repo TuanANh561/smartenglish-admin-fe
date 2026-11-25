@@ -25,6 +25,7 @@ import {
   rejectContentReview,
 } from "./contentReviewApi";
 import ClassReviewsPanel from "./ClassReviewsPanel";
+import ReviewPreview from "./ReviewPreview";
 import { PENDING_COUNT_KEY } from "./usePendingReviewCount";
 
 const RESOURCE_LABEL = {
@@ -68,38 +69,6 @@ const timeAgo = (value) =>
   value
     ? formatDistanceToNow(new Date(value), { addSuffix: true, locale: vi })
     : "";
-
-/** Hiển thị nội dung giáo viên gửi lên dạng bảng trường - giá trị. */
-function PayloadView({ payload }) {
-  if (payload === null || payload === undefined) {
-    return (
-      <p className="text-sm text-ink-muted">
-        Không có nội dung kèm theo (ví dụ: yêu cầu xoá).
-      </p>
-    );
-  }
-  if (typeof payload !== "object")
-    return <p className="text-sm text-ink">{String(payload)}</p>;
-  const entries = Array.isArray(payload)
-    ? payload.map((v, i) => [`#${i + 1}`, v])
-    : Object.entries(payload);
-  return (
-    <dl className="divide-y divide-line rounded-lg border border-line">
-      {entries.map(([key, value]) => (
-        <div key={key} className="grid grid-cols-[140px_1fr] gap-3 px-3 py-2">
-          <dt className="text-xs uppercase tracking-wide text-ink-muted break-words">
-            {key}
-          </dt>
-          <dd className="text-sm text-ink whitespace-pre-wrap break-words">
-            {value !== null && typeof value === "object"
-              ? JSON.stringify(value, null, 2)
-              : String(value ?? "")}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
 
 function ContentReviewPage() {
   const role = String(useAuthStore((s) => s.user?.role) || "").toLowerCase();
@@ -338,6 +307,7 @@ function ContentReviewPage() {
         open={Boolean(openId)}
         onClose={() => setOpenId(null)}
         title="Chi tiết yêu cầu"
+        size="xl"
       >
         {detailQuery.isLoading ? (
           <SkeletonText lines={8} />
@@ -345,48 +315,44 @@ function ContentReviewPage() {
           <ErrorState error={detailQuery.error} onRetry={detailQuery.refetch} />
         ) : detail ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                tone={(ACTION_META[detail.action] ?? {}).tone ?? "neutral"}
-              >
-                {(ACTION_META[detail.action] ?? {}).label ?? detail.action}
-              </Badge>
-              <Badge
-                tone={(STATUS_META[detail.status] ?? {}).tone ?? "neutral"}
-              >
-                {(STATUS_META[detail.status] ?? {}).label ?? detail.status}
-              </Badge>
-              <span className="text-sm text-ink-muted">
+            <div className="rounded-xl border border-line bg-canvas p-4">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
                 {RESOURCE_LABEL[detail.resourceType] ?? detail.resourceType}
                 {detail.resourceId ? ` #${detail.resourceId}` : ""}
-              </span>
-            </div>
-            <div className="text-sm text-ink">
-              <p>
-                <span className="text-ink-muted">Giáo viên: </span>
-                {detail.requestedByEmail || `#${detail.requestedBy}`}
               </p>
-              <p>
-                <span className="text-ink-muted">Gửi lần đầu: </span>
-                {timeAgo(detail.createdAt)}
-                {detail.revision > 1
-                  ? ` · cập nhật lần ${detail.revision} ${timeAgo(detail.updatedAt)}`
-                  : ""}
-              </p>
-              {detail.reviewNote && (
+              <h3 className="mt-1 text-lg font-semibold text-navy-700">
+                {detail.title || "Chưa có tiêu đề"}
+              </h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge tone={(ACTION_META[detail.action] ?? {}).tone ?? "neutral"}>
+                  {(ACTION_META[detail.action] ?? {}).label ?? detail.action}
+                </Badge>
+                <Badge tone={(STATUS_META[detail.status] ?? {}).tone ?? "neutral"}>
+                  {(STATUS_META[detail.status] ?? {}).label ?? detail.status}
+                </Badge>
+              </div>
+              <div className="mt-3 grid gap-1 text-sm text-ink sm:grid-cols-2">
                 <p>
+                  <span className="text-ink-muted">Giáo viên: </span>
+                  {detail.requestedByEmail || `#${detail.requestedBy}`}
+                </p>
+                <p>
+                  <span className="text-ink-muted">Gửi: </span>
+                  {timeAgo(detail.createdAt)}
+                  {detail.revision > 1
+                    ? ` · sửa lần ${detail.revision} ${timeAgo(detail.updatedAt)}`
+                    : ""}
+                </p>
+              </div>
+              {detail.reviewNote && (
+                <p className="mt-2 text-sm">
                   <span className="text-ink-muted">Ghi chú duyệt: </span>
                   {detail.reviewNote}
                 </p>
               )}
             </div>
 
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-ink-muted">
-                Nội dung gửi duyệt
-              </p>
-              <PayloadView payload={detail.payload} />
-            </div>
+            <ReviewPreview detail={detail} />
 
             {detail.status === "PENDING" && (
               <div className="flex justify-end gap-2 border-t border-line pt-4">

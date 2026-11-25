@@ -14,6 +14,7 @@ import {
   Pencil,
   SpellCheck,
   Trash2,
+  Undo2,
   X,
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
@@ -37,6 +38,7 @@ export default function AiDetailView({
   onDelete,
   onRestore,
   canManage,
+  canReview = true,
 }) {
   const [questionIndex, setQuestionIndex] = useState(0)
   const questions = item.questions || []
@@ -113,23 +115,24 @@ export default function AiDetailView({
                       Sửa
                     </Button>
                   )}
-                  {(item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') && (
+                  {canReview && (item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') && (
                     <Button size="sm" onClick={onApprove} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                       Phê duyệt & Xuất bản
                     </Button>
                   )}
-                  {item.status === 'PENDING_REVIEW' && (
+                  {canReview && item.status === 'PENDING_REVIEW' && (
                     <Button size="sm" variant="danger" onClick={onReject} aria-label="Từ chối">
                       <X size={16} />
                     </Button>
                   )}
-                  {item.status === 'APPROVED' && (
+                  {canReview && item.status === 'APPROVED' && (
                     <button
                       type="button"
                       onClick={onRevoke}
                       className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 cursor-pointer"
                     >
-                      ↩ Thu hồi xuất bản
+                      <Undo2 size={14} strokeWidth={1.75} />
+                      Thu hồi xuất bản
                     </button>
                   )}
                   <Button size="sm" variant="danger" icon={Trash2} onClick={onDelete}>

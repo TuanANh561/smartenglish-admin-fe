@@ -103,7 +103,7 @@ export default function AiContentToolbar({
           )}
 
           {/* Nút Duyệt tất cả (chỉ hiện khi có bài cần duyệt) */}
-          {pendingCount > 0 && !showTrash && (
+          {onBulkApprove && pendingCount > 0 && !showTrash && (
             <Button
               size="sm"
               variant="secondary"

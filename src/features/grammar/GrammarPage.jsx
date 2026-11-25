@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -383,6 +384,7 @@ function GrammarPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              <PendingRequestRows type="GRAMMAR_LESSON" colSpan={7} hidden={activeTab === 'trash' || ownerFilter === 'system'} />
               {listLoading ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center">

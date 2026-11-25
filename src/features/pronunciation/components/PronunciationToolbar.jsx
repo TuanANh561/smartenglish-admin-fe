@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
-import { Plus, RefreshCw, RotateCcw, Search, Trash2 } from 'lucide-react'
+import { Plus, RefreshCw, RotateCcw, Search, Trash2, Upload } from 'lucide-react'
 import { PRONUNCIATION_CATEGORIES } from '../pronunciationLessonApi'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
@@ -25,6 +25,7 @@ export default function PronunciationToolbar({
   onToggleTrash,
   trashCount = 0,
   onOpenCreate,
+  onOpenImport,
   ownerFilter,
   onOwnerFilterChange,
   onReload,
@@ -89,6 +90,18 @@ export default function PronunciationToolbar({
 
         {ownerFilter ? <OwnershipSelect value={ownerFilter} onChange={onOwnerFilterChange} /> : null}
         <PendingReviewButton type="PRONUNCIATION_LESSON" />
+
+        {!trashView && onOpenImport && (
+          <button
+            type="button"
+            onClick={onOpenImport}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-ink-muted hover:bg-canvas hover:text-ink transition-colors cursor-pointer"
+            title="Nhập từ file JSON"
+            aria-label="Nhập từ file JSON"
+          >
+            <Upload size={16} strokeWidth={1.75} />
+          </button>
+        )}
 
         {/* Thêm bài phát âm (Icon-only) */}
         {!trashView && (

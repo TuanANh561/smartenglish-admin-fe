@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { Volume2, Play, Pencil, Trash2, RotateCcw, BookOpen, Plus, Search } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -25,6 +26,7 @@ export function VocabTable({
   onlineResult = null,
   isLookingUp = false,
   lookupActive = false,
+  showPending = false,
 }) {
   const showOnline = lookupActive && vocabList.length === 0
   return (
@@ -59,6 +61,7 @@ export function VocabTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
+          <PendingRequestRows type="WORD" colSpan={vocabularyColumns.length + 2} hidden={!showPending || trashView} />
           {isLoading || (showOnline && isLookingUp) ? (
             <tr>
               <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
@@ -80,7 +83,7 @@ export function VocabTable({
                   {col.accessorKey === 'word' ? (
                     <div className="space-y-1">
                       {col.cell({ getValue: () => onlineResult.word, row: { original: onlineResult } })}
-                      <Badge tone="warning">Chưa có trong kho</Badge>
+                      <Badge tone="warning" className="whitespace-nowrap">Chưa có trong kho</Badge>
                     </div>
                   ) : (
                     col.cell({ getValue: () => onlineResult[col.accessorKey], row: { original: onlineResult } })

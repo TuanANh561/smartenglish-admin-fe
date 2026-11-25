@@ -5,6 +5,13 @@ import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 import Select from '@/components/ui/Select'
 import { CLASS_STATUS, LEVEL_COLOR, formatTeacherName } from '../classConstants'
+
+const STATUS_TONE = {
+  success: { bg: '#DCFCE7', text: '#15803D' },
+  warning: { bg: '#FEF3C7', text: '#A16207' },
+  danger: { bg: '#FEE2E2', text: '#B91C1C' },
+  neutral: { bg: '#f1f5f9', text: '#475569' },
+}
 import { http } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { createClass, deleteClass, getTeacherClasses, updateClass, getTeacherQuotaStatus } from '../classApi'
@@ -347,7 +354,7 @@ export default function ClassListView({ onViewClass }) {
           <table className="w-full text-left text-sm table-fixed">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className={`px-3 py-3 ${isAdmin ? 'w-[26%]' : 'w-[33%]'} whitespace-nowrap`}>TÊN LỚP</th>
+                <th className={`px-3 py-3 ${isAdmin ? 'w-[22%]' : 'w-[29%]'} whitespace-nowrap`}>TÊN LỚP</th>
                 {isAdmin && (
                   <th className="px-2.5 py-3 w-[13%] whitespace-nowrap">GIẢNG VIÊN</th>
                 )}
@@ -356,7 +363,7 @@ export default function ClassListView({ onViewClass }) {
                 <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[7%]' : 'w-[8%]'} whitespace-nowrap`}>HỌC VIÊN</th>
                 <th className={`px-2 py-3 text-center ${isAdmin ? 'w-[6%]' : 'w-[6%]'} whitespace-nowrap`}>BÀI TẬP</th>
                 <th className={`px-2 py-3 ${isAdmin ? 'w-[12%]' : 'w-[12%]'} whitespace-nowrap`}>TRẠNG THÁI</th>
-                <th className={`px-3 py-3 text-right ${isAdmin ? 'w-[8%]' : 'w-[8%]'} whitespace-nowrap`}>THAO TÁC</th>
+                <th className="px-3 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -374,8 +381,8 @@ export default function ClassListView({ onViewClass }) {
                 </tr>
               ) : (
                 paged.map((cls) => {
-                  const statusKey = (cls.status || 'ACTIVE').toLowerCase()
-                  const statusMeta = CLASS_STATUS[statusKey] || CLASS_STATUS.active
+                  const statusKey = cls.pendingAction ? 'PENDING_APPROVAL' : cls.status || 'ACTIVE'
+                  const statusMeta = CLASS_STATUS[statusKey] || CLASS_STATUS[String(statusKey).toLowerCase()] || CLASS_STATUS.active
                   const levelKey = cls.cefrTarget || cls.level || 'B1'
                   const levelStyle = LEVEL_COLOR[levelKey] ?? LEVEL_COLOR.B1
 
@@ -478,18 +485,8 @@ export default function ClassListView({ onViewClass }) {
                         <span
                           className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap shrink-0"
                           style={{
-                            backgroundColor:
-                              statusKey === 'active'
-                                ? '#ecfdf5'
-                                : statusKey === 'upcoming'
-                                  ? '#fef3c7'
-                                  : '#f1f5f9',
-                            color:
-                              statusKey === 'active'
-                                ? '#059669'
-                                : statusKey === 'upcoming'
-                                  ? '#d97706'
-                                  : '#475569',
+                            backgroundColor: STATUS_TONE[statusMeta.tone]?.bg ?? '#f1f5f9',
+                            color: STATUS_TONE[statusMeta.tone]?.text ?? '#475569',
                           }}
                         >
                           <span

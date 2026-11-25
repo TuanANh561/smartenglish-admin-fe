@@ -1,3 +1,5 @@
+import JsonImportModal from '@/components/ui/JsonImportModal'
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -80,6 +82,20 @@ const CATEGORY_FILTER_OPTIONS = [
   { value: 'Luyện thi', label: 'Luyện thi (IELTS / TOEIC)' },
 ]
 
+const PRONUNCIATION_IMPORT_SAMPLE = [
+  {
+    title: 'Long vowel /iː/',
+    ipaSymbol: '/iː/',
+    category: 'Vowels',
+    cefrLevel: 'A2',
+    description: 'Nguyên âm dài, kéo dài hơn /ɪ/.',
+    mouthShapeGuide: 'Môi kéo sang hai bên như khi cười, lưỡi nâng cao.',
+    sampleWords: [{ word: 'sheep', ipa: '/ʃiːp/', meaning: 'con cừu' }],
+    sampleSentences: [{ text: 'Please keep the sheep clean.', ipa: '' }],
+    status: 'draft',
+  },
+]
+
 export default function PronunciationPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
@@ -124,6 +140,7 @@ export default function PronunciationPage() {
   const [selectedStatus, setSelectedStatus] = useState('all')
 
   const [trashView, setTrashView] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const own = useOwnership('PRONUNCIATION_LESSON')
   const [ownerFilter, setOwnerFilter] = useState(own.defaultFilter)
   const mineMode = own.isTeacher && ownerFilter === 'mine' && !trashView
@@ -584,6 +601,7 @@ export default function PronunciationPage() {
               refreshTrashCount()
             }}
             onOpenCreate={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
+            onOpenImport={() => setImportOpen(true)}
             ownerFilter={own.isTeacher ? ownerFilter : null}
             onOwnerFilterChange={setOwnerFilter}
           />
@@ -591,6 +609,12 @@ export default function PronunciationPage() {
           {(mineMode ? mine.isLoading : isLoadingIpa) ? (
             <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
           ) : ipaRows.length === 0 ? (
+            <>
+            <table className="w-full text-left text-sm table-fixed">
+              <tbody className="divide-y divide-slate-100">
+                <PendingRequestRows type="PRONUNCIATION_LESSON" colSpan={6} hidden={trashView || ownerFilter === 'system'} />
+              </tbody>
+            </table>
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
                 {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
@@ -601,6 +625,8 @@ export default function PronunciationPage() {
               <p className="text-xs text-slate-500 max-w-md mb-4">
                 {trashView
                   ? 'Hiện không có bài học phát âm nào trong thùng rác.'
+                  : mineMode
+                  ? 'Bạn chưa có bài phát âm nào đã được duyệt.'
                   : 'Hiện tại chưa có bài học nào trong cơ sở dữ liệu. Hãy bấm vào nút "Thêm bài phát âm" để tạo bài học đầu tiên.'}
               </p>
               {trashView ? (
@@ -623,6 +649,7 @@ export default function PronunciationPage() {
                 </Button>
               )}
             </div>
+            </>
           ) : (
             <div className="w-full">
               <table className="w-full text-left text-sm text-slate-700 table-fixed">
@@ -637,6 +664,7 @@ export default function PronunciationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  <PendingRequestRows type="PRONUNCIATION_LESSON" colSpan={6} hidden={trashView || ownerFilter === 'system'} />
                   {ipaRows.map((item) => (
                     <PronunciationTableRow
                       key={item.id}
@@ -1096,6 +1124,29 @@ export default function PronunciationPage() {
         confirmVariant="danger"
         onConfirm={handleConfirmPermanentDeleteIpa}
         onClose={() => setPermanentDeleteTarget(null)}
+      />
+      <JsonImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        title="Nhập bài phát âm từ JSON"
+        sample={PRONUNCIATION_IMPORT_SAMPLE}
+        titleOf={(item) => item?.title}
+        validate={(item) =>
+          !item?.title?.trim?.() ? 'Thiếu title' : !item?.ipaSymbol ? 'Thiếu ipaSymbol' : null
+        }
+        toPayload={(item) => ({
+          category: 'Vowels',
+          cefrLevel: 'B1',
+          status: 'draft',
+          aiMinScoreThreshold: 85,
+          sampleWords: [],
+          sampleSentences: [],
+          ...item,
+          authorName: user?.displayName || user?.fullName,
+          authorEmail: user?.email,
+        })}
+        create={createPronunciationLesson}
+        onDone={() => loadIpaLessons(false)}
       />
     </div>
   )

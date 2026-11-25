@@ -15,6 +15,7 @@ import {
   saveGeminiContent,
   softDeleteAIContent,
   updateAIContent,
+  isPendingReview,
 } from './aiContentService'
 import {
   generateCloze,
@@ -204,9 +205,13 @@ function AiContentPage() {
       return
     }
     const ids = manageableItems.map((item) => item.id)
-    await bulkApproveAIContents(ids, user)
-    await refresh()
-    toast.success(`Đã duyệt ${ids.length} bài học liệu & đề thi AI`)
+    try {
+      await bulkApproveAIContents(ids, user)
+      await refresh()
+      toast.success(`Đã duyệt ${ids.length} bài học liệu & đề thi AI`)
+    } catch (error) {
+      toast.error(error.message || 'Không thể duyệt nội dung')
+    }
   }
 
   const handleCardClick = (item) => {
@@ -264,7 +269,8 @@ function AiContentPage() {
     try {
       await revokeAIContent(selectedItem.id, '', user)
       await refresh()
-      toast.success('↩ Đã thu hồi — nội dung chuyển về chờ duyệt')
+      setSelectedItem((prev) => (prev ? { ...prev, status: 'PENDING_REVIEW' } : prev))
+      toast.success('Đã thu hồi xuất bản, nội dung chuyển về trạng thái chờ duyệt')
     } catch (error) {
       toast.error(error.message || 'Không thể thu hồi nội dung')
     }
@@ -272,7 +278,11 @@ function AiContentPage() {
 
   const handleSoftDelete = async (id) => {
     try {
-      await softDeleteAIContent(id, user)
+      const res = await softDeleteAIContent(id, user)
+      if (isPendingReview(res)) {
+        toast.success('Đã gửi yêu cầu xoá. Nội dung sẽ bị xoá sau khi quản trị viên duyệt.')
+        return
+      }
       await refresh()
       setSelectedItem(null)
       setView('list')
@@ -284,7 +294,11 @@ function AiContentPage() {
 
   const handleRestore = async (id) => {
     try {
-      await restoreAIContent(id)
+      const res = await restoreAIContent(id)
+      if (isPendingReview(res)) {
+        toast.success('Đã gửi yêu cầu khôi phục, chờ quản trị viên duyệt.')
+        return
+      }
       await refresh()
       setSelectedItem(null)
       setView('list')
@@ -393,6 +407,7 @@ function AiContentPage() {
           onRestore={() => handleRestore(selectedItem.id)}
           isTrash={showTrash || selectedItem.status === 'DELETED'}
           canManage={isOwnedByCurrentUser(selectedItem)}
+          canReview={!isTeacher}
         />
       </div>
     )
@@ -451,7 +466,7 @@ function AiContentPage() {
         trashCount={trashCount}
         pendingCount={pendingCount}
         onOpenCreationModal={() => setShowCreationForm(true)}
-        onBulkApprove={handleBulkApprove}
+        onBulkApprove={isTeacher ? null : handleBulkApprove}
         onReload={refresh}
         isGenerating={isGenerating}
       />
@@ -499,6 +514,7 @@ function AiContentPage() {
               onSoftDelete={() => handleSoftDelete(item.id)}
               showTrash={showTrash}
               canManage={isOwnedByCurrentUser(item)}
+              canReview={!isTeacher}
             />
           ))}
         </div>

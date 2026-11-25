@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { Eye, Lock, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Badge from '@/components/ui/Badge'
@@ -15,6 +16,7 @@ export default function CourseTable({
   isAdmin,
   isTrash = false,
   onRestore,
+  showPending = false,
 }) {
   return (
     <div className="w-full rounded-xl border border-line bg-white shadow-xs">
@@ -37,6 +39,7 @@ export default function CourseTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
+          <PendingRequestRows type="COURSE" colSpan={9} hidden={!showPending || isTrash} />
           {courses.length === 0 ? (
             <tr>
               <td colSpan={9} className="py-12 text-center text-slate-400">

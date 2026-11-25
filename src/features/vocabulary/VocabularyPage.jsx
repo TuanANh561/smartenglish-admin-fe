@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -82,6 +83,7 @@ export function VocabularyPage() {
           lookupActive={!vocab.trashView && !vocab.isLoading && Boolean(vocab.search) && vocab.vocabList.length === 0}
           onlineResult={vocab.onlineResult}
           isLookingUp={vocab.isLookingUp}
+          showPending={ownerFilter !== 'system'}
         />
 
         {/* Phân trang */}

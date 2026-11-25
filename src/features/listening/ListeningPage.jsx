@@ -1,3 +1,5 @@
+import JsonImportModal from '@/components/ui/JsonImportModal'
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Crown, Headphones, RotateCcw, Trash2 } from 'lucide-react'
@@ -13,6 +15,7 @@ import ListeningDetailDrawer from './components/ListeningDetailDrawer'
 import ListeningToolbar from './components/ListeningToolbar'
 import ListeningTableRow from './components/ListeningTableRow'
 import {
+  createListeningLesson,
   deleteListeningLesson,
   getListeningLessons,
   getListeningLessonById,
@@ -39,6 +42,29 @@ function extractCefr(levelStr) {
   return CEFR_MAP[code] ?? { bg: '#eff6ff', text: '#1d4ed8', code: code || 'B1' }
 }
 
+const LISTENING_IMPORT_SAMPLE = [
+  {
+    title: 'Booking a table',
+    description: 'Hội thoại đặt bàn ở nhà hàng.',
+    category: 'CONVERSATION',
+    topic: 'Du lịch',
+    accent: 'US Accent',
+    cefrLevel: 'A2',
+    duration: '00:40',
+    audioUrl: 'https://example.com/audio/booking.mp3',
+    transcript: "A: I'd like to book a table for two tonight. B: Sure, what time? A: Seven o'clock, please.",
+    questions: [
+      {
+        question: 'How many people is the table for?',
+        options: ['One', 'Two', 'Three', 'Four'],
+        correctIndex: 1,
+        explanation: "Người nói đặt bàn 'for two'.",
+      },
+    ],
+    status: 'draft',
+  },
+]
+
 function ListeningPage() {
   const user = useAuthStore((s) => s.user)
   const isTeacher = String(user?.role || '').toLowerCase().includes('teacher')
@@ -63,6 +89,7 @@ function ListeningPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [trashView, setTrashView] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const [activeLesson, setActiveLesson] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -408,6 +435,7 @@ function ListeningPage() {
             myLessonsCount={myLessonsCount}
             isTeacher={isTeacher}
             onOpenCreate={handleOpenCreate}
+            onOpenImport={() => setImportOpen(true)}
             onReload={fetchLessons}
           />
 
@@ -427,6 +455,7 @@ function ListeningPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
+                <PendingRequestRows type="LISTENING_LESSON" colSpan={7} hidden={trashView || ownershipFilter === 'system'} />
                 {(mineMode ? mine.isLoading : loading) ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center">
@@ -501,6 +530,29 @@ function ListeningPage() {
         variant="danger"
         onConfirm={handleConfirmPermanentDelete}
         onCancel={() => setPermanentDeleteTarget(null)}
+      />
+      <JsonImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        title="Nhập bài nghe từ JSON"
+        sample={LISTENING_IMPORT_SAMPLE}
+        titleOf={(item) => item?.title}
+        validate={(item) =>
+          !item?.title?.trim?.() ? 'Thiếu title' : !item?.transcript && !item?.audioUrl ? 'Thiếu transcript hoặc audioUrl' : null
+        }
+        toPayload={(item) => ({
+          titleEn: item.title,
+          titleVi: item.title,
+          category: 'CONVERSATION',
+          cefrLevel: 'B1',
+          status: 'draft',
+          questions: [],
+          ...item,
+        })}
+        create={(payload) =>
+          createListeningLesson(payload, { authorName: user?.displayName || user?.fullName, authorEmail: user?.email })
+        }
+        onDone={fetchLessons}
       />
     </div>
   )

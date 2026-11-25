@@ -6,6 +6,9 @@ import { mapAiTypeToExamCategory } from './components/aiContentConstants'
 const STORAGE_KEY = 'smartenglish_ai_content_v1'
 const MEMORY_STORE = []
 
+/** Giáo viên sửa / xoá nội dung đã duyệt: máy chủ xếp vào hàng chờ duyệt thay vì áp dụng ngay. */
+export const isPendingReview = (res) => Boolean(res && typeof res === 'object' && res.pendingReview)
+
 const STATUS_LABELS = {
   GENERATING: 'GENERATING',
   PENDING_REVIEW: 'PENDING_REVIEW',
@@ -287,17 +290,10 @@ export async function updateAIContent(id, payload = {}) {
       level: payload.level ?? target?.level,
       questions: payload.questions ?? target?.questions ?? [],
     })
+    if (isPendingReview(res)) return res
     updatedRecord = normalizeRecord(res)
-  } catch {
-    updatedRecord = normalizeRecord({
-      ...target,
-      ...payload,
-      title: payload.title ?? target?.title,
-      content: payload.content ?? target?.content,
-      definition: payload.definition ?? payload.content ?? target?.definition,
-      updatedAt: new Date().toISOString(),
-      status: 'PENDING_REVIEW',
-    })
+  } catch (err) {
+    throw new Error(err?.message || 'Không lưu được thay đổi')
   }
 
   const nextRecords = records.map((item) => (item.id === id ? updatedRecord : item))
@@ -314,18 +310,8 @@ export async function approveAIContent(id, currentUser = null) {
       params: { reviewer },
     })
     approvedRecord = normalizeRecord(res)
-  } catch {
-    const records = getAIContentRecords()
-    const target = records.find((item) => item.id === id)
-    if (!target) return null
-    approvedRecord = normalizeRecord({
-      ...target,
-      status: 'APPROVED',
-      approvedBy: reviewer,
-      approvedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      rejectionReason: '',
-    })
+  } catch (err) {
+    throw new Error(err?.message || 'Không duyệt được nội dung')
   }
 
   const records = getAIContentRecords()
@@ -342,17 +328,8 @@ export async function rejectAIContent(id, reason = '', currentUser = null) {
       params: { reason, reviewer },
     })
     rejectedRecord = normalizeRecord(res)
-  } catch {
-    const records = getAIContentRecords()
-    const target = records.find((item) => item.id === id)
-    if (!target) return null
-    rejectedRecord = normalizeRecord({
-      ...target,
-      status: 'REJECTED',
-      rejectionReason: reason || 'Nội dung không đạt tiêu chuẩn duyệt.',
-      approvedBy: reviewer,
-      updatedAt: new Date().toISOString(),
-    })
+  } catch (err) {
+    throw new Error(err?.message || 'Không từ chối được nội dung')
   }
 
   const records = getAIContentRecords()
@@ -369,18 +346,8 @@ export async function revokeAIContent(id, reason = '', currentUser = null) {
       params: { reviewer },
     })
     revokedRecord = normalizeRecord(res)
-  } catch {
-    const records = getAIContentRecords()
-    const target = records.find((item) => item.id === id)
-    if (!target) return null
-    revokedRecord = normalizeRecord({
-      ...target,
-      status: 'PENDING_REVIEW',
-      approvedBy: null,
-      approvedAt: null,
-      rejectionReason: reason || '',
-      updatedAt: new Date().toISOString(),
-    })
+  } catch (err) {
+    throw new Error(err?.message || 'Không thu hồi được nội dung')
   }
 
   const records = getAIContentRecords()
@@ -390,13 +357,15 @@ export async function revokeAIContent(id, reason = '', currentUser = null) {
 
 export async function softDeleteAIContent(id, currentUser = null) {
   const user = currentUser?.displayName || currentUser?.email || 'Admin'
+  let res
   try {
-    await http.delete(`/admin/ai/contents/${id}`, {
+    res = await http.delete(`/admin/ai/contents/${id}`, {
       params: { currentUser: user },
     })
-  } catch {
-    // ignore
+  } catch (err) {
+    throw new Error(err?.message || 'Không xoá được nội dung')
   }
+  if (isPendingReview(res)) return res
 
   const records = getAIContentRecords()
   const target = records.find((item) => item.id === id)
@@ -418,18 +387,10 @@ export async function restoreAIContent(id) {
   let restoredRecord
   try {
     const res = await http.put(`/admin/ai/contents/${id}/restore`)
+    if (isPendingReview(res)) return res
     restoredRecord = normalizeRecord(res)
-  } catch {
-    const records = getAIContentRecords()
-    const target = records.find((item) => item.id === id)
-    if (!target) return null
-    restoredRecord = normalizeRecord({
-      ...target,
-      status: 'PENDING_REVIEW',
-      deletedBy: null,
-      deletedAt: null,
-      updatedAt: new Date().toISOString(),
-    })
+  } catch (err) {
+    throw new Error(err?.message || 'Không khôi phục được nội dung')
   }
 
   const records = getAIContentRecords()
@@ -441,8 +402,8 @@ export async function bulkApproveAIContents(ids, currentUser = null) {
   const reviewer = currentUser?.displayName || currentUser?.email || 'Admin'
   try {
     await http.post('/admin/ai/contents/bulk-approve', { ids, reviewer })
-  } catch {
-    // fallback
+  } catch (err) {
+    throw new Error(err?.message || 'Không duyệt được các nội dung đã chọn')
   }
 
   const records = getAIContentRecords()
