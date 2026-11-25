@@ -79,6 +79,9 @@ export function VocabularyPage() {
           onPermanentDelete={(item) => vocab.setPermanentTarget(item)}
           onAutoImport={vocab.handleAutoImport}
           isImporting={vocab.isImporting}
+          lookupActive={!vocab.trashView && !vocab.isLoading && Boolean(vocab.search) && vocab.vocabList.length === 0}
+          onlineResult={vocab.onlineResult}
+          isLookingUp={vocab.isLookingUp}
         />
 
         {/* Phân trang */}

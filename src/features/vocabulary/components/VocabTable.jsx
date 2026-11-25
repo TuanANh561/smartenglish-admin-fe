@@ -1,4 +1,5 @@
-import { Volume2, Play, Pencil, Trash2, RotateCcw, BookOpen, Sparkles, Search } from 'lucide-react'
+import { Volume2, Play, Pencil, Trash2, RotateCcw, BookOpen, Plus, Search } from 'lucide-react'
+import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
 import { vocabularyColumns } from '../columns'
@@ -21,7 +22,11 @@ export function VocabTable({
   onAutoImport,
   isImporting = false,
   isMine,
+  onlineResult = null,
+  isLookingUp = false,
+  lookupActive = false,
 }) {
+  const showOnline = lookupActive && vocabList.length === 0
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full min-w-[860px] text-left text-sm table-fixed">
@@ -48,22 +53,63 @@ export function VocabTable({
             <th className="py-3 px-1.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500 w-[60px] whitespace-nowrap">
               Audio
             </th>
-            <th className="py-3 px-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 w-[80px] whitespace-nowrap">
+            <th className={`py-3 px-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap ${showOnline ? 'w-[150px]' : 'w-[80px]'}`}>
               Thao tác
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {isLoading ? (
+          {isLoading || (showOnline && isLookingUp) ? (
             <tr>
               <td colSpan={vocabularyColumns.length + 2} className="px-4 py-12 text-center">
                 <LoadingSpinner
                   text={
-                    search
+                    showOnline && isLookingUp
+                      ? `Kho chưa có "${search}", đang tra từ điển online...`
+                      : search
                       ? `Đang tìm kiếm từ "${search}"...`
                       : 'Đang tải danh sách từ vựng...'
                   }
                 />
+              </td>
+            </tr>
+          ) : showOnline && onlineResult ? (
+            <tr className="bg-slate-50/50">
+              {vocabularyColumns.map((col) => (
+                <td key={`online-${col.accessorKey}`} className="px-3.5 py-3 text-sm overflow-hidden">
+                  {col.accessorKey === 'word' ? (
+                    <div className="space-y-1">
+                      {col.cell({ getValue: () => onlineResult.word, row: { original: onlineResult } })}
+                      <Badge tone="warning">Chưa có trong kho</Badge>
+                    </div>
+                  ) : (
+                    col.cell({ getValue: () => onlineResult[col.accessorKey], row: { original: onlineResult } })
+                  )}
+                </td>
+              ))}
+              <td className="px-1.5 py-3 text-center">
+                <button
+                  onClick={(e) => onPlayAudio(e, { ...onlineResult, id: 'online' })}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                    playingId === 'online'
+                      ? 'bg-brand-500 text-white animate-pulse'
+                      : 'text-slate-400 hover:bg-brand-50 hover:text-brand-600'
+                  }`}
+                  title="Phát âm từ vựng"
+                >
+                  {playingId === 'online' ? <Volume2 size={16} /> : <Play size={16} strokeWidth={2} />}
+                </button>
+              </td>
+              <td className="px-4 py-3 text-right whitespace-nowrap">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={Plus}
+                  loading={isImporting}
+                  onClick={() => onAutoImport?.(onlineResult.word || search)}
+                >
+                  Thêm vào kho
+                </Button>
               </td>
             </tr>
           ) : vocabList.length === 0 ? (
@@ -88,27 +134,12 @@ export function VocabTable({
                         Chưa có từ vựng nào bị chuyển vào thùng rác
                       </p>
                     )}
-                    {!trashView && search && (
+                    {showOnline && (
                       <p className="text-xs text-slate-500 mt-1">
-                        Từ vựng này chưa có trong kho CSDL. Bạn có muốn tra cứu từ điển quốc tế & AI để nạp từ này không?
+                        Từ điển online cũng không có kết quả. Kiểm tra lại chính tả.
                       </p>
                     )}
                   </div>
-
-                  {!trashView && search && onAutoImport && (
-                    <div className="pt-2 flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        icon={Sparkles}
-                        loading={isImporting}
-                        onClick={() => onAutoImport(search)}
-                        className="shadow-sm font-semibold"
-                      >
-                        Tra cứu & Nạp từ "{search}" vào kho
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </td>
             </tr>
