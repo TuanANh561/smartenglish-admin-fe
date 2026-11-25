@@ -1,8 +1,8 @@
 import { api } from '@/lib/api'
 import { ENDPOINTS } from '@/lib/endpoints'
 
-export const fetchContentReviews = ({ status = 'PENDING', page = 0, size = 20 } = {}) =>
-  api.get(ENDPOINTS.contentReviews.list, { params: { status, page, size } })
+export const fetchContentReviews = ({ status = 'PENDING', type, page = 0, size = 20 } = {}) =>
+  api.get(ENDPOINTS.contentReviews.list, { params: { status, type: type || undefined, page, size } })
 
 export const fetchContentReviewDetail = (id) => api.get(ENDPOINTS.contentReviews.detail, { path: { id } })
 
