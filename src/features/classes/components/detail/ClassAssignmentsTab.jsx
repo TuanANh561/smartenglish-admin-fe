@@ -202,7 +202,7 @@ export default function ClassAssignmentsTab({
                         Điểm sàn đạt: <strong className="text-slate-700">{asm.passingScore || 5.0}</strong>
                       </span>
                       <span>
-                        Chấm điểm: <strong className="text-slate-700">{asm.isGraded ? 'Có tính điểm' : 'Không'}</strong>
+                        Làm lại: <strong className="text-slate-700">{asm.allowRetake ? 'Cho phép' : 'Không'}</strong>
                       </span>
                     </div>
 

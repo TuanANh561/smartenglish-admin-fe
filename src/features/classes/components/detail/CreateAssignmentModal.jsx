@@ -39,6 +39,7 @@ const EMPTY_FORM = {
   dueDate: '',
   passingScore: 5.0,
   isGraded: true,
+  allowRetake: false,
 }
 
 const extractList = (res) => {
@@ -349,6 +350,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
         passingScore: Number(formData.passingScore),
         isGraded: formData.isGraded,
+        allowRetake: formData.allowRetake,
       })
       toast.success('Đã giao bài tập mới cho lớp học!')
       handleClose()
@@ -624,13 +626,13 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
           <div className="flex items-center gap-2 pt-1">
             <input
               type="checkbox"
-              id="isGraded"
-              checked={formData.isGraded}
-              onChange={(e) => setFormData({ ...formData, isGraded: e.target.checked })}
+              id="allowRetake"
+              checked={formData.allowRetake}
+              onChange={(e) => setFormData({ ...formData, allowRetake: e.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
-            <label htmlFor="isGraded" className="text-xs font-semibold text-slate-700 cursor-pointer">
-              Tính điểm vào kết quả đánh giá học bạ
+            <label htmlFor="allowRetake" className="text-xs font-semibold text-slate-700 cursor-pointer">
+              Cho phép học viên làm lại
             </label>
           </div>
 
