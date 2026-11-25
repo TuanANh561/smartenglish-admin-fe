@@ -3,7 +3,6 @@ import Select from '@/components/ui/Select'
 import { ArrowLeft, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LISTENING_TOPICS, LISTENING_CATEGORIES, LISTENING_ACCENTS } from '../listeningConstants'
-import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 
 export default function ListeningToolbar({
   search,
@@ -160,7 +159,6 @@ export default function ListeningToolbar({
           </button>
         )}
 
-        <PendingReviewButton type="LISTENING_LESSON" />
 
         {!trashView && onOpenImport && (
           <button

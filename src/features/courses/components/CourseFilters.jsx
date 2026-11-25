@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, LayoutGrid, List, Loader2, Plus, RefreshCw, Search, Trash2, Upload, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
-import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 
 /**
  * Thanh công cụ tìm kiếm và bộ lọc khóa học (1 hàng duy nhất gọn gàng, đồng bộ)
@@ -189,7 +188,6 @@ export default function CourseFilters({
             </button>
           )}
 
-          <PendingReviewButton type="COURSE" />
 
           {!trashView && onOpenImport && (
             <button
