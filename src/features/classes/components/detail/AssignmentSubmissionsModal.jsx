@@ -7,6 +7,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { formatDate } from '@/lib/utils'
 import { getAssignmentSubmissions, gradeSubmission } from '../../classApi'
 import { ScoreBadge } from '../ClassSharedComponents'
+import { isSystemAssignment } from './assignmentGrading'
 
 const STATUS_META = {
   SUBMITTED: { label: 'Chờ chấm', className: 'bg-[#FEF3C7] text-[#A16207]' },
@@ -69,6 +70,7 @@ export default function AssignmentSubmissionsModal({ assignment, onClose, onGrad
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const assignmentId = assignment?.id
+  const systemGraded = isSystemAssignment(assignment)
 
   const load = async () => {
     setLoading(true)
@@ -97,7 +99,7 @@ export default function AssignmentSubmissionsModal({ assignment, onClose, onGrad
     <Modal
       isOpen={Boolean(assignment)}
       onClose={onClose}
-      title={assignment ? `Bài nộp — ${assignment.title}` : ''}
+      title={assignment ? `${systemGraded ? 'Kết quả' : 'Bài nộp'} — ${assignment.title}` : ''}
       className="max-w-2xl max-h-[85vh] overflow-y-auto"
     >
       {loading ? (
@@ -117,7 +119,13 @@ export default function AssignmentSubmissionsModal({ assignment, onClose, onGrad
       ) : (
         <ul className="space-y-3">
           {submissions.map((s) => {
-            const meta = STATUS_META[s.status] || STATUS_META.SUBMITTED
+            const meta =
+              systemGraded && s.status === 'GRADED' && s.gradedBy == null
+                ? { label: 'Hệ thống đã chấm', className: STATUS_META.GRADED.className }
+                : systemGraded && s.status !== 'GRADED'
+                  ? { label: s.score != null ? 'Đã làm' : 'Đã hoàn thành', className: STATUS_META.GRADED.className }
+                  : STATUS_META[s.status] || STATUS_META.SUBMITTED
+            const shownScore = s.status === 'GRADED' || systemGraded ? s.score : null
             return (
               <li key={s.id} className="rounded-xl border border-line p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -132,7 +140,7 @@ export default function AssignmentSubmissionsModal({ assignment, onClose, onGrad
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.className}`}>
                       {meta.label}
                     </span>
-                    {s.status === 'GRADED' && <ScoreBadge score={Number(s.score)} />}
+                    {shownScore != null && <ScoreBadge score={Number(shownScore)} />}
                   </div>
                 </div>
 
@@ -152,14 +160,16 @@ export default function AssignmentSubmissionsModal({ assignment, onClose, onGrad
                     <span className="truncate">{s.attachmentName || 'File bài làm'}</span>
                   </a>
                 )}
-                {s.status !== 'GRADED' && s.score != null && (
+                {!systemGraded && s.status !== 'GRADED' && s.score != null && (
                   <p className="mt-2 text-xs text-ink-muted">
                     Điểm hệ thống tự chấm: <strong className="text-navy-700">{s.score}</strong>
                     {s.referenceResultId ? ` · Lượt làm bài #${s.referenceResultId}` : ''}
                   </p>
                 )}
 
-                <GradeForm key={`${s.id}-${s.gradedAt || ''}`} submission={s} onGraded={handleGraded} />
+                {!systemGraded && (
+                  <GradeForm key={`${s.id}-${s.gradedAt || ''}`} submission={s} onGraded={handleGraded} />
+                )}
               </li>
             )
           })}
