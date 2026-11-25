@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -477,6 +478,7 @@ export default function QuizBankPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              <PendingRequestRows type="EXAM" colSpan={8} hidden={trashView || authorFilter === 'system' || activeTab !== 'exams'} />
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">

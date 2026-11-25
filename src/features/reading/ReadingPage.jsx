@@ -1,3 +1,4 @@
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -322,6 +323,7 @@ function ReadingPage() {
                 </tr>
               </thead>
             <tbody className="divide-y divide-slate-100">
+              <PendingRequestRows type="READING_PASSAGE" colSpan={8} hidden={trashView || ownerFilter === 'system'} />
               {(mineMode ? mine.isLoading : isLoading) ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">

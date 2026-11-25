@@ -1,3 +1,7 @@
+import { ENDPOINTS } from '@/lib/endpoints'
+import { api } from '@/lib/api'
+import JsonImportModal from '@/components/ui/JsonImportModal'
+import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RotateCcw, Trash2 } from 'lucide-react'
@@ -33,9 +37,26 @@ const saveStoredCourseTrash = (list) => {
  * Trang Quản Lý Khóa Học & Lộ Trình Học
  * Dùng dữ liệu trực tiếp từ Backend API
  */
+const COURSE_TYPES = ['STRUCTURED', 'SELF_PACED', 'EXAM_PREP', 'CONVERSATION']
+
+const COURSE_IMPORT_SAMPLE = [
+  {
+    titleVi: 'Giao tiếp nhà hàng',
+    titleEn: 'Restaurant English',
+    descriptionVi: 'Mẫu câu gọi món, đặt bàn và thanh toán.',
+    courseType: 'CONVERSATION',
+    cefrLevelMin: 'A2',
+    cefrLevelMax: 'B1',
+    totalLessons: 6,
+    estimatedHours: 4,
+    isPremium: false,
+  },
+]
+
 export default function CoursesPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const [importOpen, setImportOpen] = useState(false)
   const normalizedRole = String(user?.role || '').toLowerCase()
   const isAdmin = normalizedRole.includes('admin')
   const isTeacher = normalizedRole.includes('teacher')
@@ -277,6 +298,7 @@ export default function CoursesPage() {
         totalCount={courses.length}
         trashView={trashView}
         onToggleTrash={handleToggleTrash}
+        onOpenImport={() => setImportOpen(true)}
         trashCount={trashCourses.length}
       />
 
@@ -299,6 +321,7 @@ export default function CoursesPage() {
           isAdmin={isAdmin}
           isTrash={trashView}
           onRestore={handleRestoreCourse}
+          showPending={authorFilter !== 'system'}
         />
       ) : (
         <CourseGrid
@@ -335,6 +358,32 @@ export default function CoursesPage() {
         course={courseToDelete}
         isDeleting={isDeleting}
         isPermanent={trashView}
+      />
+      <JsonImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        title="Nhập khoá học từ JSON"
+        sample={COURSE_IMPORT_SAMPLE}
+        titleOf={(item) => item?.titleVi || item?.titleEn}
+        validate={(item) =>
+          !item?.titleVi?.trim?.() && !item?.titleEn?.trim?.()
+            ? 'Thiếu titleVi'
+            : item.courseType && !COURSE_TYPES.includes(item.courseType)
+              ? 'courseType không hợp lệ'
+              : null
+        }
+        toPayload={(item) => ({
+          courseType: 'STRUCTURED',
+          cefrLevelMin: 'A1',
+          cefrLevelMax: 'A2',
+          isPremium: false,
+          isPublished: false,
+          ...item,
+          titleVi: item.titleVi || item.titleEn,
+          titleEn: item.titleEn || item.titleVi,
+        })}
+        create={(payload) => api.post(ENDPOINTS.courses.create, { data: payload })}
+        onDone={loadCourses}
       />
     </div>
   )

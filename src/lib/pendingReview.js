@@ -17,7 +17,7 @@ export function isPendingReviewResponse(response) {
 
 export function notifyPendingReview(message) {
   lastPendingAt = Date.now()
-  toast(message || 'Đã gửi yêu cầu. Nội dung sẽ được áp dụng sau khi quản trị viên duyệt.', { duration: 6000 })
+  toast(message || 'Đã gửi yêu cầu. Nội dung sẽ được áp dụng sau khi quản trị viên duyệt.', { duration: 6000, id: 'pending-review' })
   window.dispatchEvent(new Event(PENDING_REVIEW_EVENT))
 }
 

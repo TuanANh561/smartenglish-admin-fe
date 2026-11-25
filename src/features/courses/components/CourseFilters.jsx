@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, LayoutGrid, List, Loader2, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react'
+import { ArrowLeft, LayoutGrid, List, Loader2, Plus, RefreshCw, Search, Trash2, Upload, X } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
@@ -29,6 +29,7 @@ export default function CourseFilters({
   trashView = false,
   onToggleTrash,
   trashCount = 0,
+  onOpenImport,
 }) {
   const hasActiveFilters =
     search ||
@@ -189,6 +190,18 @@ export default function CourseFilters({
           )}
 
           <PendingReviewButton type="COURSE" />
+
+          {!trashView && onOpenImport && (
+            <button
+              type="button"
+              onClick={onOpenImport}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-ink-muted hover:bg-canvas hover:text-ink transition-colors cursor-pointer"
+              title="Nhập từ file JSON"
+              aria-label="Nhập từ file JSON"
+            >
+              <Upload size={16} strokeWidth={1.75} />
+            </button>
+          )}
 
           {/* Nút Tạo khóa học mới (Icon-only) */}
           {!trashView && (

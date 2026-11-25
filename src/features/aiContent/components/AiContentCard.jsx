@@ -148,6 +148,7 @@ function getTopicTheme(item) {
 export default function AiContentCard({
   item,
   canManage,
+  canReview = true,
   showTrash,
   onClick,
   onApprove,
@@ -246,7 +247,7 @@ export default function AiContentCard({
         {/* Action buttons */}
         {canManage && !showTrash && item.status !== 'DELETED' && (
           <div className="flex items-center gap-1.5">
-            {item.status === 'PENDING_REVIEW' && (
+            {canReview && item.status === 'PENDING_REVIEW' && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -259,7 +260,7 @@ export default function AiContentCard({
                 Duyệt
               </button>
             )}
-            {item.status === 'PENDING_REVIEW' && (
+            {canReview && item.status === 'PENDING_REVIEW' && (
               <button
                 type="button"
                 onClick={(e) => {
