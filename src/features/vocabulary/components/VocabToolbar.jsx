@@ -3,6 +3,7 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { SORT_OPTIONS, PARTS_OF_SPEECH, PART_OF_SPEECH_LABEL } from '../hooks/useVocabulary'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
+import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
 
 /**
  * Thanh công cụ tìm kiếm, bộ lọc, thao tác thêm mới/import và chuyển đổi thùng rác.
@@ -24,6 +25,8 @@ export function VocabToolbar({
   onOpenImport,
   onOpenCreate,
   onToggleTrash,
+  ownerFilter,
+  onOwnerFilterChange,
 }) {
   return (
     <div className="flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between px-6 py-4 border-b border-slate-100">
@@ -106,6 +109,7 @@ export function VocabToolbar({
           </Button>
         )}
 
+        {ownerFilter ? <OwnershipSelect value={ownerFilter} onChange={onOwnerFilterChange} /> : null}
         <PendingReviewButton type="WORD" />
 
         {/* Nút Thêm mới (Chỉ hiển thị khi không ở thùng rác) */}

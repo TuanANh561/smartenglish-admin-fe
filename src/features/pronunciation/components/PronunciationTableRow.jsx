@@ -1,5 +1,6 @@
 import { Copy, Eye, Headphones, Pencil, RotateCcw, Trash2, Volume2 } from 'lucide-react'
 import { cn, formatRelativeTime } from '@/lib/utils'
+import OwnerBadge from '@/features/contentReview/OwnerBadge'
 
 const LEVEL_COLOR = {
   A1: { bg: '#f0fdf4', text: '#15803d' },
@@ -21,7 +22,9 @@ export default function PronunciationTableRow({
   onDelete,
   onRestore,
   onPermanentDelete,
+  owner = null, // null: quản trị viên; 'mine' | 'other': giáo viên
 }) {
+  const locked = owner === 'other'
   const isPublished = item.status === 'published'
   const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.A1
 
@@ -104,7 +107,8 @@ export default function PronunciationTableRow({
         className="px-4 py-3 whitespace-nowrap text-right"
       >
         <div className="flex items-center justify-end gap-1 text-slate-400">
-          {isTrash ? (
+          {owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
+          {isTrash && locked ? null : isTrash ? (
             <>
               <button
                 type="button"
@@ -133,6 +137,7 @@ export default function PronunciationTableRow({
               >
                 <Eye size={17} />
               </button>
+              {locked ? null : (
               <button
                 type="button"
                 onClick={(e) => onEdit(e, item)}
@@ -141,6 +146,7 @@ export default function PronunciationTableRow({
               >
                 <Pencil size={17} />
               </button>
+              )}
               <button
                 type="button"
                 onClick={(e) => onDuplicate(e, item)}
@@ -149,6 +155,7 @@ export default function PronunciationTableRow({
               >
                 <Copy size={17} />
               </button>
+              {locked ? null : (
               <button
                 type="button"
                 onClick={(e) => onDelete(e, item)}
@@ -157,6 +164,7 @@ export default function PronunciationTableRow({
               >
                 <Trash2 size={17} />
               </button>
+              )}
             </>
           )}
         </div>

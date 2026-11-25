@@ -1,5 +1,6 @@
 import { BookOpen, Copy, Eye, Lock, Pencil, RotateCcw, Sparkles, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import OwnerBadge from '@/features/contentReview/OwnerBadge'
 
 const LEVEL_COLOR = {
   A1: { bg: '#f0fdf4', text: '#15803d' },
@@ -25,6 +26,7 @@ export default function ReadingTableRow({
   onRestoreClick,
   onPermanentDeleteClick,
   onTogglePublish,
+  owner = null,
   onDuplicate,
 }) {
   const levelStyle  = LEVEL_COLOR[item.cefrLevel]  ?? LEVEL_COLOR.B1
@@ -108,7 +110,8 @@ export default function ReadingTableRow({
           className="flex items-center justify-end gap-0.5 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
-          {isTrash ? (
+          {owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
+          {isTrash && !canManage ? null : isTrash ? (
             <>
               <button
                 type="button"
@@ -165,7 +168,7 @@ export default function ReadingTableRow({
                   </button>
                 </>
               )}
-              {!canManage && (
+              {!canManage && !owner && (
                 <span className="p-1.5 text-slate-300" title="Chỉ xem">
                   <Lock size={15} />
                 </span>

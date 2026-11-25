@@ -28,6 +28,7 @@ import {
   seedToeic200ExamApi,
   EXAM_CATEGORIES,
 } from './examApi'
+import { useOwnership } from '@/features/contentReview/useOwnership'
 
 const PAGE_SIZE = 8
 
@@ -93,8 +94,10 @@ export default function QuizBankPage() {
   }, [defaultAuthorFilter, user?.id])
 
   // ── Kiểm tra quyền sở hữu & nguồn gốc đề thi ────────────────────────────────
+  const ownership = useOwnership('EXAM')
   const isOwnedByMe = useCallback((item) => {
     if (!item || !user) return false
+    if (ownership.isMine(item)) return true
     const email = user.email?.toLowerCase()
     const name = (user.displayName || user.username || '').toLowerCase()
     const itemEmail = item.authorEmail?.toLowerCase()
@@ -104,7 +107,7 @@ export default function QuizBankPage() {
       (item.createdBy != null && user.id != null && String(item.createdBy) === String(user.id)) ||
       (itemName && name && itemName === name)
     )
-  }, [user])
+  }, [user, ownership])
 
   const isSystemExam = useCallback((item) => {
     if (!item) return false

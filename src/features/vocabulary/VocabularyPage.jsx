@@ -7,6 +7,9 @@ import { useVocabulary, PAGE_SIZE } from './hooks/useVocabulary'
 import VocabToolbar from './components/VocabToolbar'
 import VocabTable from './components/VocabTable'
 import VocabTrashBanner from './components/VocabTrashBanner'
+import { api } from '@/lib/api'
+import { ENDPOINTS } from '@/lib/endpoints'
+import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 
 /**
  * Trang quản lý Kho từ vựng gốc của hệ thống (Clean Architecture).
@@ -17,6 +20,15 @@ export function VocabularyPage() {
   const [isPdfImportOpen, setIsPdfImportOpen] = useState(false)
 
   const vocab = useVocabulary()
+  const own = useOwnership('WORD')
+  const [ownerFilter, setOwnerFilter] = useState(own.defaultFilter)
+  const mineMode = own.isTeacher && ownerFilter === 'mine' && !vocab.trashView
+  const mine = useMyItems('WORD', own.ownedIds, (id) => api.get(ENDPOINTS.words.detail, { path: { id } }), {
+    enabled: mineMode,
+    search: vocab.search,
+    fields: ['word', 'vietnameseMeaning'],
+  })
+  const rows = mineMode ? mine.items : own.applyFilter(vocab.vocabList, ownerFilter)
 
   return (
     <div className="space-y-4">
@@ -48,12 +60,15 @@ export function VocabularyPage() {
           onOpenImport={() => setIsPdfImportOpen(true)}
           onOpenCreate={() => navigate('/app/hoc-lieu/tu-vung/tao-moi')}
           onToggleTrash={vocab.toggleTrash}
+          ownerFilter={own.isTeacher ? ownerFilter : null}
+          onOwnerFilterChange={setOwnerFilter}
         />
 
         {/* Bảng dữ liệu từ vựng */}
         <VocabTable
-          isLoading={vocab.isLoading}
-          vocabList={vocab.vocabList}
+          isLoading={mineMode ? mine.isLoading : vocab.isLoading}
+          vocabList={rows}
+          isMine={own.isTeacher ? own.isMine : undefined}
           trashView={vocab.trashView}
           search={vocab.search}
           playingId={vocab.playingId}
@@ -64,10 +79,13 @@ export function VocabularyPage() {
           onPermanentDelete={(item) => vocab.setPermanentTarget(item)}
           onAutoImport={vocab.handleAutoImport}
           isImporting={vocab.isImporting}
+          lookupActive={!vocab.trashView && !vocab.isLoading && Boolean(vocab.search) && vocab.vocabList.length === 0}
+          onlineResult={vocab.onlineResult}
+          isLookingUp={vocab.isLookingUp}
         />
 
         {/* Phân trang */}
-        {vocab.total > 0 && (
+        {!mineMode && vocab.total > 0 && (
           <div className="border-t border-slate-100 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-slate-500">
               Hiển thị <strong>{(vocab.page - 1) * PAGE_SIZE + 1}</strong>-

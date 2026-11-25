@@ -2,6 +2,7 @@ import { ArrowLeft, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
+import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const STATUS_OPTIONS = [
@@ -25,6 +26,8 @@ export default function ReadingToolbar({
   onToggleTrash,
   trashCount,
   onOpenCreate,
+  ownerFilter,
+  onOwnerFilterChange,
   onOpenPdfImport,
   onReload,
 }) {
@@ -130,6 +133,7 @@ export default function ReadingToolbar({
           </button>
         )}
 
+        {ownerFilter ? <OwnershipSelect value={ownerFilter} onChange={onOwnerFilterChange} /> : null}
         <PendingReviewButton type="READING_PASSAGE" />
 
         {/* Thêm bài đọc (Icon-only) */}

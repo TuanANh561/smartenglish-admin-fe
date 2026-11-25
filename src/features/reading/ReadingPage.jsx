@@ -13,6 +13,7 @@ import ReadingToolbar from './components/ReadingToolbar'
 import ReadingTableRow from './components/ReadingTableRow'
 import {
   getReadingPassages,
+  getReadingPassageById,
   getReadingTopics,
   getReadingTrashCount,
   deleteReadingPassage,
@@ -21,6 +22,7 @@ import {
   togglePublishReadingPassage,
   duplicateReadingPassage,
 } from './readingApi'
+import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 
 const PAGE_SIZE = 8
 
@@ -133,11 +135,17 @@ function ReadingPage() {
     toast.success('Đã làm mới danh sách bài đọc')
   }
 
-  const canManage = (item) => {
-    if (!item) return false
-    if (!user || user?.role !== 'student') return true
-    return item.authorEmail === user.email || !item.authorEmail
-  }
+  const own = useOwnership('READING_PASSAGE')
+  const [ownerFilter, setOwnerFilter] = useState(own.defaultFilter)
+  // Giáo viên chỉ sửa / xoá bài đọc do mình tạo; quản trị viên được thao tác mọi bài
+  const canManage = (item) => Boolean(item) && own.canManage(item)
+  const mineMode = own.isTeacher && ownerFilter === 'mine' && !trashView
+  const mine = useMyItems('READING_PASSAGE', own.ownedIds, getReadingPassageById, {
+    enabled: mineMode,
+    search,
+    fields: ['title', 'titleEn', 'titleVi', 'topic'],
+  })
+  const rows = mineMode ? mine.items : own.applyFilter(passages, ownerFilter)
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleTogglePublish = async (item) => {
@@ -292,6 +300,8 @@ function ReadingPage() {
             onToggleTrash={handleToggleTrash}
             trashCount={trashCount}
             onOpenCreate={() => navigate('/app/hoc-lieu/bai-doc/tao-moi')}
+            ownerFilter={own.isTeacher ? ownerFilter : null}
+            onOwnerFilterChange={setOwnerFilter}
             onOpenPdfImport={() => setIsPdfImportOpen(true)}
             onReload={handleReload}
           />
@@ -312,13 +322,13 @@ function ReadingPage() {
                 </tr>
               </thead>
             <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
+              {(mineMode ? mine.isLoading : isLoading) ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">
                     <LoadingSpinner text="Đang tải danh sách bài đọc..." />
                   </td>
                 </tr>
-              ) : passages.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-14 text-center">
                     <div className="flex flex-col items-center gap-2">
@@ -339,10 +349,11 @@ function ReadingPage() {
                   </td>
                 </tr>
               ) : (
-                passages.map((item) => (
+                rows.map((item) => (
                   <ReadingTableRow
                     key={item.id}
                     item={item}
+                    owner={own.isTeacher ? (own.isMine(item) ? 'mine' : 'other') : null}
                     isTrash={trashView}
                     canManage={canManage(item)}
                     onRowClick={setActivePassage}
@@ -360,6 +371,7 @@ function ReadingPage() {
         </div>
 
           {/* Pagination */}
+          {!mineMode && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">
             <p className="text-xs text-slate-500">
               {total === 0
@@ -371,6 +383,7 @@ function ReadingPage() {
               <Pagination page={page} totalPages={totalPages} onChange={setPage} />
             )}
           </div>
+          )}
         </div>
       )}
 

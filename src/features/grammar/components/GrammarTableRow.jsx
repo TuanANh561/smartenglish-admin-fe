@@ -1,5 +1,6 @@
 import { BookOpen, Copy, Eye, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
+import OwnerBadge from '@/features/contentReview/OwnerBadge'
 
 const LEVEL_COLOR = {
   A1: { bg: '#f0fdf4', text: '#15803d' },
@@ -20,7 +21,9 @@ export default function GrammarTableRow({
   onRestore,
   onPermanentDelete,
   onTogglePublish,
+  owner = null, // null: quản trị viên; 'mine' | 'other': giáo viên
 }) {
+  const locked = owner === 'other'
   const isPublished = item.status === 'published'
   const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.B1
 
@@ -73,11 +76,15 @@ export default function GrammarTableRow({
 
       {/* Trạng thái */}
       <td className="px-3 py-3 whitespace-nowrap">
-        {isTrash ? (
+        {isTrash || locked ? (
+          isTrash ? (
           <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Trong thùng rác
           </span>
+          ) : (
+            <span className="text-xs text-ink-muted">{isPublished ? 'Xuất bản' : 'Bản nháp'}</span>
+          )
         ) : (
           <button
             type="button"
@@ -109,7 +116,8 @@ export default function GrammarTableRow({
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
-          {isTrash ? (
+          {owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
+          {isTrash && locked ? null : isTrash ? (
             <>
               <button
                 type="button"
@@ -140,6 +148,7 @@ export default function GrammarTableRow({
               >
                 <Eye size={17} />
               </button>
+              {locked ? null : (
               <button
                 type="button"
                 onClick={(e) => onEdit(e, item)}
@@ -148,6 +157,7 @@ export default function GrammarTableRow({
               >
                 <Pencil size={17} />
               </button>
+              )}
               <button
                 type="button"
                 onClick={(e) => onDuplicate(e, item)}
@@ -156,6 +166,7 @@ export default function GrammarTableRow({
               >
                 <Copy size={17} />
               </button>
+              {locked ? null : (
               <button
                 type="button"
                 onClick={(e) => onDelete(e, item)}
@@ -164,6 +175,7 @@ export default function GrammarTableRow({
               >
                 <Trash2 size={17} />
               </button>
+              )}
             </>
           )}
         </div>

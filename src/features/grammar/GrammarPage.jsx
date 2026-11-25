@@ -24,10 +24,13 @@ import DataImportWizardModal from '@/components/ui/DataImportWizardModal'
 import { useAuthStore } from '@/store/authStore'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import GrammarTableRow from './components/GrammarTableRow'
+import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
+import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 import GrammarDetailDrawer from './components/GrammarDetailDrawer'
 import {
   DEFAULT_GRAMMAR_TOPICS,
   getGrammarLessons,
+  getGrammarLessonById,
   getGrammarTopics,
   getGrammarTrashCount,
   createGrammarLesson,
@@ -62,6 +65,8 @@ function GrammarPage() {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const own = useOwnership('GRAMMAR_LESSON')
+  const [ownerFilter, setOwnerFilter] = useState(own.defaultFilter)
 
   // Drawer / Modal states
   const [activeLesson, setActiveLesson] = useState(null)
@@ -217,6 +222,14 @@ function GrammarPage() {
   }
 
   const start = (page - 1) * PAGE_SIZE
+  const mineMode = own.isTeacher && ownerFilter === 'mine' && activeTab !== 'trash'
+  const mine = useMyItems('GRAMMAR_LESSON', own.ownedIds, getGrammarLessonById, {
+    enabled: mineMode,
+    search,
+    fields: ['title', 'titleVi', 'titleEn', 'topic'],
+  })
+  const rows = mineMode ? mine.items : own.applyFilter(lessons, ownerFilter)
+  const listLoading = mineMode ? mine.isLoading : isLoading
   const isTeacher = user?.role === 'teacher'
 
   return (
@@ -310,6 +323,7 @@ function GrammarPage() {
                   Import
                 </Button>
 
+                {own.isTeacher ? <OwnershipSelect value={ownerFilter} onChange={setOwnerFilter} /> : null}
                 <PendingReviewButton type="GRAMMAR_LESSON" />
 
                 {/* Thêm bài học (Icon-only) */}
@@ -369,7 +383,7 @@ function GrammarPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
+              {listLoading ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center">
                     <LoadingSpinner
@@ -377,7 +391,7 @@ function GrammarPage() {
                     />
                   </td>
                 </tr>
-              ) : lessons.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
                     {activeTab === 'trash'
@@ -386,7 +400,7 @@ function GrammarPage() {
                   </td>
                 </tr>
               ) : (
-                lessons.map((item) => (
+                rows.map((item) => (
                   <GrammarTableRow
                     key={item.id}
                     item={item}
@@ -404,6 +418,7 @@ function GrammarPage() {
                       setPermanentDeleteTarget(l)
                     }}
                     onTogglePublish={(e, l) => handleTogglePublish(e, l)}
+                    owner={own.isTeacher ? (own.isMine(item) ? 'mine' : 'other') : null}
                   />
                 ))
               )}
@@ -412,6 +427,7 @@ function GrammarPage() {
         </div>
 
         {/* Pagination */}
+        {!mineMode && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
           <p className="text-xs text-slate-500">
             Hiển thị <strong>{total === 0 ? 0 : start + 1}</strong>-
@@ -420,6 +436,7 @@ function GrammarPage() {
           </p>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
+        )}
       </div>
 
       {/* ─── Drawer View Lesson Details ─────────────────────────────────── */}

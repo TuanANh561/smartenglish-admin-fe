@@ -24,3 +24,5 @@ export const rejectClassReview = (id, reason) =>
   api.put(ENDPOINTS.teacher.rejectClassReview, { path: { id }, data: { reason } })
 
 export const cancelContentReview = (id) => api.delete(ENDPOINTS.contentReviews.cancel, { path: { id } })
+
+export const fetchOwnedContent = () => api.get(ENDPOINTS.contentReviews.owned)

@@ -25,7 +25,7 @@ export {
  * Custom Hook quản lý toàn bộ nghiệp vụ, dữ liệu và trạng thái của Kho từ vựng:
  * - Tự động đồng bộ phân trang, tìm kiếm có debounce, lọc từ loại & chủ đề
  * - Quản lý chế độ Thùng rác (trashView), số lượng đếm (trashCount)
- * - Tự động kích hoạt AI/Online Dictionary nạp từ nếu CSDL chưa có
+ * - Tự động tra từ điển online khi CSDL chưa có từ đang tìm (xem trước, bấm "Thêm vào kho" mới lưu)
  * - Quản lý phát âm Web Speech API và điều phối âm thanh toàn cục
  * - Các thao tác Xóa mềm, Khôi phục, Xóa vĩnh viễn
  */
@@ -51,6 +51,9 @@ export function useVocabulary() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [playingId, setPlayingId] = useState(null)
+  const [onlineResult, setOnlineResult] = useState(null)
+  const [isLookingUp, setIsLookingUp] = useState(false)
+  const lookupRef = useRef(0)
   // Mã của request mới nhất: response của request cũ (VD: danh sách chính) không được ghi đè lên danh sách thùng rác
   const latestRequestRef = useRef(0)
 
@@ -145,6 +148,33 @@ export function useVocabulary() {
   useEffect(() => {
     fetchWords()
   }, [fetchWords])
+
+  // Kho không có từ đang tìm → tự tra từ điển online (chỉ xem trước, chưa lưu vào kho)
+  const needsLookup = !trashView && !isLoading && search.length >= 2 && vocabList.length === 0
+  useEffect(() => {
+    if (!needsLookup) {
+      lookupRef.current++
+      setOnlineResult(null)
+      setIsLookingUp(false)
+      return
+    }
+    const id = ++lookupRef.current
+    setIsLookingUp(true)
+    setOnlineResult(null)
+    api
+      .get(ENDPOINTS.words.autoLookup, { params: { word: search } })
+      .then((res) => {
+        if (id !== lookupRef.current) return
+        const data = res?.data?.word ? res.data : res
+        setOnlineResult(data?.word ? data : null)
+      })
+      .catch(() => {
+        if (id === lookupRef.current) setOnlineResult(null)
+      })
+      .finally(() => {
+        if (id === lookupRef.current) setIsLookingUp(false)
+      })
+  }, [needsLookup, search])
 
   // 5. Ngắt âm thanh khi chuyển trang, đổi bộ lọc hoặc chế độ xem
   useEffect(() => {
@@ -272,7 +302,7 @@ export function useVocabulary() {
     }
   }
 
-  // 13. Chủ động tra cứu & nạp từ điển quốc tế / AI khi người dùng xác nhận
+  // 13. Thêm từ vừa tra online vào kho (giáo viên: gửi yêu cầu duyệt)
   const handleAutoImport = async (targetWord) => {
     const w = (targetWord || searchInput || search).trim()
     if (!w) return
@@ -282,7 +312,11 @@ export function useVocabulary() {
         params: { word: w },
       })
       const newWord = res?.data || res
-      toast.success(`Đã nạp thành công từ "${newWord.word || w}" vào CSDL!`)
+      if (newWord?.pendingReview) {
+        toast.success(`Đã gửi yêu cầu thêm từ "${w}". Từ sẽ vào kho sau khi quản trị viên duyệt.`)
+        return
+      }
+      toast.success(`Đã thêm từ "${newWord.word || w}" vào kho`)
       await fetchWords(1, newWord.word || w, '', '', sortBy, false)
       loadTopics()
       refreshTrashCount()
@@ -324,6 +358,8 @@ export function useVocabulary() {
     isDeleting,
     isImporting,
     handleAutoImport,
+    onlineResult,
+    isLookingUp,
     deleteWord,
     restoreWord,
     permanentDeleteWord,
