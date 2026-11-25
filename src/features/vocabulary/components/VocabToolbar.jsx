@@ -2,6 +2,7 @@ import { Search, X, RefreshCw, Upload, Plus, Trash2, RotateCcw } from 'lucide-re
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { SORT_OPTIONS, PARTS_OF_SPEECH, PART_OF_SPEECH_LABEL } from '../hooks/useVocabulary'
+import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 
 /**
  * Thanh công cụ tìm kiếm, bộ lọc, thao tác thêm mới/import và chuyển đổi thùng rác.
@@ -104,6 +105,8 @@ export function VocabToolbar({
             Import
           </Button>
         )}
+
+        <PendingReviewButton type="WORD" />
 
         {/* Nút Thêm mới (Chỉ hiển thị khi không ở thùng rác) */}
         {!trashView && (

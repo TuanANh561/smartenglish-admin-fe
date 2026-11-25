@@ -2,6 +2,7 @@ import { ArrowLeft, LayoutGrid, LayoutList, Plus, RefreshCw, Search, Trash2, Upl
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { CEFR_LEVELS, EXAM_CATEGORIES } from '../examApi'
+import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 
 const STATUS_OPTIONS = [
   { value: 'all',       label: 'Tất cả trạng thái' },
@@ -168,6 +169,8 @@ export default function ExamToolbar({
                   Nhập đề thi
                 </Button>
               )}
+
+              <PendingReviewButton type="EXAM" />
 
               {/* Thêm đề thi (Icon-only) */}
               <button

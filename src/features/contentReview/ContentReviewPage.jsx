@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck } from "lucide-react";
 import toast from "react-hot-toast";
@@ -11,6 +12,7 @@ import Drawer from "@/components/ui/Drawer";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Modal from "@/components/ui/Modal";
+import Select from "@/components/ui/Select";
 import Tabs from "@/components/ui/Tabs";
 import Textarea from "@/components/ui/Textarea";
 import { SkeletonText } from "@/components/ui/Skeleton";
@@ -103,6 +105,15 @@ function ContentReviewPage() {
   const role = String(useAuthStore((s) => s.user?.role) || "").toLowerCase();
   const isAdmin = role === "admin" || role === "super_admin";
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const type = searchParams.get("type") || "";
+  const setType = (value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("type", value);
+    else next.delete("type");
+    setSearchParams(next, { replace: true });
+    setPage(0);
+  };
   const [area, setArea] = useState("content");
   const [status, setStatus] = useState("PENDING");
   const [page, setPage] = useState(0);
@@ -111,8 +122,8 @@ function ContentReviewPage() {
   const [reason, setReason] = useState("");
 
   const listQuery = useQuery({
-    queryKey: ["content-reviews", { status, page }],
-    queryFn: () => fetchContentReviews({ status, page }),
+    queryKey: ["content-reviews", { status, type, page }],
+    queryFn: () => fetchContentReviews({ status, type, page }),
   });
   const detailQuery = useQuery({
     queryKey: ["content-reviews", "detail", openId],
@@ -185,14 +196,26 @@ function ContentReviewPage() {
         <ClassReviewsPanel />
       ) : (
         <>
-          <Tabs
-            tabs={STATUS_TABS}
-            value={status}
-            onChange={(v) => {
-              setStatus(v);
-              setPage(0);
-            }}
-          />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Tabs
+              tabs={STATUS_TABS}
+              value={status}
+              onChange={(v) => {
+                setStatus(v);
+                setPage(0);
+              }}
+            />
+            <Select
+              size="sm"
+              containerClassName="w-48"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              options={[
+                { value: "", label: "Tất cả loại học liệu" },
+                ...Object.entries(RESOURCE_LABEL).map(([value, label]) => ({ value, label })),
+              ]}
+            />
+          </div>
 
           <Card className="p-0">
             {listQuery.isLoading ? (

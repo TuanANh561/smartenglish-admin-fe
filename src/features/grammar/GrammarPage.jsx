@@ -1,3 +1,4 @@
+import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -308,6 +309,8 @@ function GrammarPage() {
                 <Button size="sm" variant="secondary" icon={Upload} onClick={() => setIsPdfImportOpen(true)}>
                   Import
                 </Button>
+
+                <PendingReviewButton type="GRAMMAR_LESSON" />
 
                 {/* Thêm bài học (Icon-only) */}
                 <button
