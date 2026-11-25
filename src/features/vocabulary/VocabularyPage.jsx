@@ -1,4 +1,7 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import { useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
+import VocabDetailModal from './components/VocabDetailModal'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -29,7 +32,13 @@ export function VocabularyPage() {
     search: vocab.search,
     fields: ['word', 'vietnameseMeaning'],
   })
-  const rows = mineMode ? mine.items : own.applyFilter(vocab.vocabList, ownerFilter)
+  const { requests: pendingRequests } = usePendingRequests('WORD', { enabled: !vocab.trashView })
+  const rows = withPending(mineMode ? mine.items : own.applyFilter(vocab.vocabList, ownerFilter), pendingRequests, (x) => x, {
+    showNew: !vocab.trashView && ownerFilter !== 'system' && vocab.page === 1,
+    search: vocab.search,
+  })
+  const [viewing, setViewing] = useState(null)
+  useOpenPendingFromQuery(rows, setViewing)
 
   return (
     <div className="space-y-4">
@@ -83,7 +92,20 @@ export function VocabularyPage() {
           lookupActive={!vocab.trashView && !vocab.isLoading && Boolean(vocab.search) && vocab.vocabList.length === 0}
           onlineResult={vocab.onlineResult}
           isLookingUp={vocab.isLookingUp}
-          showPending={ownerFilter !== 'system'}
+          onView={setViewing}
+          emptyState={
+            <MaterialEmptyState
+              label="từ vựng"
+              mode={emptyMode({
+                trash: vocab.trashView,
+                search: vocab.search,
+                filtered: Boolean(vocab.topicId) || (vocab.partOfSpeech && vocab.partOfSpeech !== 'all'),
+                mine: mineMode,
+              })}
+              onCreate={() => navigate('/app/hoc-lieu/tu-vung/tao-moi')}
+              onBack={() => vocab.toggleTrash(false)}
+            />
+          }
         />
 
         {/* Phân trang */}
@@ -104,6 +126,22 @@ export function VocabularyPage() {
           </div>
         )}
       </div>
+
+      <VocabDetailModal
+        vocab={viewing}
+        onClose={() => setViewing(null)}
+        footer={
+          viewing?.__pending ? (
+            <PendingDecisionBar
+              request={viewing.__pending}
+              onDone={() => {
+                setViewing(null)
+                vocab.refresh()
+              }}
+            />
+          ) : null
+        }
+      />
 
       {/* Dialog xác nhận chuyển vào thùng rác (Xóa mềm) */}
       <ConfirmDialog

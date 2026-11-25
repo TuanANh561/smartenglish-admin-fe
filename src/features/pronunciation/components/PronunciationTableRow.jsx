@@ -1,3 +1,6 @@
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 import { Copy, Eye, Headphones, Pencil, RotateCcw, Trash2, Volume2 } from 'lucide-react'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import OwnerBadge from '@/features/contentReview/OwnerBadge'
@@ -24,6 +27,8 @@ export default function PronunciationTableRow({
   onPermanentDelete,
   owner = null, // null: quản trị viên; 'mine' | 'other': giáo viên
 }) {
+  const pending = item.__pending
+  const isNew = isPendingNew(item)
   const locked = owner === 'other'
   const isPublished = item.status === 'published'
   const levelStyle = LEVEL_COLOR[item.level] ?? LEVEL_COLOR.A1
@@ -31,7 +36,7 @@ export default function PronunciationTableRow({
   return (
     <tr
       onClick={() => onViewDetails(item)}
-      className="group transition-colors hover:bg-slate-50/50 cursor-pointer"
+      className={`group transition-colors cursor-pointer ${pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/50'}`}
     >
       {/* Tên bài học (Tinh gọn) */}
       <td className="px-3.5 py-3 overflow-hidden">
@@ -74,7 +79,9 @@ export default function PronunciationTableRow({
 
       {/* Trạng thái */}
       <td className="px-3 py-3 whitespace-nowrap">
-        {isTrash ? (
+        {pending ? (
+          <PendingStatusBadge request={pending} />
+        ) : isTrash ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 border border-red-100">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             <span>Đã xóa</span>
@@ -107,8 +114,8 @@ export default function PronunciationTableRow({
         className="px-4 py-3 whitespace-nowrap text-right"
       >
         <div className="flex items-center justify-end gap-1 text-slate-400">
-          {owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
-          {isTrash && locked ? null : isTrash ? (
+          {isNew ? <PendingViewButton item={item} onClick={() => onViewDetails(item)} onEdit={() => onEdit(null, item)} /> : owner ? <OwnerBadge mine={owner === 'mine'} /> : null}
+          {isNew || (isTrash && locked) ? null : isTrash ? (
             <>
               <button
                 type="button"

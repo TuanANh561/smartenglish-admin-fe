@@ -1,6 +1,9 @@
 import { BookOpen, Eye, Lock, Pencil, RotateCcw, ShieldCheck, Trash2, Users } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
 import Card from '@/components/ui/Card'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import { isPendingNew } from '@/features/contentReview/usePendingRequests'
 import { formatNumber } from '@/lib/utils'
 
 /**
@@ -14,26 +17,20 @@ export default function CourseGrid({
   isAdmin,
   isTrash = false,
   onRestore,
+  emptyState = null,
 }) {
+  const navigate = useNavigate()
   if (courses.length === 0) {
-    return (
-      <div className="py-12 text-center text-slate-400 bg-white rounded-xl border border-line">
-        <Trash2 size={24} className="mx-auto mb-2 text-slate-300" />
-        <p className="font-semibold text-slate-700 text-xs">
-          {isTrash ? 'Thùng rác đang trống' : 'Không tìm thấy chương hoặc khóa học nào phù hợp với bộ lọc.'}
-        </p>
-        {isTrash && (
-          <p className="text-[11px] text-slate-400 mt-0.5">Chưa có khóa học nào bị chuyển vào thùng rác</p>
-        )}
-      </div>
-    )
+    return <div className="rounded-xl border border-line bg-white">{emptyState}</div>
   }
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => {
-        const isOwner = checkOwnership(course)
-        const canEdit = isAdmin || isOwner
+        const pending = course.__pending
+        const isNew = isPendingNew(course)
+        const isOwner = !isNew && checkOwnership(course)
+        const canEdit = !isNew && (isAdmin || isOwner)
         const isSystemCourse =
           Number(course.createdBy) === 1 ||
           Number(course.id) <= 4 ||
@@ -42,7 +39,7 @@ export default function CourseGrid({
         return (
           <Card
             key={course.id}
-            className="group flex flex-col justify-between overflow-hidden border border-line transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className={`group flex flex-col justify-between overflow-hidden border transition-all duration-200 hover:shadow-md ${pending ? 'border-[#FDE68A] bg-[#FFFBEB]' : 'border-line'}`}
           >
             <div>
               {/* Thumbnail Container */}
@@ -69,6 +66,9 @@ export default function CourseGrid({
 
                 {/* Status Badge */}
                 <div className="absolute right-2 top-2">
+                  {pending ? (
+                    <PendingStatusBadge request={pending} />
+                  ) : (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -86,6 +86,7 @@ export default function CourseGrid({
                       ? 'Đã xuất bản'
                       : 'Bản nháp'}
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -134,7 +135,14 @@ export default function CourseGrid({
 
             {/* Actions Footer */}
             <div className="flex items-center justify-between border-t border-line bg-slate-50/50 px-3 py-2">
-              {isTrash ? (
+              {isNew ? (
+                <div className="flex w-full justify-end">
+                  <PendingViewButton item={course}
+                    onClick={() => navigate(`/app/hoc-lieu/khoa-hoc/${course.id}`)}
+                    onEdit={() => navigate(`/app/hoc-lieu/khoa-hoc/${course.id}/chinh-sua`)}
+                  />
+                </div>
+              ) : isTrash ? (
                 <>
                   <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                     Trong thùng rác

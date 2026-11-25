@@ -45,6 +45,7 @@ export default function ListeningDetailDrawer({
   onSeek,
   onAssignToClass,
   onEditClick,
+  footer,
 }) {
   const [scriptMode, setScriptMode] = useState('bilingual') // 'bilingual', 'english', 'hidden'
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0)
@@ -726,6 +727,7 @@ export default function ListeningDetailDrawer({
           </div>
         </div>
       </div>
+      {footer ? <div className="shrink-0 px-6 pb-5">{footer}</div> : null}
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import JsonImportModal from '@/components/ui/JsonImportModal'
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import { useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -475,7 +477,14 @@ export default function PronunciationPage() {
 
   const isTeacher = user?.role === 'teacher'
 
-  const ipaRows = mineMode ? mine.items : own.applyFilter(lessons, ownerFilter)
+  const { requests: pendingRequests } = usePendingRequests('PRONUNCIATION_LESSON', { enabled: !trashView })
+  const ipaRows = withPending(
+    mineMode ? mine.items : own.applyFilter(lessons, ownerFilter),
+    pendingRequests,
+    (x) => ({ ...x, level: x.cefrLevel || x.level }),
+    { showNew: !trashView && ownerFilter !== 'system' && ipaPage === 1, search },
+  )
+  useOpenPendingFromQuery(ipaRows, setActiveLesson)
 
   return (
     <div className="space-y-5">
@@ -609,47 +618,17 @@ export default function PronunciationPage() {
           {(mineMode ? mine.isLoading : isLoadingIpa) ? (
             <LoadingSpinner text="Đang tải dữ liệu bài học từ máy chủ..." className="py-20" />
           ) : ipaRows.length === 0 ? (
-            <>
-            <table className="w-full text-left text-sm table-fixed">
-              <tbody className="divide-y divide-slate-100">
-                <PendingRequestRows type="PRONUNCIATION_LESSON" colSpan={6} hidden={trashView || ownerFilter === 'system'} />
-              </tbody>
-            </table>
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${trashView ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'}`}>
-                {trashView ? <Trash2 size={24} /> : <BookOpen size={24} />}
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">
-                {trashView ? 'Thùng rác rỗng' : 'Chưa có bài học phát âm nào'}
-              </h3>
-              <p className="text-xs text-slate-500 max-w-md mb-4">
-                {trashView
-                  ? 'Hiện không có bài học phát âm nào trong thùng rác.'
-                  : mineMode
-                  ? 'Bạn chưa có bài phát âm nào đã được duyệt.'
-                  : 'Hiện tại chưa có bài học nào trong cơ sở dữ liệu. Hãy bấm vào nút "Thêm bài phát âm" để tạo bài học đầu tiên.'}
-              </p>
-              {trashView ? (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  icon={RotateCcw}
-                  onClick={() => handleToggleTrash(false)}
-                >
-                  Quay lại danh sách phát âm
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  icon={Plus}
-                  onClick={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
-                >
-                  Thêm bài phát âm ngay
-                </Button>
-              )}
-            </div>
-            </>
+            <MaterialEmptyState
+              label="bài phát âm"
+              mode={emptyMode({
+                trash: trashView,
+                search: search.trim(),
+                filtered: selectedCategory !== 'Tất cả phân loại' || selectedLevel !== 'Tất cả' || selectedStatus !== 'all',
+                mine: mineMode,
+              })}
+              onCreate={() => navigate('/app/hoc-lieu/phat-am/tao-moi')}
+              onBack={() => handleToggleTrash(false)}
+            />
           ) : (
             <div className="w-full">
               <table className="w-full text-left text-sm text-slate-700 table-fixed">
@@ -664,7 +643,6 @@ export default function PronunciationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <PendingRequestRows type="PRONUNCIATION_LESSON" colSpan={6} hidden={trashView || ownerFilter === 'system'} />
                   {ipaRows.map((item) => (
                     <PronunciationTableRow
                       key={item.id}
@@ -1091,6 +1069,17 @@ export default function PronunciationPage() {
           const target = lesson?.id ? lesson : (e?.id ? e : activeLesson)
           if (target?.id) navigate(`/app/hoc-lieu/phat-am/${target.id}/chinh-sua`)
         }}
+        footer={
+          activeLesson?.__pending ? (
+            <PendingDecisionBar
+              request={activeLesson.__pending}
+              onDone={() => {
+                setActiveLesson(null)
+                loadIpaLessons(false)
+              }}
+            />
+          ) : undefined
+        }
       />
 
       {/* Delete IPA Dialog (Soft Delete) */}

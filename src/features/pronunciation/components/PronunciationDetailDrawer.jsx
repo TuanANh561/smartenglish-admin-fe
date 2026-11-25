@@ -19,6 +19,7 @@ export default function PronunciationDetailDrawer({
   onClose,
   onPlayAudio,
   onEdit,
+  footer,
 }) {
   useEffect(() => {
     return () => {
@@ -137,6 +138,7 @@ export default function PronunciationDetailDrawer({
         )}
 
         {/* Actions */}
+        {footer ?? (onEdit ? (
         <div className="flex gap-2 border-t border-line pt-4">
           <button
             type="button"
@@ -150,6 +152,7 @@ export default function PronunciationDetailDrawer({
             <span>Chỉnh sửa bài phát âm</span>
           </button>
         </div>
+        ) : null)}
       </div>
     </Drawer>
   )

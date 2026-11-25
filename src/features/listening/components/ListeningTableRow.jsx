@@ -1,5 +1,9 @@
 import { Eye, ImageIcon, Lock, Pencil, Play, Send, Sparkles, Trash2, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Badge from '@/components/ui/Badge'
+import PendingStatusBadge from '@/features/contentReview/PendingStatusBadge'
+import PendingViewButton from '@/features/contentReview/PendingViewButton'
+import { PENDING_ROW_CLASS, isPendingNew } from '@/features/contentReview/usePendingRequests'
 
 const CATEGORY_MAP = {
   TOEIC_PART_1: { label: 'Part 1', bg: 'bg-amber-50 text-amber-800 border-amber-200' },
@@ -33,11 +37,13 @@ export default function ListeningTableRow({
       !String(item.audioUrl).match(/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i)
   )
   const isReady = item.syncedTranscripts && item.syncedTranscripts.length > 0
+  const pending = item.__pending
+  const isNew = isPendingNew(item)
 
   return (
     <tr
       onClick={() => onRowClick(item)}
-      className="group transition-colors hover:bg-slate-50/60 cursor-pointer"
+      className={cn('group transition-colors cursor-pointer', pending ? PENDING_ROW_CLASS : 'hover:bg-slate-50/60')}
     >
       {/* Tiêu đề + Nút Play Audio (Tinh gọn, chuẩn Data Table) */}
       <td className="px-3.5 py-3 overflow-hidden">
@@ -133,6 +139,17 @@ export default function ListeningTableRow({
         )}
       </td>
 
+      {/* Trạng thái */}
+      <td className="px-3 py-3 text-center whitespace-nowrap">
+        {pending ? (
+          <PendingStatusBadge request={pending} />
+        ) : item.status === 'draft' ? (
+          <Badge tone="neutral">Bản nháp</Badge>
+        ) : (
+          <Badge tone="success">Công khai</Badge>
+        )}
+      </td>
+
       {/* Câu hỏi bài tập (dữ liệu thật) */}
       <td className="px-3 py-3 text-center whitespace-nowrap">
         <span className="font-semibold text-slate-700 text-xs">
@@ -146,6 +163,10 @@ export default function ListeningTableRow({
           className="flex items-center justify-end gap-1 text-slate-400"
           onClick={(e) => e.stopPropagation()}
         >
+          {isNew ? (
+            <PendingViewButton item={item} onClick={() => onRowClick(item)} onEdit={() => onEditClick(null, item)} />
+          ) : (
+            <>
           {/* Nút giao bài */}
           {isTeacher && isOwned && (
             <button
@@ -195,6 +216,8 @@ export default function ListeningTableRow({
             >
               <Lock size={15} />
             </span>
+          )}
+            </>
           )}
         </div>
       </td>

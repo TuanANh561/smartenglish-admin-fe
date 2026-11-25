@@ -1,4 +1,6 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import { isPendingNew, useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -22,6 +24,7 @@ import {
   permanentDeleteReadingPassage,
   togglePublishReadingPassage,
   duplicateReadingPassage,
+  normalizePassage,
 } from './readingApi'
 import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 
@@ -146,7 +149,14 @@ function ReadingPage() {
     search,
     fields: ['title', 'titleEn', 'titleVi', 'topic'],
   })
-  const rows = mineMode ? mine.items : own.applyFilter(passages, ownerFilter)
+  const showPending = !trashView && ownerFilter !== 'system'
+  const { requests: pendingRequests } = usePendingRequests('READING_PASSAGE', { enabled: !trashView })
+  const rows = withPending(mineMode ? mine.items : own.applyFilter(passages, ownerFilter), pendingRequests, normalizePassage, {
+    showNew: showPending && page === 1,
+    search,
+  })
+  useOpenPendingFromQuery(rows, setActivePassage)
+  const filtered = selectedTopic !== 'Tất cả chủ đề' || selectedLevel !== 'Tất cả' || selectedStatus !== 'all'
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleTogglePublish = async (item) => {
@@ -268,8 +278,19 @@ function ReadingPage() {
           <ReadingDetailDrawer
             passage={activePassage}
             onClose={() => setActivePassage(null)}
-            canManage={canManage(activePassage)}
+            canManage={!isPendingNew(activePassage) && canManage(activePassage)}
             onEditClick={handleEditClick}
+            footer={
+              activePassage.__pending ? (
+                <PendingDecisionBar
+                  request={activePassage.__pending}
+                  onDone={() => {
+                    setActivePassage(null)
+                    loadPassages()
+                  }}
+                />
+              ) : null
+            }
           />
         </div>
       ) : (
@@ -323,7 +344,6 @@ function ReadingPage() {
                 </tr>
               </thead>
             <tbody className="divide-y divide-slate-100">
-              <PendingRequestRows type="READING_PASSAGE" colSpan={8} hidden={trashView || ownerFilter === 'system'} />
               {(mineMode ? mine.isLoading : isLoading) ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">
@@ -332,22 +352,13 @@ function ReadingPage() {
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-14 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
-                        {trashView ? (
-                          <Trash2 size={24} className="text-slate-400" />
-                        ) : (
-                          <span className="text-2xl">📖</span>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-slate-600">
-                        {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài đọc nào'}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {trashView ? 'Chưa có bài đọc nào bị xóa' : 'Thử thay đổi bộ lọc hoặc thêm bài đọc mới'}
-                      </p>
-                    </div>
+                  <td colSpan={8}>
+                    <MaterialEmptyState
+                      label="bài đọc"
+                      mode={emptyMode({ trash: trashView, search: search.trim(), filtered, mine: mineMode })}
+                      onCreate={() => navigate('/app/hoc-lieu/bai-doc/tao-moi')}
+                      onBack={() => handleToggleTrash(false)}
+                    />
                   </td>
                 </tr>
               ) : (

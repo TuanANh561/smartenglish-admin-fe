@@ -1,5 +1,7 @@
 import JsonImportModal from '@/components/ui/JsonImportModal'
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import { isPendingNew, useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Crown, Headphones, RotateCcw, Trash2 } from 'lucide-react'
@@ -22,6 +24,7 @@ import {
   getListeningStatistics,
   permanentDeleteListeningLesson,
   restoreListeningLesson,
+  normalizeLesson,
 } from './listeningLessonApi'
 import { useMyItems, useOwnership } from '@/features/contentReview/useOwnership'
 
@@ -232,6 +235,13 @@ function ListeningPage() {
     })
   }, [lessons, ownershipFilter, user, mineMode, mine.items, own.isMine, isTeacher])
 
+  const { requests: pendingRequests } = usePendingRequests('LISTENING_LESSON', { enabled: !trashView })
+  const rows = withPending(displayedLessons, pendingRequests, normalizeLesson, {
+    showNew: !trashView && ownershipFilter !== 'system' && page === 1,
+    search,
+  })
+  useOpenPendingFromQuery(rows, setActiveLesson)
+
   // Cơ chế phát âm thanh chuẩn theo yêu cầu:
   // - Bất kể có audio hay không có audio, đọc hết toàn bộ script đến khi kết thúc
   // - Không đọc tiêu đề bài học TOEIC (tránh dư thừa)
@@ -293,7 +303,7 @@ function ListeningPage() {
 
   const handleEditClick = (e, item) => {
     e?.stopPropagation?.()
-    if (!canManage(item)) {
+    if (!isPendingNew(item) && !canManage(item)) {
       toast.error(`Bạn không có quyền sửa bài nghe của "${item.authorName || 'người khác'}".`)
       return
     }
@@ -392,8 +402,19 @@ function ListeningPage() {
               setActiveLesson(null)
             }}
             isTeacher={isTeacher}
-            isOwner={checkOwnership(activeLesson)}
-            canManage={canManage(activeLesson)}
+            isOwner={!isPendingNew(activeLesson) && checkOwnership(activeLesson)}
+            canManage={!isPendingNew(activeLesson) && canManage(activeLesson)}
+            footer={
+              activeLesson.__pending ? (
+                <PendingDecisionBar
+                  request={activeLesson.__pending}
+                  onDone={() => {
+                    setActiveLesson(null)
+                    fetchLessons()
+                  }}
+                />
+              ) : null
+            }
             isPlaying={playback.playingId === activeLesson?.id}
             currentTime={playback.playingId === activeLesson?.id ? playback.currentTime : 0}
             playbackDuration={playback.playingId === activeLesson?.id ? playback.duration : 0}
@@ -445,31 +466,41 @@ function ListeningPage() {
             <table className="w-full text-left text-sm table-fixed">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/40 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-3.5 py-3 w-[35%] whitespace-nowrap">BÀI NGHE AUDIO</th>
-                  <th className="px-3 py-3 w-[13%] whitespace-nowrap">CHỦ ĐỀ</th>
+                  <th className="px-3.5 py-3 w-[30%] whitespace-nowrap">BÀI NGHE AUDIO</th>
+                  <th className="px-3 py-3 w-[11%] whitespace-nowrap">CHỦ ĐỀ</th>
                   <th className="px-2 py-3 text-center w-[8%] whitespace-nowrap">CẤP ĐỘ</th>
-                  <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">THỜI LƯỢNG</th>
-                  <th className="px-3 py-3 w-[12%] whitespace-nowrap">NGUỒN / TÁC GIẢ</th>
-                  <th className="px-3 py-3 text-center w-[10%] whitespace-nowrap">CÂU HỎI</th>
+                  <th className="px-3 py-3 text-center w-[9%] whitespace-nowrap">THỜI LƯỢNG</th>
+                  <th className="px-3 py-3 w-[11%] whitespace-nowrap">NGUỒN / TÁC GIẢ</th>
+                  <th className="px-3 py-3 text-center w-[11%] whitespace-nowrap">TRẠNG THÁI</th>
+                  <th className="px-3 py-3 text-center w-[8%] whitespace-nowrap">CÂU HỎI</th>
                   <th className="px-4 py-3 text-right w-[12%] whitespace-nowrap">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <PendingRequestRows type="LISTENING_LESSON" colSpan={7} hidden={trashView || ownershipFilter === 'system'} />
                 {(mineMode ? mine.isLoading : loading) ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={8} className="py-12 text-center">
                       <LoadingSpinner text="Đang tải danh sách bài nghe từ máy chủ..." />
                     </td>
                   </tr>
-                ) : displayedLessons.length === 0 ? (
+                ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                      {trashView ? 'Thùng rác đang trống' : 'Không tìm thấy bài nghe nào phù hợp'}
+                    <td colSpan={8}>
+                      <MaterialEmptyState
+                        label="bài nghe"
+                        mode={emptyMode({
+                          trash: trashView,
+                          search: search.trim(),
+                          filtered: category !== 'all' || topic !== 'all' || accent !== 'all',
+                          mine: mineMode,
+                        })}
+                        onCreate={handleOpenCreate}
+                        onBack={() => setTrashView(false)}
+                      />
                     </td>
                   </tr>
                 ) : (
-                  displayedLessons.map((item) => (
+                  rows.map((item) => (
                     <ListeningTableRow
                       key={item.id}
                       item={item}

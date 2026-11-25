@@ -155,6 +155,7 @@ export const ENDPOINTS = {
     approve: '/admin/content-reviews/:id/approve',
     reject: '/admin/content-reviews/:id/reject',
     cancel: '/admin/content-reviews/:id',
+    revise: '/admin/content-reviews/:id',
   },
   aiContent: {
     list: '/admin/ai/contents',

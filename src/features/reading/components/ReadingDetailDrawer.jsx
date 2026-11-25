@@ -2,7 +2,7 @@ import { BookOpen, CheckCircle2, Clock, FileText, Pencil, Sparkles, User } from 
 import Button from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
 
-export default function ReadingDetailPanel({ passage, canManage, onEditClick }) {
+export default function ReadingDetailPanel({ passage, canManage, onEditClick, footer }) {
   if (!passage) return null
 
   const questions = passage.questions || []
@@ -200,6 +200,7 @@ export default function ReadingDetailPanel({ passage, canManage, onEditClick }) 
           </div>
         </div>
       </div>
+      {footer ? <div className="shrink-0 px-6 pb-5">{footer}</div> : null}
     </div>
   )
 }

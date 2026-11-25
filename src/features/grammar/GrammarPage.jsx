@@ -1,4 +1,6 @@
-import PendingRequestRows from '@/features/contentReview/PendingRequestRows'
+import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
+import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
+import { useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
 import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -40,6 +42,7 @@ import {
   permanentDeleteGrammarLesson,
   duplicateGrammarLesson,
   togglePublishGrammarLesson,
+  normalizeLesson,
 } from './grammarLessonApi'
 
 const CEFR_LEVELS = ['Tất cả', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -229,7 +232,13 @@ function GrammarPage() {
     search,
     fields: ['title', 'titleVi', 'titleEn', 'topic'],
   })
-  const rows = mineMode ? mine.items : own.applyFilter(lessons, ownerFilter)
+  const showPending = activeTab !== 'trash' && ownerFilter !== 'system'
+  const { requests: pendingRequests } = usePendingRequests('GRAMMAR_LESSON', { enabled: activeTab !== 'trash' })
+  const rows = withPending(mineMode ? mine.items : own.applyFilter(lessons, ownerFilter), pendingRequests, normalizeLesson, {
+    showNew: showPending && page === 1,
+    search,
+  })
+  useOpenPendingFromQuery(rows, setActiveLesson)
   const listLoading = mineMode ? mine.isLoading : isLoading
   const isTeacher = user?.role === 'teacher'
 
@@ -384,7 +393,6 @@ function GrammarPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <PendingRequestRows type="GRAMMAR_LESSON" colSpan={7} hidden={activeTab === 'trash' || ownerFilter === 'system'} />
               {listLoading ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center">
@@ -395,10 +403,18 @@ function GrammarPage() {
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
-                    {activeTab === 'trash'
-                      ? 'Thùng rác trống. Không có bài học nào bị xóa.'
-                      : 'Không tìm thấy bài học ngữ pháp nào phù hợp'}
+                  <td colSpan={7}>
+                    <MaterialEmptyState
+                      label="bài ngữ pháp"
+                      mode={emptyMode({
+                        trash: activeTab === 'trash',
+                        search: search.trim(),
+                        filtered: selectedTopic !== 'Tất cả chủ điểm' || selectedLevel !== 'Tất cả' || selectedStatus !== 'all',
+                        mine: mineMode,
+                      })}
+                      onCreate={() => navigate('/app/hoc-lieu/ngu-phap/tao-moi')}
+                      onBack={() => handleTabChange('active')}
+                    />
                   </td>
                 </tr>
               ) : (
@@ -445,7 +461,18 @@ function GrammarPage() {
       <GrammarDetailDrawer
         activeLesson={activeLesson}
         onClose={() => setActiveLesson(null)}
-        onEdit={(item) => navigate(`/app/hoc-lieu/ngu-phap/${item.id}/chinh-sua`)}
+        onEdit={activeLesson?.__pending && String(activeLesson.id).startsWith('pending-') ? null : (item) => navigate(`/app/hoc-lieu/ngu-phap/${item.id}/chinh-sua`)}
+        footer={
+          activeLesson?.__pending ? (
+            <PendingDecisionBar
+              request={activeLesson.__pending}
+              onDone={() => {
+                setActiveLesson(null)
+                loadData()
+              }}
+            />
+          ) : undefined
+        }
       />
 
       {/* ─── Soft Delete Confirmation Dialog ────────────────────────────── */}
