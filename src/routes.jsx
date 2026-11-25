@@ -3,6 +3,7 @@ import LandingPage from '@/pages/landing/LandingPage'
 import AppShellLayout from '@/components/layout/AppShellLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import AiContentPage from '@/features/aiContent/AiContentPage'
+import ContentReviewPage from '@/features/contentReview/ContentReviewPage'
 import AiConfigPage from '@/features/aiConfig/AiConfigPage'
 import AuditLogPage from '@/features/auditLog/AuditLogPage'
 import LoginPage from '@/features/auth/LoginPage'
@@ -85,6 +86,7 @@ export const router = createBrowserRouter([
           { path: 'hoc-lieu/bai-kiem-tra/tao-moi', element: <ExamFormPage /> },
           { path: 'hoc-lieu/bai-kiem-tra/:id/chinh-sua', element: <ExamFormPage /> },
           { path: 'noi-dung-ai', element: <AiContentPage /> },
+          { path: 'duyet-noi-dung', element: <ContentReviewPage /> },
           { path: 'voice-ai', element: <AiConfigPage /> },
           { path: 'doanh-thu', element: <RevenueListPage /> },
           { path: 'doi-soat', element: <TransactionsPage /> },

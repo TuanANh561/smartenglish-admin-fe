@@ -11,6 +11,8 @@ export const CLASS_STATUS = {
   ENDED:    { label: 'Đã kết thúc',  tone: 'neutral',  dot: '#94a3b8' },
   upcoming: { label: 'Sắp khai giảng', tone: 'warning', dot: '#f59e0b' },
   UPCOMING: { label: 'Sắp khai giảng', tone: 'warning', dot: '#f59e0b' },
+  PENDING_APPROVAL: { label: 'Chờ duyệt', tone: 'warning', dot: '#f59e0b' },
+  REJECTED: { label: 'Bị từ chối', tone: 'danger', dot: '#dc2626' },
 }
 
 // Màu badge cấp độ CEFR

@@ -147,6 +147,14 @@ export const ENDPOINTS = {
   },
 
   // ── ai-practice-service ─────────────────────────────────────────
+  contentReviews: {
+    list: '/admin/content-reviews',
+    pendingCount: '/admin/content-reviews/pending-count',
+    detail: '/admin/content-reviews/:id',
+    approve: '/admin/content-reviews/:id/approve',
+    reject: '/admin/content-reviews/:id/reject',
+    cancel: '/admin/content-reviews/:id',
+  },
   aiContent: {
     list: '/admin/ai/contents',
     detail: '/admin/ai/contents/:id',
@@ -288,5 +296,9 @@ export const ENDPOINTS = {
     mySubmission: '/api/v1/teacher/classes/assignments/:assignmentId/my-submission',
     gradeSubmission: '/api/v1/teacher/classes/assignments/submissions/:submissionId/grade',
     quota: '/api/v1/teacher/classes/quota',
+    classReviews: '/api/v1/teacher/classes/admin/reviews',
+    classReviewCount: '/api/v1/teacher/classes/admin/reviews/count',
+    approveClassReview: '/api/v1/teacher/classes/admin/reviews/:id/approve',
+    rejectClassReview: '/api/v1/teacher/classes/admin/reviews/:id/reject',
   },
 }
