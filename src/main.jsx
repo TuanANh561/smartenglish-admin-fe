@@ -3,8 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { installPendingReviewToastGuard } from '@/lib/pendingReview'
 import './index.css'
 import { router } from './routes.jsx'
+
+installPendingReviewToastGuard()
 
 const queryClient = new QueryClient({
   defaultOptions: {

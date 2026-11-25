@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  ClipboardCheck,
   ClipboardList,
   Crown,
   Flag,
@@ -45,6 +46,12 @@ export const ROLE_ACCESS = {
     '/app/giao-dich',
     '/app/hoc-lieu/khoa-hoc',
     '/app/hoc-lieu/bai-kiem-tra',
+    '/app/hoc-lieu/tu-vung',
+    '/app/hoc-lieu/ngu-phap',
+    '/app/hoc-lieu/phat-am',
+    '/app/hoc-lieu/bai-doc',
+    '/app/hoc-lieu/bai-nghe',
+    '/app/duyet-noi-dung',
     '/app/noi-dung-ai',
     '/app/thong-bao',
     '/app/nhat-ky',
@@ -86,17 +93,25 @@ export const NAV_GROUPS = [
       {
         label: 'Bài học',
         icon: BookOpen,
-        roles: ['admin'],
+        roles: ['admin', 'teacher'],
         children: [
-          { to: '/app/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin'] },
-          { to: '/app/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin'] },
-          { to: '/app/hoc-lieu/phat-am', label: 'Luyện nói & Phát âm', roles: ['admin'] },
-          { to: '/app/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin'] },
-          { to: '/app/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin'] },
+          { to: '/app/hoc-lieu/tu-vung', label: 'Từ vựng', roles: ['admin', 'teacher'] },
+          { to: '/app/hoc-lieu/ngu-phap', label: 'Ngữ pháp', roles: ['admin', 'teacher'] },
+          { to: '/app/hoc-lieu/phat-am', label: 'Luyện nói & Phát âm', roles: ['admin', 'teacher'] },
+          { to: '/app/hoc-lieu/bai-doc', label: 'Đọc hiểu', roles: ['admin', 'teacher'] },
+          { to: '/app/hoc-lieu/bai-nghe', label: 'Nghe hiểu', roles: ['admin', 'teacher'] },
         ],
       },
       { to: '/app/hoc-lieu/bai-kiem-tra', label: 'Bài Thi', icon: ClipboardList, roles: ['admin', 'teacher'] },
       { to: '/app/hoc-lieu/khoa-hoc', label: 'Khoá học', icon: Library, roles: ['admin', 'teacher'] },
+      {
+        to: '/app/duyet-noi-dung',
+        label: 'Duyệt thay đổi',
+        labelByRole: { teacher: 'Yêu cầu chờ duyệt', admin: 'Duyệt thay đổi' },
+        icon: ClipboardCheck,
+        roles: ['admin', 'teacher'],
+        badge: 'contentReviews',
+      },
     ],
   },
   {
@@ -221,6 +236,10 @@ export const ROUTE_META = {
   '/app/hoc-lieu/bai-kiem-tra': {
     title: 'Quản lý Bài Kiểm Tra (Quiz Bank)',
     description: 'Quản lý ngân hàng câu hỏi và duyệt nội dung do AI sinh ra',
+  },
+  '/app/duyet-noi-dung': {
+    title: 'Duyệt thay đổi học liệu',
+    description: 'Thêm, sửa, xoá học liệu của giáo viên chỉ được áp dụng sau khi quản trị viên duyệt',
   },
   '/app/noi-dung-ai': {
     title: 'Tạo — Duyệt nội dung AI',

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ENDPOINTS } from './endpoints'
+import { isPendingReviewResponse, notifyPendingReview } from './pendingReview'
 
 /**
  * Điểm chuyển mạch giữa dữ liệu giả và API thật.
@@ -77,6 +78,7 @@ rawHttp.interceptors.response.use(undefined, (error) => {
 http.interceptors.response.use(
   (response) => {
     const res = response.data
+    if (isPendingReviewResponse(response)) notifyPendingReview(res.message)
     // Nếu backend trả về ErrorResponse dạng { status: 4xx/5xx, error: "...", message: "..." }
     if (res && typeof res === 'object' && typeof res.status === 'number' && res.status >= 400) {
       const err = new Error(res.message || res.error || 'Lỗi xử lý từ máy chủ')
@@ -103,6 +105,9 @@ function toApiError(error) {
     409: 'Dữ liệu bị trùng hoặc đang xung đột.',
     422: 'Dữ liệu không hợp lệ.',
     500: 'Máy chủ gặp sự cố. Vui lòng thử lại sau.',
+    502: 'Dịch vụ tạm thời không phản hồi. Vui lòng thử lại sau ít phút.',
+    503: 'Dịch vụ đang khởi động hoặc tạm thời không phản hồi. Vui lòng thử lại sau ít phút.',
+    504: 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.',
   }
   return {
     status: status ?? 0,
@@ -209,6 +214,7 @@ async function request(method, endpoint, options = {}, isRetry = false) {
       endpoint.startsWith('/admin/permissions') ||
       endpoint.startsWith('/content/listening') ||
       endpoint.startsWith('/admin/ai') ||
+      endpoint.startsWith('/admin/content-reviews') ||
       endpoint.startsWith('/ai-practice') ||
       endpoint.startsWith('/content/courses') ||
       endpoint.startsWith('/api/v1/teacher') ||

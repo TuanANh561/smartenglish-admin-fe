@@ -24,6 +24,7 @@ import { getVisibleNavGroups } from '@/components/layout/navConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
 import { useSidebarStore } from '@/store/sidebarStore'
+import { usePendingReviewCount } from '@/features/contentReview/usePendingReviewCount'
 
 // Icon và màu sắc riêng biệt cho từng bài học con (tương phản cao, tươi sáng)
 const SUB_CONFIG = {
@@ -247,7 +248,8 @@ function NavItemGroup({ item, role, isCollapsed }) {
 /**
  * Item menu đơn (Dùng Portal Tooltip nền trắng tương phản cao khi thu nhỏ)
  */
-function SingleNavItem({ item, isCollapsed, unread, role }) {
+function SingleNavItem({ item, isCollapsed, unread, role, badgeTone = 'red' }) {
+  const isWarning = badgeTone === 'warning'
   const [isTooltipOpen, setIsTooltipOpen] = useState(false)
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
   const buttonRef = useRef(null)
@@ -306,14 +308,21 @@ function SingleNavItem({ item, isCollapsed, unread, role }) {
             {unread > 0 && (
               isCollapsed ? (
                 <span
-                  className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-navy-800"
-                  title={`${unread} chưa đọc`}
+                  className={cn(
+                    'absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-navy-800',
+                    isWarning ? 'bg-[#FEF3C7]' : 'bg-red-500',
+                  )}
+                  title={isWarning ? `${unread} yêu cầu chờ duyệt` : `${unread} chưa đọc`}
                 />
               ) : (
                 <span
                   className={cn(
                     'min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold leading-none',
-                    isActive ? 'bg-white text-brand-600' : 'bg-red-500 text-white',
+                    isActive
+                      ? 'bg-white text-brand-600'
+                      : isWarning
+                        ? 'bg-[#FEF3C7] text-[#A16207]'
+                        : 'bg-red-500 text-white',
                   )}
                 >
                   {unread > 99 ? '99+' : unread}
@@ -340,7 +349,12 @@ function SingleNavItem({ item, isCollapsed, unread, role }) {
           >
             <span>{item.label}</span>
             {unread > 0 && (
-              <span className="rounded-full bg-red-500 text-white px-1.5 py-0.2 text-[9px] font-bold">
+              <span
+                className={cn(
+                  'rounded-full px-1.5 py-0.2 text-[9px] font-bold',
+                  isWarning ? 'bg-[#FEF3C7] text-[#A16207]' : 'bg-red-500 text-white',
+                )}
+              >
                 {unread}
               </span>
             )}
@@ -372,6 +386,8 @@ function Sidebar() {
   const toggleSidebar = useSidebarStore((s) => s.toggleSidebar)
 
   const communityUnread = useChatStore((s) => s.totalUnreadCount)
+  const normRole = String(role || '').toLowerCase()
+  const pendingReviews = usePendingReviewCount(normRole === 'admin' || normRole === 'super_admin')
   const fetchUnreadCount = useChatStore((s) => s.fetchUnreadCount)
 
   // Polling unread messages
@@ -443,7 +459,8 @@ function Sidebar() {
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) => {
                 const isCommunity = Boolean(item.to && item.to.includes('cong-dong'))
-                const unread = isCommunity ? communityUnread : (item.unreadCount || 0)
+                const isReviewQueue = item.badge === 'contentReviews'
+                const unread = isCommunity ? communityUnread : isReviewQueue ? pendingReviews : (item.unreadCount || 0)
 
                 if (item.children) {
                   return (
@@ -463,6 +480,7 @@ function Sidebar() {
                     isCollapsed={isCollapsed}
                     unread={unread}
                     role={role}
+                    badgeTone={isReviewQueue ? 'warning' : 'red'}
                   />
                 )
               })}
