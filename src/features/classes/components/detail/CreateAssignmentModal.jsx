@@ -15,6 +15,8 @@ import toast from 'react-hot-toast'
 import Select from '@/components/ui/Select'
 import { api, http } from '@/lib/api'
 import { getClassCourseIds } from '../../classCourseHelper'
+import { useAuthStore } from '@/store/authStore'
+import { fetchOwnedContent } from '@/features/contentReview/contentReviewApi'
 
 const ASSIGNMENT_TYPES = [
   { value: 'HOMEWORK', label: 'Bài tập về nhà (Homework)' },
@@ -37,6 +39,110 @@ const EMPTY_FORM = {
   dueDate: '',
   passingScore: 5.0,
   isGraded: true,
+  allowRetake: false,
+}
+
+const extractList = (res) => {
+  if (res.status !== 'fulfilled' || !res.value) return []
+  const v = res.value
+  if (Array.isArray(v)) return v
+  if (Array.isArray(v?.content)) return v.content
+  if (Array.isArray(v?.items)) return v.items
+  if (Array.isArray(v?.data)) return v.data
+  if (Array.isArray(v?.data?.content)) return v.data.content
+  if (Array.isArray(v?.data?.items)) return v.data.items
+  return []
+}
+
+const unwrapOne = (v) => (v && typeof v === 'object' && v.data && !v.id ? v.data : v)
+const isPublished = (item) => !item?.status || String(item.status).toLowerCase() === 'published'
+const isDeleted = (item) => Boolean(item?.deletedAt || item?.isDeleted || item?.deleted)
+const MAX_OWNED_PER_TYPE = 50
+
+/**
+ * Học liệu do chính giáo viên tạo và đã được quản trị viên duyệt:
+ * đề thi, bài đọc, bài nghe của giáo viên (chỉ có trong bảng chính sau khi yêu cầu tạo được duyệt, đã xuất bản)
+ * và học liệu AI giáo viên tạo đã được duyệt (khi duyệt, câu hỏi AI được chuyển thành đề thi cùng tên).
+ */
+async function fetchTeacherMaterials(user) {
+  const owned = (await fetchOwnedContent().catch(() => null)) || {}
+  const ids = (type) => (Array.isArray(owned[type]) ? owned[type] : []).slice(0, MAX_OWNED_PER_TYPE)
+
+  const loadEach = async (type, path, build) => {
+    const results = await Promise.allSettled(ids(type).map((id) => api.get(`${path}/${id}`)))
+    return results
+      .filter((r) => r.status === 'fulfilled' && r.value)
+      .map((r) => unwrapOne(r.value))
+      .filter((item) => item?.id != null && !isDeleted(item) && isPublished(item))
+      .map(build)
+  }
+
+  const [exams, readings, listenings, aiExams] = await Promise.all([
+    loadEach('EXAM', '/admin/exams', (ex) => ({
+      key: `EXAM_${ex.id}`,
+      id: ex.id,
+      title: ex.title || `Đề thi #${ex.id}`,
+      category: 'Đề thi của tôi',
+      suggestedType: 'QUIZ',
+    })),
+    loadEach('READING_PASSAGE', '/admin/reading-passages', (r) => ({
+      key: `READING_${r.id}`,
+      id: r.id,
+      title: r.title || r.titleVi || r.titleEn || `Bài đọc #${r.id}`,
+      category: 'Bài đọc của tôi',
+      suggestedType: 'READING',
+    })),
+    loadEach('LISTENING_LESSON', '/admin/listening-lessons', (ls) => ({
+      key: `LISTENING_${ls.id}`,
+      id: ls.id,
+      title: ls.title || ls.titleVi || `Bài nghe #${ls.id}`,
+      category: 'Bài nghe của tôi',
+      suggestedType: 'LISTENING',
+    })),
+    fetchTeacherAiExams(user, new Set(ids('AI_CONTENT').map(String))),
+  ])
+  return [...exams, ...aiExams, ...readings, ...listenings]
+}
+
+/** Học liệu AI của giáo viên đã duyệt và có câu hỏi → đề thi cùng tên trong ngân hàng đề. */
+async function fetchTeacherAiExams(user, ownedAiIds) {
+  if (!user) return []
+  const res = await Promise.allSettled([
+    api.get('/admin/ai/contents', { params: { page: 1, size: 100, status: 'APPROVED' } }),
+  ])
+  const me = [user.id, user.email, user.username, user.displayName]
+    .filter((v) => v != null && v !== '')
+    .map((v) => String(v).trim().toLowerCase())
+  const mine = extractList(res[0]).filter(
+    (c) =>
+      String(c.status || '').toUpperCase() === 'APPROVED' &&
+      !isDeleted(c) &&
+      Array.isArray(c.questions) &&
+      c.questions.length > 0 &&
+      (ownedAiIds.has(String(c.id)) || me.includes(String(c.createdBy ?? '').trim().toLowerCase())),
+  )
+  const found = await Promise.allSettled(
+    mine.slice(0, MAX_OWNED_PER_TYPE).map((c) =>
+      api.get('/admin/exams', { params: { search: c.title, page: 1, size: 5 } }).then((list) => ({ c, list })),
+    ),
+  )
+  const items = []
+  found.forEach((r) => {
+    if (r.status !== 'fulfilled') return
+    const { c, list } = r.value
+    const exam = extractList({ status: 'fulfilled', value: list }).find(
+      (ex) => String(ex.title || '').trim() === String(c.title || '').trim() && !isDeleted(ex) && isPublished(ex),
+    )
+    if (!exam) return
+    items.push({
+      key: `EXAM_${exam.id}`,
+      id: exam.id,
+      title: exam.title,
+      category: 'Học liệu AI của tôi',
+      suggestedType: 'QUIZ',
+    })
+  })
+  return items
 }
 
 export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAssignment, preset }) {
@@ -48,6 +154,8 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef(null)
+  const user = useAuthStore((s) => s.user)
+  const isTeacher = String(user?.role || '').toLowerCase() === 'teacher'
 
   useEffect(() => {
     if (!isOpen) return
@@ -60,27 +168,17 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
         // Mở từ tab Khóa học → chỉ lấy bài học của đúng khóa đó
         const primaryCourseId = preset?.courseId || courseIds[0] || cls?.courseId || 1
 
-        const [lessonsRes, examsRes, readingsRes, listeningsRes] = await Promise.allSettled([
+        const [lessonsRes, examsRes, readingsRes, listeningsRes, mineRes] = await Promise.allSettled([
           api.get('/admin/lessons', { params: { courseId: primaryCourseId } }),
           api.get('/admin/exams', { params: { page: 0, size: 30 } }),
           api.get('/admin/reading-passages', { params: { page: 0, size: 30 } }),
           api.get('/admin/listening-lessons', { params: { page: 0, size: 30 } }),
+          isTeacher ? fetchTeacherMaterials(user) : Promise.resolve([]),
         ])
 
         if (!active) return
 
         const items = []
-
-        const extractList = (res) => {
-          if (res.status !== 'fulfilled' || !res.value) return []
-          const v = res.value
-          if (Array.isArray(v)) return v
-          if (Array.isArray(v?.content)) return v.content
-          if (Array.isArray(v?.items)) return v.items
-          if (Array.isArray(v?.data)) return v.data
-          if (Array.isArray(v?.data?.content)) return v.data.content
-          return []
-        }
 
         extractList(lessonsRes).forEach((l) => {
           items.push({
@@ -124,7 +222,11 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
           })
         })
 
-        setSystemMaterials(items)
+        // Học liệu của giáo viên lên đầu; bản trùng trong kho hệ thống thì bỏ
+        const mine = mineRes.status === 'fulfilled' ? mineRes.value : []
+        const mineKeys = new Set(mine.map((m) => m.key))
+        const uniqueMine = mine.filter((m, i) => mine.findIndex((x) => x.key === m.key) === i)
+        setSystemMaterials([...uniqueMine, ...items.filter((m) => !mineKeys.has(m.key))])
 
         // Chọn sẵn bài học được bấm (hoặc bài đầu tiên của khóa) để giáo viên không phải chọn lại
         if (preset?.courseId) {
@@ -152,7 +254,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
     return () => {
       active = false
     }
-  }, [isOpen, cls?.id, cls?.courseId, preset])
+  }, [isOpen, cls?.id, cls?.courseId, preset, isTeacher, user])
 
   if (!isOpen) return null
 
@@ -248,6 +350,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
         passingScore: Number(formData.passingScore),
         isGraded: formData.isGraded,
+        allowRetake: formData.allowRetake,
       })
       toast.success('Đã giao bài tập mới cho lớp học!')
       handleClose()
@@ -259,7 +362,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
   }
 
   const materialOptions = [
-    { value: '', label: loadingMaterials ? 'Đang tải kho học liệu...' : '-- Chọn bài từ kho học liệu hệ thống --' },
+    { value: '', label: loadingMaterials ? 'Đang tải kho học liệu...' : '-- Chọn bài từ kho học liệu --' },
     ...systemMaterials.map((m) => ({
       value: m.key,
       label: `[${m.category}] ${m.title}`,
@@ -523,13 +626,13 @@ export default function CreateAssignmentModal({ isOpen, onClose, cls, onCreateAs
           <div className="flex items-center gap-2 pt-1">
             <input
               type="checkbox"
-              id="isGraded"
-              checked={formData.isGraded}
-              onChange={(e) => setFormData({ ...formData, isGraded: e.target.checked })}
+              id="allowRetake"
+              checked={formData.allowRetake}
+              onChange={(e) => setFormData({ ...formData, allowRetake: e.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
-            <label htmlFor="isGraded" className="text-xs font-semibold text-slate-700 cursor-pointer">
-              Tính điểm vào kết quả đánh giá học bạ
+            <label htmlFor="allowRetake" className="text-xs font-semibold text-slate-700 cursor-pointer">
+              Cho phép học viên làm lại
             </label>
           </div>
 

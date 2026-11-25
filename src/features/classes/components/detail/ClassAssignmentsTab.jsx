@@ -16,6 +16,7 @@ import {
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AssignmentSubmissionsModal from './AssignmentSubmissionsModal'
 import AssignmentDetailModal from './AssignmentDetailModal'
+import { isSystemAssignment } from './assignmentGrading'
 
 const TYPE_CONFIG = {
   HOMEWORK: { label: 'Bài tập', bg: '#eff6ff', text: '#2563eb' },
@@ -201,7 +202,7 @@ export default function ClassAssignmentsTab({
                         Điểm sàn đạt: <strong className="text-slate-700">{asm.passingScore || 5.0}</strong>
                       </span>
                       <span>
-                        Chấm điểm: <strong className="text-slate-700">{asm.isGraded ? 'Có tính điểm' : 'Không'}</strong>
+                        Làm lại: <strong className="text-slate-700">{asm.allowRetake ? 'Cho phép' : 'Không'}</strong>
                       </span>
                     </div>
 
@@ -218,8 +219,8 @@ export default function ClassAssignmentsTab({
                         onClick={() => setReviewing(asm)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        <PenLine size={12} />
-                        <span>Chấm bài</span>
+                        {isSystemAssignment(asm) ? <Eye size={12} /> : <PenLine size={12} />}
+                        <span>{isSystemAssignment(asm) ? 'Xem kết quả' : 'Chấm bài'}</span>
                       </button>
                     </div>
                   </div>
