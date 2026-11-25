@@ -2,7 +2,6 @@ import { Search, X, RefreshCw, Upload, Plus, Trash2, RotateCcw } from 'lucide-re
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import { SORT_OPTIONS, PARTS_OF_SPEECH, PART_OF_SPEECH_LABEL } from '../hooks/useVocabulary'
-import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import OwnershipSelect from '@/features/contentReview/OwnershipSelect'
 
 /**
@@ -110,7 +109,6 @@ export function VocabToolbar({
         )}
 
         {ownerFilter ? <OwnershipSelect value={ownerFilter} onChange={onOwnerFilterChange} /> : null}
-        <PendingReviewButton type="WORD" />
 
         {/* Nút Thêm mới (Chỉ hiển thị khi không ở thùng rác) */}
         {!trashView && (

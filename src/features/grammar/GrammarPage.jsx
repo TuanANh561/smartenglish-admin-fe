@@ -1,7 +1,6 @@
 import MaterialEmptyState, { emptyMode } from '@/features/contentReview/MaterialEmptyState'
 import PendingDecisionBar from '@/features/contentReview/PendingDecisionBar'
 import { useOpenPendingFromQuery, usePendingRequests, withPending } from '@/features/contentReview/usePendingRequests'
-import PendingReviewButton from '@/features/contentReview/PendingReviewButton'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -334,7 +333,6 @@ function GrammarPage() {
                 </Button>
 
                 {own.isTeacher ? <OwnershipSelect value={ownerFilter} onChange={setOwnerFilter} /> : null}
-                <PendingReviewButton type="GRAMMAR_LESSON" />
 
                 {/* Thêm bài học (Icon-only) */}
                 <button
